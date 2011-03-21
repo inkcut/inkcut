@@ -1,0 +1,6 @@
+device - vinyl cutter or plotter
+overcut - extra distance that the blade will cut past or back over at the end
+     of the design
+blade offset - distance from the center of the blade and the actual point where
+    it cuts
+job - a vector plot and all of the settings required to make a desired cut
