@@ -23,8 +23,8 @@ import sys
 import os
 
 dirname = os.path.dirname
-sys.path.append(os.path.join(os.path.abspath(dirname(dirname(__file__))),'inkcut'))
+sys.path.append(os.path.join(os.path.abspath(dirname(dirname(__file__))),'app'))
 
-import app as Inkcut
+import inkcut as Inkcut
 app = Inkcut.Application()
 app.run()

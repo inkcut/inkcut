@@ -107,18 +107,20 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkCheckMenuItem" id="menuitem11">
+                              <object class="GtkCheckMenuItem" id="live_preview">
                                 <property name="visible">True</property>
                                 <property name="label" translatable="yes">Live Preview</property>
                                 <property name="use_underline">True</property>
                                 <property name="active">True</property>
+                                <signal name="toggled" handler="on_live_preview_toggled"/>
                               </object>
                             </child>
                             <child>
-                              <object class="GtkMenuItem" id="menuitem10">
+                              <object class="GtkMenuItem" id="preview_refresh">
                                 <property name="visible">True</property>
                                 <property name="label" translatable="yes">Refresh</property>
                                 <property name="use_underline">True</property>
+                                <signal name="activate" handler="on_preview_refresh_activate"/>
                               </object>
                             </child>
                           </object>
@@ -973,6 +975,7 @@
                     <child>
                       <object class="GtkComboBox" id="material_select">
                         <property name="visible">True</property>
+                        <signal name="changed" handler="on_material_select_changed"/>
                       </object>
                       <packing>
                         <property name="position">0</property>
@@ -989,13 +992,14 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkColorButton" id="colorbutton1">
+                      <object class="GtkColorButton" id="material_color_btn">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip_text" translatable="yes">Changes the background color of the preview</property>
                         <property name="title" translatable="yes">Pick a Material Color - Inkcut</property>
                         <property name="color">#ffffffffffff</property>
+                        <signal name="color_set" handler="on_material_color_btn_color_set"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1503,9 +1507,10 @@ This is not supported by all plotters.</property>
                                   <object class="GtkHBox" id="hbox4">
                                     <property name="visible">True</property>
                                     <child>
-                                      <object class="GtkImage" id="image2">
+                                      <object class="GtkImage" id="copy_rotation_img">
                                         <property name="visible">True</property>
-                                        <property name="stock">gtk-print</property>
+                                        <property name="pixel_size">0</property>
+                                        <property name="icon_name">printer</property>
                                         <property name="icon-size">3</property>
                                       </object>
                                       <packing>
@@ -1518,6 +1523,7 @@ This is not supported by all plotters.</property>
                                       <object class="GtkComboBox" id="copy_rotation">
                                         <property name="visible">True</property>
                                         <property name="model">copy_rotation_ls</property>
+                                        <signal name="changed" handler="on_copy_rotation_changed"/>
                                       </object>
                                       <packing>
                                         <property name="position">1</property>

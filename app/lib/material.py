@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#       job.py
+#       material.py
 #
 #       Copyright 2010 Jairus Martin <jrm5555@psu.edu>
 #
@@ -20,7 +20,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 from unit import unit
-from sqlalchemy import Table, Column, Integer, Float, String
+from sqlalchemy import Table, Column, Integer, Float, Unicode
 from meta import Base
 
 class Material(Base):
@@ -28,22 +28,23 @@ class Material(Base):
     Defines material properties for device and size limitations of a job.
     """
     __tablename__ = 'materials'
-    
+
     id = Column(Integer, primary_key=True)
-    name = Column(String(50))
-    cost = Column(Float)
-    width = Column(Float)
-    length = Column(Float)
+    name = Column(Unicode)
+    cost = Column(Float) # $
+    width = Column(Float) # cm
+    length = Column(Float) # cm
     margin_top = Column(Float)
     margin_right = Column(Float)
     margin_bottom = Column(Float)
     margin_left = Column(Float)
-    velocity = Column(Integer)
-    force = Column(Integer)
-    
+    velocity = Column(Integer) # cm/s
+    force = Column(Integer) # g
+    color = Column(Unicode) # g
+
     def __init__(self,id=None,name=None,cost=0,width=None,length=0,
             margin_top=0,margin_right=0,margin_bottom=0,margin_left=0,
-            velocity=None,force=None
+            velocity=None,force=None,color=u'#FFF'
             ):
         """
         Create a device instance with it's properties.
@@ -59,12 +60,13 @@ class Material(Base):
         self.margin_left = margin_left
         self.velocity = velocity # usure of units
         self.force = force # grams
- 
+        self.color = color # grams
+
     def __repr__(self):
-        return "<Material('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')>" % (
+        return "<Material('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')>" % (
                 self.id,self.name,self.cost,self.width,self.length,
                 self.margin_top,self.margin_right,self.margin_bottom,
-                self.margin_left,self.velocity,self.force
+                self.margin_left,self.velocity,self.force,self.color
             )
 
 

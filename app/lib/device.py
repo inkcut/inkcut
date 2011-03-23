@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#       job.py
+#       device.py
 #
 #       Copyright 2010 Jairus Martin <jrm5555@psu.edu>
 #
@@ -20,7 +20,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 from unit import unit
-from sqlalchemy import Table, Column, Integer, Float, String,Boolean
+from sqlalchemy import Table, Column, Integer, Float, Unicode,Boolean
 from meta import Base
 
 class Device(Base):
@@ -30,13 +30,13 @@ class Device(Base):
     Does final job svg to hpgl conversion.
     """
     __tablename__ = 'devices'
-        
+
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    brand = Column(String)
-    model = Column(String)
+    name = Column(Unicode)
+    brand = Column(Unicode)
+    model = Column(Unicode)
     operating_cost = Column(Float)
-    
+
     width = Column(Float)
     length = Column(Float)
     uses_media_roll = Column(Boolean)
@@ -48,20 +48,20 @@ class Device(Base):
     blade_overcut = Column(Float)
     calibration_x = Column(Float)
     calibration_y = Column(Float)
-    
-    command_language = Column(String)
+
+    command_language = Column(Unicode)
     command_buffer = Column(Integer)
-    command_method = Column(String)
-    
-    command_port = Column(String)
+    command_method = Column(Unicode)
+
+    command_port = Column(Unicode)
     command_baudrate = Column(Integer)
-    command_parity = Column(String)
+    command_parity = Column(Unicode)
     command_stopbits = Column(Float)
     command_bytesize = Column(Integer)
     command_xonxoff = Column(Boolean)
     command_rtscts = Column(Boolean)
     command_dsrdtr = Column(Boolean)
-    
+
     command_use_software = Column(Boolean,default=False)
     velocity_min = Column(Integer)
     velocity_max = Column(Integer)
@@ -69,10 +69,10 @@ class Device(Base):
     force_min = Column(Integer)
     force_max = Column(Integer)
     force = Column(Integer)
-    
-    
-    
-    
+
+
+
+
     def __init__(self,id=None,name=None,brand=None,model=None,
             operating_cost=0,width=None,length=None,
             uses_media_roll=True,
@@ -96,7 +96,7 @@ class Device(Base):
         self.brand = brand
         self.model = model
         self.operating_cost = operating_cost
-        
+
         self.width = width
         self.length = length
         self.uses_media_roll = uses_media_roll
@@ -108,11 +108,11 @@ class Device(Base):
         self.blade_overcut = blade_overcut
         self.calibration_x = calibration_x
         self.calibration_y = calibration_y
-        
+
         self.command_language = command_language
         self.command_buffer = command_buffer
         self.command_method = command_method
-        
+
         self.command_port = command_port
         self.command_baudrate = command_baudrate
         self.command_parity = command_parity
@@ -121,7 +121,7 @@ class Device(Base):
         self.command_xonxoff = command_xonxoff
         self.command_rtscts = command_rtscts
         self.command_dsrdtr = command_dsrdtr
-        
+
         self.command_use_software = command_use_software
         self.velocity_min = velocity_min
         self.velocity_max = velocity_max

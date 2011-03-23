@@ -19,7 +19,10 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
-import sys,os,logging,pygtk
+import sys
+import os
+import logging,logging.config
+import pygtk
 pygtk.require('2.0')
 import gtk
 import ConfigParser
@@ -27,6 +30,7 @@ import lib
 from lib.unit import unit
 from lib.meta import Session
 from lib.job import Job
+from lib.material import Material
 from lib.serial import scan
 from lxml import etree
 from sqlalchemy import engine_from_config
@@ -34,13 +38,15 @@ from sqlalchemy import engine_from_config
 # Load Configuration Files
 config = ConfigParser.RawConfigParser()
 dirname = os.path.dirname
-config.read(os.path.join(dirname(__file__),'config','app.cfg'))
-if os.name == 'nt':
-    sys.path.append(config.get('Inkscape','win_extension_dir'))
-elif os.name == 'posix':
+CONFIG_FILE = os.path.join(dirname(__file__),'config','app.cfg')
+config.read(CONFIG_FILE)
+if os.name == 'posix':
     import cups
-    sys.path.append(config.get('Inkscape','extension_dir'))
-import inkex
+
+
+# Logging
+logging.config.fileConfig(CONFIG_FILE)
+log = logging.getLogger("inkcut")
 
 
 class Application(object):
@@ -50,8 +56,11 @@ class Application(object):
 
     def __init__(self):
         """Load initial application settings from database """
+        # setup the database session
         engine = engine_from_config(dict(config.items('Inkcut')),'sqlalchemy.')
         Session.configure(bind=engine)
+        self.session = Session()
+
         self.job = None
         self.ui = {
             'main_window':MainWindow(self),
@@ -81,12 +90,18 @@ class Application(object):
             msg.destroy()
             return False
 
+    def reload_job(self):
+        """ Refreshes the current job """
+        if self.ui['main_window'].widgets['live_preview'].get_active():
+            self._update_preview()
+
     def _update_preview(self):
         """ Refreshes the preview """
-        loader = gtk.gdk.PixbufLoader('svg')
-        loader.write(etree.tostring(self.job.data))
-        loader.close()
-        self.ui['main_window'].widgets['preview'].set_from_pixbuf(loader.get_pixbuf())
+        if self.job.data:
+            loader = gtk.gdk.PixbufLoader('svg')
+            loader.write(etree.tostring(self.job.data))
+            loader.close()
+            self.ui['main_window'].widgets['preview'].set_from_pixbuf(loader.get_pixbuf())
 
     def _flash(self,id,msg,duration=30.0):
         """ Flash a message in the statusbar """
@@ -171,8 +186,18 @@ class MainWindow(UserInterface):
             'Fastest path (min blade movement)'])
         combo.set_active(0)
 
+        combo = builder.get_object("copy_rotation")
+        self.set_model_from_list(combo,['%s°'%(i*90) for i in range(0,4)])
+        combo.set_active(0)
+
+        materials = app.session.query(Material).all()
+        combo = builder.get_object("material_select")
+        self.set_model_from_list(combo,[m.name for m in materials])
+        combo.set_active(0)
+
         # Connect the signals
         builder.connect_signals(self)
+
         self.widgets = self.keep_widgets(builder,[
             'main','smoothness','blade_offset','overcut','velocity',
             'force','feed_distance','req_copies','pos_x','pos_y',
@@ -180,13 +205,27 @@ class MainWindow(UserInterface):
             'margin','weed_plot_padding','weed_copy_padding',
             'align_horizontal_box','align_vertical_box','weed_plot_box',
             'weed_copy_box','sort_order_box','invert_x_box',
-            'invert_y_box','feed_to_origin_rad','statusbar','preview'
+            'invert_y_box','feed_to_origin_rad','statusbar','preview',
+            'copy_rotation_img','live_preview'
             ])
 
-    def on_device_properties_activate(self,widget,data=None):
-        self.app.ui['device_dialog'].widgets['main'].run()
-        self.app.ui['device_dialog'].widgets['main'].hide()
+    # Job actions
+    def on_material_select_changed(self,combo,data=None):
+        """ Update the job's material """
+        self.app.reload_job()
 
+
+    def on_material_color_btn_color_set(self,button,data=None):
+        """ Update the material's color and preview """
+        self.app.reload_job()
+
+
+    def on_copy_rotation_changed(self,combo,data=None):
+        """ Update the job's data rotation """
+        self.app.reload_job()
+
+
+    # Menu actions
     def on_job_open_activate(self,widget,data=None):
         """ Open a job """
         dialog = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_OPEN,
@@ -216,7 +255,14 @@ class MainWindow(UserInterface):
         if response == gtk.RESPONSE_OK:
             self.app.load(source_filename=filename)
 
+    def on_preview_refresh_activate(self,widget,data=None):
+        """ Manually refresh the preview """
+        self.app._update_preview()
 
+    # Dialogs this window controls
+    def on_device_properties_activate(self,widget,data=None):
+        self.app.ui['device_dialog'].widgets['main'].run()
+        self.app.ui['device_dialog'].widgets['main'].hide()
 
 
 class DeviceDialog(UserInterface):
