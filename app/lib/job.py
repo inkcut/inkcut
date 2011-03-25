@@ -70,43 +70,10 @@ class Job(Base):
         self.requirements = JobRequirements()
 
         # Job status flags
-        self.status = 'Unprocessed'
+        self.status = u'Unprocessed'
         self.messages = []
 
     # Job managment
-    def create(self,
-            id=None,
-            name=None,
-            description=None,
-            created=datetime.now(),
-            source_filename=None,
-            source_last_modified=None,
-            source=None,
-            data=None,
-            status=u'New Job: Unprocessed',
-            device=None,
-            material=None,
-            **kwargs
-            ):
-        """ Creates a database entry and loads a source graphic """
-        self.id = id
-        self.name = name
-        self.description = description
-        self.created = created
-        self.source_filename = source_filename
-        self.source_last_modified = source_last_modified
-        self.source = source # svg etree._ElementTree
-        self.data = data # modified svg file
-        self.status = status
-        self.device = device
-        self.material = material
-
-        # Job requirements
-        self.requirements = JobRequirements(kwargs)
-
-        self.process()
-        return self
-
     def load(self,source=None,source_filename=None,selected_nodes=None):
         """ tries to find a database entry if not creates a new one """
         # if in_database:
@@ -138,20 +105,8 @@ class Job(Base):
         """ Loads a job from the database """
         pass
 
-    def delete():
+    def delete(self,id):
         """ Removes a job from the database, logs the activity """
-        pass
-
-    # Job requirements
-    def requirements(self):
-        """ Returns a dictionary of the job requirements """
-        return self.properties
-
-    def requirement(self,key,value=None):
-        """
-        Reads the requirement with given key.  If a value is passed it
-        sets the requirment to that value.
-        """
         pass
 
     # Job processing

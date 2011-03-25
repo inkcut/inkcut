@@ -21,7 +21,7 @@ setup(
     # metadata for upload to PyPI
     author = "Jairus Martin",
     author_email = "jrm5555@psu.edu",
-    description = "A gtk+ application for converting svg graphics to hpgl and sending them to a plotter or cutter.",
+    description = "Gtk+ application for converting svg graphics to hpgl and sending them to a plotter.",
     license = "GPL",
     keywords = "inkcut, vinyl, cutting, plotting, plot, cut, sign, lettering, decal",
     url = "http://inkcut.sourceforge.net",   # project home page, if any

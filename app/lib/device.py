@@ -19,6 +19,7 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
+import serial
 from unit import unit
 from sqlalchemy import Table, Column, Integer, Float, Unicode,Boolean
 from meta import Base
@@ -144,6 +145,19 @@ class Device(Base):
     def _disconnect():
         """Disconnect the device, update status"""
         pass
+
+    @staticmethod
+    def port_scan():
+        """scan for available ports. return a list of tuples (num, name)"""
+        available = []
+        for i in range(256):
+            try:
+                s = serial.Serial(i)
+                available.append( (i, s.portstr))
+                s.close()   # explicit close 'cause of delayed GC in java
+            except serial.SerialException:
+                pass
+        return available
 
     def process(self,data):
         """

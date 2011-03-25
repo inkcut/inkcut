@@ -31,18 +31,15 @@ from lib.unit import unit
 from lib.meta import Session
 from lib.job import Job
 from lib.material import Material
-from lib.serial import scan
+from lib.device import Device
 from lxml import etree
 from sqlalchemy import engine_from_config
 
 # Load Configuration Files
 config = ConfigParser.RawConfigParser()
 dirname = os.path.dirname
-CONFIG_FILE = os.path.join(dirname(__file__),'config','app.cfg')
+CONFIG_FILE = os.path.join(dirname(__file__),'conf','app.cfg')
 config.read(CONFIG_FILE)
-if os.name == 'posix':
-    import cups
-
 
 # Logging
 logging.config.fileConfig(CONFIG_FILE)
@@ -89,6 +86,10 @@ class Application(object):
             msg.run()
             msg.destroy()
             return False
+
+    def reload_device(self):
+        """ Reloads the device """
+        pass
 
     def reload_job(self):
         """ Refreshes the current job """
@@ -161,7 +162,6 @@ class UserInterface(object):
     def gtk_window_hide(self,window):
         """ Hide a window """
         self.window.hide();
-
 
 
 class MainWindow(UserInterface):
@@ -279,15 +279,15 @@ class DeviceDialog(UserInterface):
 
         # Populate the combo boxes
         # TODO: FIX FOR WINDOWS
-        if os.name != 'nt':
-            con = cups.Connection()
-            printers = con.getPrinters()
-            combo = builder.get_object("printer")
-            self.set_model_from_list(combo,printers)
-            combo.set_active(len(printers)-1)
+        #if os.name != 'nt':
+        #    con = cups.Connection()
+        #    printers = con.getPrinters()
+        #    combo = builder.get_object("printer")
+        #    self.set_model_from_list(combo,printers)
+        #    combo.set_active(len(printers)-1)
 
         # Scan for serial ports, should work on both linux and windows
-        ports = scan.scan()
+        ports = Device.port_scan()
         combo = builder.get_object("port")
         self.set_model_from_list(combo,ports)
         combo.set_active(len(ports)-1)
