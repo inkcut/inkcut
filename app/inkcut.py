@@ -21,24 +21,29 @@
 #       MA 02110-1301, USA.
 import sys
 import os
+
+# Path Globals
+APP_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(APP_DIR,'lib')
+
 import logging,logging.config
 import pygtk
 pygtk.require('2.0')
 import gtk
 import ConfigParser
-import lib
-from lib.unit import unit
-from lib.meta import Session
-from lib.job import Job
-from lib.material import Material
-from lib.device import Device
+
+
+# Inkcut modules
+from meta import Session
+from job import Job
+from material import Material
+from device import Device
 from lxml import etree
-from sqlalchemy import engine_from_config
+from sqlalchemy import create_engine
 
 # Load Configuration Files
 config = ConfigParser.RawConfigParser()
-dirname = os.path.dirname
-CONFIG_FILE = os.path.join(dirname(__file__),'conf','app.cfg')
+CONFIG_FILE = os.path.join(APP_DIR,'conf','app.cfg')
 config.read(CONFIG_FILE)
 
 # Logging
@@ -54,7 +59,8 @@ class Application(object):
     def __init__(self):
         """Load initial application settings from database """
         # setup the database session
-        engine = engine_from_config(dict(config.items('Inkcut')),'sqlalchemy.')
+        engine = create_engine('sqlite:///%s'%os.path.join(APP_DIR,config.get('Inkcut','database_dir'),config.get('Inkcut','database_name')))
+        
         Session.configure(bind=engine)
         self.session = Session()
 
@@ -171,7 +177,7 @@ class MainWindow(UserInterface):
         builder = gtk.Builder()
 
         # TODO: fix this
-        glade_file = os.path.join(os.path.abspath(dirname(__file__)),'ui','main-window.glade')
+        glade_file = os.path.join(APP_DIR,'ui','main-window.glade')
         builder.add_from_file(glade_file)
 
         # Set defaults
@@ -270,7 +276,7 @@ class DeviceDialog(UserInterface):
         """ Builds the device properties dialog window """
         self.app = app
         builder = gtk.Builder()
-        glade_file = os.path.join(os.path.abspath(dirname(__file__)),'ui','device-dialog.glade')
+        glade_file = os.path.join(APP_DIR,'ui','device-dialog.glade')
         builder.add_from_file(glade_file)
 
         # Set defaults
@@ -329,3 +335,11 @@ class DeviceDialog(UserInterface):
         """ cancel instead of destroying """
         self.on_device_dialog_cancel_clicked()
         return True
+
+if __name__ == "__main__":
+    app = Application()
+    #etree.parse(sys.stdin), sys.argv[1:]
+	
+	#sys.stdin.close()
+    app.run()
+	
