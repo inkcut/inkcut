@@ -1,0 +1,31 @@
+TODO List:  Steps that need to be taken to complete Inkcut 1.1
+
+===============================================================================
+Backend
+===============================================================================
+Job and JobRequirements to SVG
+-------------------------------------------------------------------------------
+We need to be able to produce an SVG of only path elements (or possilby shapes
+if that can be handled below)
+
+
+
+SVG to Output Format Converstion
+-------------------------------------------------------------------------------
+For the device to plot, the svg file has to be converted into hpgl,gpgl or the
+specific graphic language of the cutter.  The steps needed to achive this are:
+    1. make a method to apply a matrix transformations to a path
+    2. make methods to convert the pysvg shapes into paths
+    3. make script to convert paths to hpgl that can also do the following:
+        requirements:
+           * blade offset compensation
+           * overcut compensation
+           * speed adjustment (variable)
+           * force adjustment
+           * final axis rotation and mirroring
+
+Device Connection
+
+===============================================================================
+Backend
+===============================================================================
