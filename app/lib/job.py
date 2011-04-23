@@ -23,11 +23,15 @@
 #       MA 02110-1301, USA.
 from datetime import datetime
 from unit import unit
-from lxml import etree
 
+# svg parsing
+from lxml import etree
+from lib.pysvg import parser
+from lib.pysvg import shapes
+from lib.pysvg import structure
 
 # Database model
-from sqlalchemy import Table, Column, Integer, Float, UnicodeText,DateTime, Unicode, ForeignKey, Boolean
+from sqlalchemy import Table, Column, Integer, Float, UnicodeText,DateTime, Unicode, ForeignKey, Boolean,Text
 from meta import Base
 
 class Job(Base):
@@ -43,78 +47,99 @@ class Job(Base):
     created = Column(DateTime,default=datetime.now())
     source_filename = Column(Unicode,unique=True)
     source_last_modified = Column(DateTime)
-    source = Column(UnicodeText,nullable=False)
-    data = Column(UnicodeText)
+    source = Column(Text,nullable=False)
+    selected_nodes = Column(Text)
+    data = Column(Text)
     status = Column(Unicode)
     device_id = Column(Integer, ForeignKey('devices.id'))
     material_id = Column(Integer, ForeignKey('materials.id'))
     requirements_id = Column(Integer, ForeignKey('job_requirements.id'))
 
-    def __init__(self):
+    def __init__(self,
+            id=None,
+            name=None,
+            description=None,
+            created=datetime.now(),
+            source_filename=None,
+            source_last_modified=None,
+            source=None,
+            data=None,
+            status=None,
+            device_id=None,
+            material_id=None,
+            requirements_id=None,
+            selected_nodes=None,
+            ):
         """
-        Create a job instance with it's undefined properties.
+        Create a job instance with it's properties.
         """
-        self.id = None
-        self.name = None
-        self.description = None
-        self.created = datetime.now()
-        self.source_filename = None # original graphic source filename
-        self.source_last_modified = None
-        self.source = None # original graphic source file
-        self.data = None # inkcut created and modified svg
-        self.status = None
-        self.device = None
-        self.material = None
+        self.id = id
+        self.name = unicode(name)
+        self.description = unicode(description)
+        self.created = created
+        self.source_filename = unicode(source_filename) # original graphic source filename
+        self.source_last_modified = source_last_modified
+        self.source = source # original graphic source file
+        self.selected_nodes = selected_nodes
+        self.data = data # inkcut created and modified svg
+        self.status = unicode(status)
+        self.device_id = device_id
+        self.material_id = material_id
 
         # Job requirements
-        self.requirements = JobRequirements()
+        if requirements_id is None:
+            self.requirements = JobRequirements()
+            self.requirements_id = self.requirements.id
+        else:
+            self.requirements_id = requirements_id
+            
 
         # Job status flags
         self.status = u'Unprocessed'
         self.messages = []
+        
+        # Job properties
+        self.plot_width = 0
+        self.plot_length = 0
+        self.copy_width = 0
+        self.copy_length = 0
+        self.path_length = 0
+        self.estimated_cost = None
+        self.estimated_time = None
+
 
     # Job managment
-    def load(self,source=None,source_filename=None,selected_nodes=None):
-        """ tries to find a database entry if not creates a new one """
-        # if in_database:
-        #   return self.read(id)
-        # else:
-        #   return self.create():
-        if type(source) == etree._ElementTree:
-            self.create(source=source,
-                    source_filename=source_filename,
-                    selected_nodes=selected_nodes)
+    def load(self):
+        """ Parses the source file into an etree object. """
+        if type(self.source) == etree._ElementTree:
+            self.source = etree.tostring(self.source)
+            self.process()
             return True
-        elif source_filename is not None:
+        elif self.source_filename is not None:
             try:
-                source = etree.parse(source_filename)
-                self.create(source=source,
-                    source_filename=source_filename,
-                    selected_nodes=selected_nodes)
+                self.source = f.open(self.source_filename).read()
+                self.process()
                 return True
             except (IOError,etree.XMLSyntaxError):
-                self.messages.append('Could not open the file: %s. \n Reason: Invalid filetype or file not found.'% source_filename)
+                self.messages.append('Could not open the file: %s. \n Reason: Invalid filetype or file not found.'% self.source_filename)
                 return False
 
         self.messages.append('Could not open the source file.')
         return False
-
-
-
-    def read(self,id):
-        """ Loads a job from the database """
-        pass
-
-    def delete(self,id):
-        """ Removes a job from the database, logs the activity """
-        pass
 
     # Job processing
     def process(self):
         """
         Converts the source svg to data svg using job requirements.
         """
-        self.data = self.source
+        # create the base svg (simulate the material)
+        svg = structure.svg()
+        
+        # grab the paths from the source
+        src = parser.parse_string(self.source)
+        paths = src.getElementsByType(shape.path)
+        
+        self.data = svg.getXML()
 
     def validate(self):
         """

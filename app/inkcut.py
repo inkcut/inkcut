@@ -24,7 +24,7 @@ import os
 
 # Path Globals
 APP_DIR = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(APP_DIR,'lib')
+sys.path.append(os.path.join(APP_DIR,'lib'))
 
 import logging,logging.config
 import pygtk
@@ -77,18 +77,30 @@ class Application(object):
         gtk.main()
 
     def load(self,source=None,source_filename=None,selected_nodes=None):
-        job = Job()
-        if job.load(source=source,source_filename=source_filename,selected_nodes=selected_nodes):
-            # update the ui with job info
-            self.job = job
-            self._flash(0,'%s loaded'%os.path.basename(job.source_filename or 'File'))
-            self._update_preview()
-            return True
+        # Check if similar job exists
+        jobs = self.session.query(Job).filter(Job.source_filename == unicode(source_filename)).all()
+        if len(jobs)==0:
+            job = Job(source=source,source_filename=source_filename,selected_nodes=selected_nodes)
+            if job.load():
+                # update the ui with job info
+                self.job = job
+                self._flash(0,'%s loaded'%os.path.basename(job.source_filename or 'File'))
+                self._update_preview()
+                return True
+            else:
+                msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                    buttons=gtk.BUTTONS_CLOSE,
+                    message_format=job.messages.pop())
+                msg.set_title('Error opening file')
+                msg.run()
+                msg.destroy()
+                return False
         else:
+            # open a new job or 
             msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                 buttons=gtk.BUTTONS_CLOSE,
-                message_format=job.messages.pop())
-            msg.set_title('Error opening file')
+                message_format='A similar job was already found, do you want to load that?')
+            msg.set_title('File Already Found opening file')
             msg.run()
             msg.destroy()
             return False
@@ -234,7 +246,7 @@ class MainWindow(UserInterface):
     # Menu actions
     def on_job_open_activate(self,widget,data=None):
         """ Open a job """
-        dialog = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_OPEN,
+        dialog = gtk.FileChooserDialog(title='Open File - Inkcut',action=gtk.FILE_CHOOSER_ACTION_OPEN,
                     buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
         dialog.set_current_folder(os.getenv('USERPROFILE') or os.getenv('HOME'))
 
@@ -264,11 +276,118 @@ class MainWindow(UserInterface):
     def on_preview_refresh_activate(self,widget,data=None):
         """ Manually refresh the preview """
         self.app._update_preview()
-
+    
+    def on_refresh_job_preview_activate(self,widget,data=None):
+        pass
+    
+    def on_submit_job_activate(self,widget,data=None):
+        pass
+    
+    def on_cut_clicked(self,widget,data=None):
+        pass
+    
+    def on_preview_clicked(self,widget,data=None):
+        pass
+    
+    def on_live_preview_toggled(self,widget,data=None):
+        pass
+    
+    def on_send_clicked(self,widget,data=None):
+        pass
+    
+    def on_pause_clicked(self,widget,data=None):
+        pass
+    
+    def on_invertbox_toggled(self,widget,data=None):
+        pass
+        
+    def on_material_size_changed(self,widget,data=None):
+        pass
+    
+    def on_margin_value_changed(self,widget,data=None):
+        pass
+    
+    def on_spacing_value_changed(self,widget,data=None):
+        pass
+    
+    def on_pos_value_changed(self,widget,data=None):
+        pass
+    
+    def on_copies_value_changed(self,widget,data=None):
+        pass
+    
+    def on_feeding_group_changed(self,widget,data=None):
+        pass
+    
+    def on_force_value_changed(self,widget,data=None):
+        pass
+    
+    def on_velocity_value_changed(self,widget,data=None):
+        pass
+    
+    def on_overcut_value_changed(self,widget,data=None):
+        pass
+    
+    def on_offset_value_changed(self,widget,data=None):
+        pass
+    
+    def on_smoothness_value_changed(self,widget,data=None):
+        pass
+    
+    def on_margin_value_changed(self,widget,data=None):
+        pass
+    
+    def on_margin_value_changed(self,widget,data=None):
+        pass
+        
+    def on_stack_btn_clicked(self,widget,data=None):
+        pass
+        
+    def on_reset_stack_btn_clicked(self,widget,data=None):
+        pass
+        
+    def on_weed_box_toggled(self,widget,data=None):
+        pass
+        
+    def on_weed_v_box_toggled(self,widget,data=None):
+        pass
+        
+    def on_order_changed(self,widget,data=None):
+        pass
+        
+    def on_reset_stack_btn_clicked(self,widget,data=None):
+        pass
+        
+    def on_test_connection_clicked(self,widget,data=None):
+        pass
+        
+    def on_reset_stack_btn_clicked(self,widget,data=None):
+        pass
+        
+    def on_reset_stack_btn_clicked(self,widget,data=None):
+        pass
+    
+    
+    
     # Dialogs this window controls
     def on_device_properties_activate(self,widget,data=None):
         self.app.ui['device_dialog'].widgets['main'].run()
         self.app.ui['device_dialog'].widgets['main'].hide()
+    
+    def on_material_properties_activate(self,widget,data=None):
+        #self.app.ui['device_dialog'].widgets['main'].run()
+        #self.app.ui['device_dialog'].widgets['main'].hide()
+        pass
+    
+    def on_inkcut_preferences_activate(self,widget,data=None):
+        #self.app.ui['device_dialog'].widgets['main'].run()
+        #self.app.ui['device_dialog'].widgets['main'].hide()
+        pass
+    
+    def open_about_dialog(self,widget,data=None):
+        #self.app.ui['device_dialog'].widgets['main'].run()
+        #self.app.ui['device_dialog'].widgets['main'].hide()
+        pass
 
 
 class DeviceDialog(UserInterface):

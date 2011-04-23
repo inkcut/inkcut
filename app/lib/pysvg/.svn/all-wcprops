@@ -1,0 +1,101 @@
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/29/trunk/pySVG/src/pysvg
+END
+core.py
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/29/trunk/pySVG/src/pysvg/core.py
+END
+linking.py
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/18/trunk/pySVG/src/pysvg/linking.py
+END
+parser.py
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/3/trunk/pySVG/src/pysvg/parser.py
+END
+gradient.py
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/24/trunk/pySVG/src/pysvg/gradient.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/3/trunk/pySVG/src/pysvg/__init__.py
+END
+style.py
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/24/trunk/pySVG/src/pysvg/style.py
+END
+shape.py
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/23/trunk/pySVG/src/pysvg/shape.py
+END
+structure.py
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/24/trunk/pySVG/src/pysvg/structure.py
+END
+script.py
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/24/trunk/pySVG/src/pysvg/script.py
+END
+builders.py
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/24/trunk/pySVG/src/pysvg/builders.py
+END
+util.py
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/3/trunk/pySVG/src/pysvg/util.py
+END
+animate.py
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/24/trunk/pySVG/src/pysvg/animate.py
+END
+turtle.py
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/17/trunk/pySVG/src/pysvg/turtle.py
+END
+text.py
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/24/trunk/pySVG/src/pysvg/text.py
+END
+filter.py
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/24/trunk/pySVG/src/pysvg/filter.py
+END
+attributes.py
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/5/trunk/pySVG/src/pysvg/attributes.py
+END

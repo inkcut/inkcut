@@ -6,15 +6,15 @@ For licensing information please refer to license.txt
 '''
 from xml.dom import minidom
 from xml.dom import Node
-from animate import *
-from filter import *
-from gradient import *
-from linking import *
-from script import *
-from shape import *
-from structure import *
-from style import *
-from text import *
+from pysvg.animate import *
+from pysvg.filter import *
+from pysvg.gradient import *
+from pysvg.linking import *
+from pysvg.script import *
+from pysvg.shape import *
+from pysvg.structure import *
+from pysvg.style import *
+from pysvg.text import *
 
 def calculateMethodName(attr):
     name=attr
@@ -71,13 +71,4 @@ def parse(inFileName):
     #print rootObj.getXML()
     return rootObj
 
-def parse_string(string):
-    doc = minidom.parseString(string)
-    rootNode = doc.documentElement
-    rootObj = svg()
-    build(rootNode,rootObj)
-    # Enable Python to collect the space used by the DOM.
-    doc = None
-    #print rootObj.getXML()
-    return rootObj
 

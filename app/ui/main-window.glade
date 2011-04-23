@@ -71,7 +71,6 @@
                       <object class="GtkImageMenuItem" id="imagemenuitem5">
                         <property name="label">gtk-quit</property>
                         <property name="visible">True</property>
-                        <property name="accel_path">Ctrl+Q</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="gtk_main_quit"/>
@@ -525,7 +524,7 @@
                                         <property name="receives_default">True</property>
                                         <property name="extension_events">cursor</property>
                                         <property name="tooltip_text" translatable="yes">Fills one material width full of copies.</property>
-                                        <signal name="clicked" handler="on_stack_btn_clicked" object="copies"/>
+                                        <signal name="clicked" handler="on_stack_btn_clicked"/>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -540,7 +539,7 @@
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="tooltip_text" translatable="yes">Resets the number of copies to 1.</property>
-                                        <signal name="clicked" handler="on_reset_stack_btn_clicked" object="copies"/>
+                                        <signal name="clicked" handler="on_reset_stack_btn_clicked"/>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -1314,7 +1313,7 @@
                                 <child>
                                   <object class="GtkComboBox" id="sort_order_cb">
                                     <property name="visible">True</property>
-                                    <signal name="changed" handler="on_order_changed" object="order_combo"/>
+                                    <signal name="changed" handler="on_order_changed"/>
                                   </object>
                                   <packing>
                                     <property name="position">3</property>
@@ -1639,7 +1638,7 @@ This is not supported by all plotters.</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="related_action">refresh_job_preview</property>
-                <signal name="clicked" handler="on_preview_clicked" object="inkscape_preview"/>
+                <signal name="clicked" handler="on_preview_clicked"/>
                 <child>
                   <object class="GtkHBox" id="hbox36">
                     <property name="visible">True</property>
@@ -3439,13 +3438,11 @@ Special thanks to nosklo!</property>
     <property name="upper">100</property>
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">1</property>
-    <property name="page_size">10</property>
   </object>
   <object class="GtkAdjustment" id="weed_copy_padding">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
-    <property name="page_size">10</property>
   </object>
   <object class="GtkAction" id="submit_job">
     <signal name="activate" handler="on_submit_job_activate"/>
