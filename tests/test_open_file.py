@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#       unit.py
+#       launch-app.py
 #
 #       Copyright 2010 Jairus Martin <jrm5555@psu.edu>
 #
@@ -19,30 +19,14 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
+import sys
+import os
 
-# according to svg 1.1 specification http://www.w3.org/TR/SVG/coords.html
-UNIT = {
-    'in':90.0,
-    'pt':1.25,
-    'px':1,
-    'mm':3.5433070866,
-    'cm':35.433070866,
-    'm':3543.3070866,
-    'km':3543307.0866,
-    'pc':15.0,
-    'yd':3240.0,
-    'ft':1080.0
-}
+dirname = os.path.dirname
+sys.path.append(os.path.join(os.path.abspath(dirname(dirname(__file__))),'app'))
 
-SCALE = {
+import inkcut as Inkcut
+app = Inkcut.Application()
+app.load(source_filename=os.path.join(os.path.abspath(dirname(__file__)),'fat-giraffes.svg'))
+app.run()
 
-}
-
-def unit(x,convert_to="px",from_unit="px"):
-    """
-    Converts a number in px to given units.
-    Pass a third unit to convert from that unit to unit.
-    """
-    assert convert_to in UNIT, "Cannot convert to unknown unit: %s" % convert_to
-    assert from_unit in UNIT, "Cannot from unknown unit: %s" % from_unit
-    return float(x)*UNIT[convert_to]/UNIT[from_unit]

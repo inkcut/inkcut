@@ -62,11 +62,23 @@ class Material(Base):
         self.force = force # grams
         self.color = color # grams
 
-    def __repr__(self):
-        return "<Material('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')>" % (
-                self.id,self.name,self.cost,self.width,self.length,
-                self.margin_top,self.margin_right,self.margin_bottom,
-                self.margin_left,self.velocity,self.force,self.color
-            )
+    def get_width(self,in_unit='cm'):
+        return unit(self.width,in_unit)
 
+    def set_width(self,value,convert_to='cm'):
+        self.width = unit(value,convert_to)
+
+    def get_length(self,in_unit='cm'):
+        return unit(self.length,in_unit)
+
+    def set_length(self,value,convert_to='cm'):
+        self.length = unit(value,convert_to)
+
+    def get_color(self):
+        return self.color
+
+    def set_color(self,color):
+        assert color.startswith('#')
+        assert 3 < len(color) < 8
+        self.color = color
 

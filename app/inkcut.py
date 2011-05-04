@@ -31,6 +31,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import ConfigParser
+import tempfile
 
 
 # Inkcut modules
@@ -60,7 +61,7 @@ class Application(object):
         """Load initial application settings from database """
         # setup the database session
         engine = create_engine('sqlite:///%s'%os.path.join(APP_DIR,config.get('Inkcut','database_dir'),config.get('Inkcut','database_name')))
-        
+
         Session.configure(bind=engine)
         self.session = Session()
 
@@ -81,6 +82,7 @@ class Application(object):
         jobs = self.session.query(Job).filter(Job.source_filename == unicode(source_filename)).all()
         if len(jobs)==0:
             job = Job(source=source,source_filename=source_filename,selected_nodes=selected_nodes)
+            job.material = self.session.query(Material).first()
             if job.load():
                 # update the ui with job info
                 self.job = job
@@ -96,7 +98,7 @@ class Application(object):
                 msg.destroy()
                 return False
         else:
-            # open a new job or 
+            # open a new job or
             msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                 buttons=gtk.BUTTONS_CLOSE,
                 message_format='A similar job was already found, do you want to load that?')
@@ -116,11 +118,17 @@ class Application(object):
 
     def _update_preview(self):
         """ Refreshes the preview """
-        if self.job.data:
-            loader = gtk.gdk.PixbufLoader('svg')
-            loader.write(etree.tostring(self.job.data))
-            loader.close()
-            self.ui['main_window'].widgets['preview'].set_from_pixbuf(loader.get_pixbuf())
+        loader = gtk.gdk.PixbufLoader('svg')
+        data = self.job.get_preview_svg()
+        loader.write(data)
+        loader.close()
+        pixbuf = loader.get_pixbuf()
+        w = float(pixbuf.get_width())
+        h = float(pixbuf.get_height())
+        # fix for dynamic height!
+        height = 440;
+        pixbuf = pixbuf.scale_simple(int(w*height/h),height,gtk.gdk.INTERP_BILINEAR)
+        self.ui['main_window'].widgets['preview'].set_from_pixbuf(pixbuf)
 
     def _flash(self,id,msg,duration=30.0):
         """ Flash a message in the statusbar """
@@ -276,114 +284,114 @@ class MainWindow(UserInterface):
     def on_preview_refresh_activate(self,widget,data=None):
         """ Manually refresh the preview """
         self.app._update_preview()
-    
+
     def on_refresh_job_preview_activate(self,widget,data=None):
         pass
-    
+
     def on_submit_job_activate(self,widget,data=None):
         pass
-    
+
     def on_cut_clicked(self,widget,data=None):
         pass
-    
+
     def on_preview_clicked(self,widget,data=None):
         pass
-    
+
     def on_live_preview_toggled(self,widget,data=None):
         pass
-    
+
     def on_send_clicked(self,widget,data=None):
         pass
-    
+
     def on_pause_clicked(self,widget,data=None):
         pass
-    
+
     def on_invertbox_toggled(self,widget,data=None):
         pass
-        
+
     def on_material_size_changed(self,widget,data=None):
         pass
-    
+
     def on_margin_value_changed(self,widget,data=None):
         pass
-    
+
     def on_spacing_value_changed(self,widget,data=None):
         pass
-    
+
     def on_pos_value_changed(self,widget,data=None):
         pass
-    
+
     def on_copies_value_changed(self,widget,data=None):
         pass
-    
+
     def on_feeding_group_changed(self,widget,data=None):
         pass
-    
+
     def on_force_value_changed(self,widget,data=None):
         pass
-    
+
     def on_velocity_value_changed(self,widget,data=None):
         pass
-    
+
     def on_overcut_value_changed(self,widget,data=None):
         pass
-    
+
     def on_offset_value_changed(self,widget,data=None):
         pass
-    
+
     def on_smoothness_value_changed(self,widget,data=None):
         pass
-    
+
     def on_margin_value_changed(self,widget,data=None):
         pass
-    
+
     def on_margin_value_changed(self,widget,data=None):
         pass
-        
+
     def on_stack_btn_clicked(self,widget,data=None):
         pass
-        
+
     def on_reset_stack_btn_clicked(self,widget,data=None):
         pass
-        
+
     def on_weed_box_toggled(self,widget,data=None):
         pass
-        
+
     def on_weed_v_box_toggled(self,widget,data=None):
         pass
-        
+
     def on_order_changed(self,widget,data=None):
         pass
-        
+
     def on_reset_stack_btn_clicked(self,widget,data=None):
         pass
-        
+
     def on_test_connection_clicked(self,widget,data=None):
         pass
-        
+
     def on_reset_stack_btn_clicked(self,widget,data=None):
         pass
-        
+
     def on_reset_stack_btn_clicked(self,widget,data=None):
         pass
-    
-    
-    
+
+
+
     # Dialogs this window controls
     def on_device_properties_activate(self,widget,data=None):
         self.app.ui['device_dialog'].widgets['main'].run()
         self.app.ui['device_dialog'].widgets['main'].hide()
-    
+
     def on_material_properties_activate(self,widget,data=None):
         #self.app.ui['device_dialog'].widgets['main'].run()
         #self.app.ui['device_dialog'].widgets['main'].hide()
         pass
-    
+
     def on_inkcut_preferences_activate(self,widget,data=None):
         #self.app.ui['device_dialog'].widgets['main'].run()
         #self.app.ui['device_dialog'].widgets['main'].hide()
         pass
-    
+
     def open_about_dialog(self,widget,data=None):
         #self.app.ui['device_dialog'].widgets['main'].run()
         #self.app.ui['device_dialog'].widgets['main'].hide()
@@ -458,7 +466,7 @@ class DeviceDialog(UserInterface):
 if __name__ == "__main__":
     app = Application()
     #etree.parse(sys.stdin), sys.argv[1:]
-	
-	#sys.stdin.close()
+
+    #sys.stdin.close()
     app.run()
-	
+

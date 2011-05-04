@@ -28,21 +28,21 @@ def setup_app():
         # Add some stuff the the db
         log.info('Create Materials')
         material = Material(name=u'3M 180C White',
-            cost=.47,width=38.1,length=4572,
+            cost=.47,width=38.1,length=100,
             margin_top=0,margin_right=0,margin_bottom=0,margin_left=0,
             velocity=16,force=80,color=u'#FFF'
         )
         app.session.add(material)
 
         material = Material(name=u"3M 180C Black",
-            cost=.47,width=38.1,length=4572,
+            cost=.47,width=38.1,length=100,
             margin_top=0,margin_right=0,margin_bottom=0,margin_left=0,
             velocity=16,force=80,color=u'#000'
         )
         app.session.add(material)
 
         material = Material(name=u"Avery 900 Ultimate Cast Metallic Red",
-            cost=1.23,width=38.1,length=4572,
+            cost=1.23,width=38.1,length=100,
             margin_top=0,margin_right=0,margin_bottom=0,margin_left=0,
             velocity=4,force=100,color=u'#BE3934'
         )

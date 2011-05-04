@@ -27,8 +27,9 @@ from unit import unit
 # svg parsing
 from lxml import etree
 from lib.pysvg import parser
-from lib.pysvg import shapes
+from lib.pysvg import shape
 from lib.pysvg import structure
+from lib.pysvg import builders
 
 # Database model
 from sqlalchemy import Table, Column, Integer, Float, UnicodeText,DateTime, Unicode, ForeignKey, Boolean,Text
@@ -92,12 +93,12 @@ class Job(Base):
             self.requirements_id = self.requirements.id
         else:
             self.requirements_id = requirements_id
-            
+
 
         # Job status flags
         self.status = u'Unprocessed'
         self.messages = []
-        
+
         # Job properties
         self.plot_width = 0
         self.plot_length = 0
@@ -117,7 +118,7 @@ class Job(Base):
             return True
         elif self.source_filename is not None:
             try:
-                self.source = f.open(self.source_filename).read()
+                self.source = open(self.source_filename).read()
                 self.process()
                 return True
             except (IOError,etree.XMLSyntaxError):
@@ -132,14 +133,48 @@ class Job(Base):
         """
         Converts the source svg to data svg using job requirements.
         """
-        # create the base svg (simulate the material)
-        svg = structure.svg()
-        
-        # grab the paths from the source
+        """# grab the paths from the source
         src = parser.parse_string(self.source)
-        paths = src.getElementsByType(shape.path)
-        
-        self.data = svg.getXML()
+        self.data = ''
+        for path in src.getElementsByType(shape.path):
+            self.data += path.getXML()
+        """
+        self.data = self.source
+
+    def get_preview_svg(self):
+        """
+        Returns a svg preview of the job.
+        """
+        w = self.material.get_width()
+        l = self.material.get_length()
+
+        # create the base svg (simulate the material)
+        svg = structure.svg(width=unit(2,'cm')+w,height=unit(2,'cm')+l)
+
+        # add the material layer
+        layer = structure.g()
+        layer.set_id('material_layer')
+        layer.setAttribute('inkscape:label','Material Layer')
+        layer.setAttribute('inkscape:groupmode','layer')
+        material = builders.ShapeBuilder().createRect(
+                x=unit(1,'cm'),y=unit(1,'cm'),width=w,height=l,
+                fill=self.material.get_color()
+            )
+        layer.addElement(material)
+        svg.addElement(layer)
+
+        # add the data layer
+        layer = structure.g()
+        layer.set_id('data_layer')
+        layer.setAttribute('inkscape:label','Data Layer')
+        layer.setAttribute('inkscape:groupmode','layer')
+        data = parser.parse_string(self.data)
+        data.set_x(unit(1,'cm'))
+        data.set_y(unit(1,'cm'))
+        for path in data.getElementsByType(shape.path):
+            layer.addElement(path)
+        svg.addElement(layer)
+        return svg.getXML()
 
     def validate(self):
         """
