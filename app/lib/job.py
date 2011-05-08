@@ -23,13 +23,7 @@
 #       MA 02110-1301, USA.
 from datetime import datetime
 from unit import unit
-
-# svg parsing
-from lxml import etree
-from lib.pysvg import parser
-from lib.pysvg import shape
-from lib.pysvg import structure
-from lib.pysvg import builders
+from plot import Plot
 
 # Database model
 from sqlalchemy import Table, Column, Integer, Float, UnicodeText,DateTime, Unicode, ForeignKey, Boolean,Text
@@ -133,12 +127,17 @@ class Job(Base):
         """
         Converts the source svg to data svg using job requirements.
         """
-        """# grab the paths from the source
-        src = parser.parse_string(self.source)
-        self.data = ''
-        for path in src.getElementsByType(shape.path):
-            self.data += path.getXML()
-        """
+        req = self.requirements
+        plot = Plot(material)
+        plot.set_source(self.source)
+        plot.set_selected_nodes(req.plot_selected_nodes)
+        plot.set_margin(req.plot_margin_top,req.plot_margin_right,req.plot_margin_bottom,req.plot_margin_left)
+        plot.set_scale(req.scale_x*(invert_axis_x and 1 or -1),req.scale_y*(invert_axis_y and 1 or -1))
+        plot.set_copy_spacing(req.copy_spacing_x,req.copy_spacing_y)
+        plot.set_copies(req.copies)
+        plot.create()
+        
+        
         self.data = self.source
 
     def get_preview_svg(self):

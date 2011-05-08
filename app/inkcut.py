@@ -126,7 +126,7 @@ class Application(object):
         w = float(pixbuf.get_width())
         h = float(pixbuf.get_height())
         # fix for dynamic height!
-        height = 440;
+        height = 480;
         pixbuf = pixbuf.scale_simple(int(w*height/h),height,gtk.gdk.INTERP_BILINEAR)
         self.ui['main_window'].widgets['preview'].set_from_pixbuf(pixbuf)
 

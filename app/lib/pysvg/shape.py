@@ -6,7 +6,6 @@ For licensing information please refer to license.txt
 '''
 from attributes import *
 from core import BaseElement, BaseShape, PointAttrib, DimensionAttrib, PointToAttrib
-
         
 class rect(BaseShape, PointAttrib, DimensionAttrib):
     """
@@ -456,6 +455,8 @@ class path(BaseShape, ExternalAttrib, MarkerAttrib):
     
     def appendArcToPath(self,rx,ry,x,y,x_axis_rotation=0,large_arc_flag=0,sweep_flag=1 ,relative=True):
         self.__append__('a',[rx,ry,x_axis_rotation,large_arc_flag,sweep_flag,x,y], relative)
+    
+
 
 class polyline(BaseShape):
     """
