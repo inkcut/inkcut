@@ -238,7 +238,7 @@ class MainWindow(UserInterface):
     # Job actions
     def on_material_select_changed(self,combo,data=None):
         """ Update the job's material """
-        self.app.reload_job()
+        self.app.job.reload_job()
 
 
     def on_material_color_btn_color_set(self,button,data=None):
@@ -301,13 +301,13 @@ class MainWindow(UserInterface):
         pass
 
     def on_send_clicked(self,widget,data=None):
-        pass
+        self.app.job.submit()
 
     def on_pause_clicked(self,widget,data=None):
         pass
 
     def on_invertbox_toggled(self,widget,data=None):
-        pass
+        self.app.job.requirements.set_mirror(True)
 
     def on_material_size_changed(self,widget,data=None):
         pass
@@ -368,13 +368,6 @@ class MainWindow(UserInterface):
 
     def on_test_connection_clicked(self,widget,data=None):
         pass
-
-    def on_reset_stack_btn_clicked(self,widget,data=None):
-        pass
-
-    def on_reset_stack_btn_clicked(self,widget,data=None):
-        pass
-
 
 
     # Dialogs this window controls

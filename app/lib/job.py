@@ -122,6 +122,12 @@ class Job(Base):
         self.messages.append('Could not open the source file.')
         return False
 
+    def set_material():
+        pass
+
+    def set_device():
+        pass
+
     # Job processing
     def process(self):
         """
@@ -129,15 +135,15 @@ class Job(Base):
         """
         req = self.requirements
         plot = Plot(material)
-        plot.set_source(self.source)
+        plot.set_graphic(self.source)
         plot.set_selected_nodes(req.plot_selected_nodes)
         plot.set_margin(req.plot_margin_top,req.plot_margin_right,req.plot_margin_bottom,req.plot_margin_left)
         plot.set_scale(req.scale_x*(invert_axis_x and 1 or -1),req.scale_y*(invert_axis_y and 1 or -1))
         plot.set_copy_spacing(req.copy_spacing_x,req.copy_spacing_y)
         plot.set_copies(req.copies)
         plot.create()
-        
-        
+
+
         self.data = self.source
 
     def get_preview_svg(self):
@@ -210,9 +216,7 @@ class JobRequirements(Base):
     __tablename__ = 'job_requirements'
     id = Column(Integer, primary_key=True)
     copies = Column(Integer)
-    scale_x = Column(Float)
-    scale_y = Column(Float)
-    scale_lock = Column(Boolean)
+    scale = Column(Float)
     start_x = Column(Integer)
     start_y = Column(Integer)
     center_x = Column(Boolean)
@@ -237,9 +241,7 @@ class JobRequirements(Base):
     def __init__(self,
             id=None,
             copies=1,
-            scale_x=1,
-            scale_y=1,
-            scale_lock=1,
+            scale=1,
             start_x=0,
             start_y=0,
             center_x=False,
@@ -263,9 +265,7 @@ class JobRequirements(Base):
         ):
         # Job requirements
         self.copies = copies
-        self.scale_x = scale_x
-        self.scale_y = scale_y
-        self.scale_lock = scale_lock
+        self.scale = scale
         self.start_x = start_x
         self.start_y = start_y
         self.center_x = center_x
@@ -289,3 +289,64 @@ class JobRequirements(Base):
 
         # Job status flags
         self.changed = True
+
+        # Setting Requirements
+        def set_copies(self,n):
+            assert n >= 1
+            self.copies = n
+
+        def set_scale(self,r):
+            assert r > 0
+            self.scale = r
+
+        def set_start_position(self,x,y):
+            assert x > 0
+            assert y > 0
+            self.start_x = x
+            self.start_y = y
+
+        def set_auto_center(self,enable_x,enable_y):
+            assert bool enable_x
+            assert bool enable_y
+            self.center_x = enable_x
+            self.center_y = enable_y
+
+        def set_invert_axis(self,enable_x,enable_y):
+            assert bool enable_x
+            assert bool enable_y
+            self.invert_axis_x = enable_x
+            self.invert_axis_y = enable_y
+
+        def set_plot_margin(self,top,right,bottom,left):
+            assert top >= 0
+            assert right >= 0
+            assert bottom >= 0
+            assert left >= 0
+            self.plot_margin_top = top
+            self.plot_margin_right = right
+            self.plot_margin_bottom = bottom
+            self.plot_margin_left = left
+
+        def set_copy_spacing(self,x,y):
+            self.copy_spacing_x = x
+            self.copy_spacing_y = y
+
+        def set_path_smoothness(self,s):
+            assert s >= .01
+            self.path_smoothness = s
+
+        def set_path_sort_order(self,order):
+            #assert order in ['One copy at a time']
+            self.path_sort_order = order
+
+        def set_weed_plot(self,enabled,margin):
+            assert bool enabled
+            assert min([self.plot_margin_top,self.plot_margin_right,self.plot_margin_bottom,self.plot_margin_left]) > margin > 0
+            self.weed_plot = enabled
+            self.weed_plot_margin = margin
+
+        def set_weed_copy(self,enabled,margin):
+            assert bool enabled
+            assert min([self.plot_margin_top,self.plot_margin_right,self.plot_margin_bottom,self.plot_margin_left]) > margin > 0
+            self.weed_copy = enabled
+            self.weed_copy_margin = margin
