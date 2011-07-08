@@ -1,36 +1,45 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#   App: Inkcut, Plot HPGL directly from Inkscape.
+#   File: plot.py
+#   Lisence: Copyright 2011 Jairus Martin, Released under GPL lisence
+#   Author: Jairus Martin <frmdstryr@gmail.com>
+#   Date: 2 July 2011
+#   Changes:
+#   moved Graphic to a new file...
 #
-#       Inkcut, Plot HPGL directly from Inkscape.
-#       plot.py
-# ----------------------------------------------------------------------
-#   Class for creating complex plots from a simple svg graphic.
-#   A Graphic is created from a svg file.  The graphic is then added
-#   to an svg representing a plot.  The graphic is cloned cloned,
-#   spaced
-# ----------------------------------------------------------------------
-#   Copyright 2010 Jairus Martin <frmdstryr@gmail.com>
-#   Released under GPL lisence
-
-from lib.geom import inkex, cubicsuperpath, simplepath, cspsubdiv, simpletransform,bezmisc
-from lib.pysvg import parser, shape, structure, builders
+import logging
 from lxml import etree
+from graphic import Graphic
+
+
+log = logging.getLogger(__name__)
 
 class Plot:
     """
-    Makes an svg the fulfills the job requriements
+    A class representing a Plot. Includes methods for creating multiple copies
+    of a graphic and positioning them on the plot.  Has plot wide path
+    manipulation methods such as scaling, mirroring, rotating, and translating.
+    Has the ability to create weedlines. Raises exceptions if the graphic or
+    number of copies is too large for the material area.
     """
-    def __init__(self,material):
-        height = material.get_width()
-        width = material.get_length()
-
-        # create the base svg (simulate the material)
-        #svg = structure.svg(width=unit(2,'cm')+width,height=unit(2,'cm')+height)
+    def __init__(self,width,height,color='#FFFFFF'):
+        """Creates the base plot SVG and defines the plot material."""
+        self._material = {'width':height,'length':width,'color':color}
+        self.graphics = []
+        self._properties = {
+            'copies': 1,
+            'spacing': [unit(.25,'cm'),unit(.25,'cm')],
+            'padding':  [unit(1,'cm'),0,unit(1,'cm'),0],
+            'axis_mirror_x': False,
+            'axis_mirror_y': False,
+            'axis_rotation': 0,
+            'axis_scale': 1,
+        }
         svg = etree.Element(inkex.addNS('svg','svg'))
         svg.set('version','1.1')
         svg.set('height',str(unit(2,'cm')+height))
         svg.set('width',str(unit(2,'cm')+width))
-
 
         # add the data layer
         layer = etree.Element(inkex.addNS('g','svg'))
@@ -40,12 +49,16 @@ class Plot:
         svg.append(layer)
         self.svg = svg
 
-    def get_preview_svg(self,material):
+    def get_xml(self,material_length,material_width,material_color='#DDDDDD'):
+        """
+        Creates a visual representation of the svg as it would look if it were
+        plotted on the material.
+        """
         # make a new svg
         svg = etree.Element(inkex.addNS('svg','svg'))
         svg.set('version','1.1')
-        svg.set('height',str(unit(2,'cm')+height))
-        svg.set('width',str(unit(2,'cm')+width))
+        svg.set('height',str(unit(2,'cm')+material_width))
+        svg.set('width',str(unit(2,'cm')+material_length))
 
         # add the material layer
         layer = etree.Element(inkex.addNS('g','svg'))
@@ -55,9 +68,9 @@ class Plot:
         layer.set('transform','translate(%f,%f)'%(unit(1,'cm'),unit(1,'cm')))
         layer.set('x','0')
         layer.set('y','0')
-        layer.set('width',str(material.get_height()))
-        layer.set('height',str(material.get_length()))
-        style = {'fill' : str(material.get_color()),'fill-opacity': '1','stroke':'#000000'}
+        layer.set('width',str(material_width))
+        layer.set('height',str(material_length))
+        style = {'fill' : str(material_color),'fill-opacity': '1','stroke':'#000000'}
         style = simplestyle.formatStyle(style)
         layer.set('style',style)
 
@@ -68,16 +81,106 @@ class Plot:
 
         return etree.tostring(svg)
 
+    # Properties --------------------------------------------------------------
+    def _get_available_bounding_box(self):
+        """
+        Returns the plottable bounding box of the material, or corner points of
+        the area to be plotted on as a list in the format [minx,maxx,miny,maxy].
+        """
+        width, height = self._material['length'],self._material['width']
+        top, right, bottom, left = self.get_padding()
+        return [left,width-right,bottom,height-top]
+
+    def get_available_width(self):
+        """ Returns the plottable width (x-dimension) of the material. """
+        bbox = self._get_available_bounding_box()
+        return bbox[1]-bbox[0]
+
+    def get_available_height(self):
+        """ Returns the plottable height (y-dimension) of the material. """
+        bbox = self._get_available_bounding_box()
+        return bbox[3]-bbox[2]
+
+    def get_start_position(self):
+        """
+        Convience method. Returns the starting point of the plottable area
+        as a list in the form [minx,miny].
+        """
+        bbox = self._get_available_bounding_box()
+        return [bbox[0],bbox[2]]
+
+    def get_position(self):
+        """
+        Convience method. Returns the point upper left most point of the plot
+        as a list in the form [minx,miny].
+        """
+        bbox = self.get_bounding_box()
+        return [bbox[0],bbox[2]]
+
+    def get_bounding_box(self):
+        """
+        Returns the bounding box, or corner points of the plot as a list in
+        the format [minx,maxx,miny,maxy].   This should always be within the
+        available_bounding_box()!
+        """
+        bbox = [0,0,0,0]
+        if !len(self.graphics):
+            return bbox
+        else:
+            for g in self.graphics:
+                bbox = simpletransform.boxunion(g.get_bounding_box(),bbox)
+            return bbox
+
+    def get_height(self):
+        """Returns the height (y-size) of the entire plot. """
+        bbox = self.get_bounding_box()
+        return bbox[3]-bbox[2]
+
+    def get_width(self):
+        """Returns the width (x-size) of the entire plot. """
+        bbox = self.get_bounding_box()
+        return bbox[1]-bbox[0]
+
+    def get_padding(self):
+        """Returns the padding set on the outside of the plot as a list [top,right,bottom,left]."""
+        return self._properties['padding']
+
+    def get_spacing(self):
+        """Returns the spacing to be used between copies as a list [col_x,row_y]. """
+        return self._properties['spacing']
+
+    def get_axis_mirror_x(self):
+        """Returns true if the plot has been mirrored about the x-axis. """
+        return self._properties['axis_mirror_x']
+
+    def get_axis_mirror_y(self):
+        """Returns true if the plot has been mirrored about the y-axis. """
+        return self._properties['axis_mirror_y']
+
+    def get_axis_rotation(self):
+        """
+        Returns the degrees the plot has been rotated relative to the original.
+        Designed for devices that use a rotated axis relative to the SVG spec.
+        """
+        return self._properties['axis_rotation']
+
+    def get_axis_scale(self):
+        """
+        Returns the scale of the plot relative to the original.  Designed to be
+        used for a final device calibration scaling. Returns scale.
+        """
+        return self._properties['axis_scale']
+
+    # Manipulation ------------------------------------------------------------
     def set_graphic(self,svg):
-        """
-        Creates a Graphic from an input SVG string, return true if success
-        or false if error message
-        """
-        self.graphic = Graphic(svg)
+        """Sets the SVG graphic that is used in the plot. Returns Null."""
+        self.graphics.append(Graphic(svg))
 
     def set_copies(self,n):
         """
-        Makes n copies of a path, does nothing with position or path data
+        Makes n copies of a path and spaces them out on the plot. Raises a
+        ValueError exception if n copies will not fit on the material with the
+        given settings. Returns Null.
         """
         layer = self.svg.getElementByID('data_layer')
         layer._subElements = [] # bad!
@@ -87,7 +190,7 @@ class Plot:
             copy.set_id("copy-%i"%(i))
             for path in paths:
                 copy.addElement(path)
-            layer.addElement(copy)
+            layer.append(copy)
 
     def set_copy_positions(self):
         """
@@ -97,151 +200,16 @@ class Plot:
         for copy in layer.getAllElements():
             copy.setAttribute('transform','translate(%f,%f)'%(x,y))
 
+class SizeError(Exception):
+    """Exception raised when a graphic is too big for the material."""
+    pass
 
-class Graphic:
-    """
-    SVG graphic to be copied/scaled repositioned ect... from Inkcut 1.0
-    """
-    def __init__(self,svg):
-        self.data = self.to_basic_paths(self.get_paths(svg))
 
-        group = etree.Element(inkex.addNS('g','svg'))
-        group.set('id','base_graphic')
-        for path in paths:
-            group.addElement(path)
-        self.data = group
-
-        # graphic properties
-        self.bbox = self.get_bounding_box()
-        self.height = self.get_height()
-        self.width = self.get_width()
-        #self.length = self.get_path_length()
-
-    def get_paths(self,nodes):
-        # takes in a list of lxml elements
-        # returns a list of inkscape compound simplepaths (paths in paths etc...)
-        if type(nodes) != type(list):
-            nodes = list(nodes)
-        spl = []
-        for node in nodes:
-            if node.tag in [ inkex.addNS('path','svg'), 'path' ]:
-                spl.extend(simplepath.parsePath(node.get("d")))
-            elif node.tag in [ inkex.addNS('rect','svg'), 'rect' ]:
-                # TODO: Convert rect to path
-                raise AssertionError("Cannot handle '%s' objects, covert to rect's to path first."%(tag))
-            elif node.tag in [ inkex.addNS('g','svg'), 'g' ]:
-                if node.get("transform"):
-                    simpletransform.applyTransformToNode(node.get("transform"),node)
-                spl.extend(self.get_paths(list(node)))
-            else:
-                raise AssertionError("Cannot handle tag '%s'"%(tag))
-        return spl
-
-    def to_basic_paths(self,spl):
-        # break a complex path with subpaths into individual paths
-        bpl = [] # list of basic paths
-        i=-1
-        for cmd in spl:
-            if cmd[0]=='M': # start new path!
-                bpl.append([cmd])
-                i+=1
-            else:
-                bpl[i].append(cmd)
-        return bpl
-
-    # Properties --------------------------------------------------------------
-    def get_height(self):
-        bbox = self.get_bounding_box()
-        return bbox[3]-bbox[2]
-
-    def get_width(self):
-        bbox = self.get_bounding_box()
-        return bbox[1]-bbox[0]
-
-    def get_bounding_box(self):
-        # corner points of box
-        return list(simpletransform.computeBBox(self.data)) # [minx,maxx,miny,maxy]
-
-    def get_path_length(self):
-        poly = self.to_polyline()
-        i = 1
-        d = 0
-        while i < len(poly):
-            last = poly[i-1][1]
-            cur = poly[i][1]
-            d += bezmisc.pointdistance(last,cur)
-            i+=1
-        return d
-
-    # Export ------------------------------------------------------------------
-    def to_polyline(self,path_smoothness):
-        smoothness = path_smoothness
-        def curveto(p0,curve,flat):
-            poly = []
-            d = simplepath.formatPath([['M',p0],curve])
-            p = cubicsuperpath.parsePath(d)
-            cspsubdiv.cspsubdiv(p, flat)
-            for sp in p:
-                first = True
-                for csp in sp:
-                    if first:
-                        first = False
-                    else:
-                        for subpath in csp:
-                            poly.append(['L',list(subpath)])
-            return poly
-
-        poly = []
-        last = self.data[0][1][:]  # start position
-        for i in range(0,len(self.data)):
-            cmd = self.data[i][0]
-            params = self.data[i][1]
-            if cmd=='L' or cmd=='M':
-                poly.append([cmd,params])
-                last = params
-            elif cmd=='C':
-                poly.extend(curveto(last,[cmd,params],smoothness))
-                last = [params[4],params[5]]
-            elif cmd=='A':
-                poly.extend(curveto(last,[cmd,params],smoothness))
-                last = [params[5],params[6]]
-            elif cmd=='Z': #don't know
-                    #poly.append(['L',self.data[0][1][:]])
-                    last = last
-            else: #unknown?
-                raise AssertionError("Polyline only handles, (L, C, A,& Z) path cmds, given %s"%(cmd))
-        #pprint(poly)
-
-        # remove double points
-        last = poly[0][1]
-        i = 1
-        while i < len(poly)-1: # skip last
-            cur = poly[i][1]
-            if cur == last:
-                poly.pop(i)
-            i +=1
-            last = cur[:]
-
-        return poly
-
-    def set_scale(self):
-        pass
-
-    def set_mirror_x(self):
-        pass
-
-    def set_mirror_y(self):
-        pass
-
-    def set_rotation(self):
-        pass
-
-    def move_to_origin(self):
-        pass
 
 # lxml Shortcut Functions
-
 def get_element_by_id(self,etreeElement, id):
+        """Returns the first etree element with the given id"""
+        assert type(etreeElement) == etree.Element, "etreeElement must be an etree.Element!"
         path = '//*[@id="%s"]' % id
         el_list = etreeElement.xpath(path, namespaces=inkex.NSS)
         if el_list:
@@ -250,7 +218,9 @@ def get_element_by_id(self,etreeElement, id):
           return None
 
 def get_selected_nodes(self,etreeElement,id_list):
-        """Collect selected nodes"""
+        """Returns a list of nodes that have an id in the id_list."""
+        assert type(etreeElement) == etree.Element, "etreeElement must be an etree.Element!"
+        assert type(id_list) == id_list, "id_list must be a list of id's to search for"
         nodes = []
         for id in id_list:
             path = '//*[@id="%s"]' % id

@@ -306,14 +306,14 @@ class JobRequirements(Base):
             self.start_y = y
 
         def set_auto_center(self,enable_x,enable_y):
-            assert bool enable_x
-            assert bool enable_y
+            assert bool == type(enable_x)
+            assert bool == type(enable_y)
             self.center_x = enable_x
             self.center_y = enable_y
 
         def set_invert_axis(self,enable_x,enable_y):
-            assert bool enable_x
-            assert bool enable_y
+            assert bool == type(enable_x)
+            assert bool == type(enable_y)
             self.invert_axis_x = enable_x
             self.invert_axis_y = enable_y
 
@@ -340,13 +340,13 @@ class JobRequirements(Base):
             self.path_sort_order = order
 
         def set_weed_plot(self,enabled,margin):
-            assert bool enabled
+            assert bool == type(enabled)
             assert min([self.plot_margin_top,self.plot_margin_right,self.plot_margin_bottom,self.plot_margin_left]) > margin > 0
             self.weed_plot = enabled
             self.weed_plot_margin = margin
 
         def set_weed_copy(self,enabled,margin):
-            assert bool enabled
+            assert bool == type(enabled)
             assert min([self.plot_margin_top,self.plot_margin_right,self.plot_margin_bottom,self.plot_margin_left]) > margin > 0
             self.weed_copy = enabled
             self.weed_copy_margin = margin
