@@ -1,0 +1,46 @@
+Introduction
+    This is the repository for all requirements not in use cases.
+
+Functionality
+    Logging and Error Handling
+    Works with multiple units (SI, metric, English)
+
+Usability
+    Human Factors
+    It should update the preview immediately after a change.
+    Not too complex for new users but yet have advanced features for those who
+    know how to use them.
+    Can inturrupt the device in mid cut, then continue again.
+
+Reliability
+    Recoverability
+    Log the jobs at different steps to attempt to be able to recover them
+
+Performance
+    Immediate preview, quickly process data for device (less than 1 minute at most)
+
+Supportability
+    Can configure devices and materials for special needs/jobs
+
+Implementation Constraints
+    Written mainly in Python, possibly some C or C++.
+
+Purchased Components
+    None!
+
+Open Source Components
+    2dgeometry library
+    pyserial
+    cups
+    lxml
+
+Hardware Interfaces
+
+    USB - Devices
+    Serial Devices
+
+Software Interfaces
+    Works on linux and windows, possibly mac.
+    GUI for user
+    Integrates with Adobe Illustrator and Inkscape
+

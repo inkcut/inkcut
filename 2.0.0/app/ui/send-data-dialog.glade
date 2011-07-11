@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy project-wide -->
+  <object class="GtkDialog" id="dialog3">
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Inkcut send plot data</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="icon">blade.png</property>
+    <property name="type_hint">normal</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox11">
+        <property name="visible">True</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkVBox" id="vbox11">
+            <property name="visible">True</property>
+            <property name="spacing">4</property>
+            <child>
+              <object class="GtkExpander" id="expander1">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <child>
+                  <object class="GtkScrolledWindow" id="scrolledwindow3">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="hscrollbar_policy">automatic</property>
+                    <property name="vscrollbar_policy">never</property>
+                    <child>
+                      <object class="GtkViewport" id="viewport2">
+                        <property name="visible">True</property>
+                        <property name="resize_mode">queue</property>
+                        <child>
+                          <object class="GtkTextView" id="plotdata">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="label39">
+                    <property name="visible">True</property>
+                    <property name="ypad">2</property>
+                    <property name="label" translatable="yes">Show Plot Data</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHSeparator" id="hseparator7">
+                <property name="visible">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkExpander" id="expander2">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="expanded">True</property>
+                <child>
+                  <object class="GtkTextView" id="plotdetails">
+                    <property name="width_request">320</property>
+                    <property name="height_request">120</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="editable">False</property>
+                    <property name="wrap_mode">word</property>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="label43">
+                    <property name="visible">True</property>
+                    <property name="ypad">2</property>
+                    <property name="label" translatable="yes">Plot Details</property>
+                    <property name="justify">right</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area11">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="abort">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="pause">
+                <property name="label">gtk-media-pause</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="cut1">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_send_clicked"/>
+                <child>
+                  <object class="GtkHBox" id="hbox37">
+                    <property name="visible">True</property>
+                    <child>
+                      <object class="GtkImage" id="image1">
+                        <property name="visible">True</property>
+                        <property name="pixbuf">blade.png</property>
+                      </object>
+                      <packing>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label56">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Send</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="padding">4</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">abort</action-widget>
+      <action-widget response="0">pause</action-widget>
+      <action-widget response="0">cut1</action-widget>
+    </action-widgets>
+  </object>
+</interface>
