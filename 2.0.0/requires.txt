@@ -1,4 +1,0 @@
-lxml
-pygtk
-pyserial
-pysvg
