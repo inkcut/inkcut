@@ -178,3 +178,75 @@ class TestPlot:
         graphic.set_rotation(23.21)
         graphic.set_rotation(0)
         assert  graphic.get_xml() == xml
+
+    def test_weedline(self):
+        """Check a weedline is added correctly."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        pos = graphic.get_position()
+        graphic.set_weedline(True)
+        f = open("out/arrow_%s.svg"%sys._getframe().f_code.co_name,"w")
+        f.write(graphic.get_xml())
+        f.close()
+        assert  graphic.get_position() == pos
+
+    def test_weedline_2(self):
+        """Check a weedline is removed correctly."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        data = graphic._get_debug_data()
+        graphic.set_weedline(True)
+        graphic.set_weedline(False)
+        assert  graphic._get_debug_data() == data
+
+    def test_weedline_3(self):
+        """Check a weedline padding is added correctly."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        h = graphic.get_height()
+        w = graphic.get_width()
+        graphic.set_weedline_padding(100)
+        graphic.set_weedline(True)
+        f = open("out/arrow_%s.svg"%sys._getframe().f_code.co_name,"w")
+        f.write(graphic.get_xml())
+        f.close()
+        assert  graphic.get_height() == h+200
+        assert  graphic.get_width() == w+200
+
+    def test_weedline_4(self):
+        """Check a weedline padding is added correctly in reverse order."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        h = graphic.get_height()
+        w = graphic.get_width()
+        pos = graphic.get_position()
+        graphic.set_weedline(True)
+        graphic.set_weedline_padding(10)
+        assert  graphic.get_height() == h+20
+        assert  graphic.get_width() == w+20
+        assert  graphic.get_position() == pos
+
+    def test_weedline_5(self):
+        """Check a weedline padding is removed correctly."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        h = graphic.get_height()
+        w = graphic.get_width()
+        pos = graphic.get_position()
+        graphic.set_weedline_padding(10)
+        graphic.set_weedline(True)
+        graphic.set_weedline_padding(0)
+        assert  graphic.get_height() == h
+        assert  graphic.get_width() == w
+        assert  graphic.get_position() == pos
+
+    def test_adjusted_bbox(self):
+        """Check that get_bounding_box(adjusted=True) works correctly."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        bbox = graphic.get_bounding_box()
+        h = graphic.get_height()
+        w = graphic.get_width()
+        graphic.set_weedline_padding(10)
+        graphic.set_weedline(True)
+        assert  graphic.get_width(adjusted=True) == w
+        assert  graphic.get_height(adjusted=True) == h
+        log.debug(bbox)
+        log.debug(graphic.get_bounding_box(adjusted=True))
+        assert  graphic.get_bounding_box(adjusted=True) == bbox
+
+
