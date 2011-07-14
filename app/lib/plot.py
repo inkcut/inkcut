@@ -1,13 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#   App: Inkcut, Plot HPGL directly from Inkscape.
-#   File: plot.py
-#   Lisence: Copyright 2011 Jairus Martin, Released under GPL lisence
-#   Author: Jairus Martin <frmdstryr@gmail.com>
-#   Date: 2 July 2011
-#   Changes:
-#   moved Graphic to a new file...
+#       App: Inkcut
+#       File: plot.py
+#       Lisence: Copyright 2011 Jairus Martin, Released under GPL lisence
+#       Author: Jairus Martin <frmdstryr@gmail.com>
+#       Date: 2 July 2011
+#       Changes:
+#       moved Graphic to a new file...
 #
+#       This program is free software; you can redistribute it and/or modify
+#       it under the terms of the GNU General Public License as published by
+#       the Free Software Foundation; either version 2 of the License, or
+#       (at your option) any later version.
+#
+#       This program is distributed in the hope that it will be useful,
+#       but WITHOUT ANY WARRANTY; without even the implied warranty of
+#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#       GNU General Public License for more details.
+#
+#       You should have received a copy of the GNU General Public License
+#       along with this program; if not, write to the Free Software
+#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#       MA 02110-1301, USA.
+
 import logging
 from lxml import etree
 from graphic import Graphic
@@ -31,6 +46,8 @@ class Plot:
             'copies': 1,
             'spacing': [unit(.25,'cm'),unit(.25,'cm')],
             'padding':  [unit(1,'cm'),0,unit(1,'cm'),0],
+            'x': 0,
+            'y': 0,
             'axis_mirror_x': False,
             'axis_mirror_y': False,
             'axis_rotation': 0,
@@ -49,7 +66,7 @@ class Plot:
         svg.append(layer)
         self.svg = svg
 
-    def get_xml(self,material_length,material_width,material_color='#DDDDDD'):
+    def get_preview_xml(self,material_length,material_width,material_color='#DDDDDD'):
         """
         Creates a visual representation of the svg as it would look if it were
         plotted on the material.
@@ -112,10 +129,11 @@ class Plot:
     def get_position(self):
         """
         Convience method. Returns the point upper left most point of the plot
-        as a list in the form [minx,miny].
+        relative to get_start_position() as a list in the form [minx,miny].
         """
         bbox = self.get_bounding_box()
-        return [bbox[0],bbox[2]]
+        pos = self.get_start_position()
+        return [bbox[0]-pos[0],bbox[2]-pos[2]]
 
     def get_bounding_box(self):
         """
@@ -123,10 +141,10 @@ class Plot:
         the format [minx,maxx,miny,maxy].   This should always be within the
         available_bounding_box()!
         """
-        bbox = [0,0,0,0]
-        if !len(self.graphics):
-            return bbox
+        if len(self.graphics) < 1:
+            raise IndexError
         else:
+            bbox = self.graphics[0].get_bounding_box()
             for g in self.graphics:
                 bbox = simpletransform.boxunion(g.get_bounding_box(),bbox)
             return bbox
@@ -164,7 +182,8 @@ class Plot:
         """
         return self._properties['axis_rotation']
 
-    def get_axis_scale(self):
+
+    def get_axis_scale(self): # I don't recommend using this! Do final scaling in the export scripts!
         """
         Returns the scale of the plot relative to the original.  Designed to be
         used for a final device calibration scaling. Returns scale.
@@ -173,35 +192,121 @@ class Plot:
 
     # Manipulation ------------------------------------------------------------
     def set_graphic(self,svg):
-        """Sets the SVG graphic that is used in the plot. Returns Null."""
-        self.graphics.append(Graphic(svg))
+        """Sets the SVG graphic that is used in the plot. Returns None."""
+        g = Graphic(svg)
+        if g.get_height() > self.get_available_height():
+            raise SizeError
+        elif g.get_width() > self.get_available_width():
+            raise SizeError
+        self.graphics.append(g)
+
+    def set_position(self,x,y):
+        """
+        Sets where the top left corner of the plot is positioned relative to
+        get_start_position(). Disables set_align_center_x() and
+        set_align_center_y(). Returns None.
+        """
+        assert type(x) in [int,float] and type(y) in [int,float], "x and y must be an int or a float"
+        assert x >= 0 and y >= 0 , "x and y must be 0 or more."
+        if x+self.get_width() > self.get_available_width():
+            raise PositionError
+        if y+self.get_height() > self.get_available_height():
+            raise PositionError
+        pass
+
+    def set_align_center_x(self,enabled):
+        """
+        If enabled, the plot is positioned to be centered horizontally
+        in the get_available_width(). Returns None.
+        """
+        assert type(enabled) == bool, "enable must be a bool"
+        pass
+
+    def set_align_center_y(self,enabled):
+        """
+        If enabled, the plot is positioned to be centered vertically in the
+        get_available_height(). Returns None.
+        """
+        assert type(enabled) == bool, "enabled must be a bool"
+        pass
+
+    def set_padding(self,top=None,right=None,bottom=None,left=None):
+        """
+        Sets the padding or distance between the materials bounding box and the
+        plottable bounding box _get_available_bounding_box(). Similar to padding
+        in the css box structure or printing margins. Returns None.
+        """
+        pass
 
     def set_copies(self,n):
         """
         Makes n copies of a path and spaces them out on the plot. Raises a
-        ValueError exception if n copies will not fit on the material with the
-        given settings. Returns Null.
+        SizeError exception if n copies will not fit on the material with the
+        current settings. Returns None.
         """
-        layer = self.svg.getElementByID('data_layer')
-        layer._subElements = [] # bad!
-        paths = self.src
-        for i in range(0,len(paths)):
-            copy = structure.g()
-            copy.set_id("copy-%i"%(i))
-            for path in paths:
-                copy.addElement(path)
-            layer.append(copy)
+        assert type(n) == int, "n must be an integer value."
+        assert n > 0, "n must be 1 or more."
+        pass
 
-    def set_copy_positions(self):
+    def set_spacing(self,x,y):
+        """ Sets the spacing between columns (x) and rows (y). Returns None."""
+        pass
+
+    def set_plot_weedline(self,enabled):
+        """If enabled, a box is drawn around the entire plot. Returns None. """
+        assert type(enabled) == bool, "enabled must be a bool"
+        # psudocode: create a Graphic with the svg of the box then append
+        # it to the self.graphics array. use get_bounding_box() for points.
+        pass
+
+    def set_plot_weedline_padding(self,padding):
         """
-        Sets the x and y values of each copy
+        Sets the padding between the plot weedline and the plot data. Returns
+        None.
         """
-        layer = get_element_by_id(self.svg,'inkcut_plot_layer')
-        for copy in layer.getAllElements():
-            copy.setAttribute('transform','translate(%f,%f)'%(x,y))
+        assert type(padding) in [int,float], "padding must be an int or float."
+        pass
+
+    # two methods below can possibly be elimiated when pushed into graphic.py??
+    def set_graphic_weedline(self,enabled):
+        """If enabled, a box is drawn around each graphic. Returns None. """
+        assert type(enabled) == bool, "enabled must be a bool"
+        # psudocode: create method for Graphic called set_weedline()
+        # that does a similar function of set_plot_weedline() above!
+        pass
+
+    def set_graphic_weedline_padding(self,padding):
+        """
+        Sets the padding between the graphic weedline and the plot data. Returns
+        None.
+        """
+        assert type(padding) in [int,float], "padding must be an int or float."
+        pass
+
+    def set_axis_scale(self,n):
+        """Sets the scale of all the graphics in the plot. Returns None."""
+        pass
+
+    def set_axis_mirror_x(self,enabled):
+        """
+        If enabled, each graphic in the plot is mirrored about the y axis. If
+        false, the graphic will return to the original orentation. Returns None.
+        """
+        pass
+
+    def set_axis_mirror_y(self,enabled):
+        """
+        If enabled, each graphic in the plot is mirrored about the y axis. If
+        false, the graphic will return to the original orentation. Returns None.
+        """
+        pass
 
 class SizeError(Exception):
     """Exception raised when a graphic is too big for the material."""
+    pass
+
+class PositionError(Exception):
+    """Exception raised when a plot is positioned off the material."""
     pass
 
 

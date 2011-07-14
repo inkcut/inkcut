@@ -35,11 +35,15 @@ class Graphic:
         self._properties = {
             'scale': 1,
             'rotation': 0,
-            'x': self.get_position()[0],
-            'y': self.get_position()[1],
             'mirror_x': False,
             'mirror_y': False,
+            'weedline': False,
+            'weedline_padding': 0
         }
+
+    def _get_debug_data(self):
+        """Returns self.data"""
+        return self.data
 
     def get_data(self):
         """
@@ -63,22 +67,33 @@ class Graphic:
         return etree.tostring(svg)
 
     # Properties --------------------------------------------------------------
-    def get_bounding_box(self):
+    def get_bounding_box(self,adjusted=False):
         """
         Returns the bounding box, or corner points of the graphic as a list in
-        the format [minx,maxx,miny,maxy].
+        the format [minx,maxx,miny,maxy]. If adjusted is true, the bounding box
+        is adjusted to not include the weedline padding.
         """
+        had_weedline = self.get_weedline_status()
+        if adjusted:
+            self.set_weedline(False) # removes weedline if it is enabled
         path = cubicsuperpath.parsePath(simplepath.formatPath(self.data))
+        self.set_weedline(had_weedline) # adds weedline back if it was enabled
         return list(simpletransform.roughBBox(path))
 
-    def get_height(self):
-        """Returns the height (y size) of the graphic."""
-        bbox = self.get_bounding_box()
+    def get_height(self,adjusted=False):
+        """
+        Returns the height (y size) of the graphic. If adjusted is true,
+        the height is adjusted to not include the weedline padding.
+        """
+        bbox = self.get_bounding_box(adjusted)
         return bbox[3]-bbox[2]
 
-    def get_width(self):
-        """Returns the width (x size) of the graphic."""
-        bbox = self.get_bounding_box()
+    def get_width(self,adjusted=False):
+        """
+        Returns the width (x size) of the graphic. If adjusted is true,
+        the width is adjusted to not include the weedline padding.
+        """
+        bbox = self.get_bounding_box(adjusted)
         return bbox[1]-bbox[0]
 
     def get_mirror_x(self):
@@ -99,12 +114,12 @@ class Graphic:
         """Returns the scale of the graphic relative to the original."""
         return self._properties['scale']
 
-    def get_position(self):
+    def get_position(self,adjusted=False):
         """
         Convience method. Returns the upper left most point of the graphic
         relative to the origin as a list [minx,miny].
         """
-        bbox = self.get_bounding_box()
+        bbox = self.get_bounding_box(adjusted)
         return [bbox[0],bbox[2]]
 
     def get_path_length(self):
@@ -119,10 +134,18 @@ class Graphic:
             i+=1
         return d
 
+    def get_weedline_status(self):
+        """ Returns true if a weedline is drawn around the graphic."""
+        return self._properties['weedline']
+
+    def get_weedline_padding(self):
+        """ Returns the weedline padding around the graphic as a float."""
+        return self._properties['weedline_padding']
+
     # Conversion --------------------------------------------------------------
     def _to_simplepaths(self,nodes):
         """
-        Takes in a list of etree.Elements and returns a list of simplepaths.
+        Takes in a list of etree._Elements and returns a list of simplepaths.
         """
         if type(nodes) != type(list):
             nodes = list(nodes)
@@ -214,7 +237,7 @@ class Graphic:
 
     # Manipulation ------------------------------------------------------------
     def set_scale(self,scale):
-        """Scales the graphic relative to the original. Returns Null."""
+        """Scales the graphic relative to the original. Returns None."""
         assert type(scale) in [int,float], "scale must be an int or float"
         assert scale > 0, "scale must be a postive value!"
         last = self._properties['scale']
@@ -224,7 +247,7 @@ class Graphic:
     def set_mirror_x(self, enabled):
         """
         If enabled, the graphic is mirrored about the x axis. If false, the
-        graphic will return to the original orentation. Returns Null.
+        graphic will return to the original orentation. Returns None.
         """
         assert type(enabled) == bool, "enabled must be a bool"
         if enabled != self._properties['mirror_x']:
@@ -236,7 +259,7 @@ class Graphic:
     def set_mirror_y(self, enabled):
         """
         If enabled, the graphic is mirrored about the y axis. If false, the
-        graphic will return to the original orentation. Returns Null.
+        graphic will return to the original orentation. Returns None.
         """
         assert type(enabled) == bool, "enabled must be a bool"
         if enabled != self._properties['mirror_y']:
@@ -246,7 +269,7 @@ class Graphic:
             self._properties['mirror_y'] = enabled
 
     def set_rotation(self,degrees):
-        """Rotates the graphic relative to the original.  Returns Null."""
+        """Rotates the graphic relative to the original.  Returns None."""
         assert type(degrees) in [int, float], "degrees must be an int or float"
         assert -360 < degrees < 360, "degrees must be between -359-359"
         last = self._properties['rotation']
@@ -260,9 +283,43 @@ class Graphic:
     def set_position(self,x,y):
         """
         Translates the graphic to the position x,y relative to the origin.
-        Returns Null. Note: This ignores the inital position of the graphic!
+        Returns None. Note: This ignores the inital position of the graphic!
         """
         assert type(x) in [int,float], "x must be an int or float"
         assert type(y) in [int,float], "y must be an int or float"
         pos = self.get_position()
         simplepath.translatePath(self.data,x-pos[0],y-pos[1])
+
+    def set_weedline(self,enabled):
+        """ If enabled a box is drawn around the graphic. Returns None."""
+        assert type(enabled) == bool, "enabled must be a bool"
+        if enabled != self.get_weedline_status(): # a change needs made
+            x,y = self.get_position()
+            if enabled: # add it to the data
+                # bbox should not include padding since the weedline is not yet enabled
+                minx,maxx,miny,maxy = self.get_bounding_box()
+                p = self.get_weedline_padding()
+                d = "M%f,%f V%f H%f V%f Z" % (minx-p,miny-p,maxy+p,maxx+p,miny-p)
+                self.data.extend(simplepath.parsePath(d))
+            else: # remove it from the data
+                for i in range(0,5): # remove the 5 commands added
+                    self.data.pop()
+            self._properties['weedline'] = enabled
+            self.set_position(x,y)
+
+    def set_weedline_padding(self,padding):
+        """
+        Sets the padding between the weedline and graphic. If the graphic
+        originally had a weedline the padding will be added immediately,
+        otherwise it will be added the next time it is enabled. Returns None.
+        """
+        assert type(padding) in [int,float], "padding must be an int or float"
+        assert padding >= 0, "padding must be 0 or more"
+        if padding != self.get_weedline_padding():
+            had_weedline = self.get_weedline_status()
+            self.set_weedline(False)
+            self._properties['weedline_padding'] = padding
+            self.set_weedline(had_weedline)
+
+
+
