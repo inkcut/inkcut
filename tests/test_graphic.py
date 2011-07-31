@@ -1,4 +1,26 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# App: Inkcut
+# File: test_graphic.py
+# Author: Copyright 2011 Jairus Martin <frmdstryr@gmail.com>
+# Date: 12 July 2011
+#
+# License:
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
 """Test suite to test the graphic.py file"""
 import sys
 import os
@@ -81,6 +103,26 @@ class TestPlot:
         w = 333.469
         assert w-e < graphic.get_width() < w+e, "Graphic width is wrong after scaling the second time!"
 
+    def test_scale_y(self):
+        """Check that graphic is scaled properly."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        graphic.set_scale(1,2)
+        e = 1
+        w = 333.469
+        h = 170.563*2
+        assert w-e < graphic.get_width() < w+e, "Graphic width is wrong after scaling!"
+        assert h-e < graphic.get_height() < h+e, "Graphic height is wrong after scaling!"
+
+    def test_scale_y(self):
+        """Check that graphic is scaled properly."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        graphic.set_scale(3,1)
+        e = 1
+        w = 333.469*3
+        h = 170.563
+        assert w-e < graphic.get_width() < w+e, "Graphic width is wrong after scaling!"
+        assert h-e < graphic.get_height() < h+e, "Graphic height is wrong after scaling!"
+
     def test_mirror_x(self):
         """Check that graphic is mirrored properly about the x axis."""
         graphic = Graphic(etree.parse("arrow.svg").getroot())
@@ -103,7 +145,7 @@ class TestPlot:
         graphic2 = Graphic(etree.parse("arrow.svg").getroot())
         graphic.set_mirror_x(True)
         graphic.set_mirror_x(False)
-        assert graphic.get_xml() == graphic2.get_xml(), "They should be the same!"
+        assert graphic.get_bounding_box() == graphic2.get_bounding_box(), "They should be the same!"
 
     def test_symmetric_x(self):
         """Check that a symmetric graphic is mirrored x properly."""
@@ -119,7 +161,7 @@ class TestPlot:
         graphic2 = Graphic(etree.parse("arrow.svg").getroot())
         graphic.set_mirror_y(True)
         graphic.set_mirror_y(False)
-        assert graphic.get_xml() == graphic2.get_xml(), "They should be the same!"
+        assert graphic.get_bounding_box() == graphic2.get_bounding_box(), "They should be the same!"
 
     def test_translate_1(self):
         """Check that graphic is translated properly."""
@@ -249,4 +291,31 @@ class TestPlot:
         log.debug(graphic.get_bounding_box(adjusted=True))
         assert  graphic.get_bounding_box(adjusted=True) == bbox
 
+    def test_changed_flag(self):
+        """Check that changed flag works correctly."""
+        graphic = Graphic(etree.parse("arrow.svg").getroot())
+        graphic.reset_changed_flag()
+        graphic.set_mirror_x(True)
+        assert graphic.get_changed_flag(), "Changed flag should be set!"
+        graphic.reset_changed_flag()
+        graphic.set_mirror_x(False)
+        assert graphic.get_changed_flag(), "Changed flag should be set!"
+        graphic.reset_changed_flag()
+        graphic.set_scale(2)
+        assert graphic.get_changed_flag(), "Changed flag should be set!"
+        graphic.reset_changed_flag()
+        graphic.set_rotation(2)
+        assert graphic.get_changed_flag(), "Changed flag should be set!"
+        graphic.reset_changed_flag()
+        graphic.set_position(2,500)
+        assert not graphic.get_changed_flag(), "Changed flag should not be set!"
+        graphic.reset_changed_flag()
+        graphic.set_weedline(True)
+        assert graphic.get_changed_flag(), "Changed flag should be set!"
 
+    def test_get_polyline(self):
+        """ Check that get polyline works correctly."""
+        graphic = Graphic(etree.parse("fat-giraffes.svg"))
+        f = open("pout.py","w")
+        f.write("poly = %s"%graphic.get_polyline())
+        f.close()

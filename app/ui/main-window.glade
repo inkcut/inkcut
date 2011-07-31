@@ -2,6 +2,22 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkAction" id="gtk_main_quit">
+    <signal name="activate" handler="gtk_main_quit" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="inkcut_preferences">
+    <signal name="activate" handler="on_inkcut_preferences_activate" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="material_properties">
+    <property name="label">Properties</property>
+    <signal name="activate" handler="on_material_properties_activate" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="refresh_job_preview">
+    <signal name="activate" handler="on_refresh_job_preview_activate" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="submit_job">
+    <signal name="activate" handler="on_submit_job_activate" swapped="no"/>
+  </object>
   <object class="GtkAboutDialog" id="aboutdialog1">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -738,26 +754,6 @@ Special thanks to nosklo!</property>
     <property name="step_increment">10</property>
     <signal name="value-changed" handler="on_material_size_changed" swapped="no"/>
   </object>
-  <object class="GtkAction" id="device_properties">
-    <property name="label">Properties</property>
-    <signal name="activate" handler="on_device_properties_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="gtk_main_quit">
-    <signal name="activate" handler="gtk_main_quit" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="inkcut_preferences">
-    <signal name="activate" handler="on_inkcut_preferences_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="material_properties">
-    <property name="label">Properties</property>
-    <signal name="activate" handler="on_material_properties_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="refresh_job_preview">
-    <signal name="activate" handler="on_refresh_job_preview_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="submit_job">
-    <signal name="activate" handler="on_submit_job_activate" swapped="no"/>
-  </object>
   <object class="GtkListStore" id="copy_rotation_ls">
     <columns>
       <!-- column-name Rotation -->
@@ -776,6 +772,10 @@ Special thanks to nosklo!</property>
     <property name="value">30</property>
     <property name="step_increment">1</property>
     <signal name="value-changed" handler="on_material_size_changed" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="device_properties">
+    <property name="label">Properties</property>
+    <signal name="activate" handler="on_device_properties_activate" swapped="no"/>
   </object>
   <object class="GtkDialog" id="dialog2">
     <property name="width_request">480</property>
@@ -1462,7 +1462,7 @@ Special thanks to nosklo!</property>
                                         <signal name="value-changed" handler="on_material_size_changed" swapped="no"/>
                                       </object>
                                       <packing>
-                                        <property name="expand">True</property>
+                                        <property name="expand">False</property>
                                         <property name="fill">True</property>
                                         <property name="padding">4</property>
                                         <property name="pack_type">end</property>
@@ -1521,7 +1521,7 @@ Special thanks to nosklo!</property>
                                         <property name="numeric">True</property>
                                       </object>
                                       <packing>
-                                        <property name="expand">True</property>
+                                        <property name="expand">False</property>
                                         <property name="fill">True</property>
                                         <property name="padding">4</property>
                                         <property name="pack_type">end</property>
@@ -1580,7 +1580,7 @@ Special thanks to nosklo!</property>
                                         <property name="numeric">True</property>
                                       </object>
                                       <packing>
-                                        <property name="expand">True</property>
+                                        <property name="expand">False</property>
                                         <property name="fill">True</property>
                                         <property name="padding">4</property>
                                         <property name="pack_type">end</property>
@@ -1595,6 +1595,22 @@ Special thanks to nosklo!</property>
                                   </packing>
                                 </child>
                                 <child>
+                                  <object class="GtkCheckButton" id="checkbutton2">
+                                    <property name="label" translatable="yes">Lock proportion</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">False</property>
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="active">True</property>
+                                    <property name="draw_indicator">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
                                   <object class="GtkButton" id="button2">
                                     <property name="label" translatable="yes">Reset</property>
                                     <property name="visible">True</property>
@@ -1606,7 +1622,7 @@ Special thanks to nosklo!</property>
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">True</property>
-                                    <property name="position">3</property>
+                                    <property name="position">4</property>
                                   </packing>
                                 </child>
                               </object>
@@ -1627,72 +1643,6 @@ Special thanks to nosklo!</property>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkFrame" id="frame3">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label_xalign">0</property>
-                        <child>
-                          <object class="GtkAlignment" id="alignment3">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="top_padding">2</property>
-                            <property name="bottom_padding">4</property>
-                            <property name="left_padding">4</property>
-                            <property name="right_padding">4</property>
-                            <child>
-                              <object class="GtkVBox" id="vbox2">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="spacing">4</property>
-                                <child>
-                                  <object class="GtkComboBox" id="combobox1">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="tooltip_text" translatable="yes">Set the rotation of the graphic with respect to the original state.</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">True</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkCheckButton" id="checkbutton1">
-                                    <property name="label" translatable="yes">Rotate to save material</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="tooltip_text" translatable="yes">When enabled, if rotating the graphic will save material, the graphic will automatically be rotated.</property>
-                                    <property name="use_action_appearance">False</property>
-                                    <property name="draw_indicator">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">True</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                        <child type="label">
-                          <object class="GtkLabel" id="label2">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="xpad">4</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Graphic Rotation&lt;/b&gt;</property>
-                            <property name="use_markup">True</property>
-                          </object>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">1</property>
                       </packing>
                     </child>
                     <child>
@@ -1787,6 +1737,72 @@ Special thanks to nosklo!</property>
                             <property name="can_focus">False</property>
                             <property name="xpad">4</property>
                             <property name="label" translatable="yes">&lt;b&gt;Graphic Copies&lt;/b&gt;</property>
+                            <property name="use_markup">True</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFrame" id="frame3">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label_xalign">0</property>
+                        <child>
+                          <object class="GtkAlignment" id="alignment3">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="top_padding">2</property>
+                            <property name="bottom_padding">4</property>
+                            <property name="left_padding">4</property>
+                            <property name="right_padding">4</property>
+                            <child>
+                              <object class="GtkVBox" id="vbox2">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="spacing">4</property>
+                                <child>
+                                  <object class="GtkComboBox" id="combobox1">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">Set the rotation of the graphic with respect to the original state.</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="checkbutton1">
+                                    <property name="label" translatable="yes">Rotate to save material</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">False</property>
+                                    <property name="tooltip_text" translatable="yes">When enabled, if rotating the graphic will save material, the graphic will automatically be rotated.</property>
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="draw_indicator">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="label">
+                          <object class="GtkLabel" id="label2">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="xpad">4</property>
+                            <property name="label" translatable="yes">&lt;b&gt;Graphic Rotation&lt;/b&gt;</property>
                             <property name="use_markup">True</property>
                           </object>
                         </child>
@@ -1942,7 +1958,7 @@ Special thanks to nosklo!</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="xpad">4</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Copy Spacing&lt;/b&gt;</property>
+                            <property name="label" translatable="yes">&lt;b&gt;Graphic Spacing&lt;/b&gt;</property>
                             <property name="use_markup">True</property>
                           </object>
                         </child>

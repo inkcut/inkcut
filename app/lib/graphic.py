@@ -1,24 +1,72 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#   App: Inkcut, Plot HPGL directly from Inkscape.
-#   File: graphic.py
-#   Lisence: Copyright 2011 Jairus Martin, Released under GPL lisence
-#   Author: Jairus Martin <frmdstryr@gmail.com>
-#   Date: 2 July 2011
-#   Changes: Documented everthing, added assertions...
+#
+# App: Inkcut
+# File: graphic.py
+# Author: Copyright 2011 Jairus Martin <frmdstryr@gmail.com>
+# Date: 12 July 2011
+#
+# License:
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
 import logging
 import math
 from pprint import pprint
-from lib.geom import inkex, cubicsuperpath, simplepath, cspsubdiv, simpletransform,bezmisc
+from geom import inkex, cubicsuperpath, simplepath, cspsubdiv, simpletransform,bezmisc
 from lxml import etree
 log = logging.getLogger(__name__)
+
+SVG = """
+<svg
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+    width="100%"
+    height="100%"
+    version="1.1">
+    <defs>
+        <style type="text/css">
+            <![CDATA[path {fill: none;stroke: #000000;stroke-dasharray: 9, 5;}]]>
+        </style>
+        <svg:filter id="filter1">
+            <svg:feGaussianBlur id="feGaussianBlur1" stdDeviation="8"></svg:feGaussianBlur>
+        </svg:filter>
+    </defs>
+    <metadata>
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>
+"""
 class Graphic:
     """
     An class to represent an SVG graphic.  Includes methods for scaling,
     mirroring, rotating, and translating.  Gathers properties such as height,
     width, bounding box, and current position.
     """
-    def __init__(self,svg):
+    def __init__(self,svg,plot=None):
         """
         Creates a Graphic.  Takes svg as a string as a paramter, extracts all
         paths within the svg, and joins them into one simplepath.
@@ -28,12 +76,17 @@ class Graphic:
             svg = etree.fromstring(svg)
         if type(svg) == etree._ElementTree:
             svg = svg.getroot()
-        self.data = self._to_simplepaths(svg)
+        self._data = self._to_simplepaths(svg)
+
+        # Used for automatically calling updates on the plot when a necessary change is made.
+        self._plot = plot
 
         # Set the initial properties, these will be used by the manipulation
         # functions to keep a track of to the original state reversions are needed.
         self._properties = {
-            'scale': 1,
+            'changed':True,
+            'scale_x': 1,
+            'scale_y': 1,
             'rotation': 0,
             'mirror_x': False,
             'mirror_y': False,
@@ -41,32 +94,52 @@ class Graphic:
             'weedline_padding': 0
         }
 
+    def _update(self):
+        """
+        If attached to a plot, the plot will automatically be updated when
+        this function is called. Returns true on success.
+        """
+        if self._plot:
+            try:
+                self._plot.update()
+                log.info("Plot.update() successfully triggered.")
+                self.reset_changed_flag()
+                return True
+            except AttributeError:
+                return False
+
     def _get_debug_data(self):
-        """Returns self.data"""
-        return self.data
+        """Returns self._data"""
+        return self._data
 
     def get_data(self):
         """
         Breaks all paths up into basic paths. Returns the graphic as an etree
         element wrapped in group tags.
         """
-        group = etree.Element(inkex.addNS('g','svg'))
-        group.set('id','base_graphic')
-
-        for sp in self._to_basic_paths():
-            path = etree.Element(inkex.addNS('path','svg'))
-            path.set('d',simplepath.formatPath(sp))
+        group = etree.Element('g')
+        group.set('id',u"data.%s" %id(self))
+        spl = self.get_data_array()
+        for i in range(0,len(spl)):
+            path = etree.Element('path')
+            path.set('d',simplepath.formatPath(spl[i]))
+            if self.get_weedline_status() and i==len(spl):
+                path.set('class','weedline')
             group.append(path)
         return group
 
     def get_xml(self):
         """ Returns the graphic as an xml string. """
-        svg = etree.Element(inkex.addNS('svg','svg'))
-        svg.set('version','1.1')
+        svg = etree.fromstring(SVG)
+
         svg.append(self.get_data())
-        return etree.tostring(svg)
+        return etree.tostring(svg,pretty_print=True,xml_declaration=True,encoding="UTF-8",standalone=False)
 
     # Properties --------------------------------------------------------------
+    def get_changed_flag(self):
+        """ Returns the graphic's changed flag as a bool."""
+        return self._properties['changed']
+
     def get_bounding_box(self,adjusted=False):
         """
         Returns the bounding box, or corner points of the graphic as a list in
@@ -76,7 +149,7 @@ class Graphic:
         had_weedline = self.get_weedline_status()
         if adjusted:
             self.set_weedline(False) # removes weedline if it is enabled
-        path = cubicsuperpath.parsePath(simplepath.formatPath(self.data))
+        path = cubicsuperpath.parsePath(simplepath.formatPath(self._data))
         self.set_weedline(had_weedline) # adds weedline back if it was enabled
         return list(simpletransform.roughBBox(path))
 
@@ -111,8 +184,8 @@ class Graphic:
         return self._properties['rotation']
 
     def get_scale(self):
-        """Returns the scale of the graphic relative to the original."""
-        return self._properties['scale']
+        """Returns the scale of the graphic relative to the original as a list [x,y]"""
+        return [self._properties['scale_x'],self._properties['scale_y']]
 
     def get_position(self,adjusted=False):
         """
@@ -158,20 +231,20 @@ class Graphic:
                 log.warn("Cannot handle '%s' objects, covert to rect's to path first."%(node.tag))
             elif node.tag in [ inkex.addNS('g','svg'), 'g' ]:
                 if node.get("transform"): # This doesn't work!
-                    simpletransform.applyTransformToNode(node.get("transform"),node)
+                    #simpletransform.applyTransformToPath(node.get("transform"),node)
+                    pass
                 spl.extend(self._to_simplepaths(list(node)))
             else:
                 log.warn("Cannot handle tag '%s'"%(node.tag))
         return spl
 
-    def _to_polyline(self,path_smoothness=0.02):
+    def get_polyline(self,smoothness=0.02):
         """
         Converts the graphic into a path that has only contains straight lines.
         The smoothness is the maximum distance allowed between points in a
-        curve. Returns the data as a cubic simple path.
+        curve. Returns the data as a list of paths.
         """
-        smoothness = path_smoothness
-        def curveto(p0,curve,flat):
+        def curveto(p0,curve,flat=smoothness):
             poly = []
             d = simplepath.formatPath([['M',p0],curve])
             p = cubicsuperpath.parsePath(d)
@@ -186,27 +259,23 @@ class Graphic:
                             poly.append(['L',list(subpath)])
             return poly
 
-        poly = []
-        last = self.data[0][1][:]  # start position
-        for i in range(0,len(self.data)):
-            cmd = self.data[i][0]
-            params = self.data[i][1]
-            if cmd=='L' or cmd=='M':
-                poly.append([cmd,params])
-                last = params
-            elif cmd=='C':
-                poly.extend(curveto(last,[cmd,params],smoothness))
-                last = [params[4],params[5]]
-            elif cmd=='A':
-                poly.extend(curveto(last,[cmd,params],smoothness))
-                last = [params[5],params[6]]
-            elif cmd=='Z': #don't know
-                    #poly.append(['L',self.data[0][1][:]])
-                    last = last
-            else: #unknown?
-                raise AssertionError("Polyline only handles, (L, C, A,& Z) path cmds, given %s"%(cmd))
+        paths = []
+        for path in self.get_data_array():
+            p = []
+            for segment in path:
+                cmd, params = segment
+                if cmd in ['L','M']:
+                    p.append(segment)
+                    node = params
+                elif cmd in ['C','A']:
+                    p.extend(curveto(node,segment))
+                    node = [params[-2],params[-1]]
+                elif cmd == 'Z':
+                    segment = ['L',path[0][1]]
+                    p.append(segment)
+            paths.append(p)
 
-        # remove double points
+        """# remove double points
         last = poly[0][1]
         i = 1
         while i < len(poly)-1: # skip last
@@ -215,34 +284,44 @@ class Graphic:
                 poly.pop(i)
             i +=1
             last = cur[:]
+        """
+        return paths
 
-        return poly
-
-    def _to_basic_paths(self):
+    def get_data_array(self):
         """
         Converts a list of simplepaths that may have several moveto commands
         within each simplepath into a path that has only one moveto command per
         path.  Retuns a list of "basic" simplepaths.
         """
-        spl = self.data
-        bpl = [] # list of basic paths
+        paths = [] # list of basic paths
         i=-1
-        for cmd in spl:
-            if cmd[0]=='M': # start new path!
-                bpl.append([cmd])
+        for path in self._data:
+            if path[0]=='M': # start new path!
+                paths.append([path])
                 i+=1
             else:
-                bpl[i].append(cmd)
-        return bpl
+                paths[i].append(path)
+        return paths
 
     # Manipulation ------------------------------------------------------------
-    def set_scale(self,scale):
+    def reset_changed_flag(self):
+        """ Sets the changed flag to false. """
+        self._properties['changed'] = False
+
+    def set_scale(self,scale_x,scale_y=None):
         """Scales the graphic relative to the original. Returns None."""
-        assert type(scale) in [int,float], "scale must be an int or float"
-        assert scale > 0, "scale must be a postive value!"
-        last = self._properties['scale']
-        simplepath.scalePath(self.data,float(scale)/last,float(scale)/last)
-        self._properties['scale'] = scale
+        if scale_y is None:
+            scale_y = scale_x
+        assert type(scale_x) in [int,float], "scale_x must be an int or float"
+        assert type(scale_y) in [int,float], "scale_y must be an int or float"
+        assert scale_x > 0, "scale_x must be a postive value!"
+        assert scale_y > 0, "scale must be a postive value!"
+        last = self.get_scale()
+        simplepath.scalePath(self._data,float(scale_x)/last[0],float(scale_y)/last[1])
+        self._properties['scale_x'] = scale_x
+        self._properties['scale_y'] = scale_y
+        self._properties['changed'] = last != self.get_scale()
+        self._update()
 
     def set_mirror_x(self, enabled):
         """
@@ -252,9 +331,11 @@ class Graphic:
         assert type(enabled) == bool, "enabled must be a bool"
         if enabled != self._properties['mirror_x']:
             x,y = self.get_position()
-            simplepath.scalePath(self.data,1,-1) # flip it
+            simplepath.scalePath(self._data,1,-1) # flip it
             self.set_position(x,y)
             self._properties['mirror_x'] = enabled
+            self._properties['changed'] = True
+            self._update()
 
     def set_mirror_y(self, enabled):
         """
@@ -264,9 +345,10 @@ class Graphic:
         assert type(enabled) == bool, "enabled must be a bool"
         if enabled != self._properties['mirror_y']:
             x,y = self.get_position()
-            simplepath.scalePath(self.data,-1,1) # flip it
+            simplepath.scalePath(self._data,-1,1) # flip it
             self.set_position(x,y)
-            self._properties['mirror_y'] = enabled
+            self._properties['changed'] = True
+            self._update()
 
     def set_rotation(self,degrees):
         """Rotates the graphic relative to the original.  Returns None."""
@@ -276,9 +358,11 @@ class Graphic:
         if (degrees != last):
             x,y = self.get_position()
             radians = (degrees-last)*math.pi/180
-            simplepath.rotatePath(self.data, radians)
+            simplepath.rotatePath(self._data, radians)
             self.set_position(x,y) # put it back to the same position it was before rotating!
             self._properties['rotation'] = degrees
+            self._properties['changed'] = True
+            self._update()
 
     def set_position(self,x,y):
         """
@@ -288,7 +372,7 @@ class Graphic:
         assert type(x) in [int,float], "x must be an int or float"
         assert type(y) in [int,float], "y must be an int or float"
         pos = self.get_position()
-        simplepath.translatePath(self.data,x-pos[0],y-pos[1])
+        simplepath.translatePath(self._data,x-pos[0],y-pos[1])
 
     def set_weedline(self,enabled):
         """ If enabled a box is drawn around the graphic. Returns None."""
@@ -300,12 +384,14 @@ class Graphic:
                 minx,maxx,miny,maxy = self.get_bounding_box()
                 p = self.get_weedline_padding()
                 d = "M%f,%f V%f H%f V%f Z" % (minx-p,miny-p,maxy+p,maxx+p,miny-p)
-                self.data.extend(simplepath.parsePath(d))
+                self._data.extend(simplepath.parsePath(d))
             else: # remove it from the data
                 for i in range(0,5): # remove the 5 commands added
-                    self.data.pop()
+                    self._data.pop()
             self._properties['weedline'] = enabled
             self.set_position(x,y)
+            self._properties['changed'] = True
+            self._update()
 
     def set_weedline_padding(self,padding):
         """
@@ -320,6 +406,8 @@ class Graphic:
             self.set_weedline(False)
             self._properties['weedline_padding'] = padding
             self.set_weedline(had_weedline)
+            # updated in set_weedline
+
 
 
 
