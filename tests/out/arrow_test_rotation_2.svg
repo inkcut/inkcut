@@ -2,7 +2,9 @@
 <svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="100%" height="100%" version="1.1">
     <defs>
         <style type="text/css">
-            path {fill: none;stroke: #000000;stroke-dasharray: 9, 5;}
+            
+                path {fill: none;stroke: #000000;opacity:0.7}
+            
         </style>
         <svg:filter id="filter1">
             <svg:feGaussianBlur id="feGaussianBlur1" stdDeviation="8"/>
@@ -17,4 +19,4 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
-<g id="data.153818604"><path d="M15.089286 200.683036L57.776786 274.52679L100.49554 348.33929L143.05804 274.46429L185.65179 200.558036L100.37054 200.620536L15.089286 200.683036Z"/><path d="M77.526786 200.558036L123.24554 200.558036L123.24554 14.870536L77.526786 14.870536L77.526786 200.558036Z"/></g></svg>
+<g id="data.55124840"><path d="M15.089286 200.683036L57.776786 274.52679L100.49554 348.33929L143.05804 274.46429L185.65179 200.558036L100.37054 200.620536L15.089286 200.683036Z"/><path d="M77.526786 200.558036L123.24554 200.558036L123.24554 14.870536L77.526786 14.870536L77.526786 200.558036Z"/></g></svg>

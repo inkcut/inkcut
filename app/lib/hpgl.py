@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # App: Inkcut
 # File: hpgl.py
 # Author: Copyright 2011 Jairus Martin <frmdstryr@gmail.com>
-# Date: 28 July 2011
+# Date: 6 August 2011
 # Version: 0.1
 #
 # License:
@@ -27,9 +27,14 @@ import logging
 log = logging.getLogger(__name__)
 
 from plugin import Plugin
-from graphic import Graphic
+from graphic import Graphic,SVG
+from lxml import etree
 
-class HPGLPlugin(Plugin):
+# See http://www.w3.org/TR/SVG/coords.html#Units and
+# http://en.wikipedia.org/wiki/HPGL
+HPGL_SCALE = 1016/90.0
+
+class Export(Plugin):
     def __init__(self):
         super(Plugin,self).__init__()
         self.name = "HPGL"
@@ -38,11 +43,6 @@ class HPGLPlugin(Plugin):
 
     def run(self):
         """ Converts an SVG into HPGL. """
-        super(Plugin,self).run()
-
-        # See http://www.w3.org/TR/SVG/coords.html#Units and
-        # http://en.wikipedia.org/wiki/HPGL
-        HPGL_SCALE = 1016/90.0
 
         # Set initial HPGL commands
         hpgl = ['IN','SP1']
@@ -55,32 +55,90 @@ class HPGLPlugin(Plugin):
             hpgl.append('VS%d'%self.device['cutting_speed'][0])
 
         # Read the input SVG into a Graphic to provide easy manipulation.
-        g = Graphic(etree.parse(self.input))
+        g = Graphic(self.input)
         g.set_rotation(self.device['axis_rotation'])
         g.set_scale(self.device['axis_scale'][0]*HPGL_SCALE,self.device['axis_scale'][1]*HPGL_SCALE)
         g.set_position(self.device['axis_translate'][0],self.device['axis_translate'][1])
 
         # Create the HPGL data
         paths = g.get_polyline()
-
+        
         # Apply device specific settings
-        self.apply_cutting_overlap(paths,self.device['cutting_overlap'))
-        self.apply_cutting_blade_offset(paths,self.device['cutting_blade_offset'))
+        if self.device['cutting_overlap'][1]:
+            Plugin.apply_cutting_overlap(paths,self.device['cutting_overlap'][0])
+        if self.device['cutting_blade_offset'][1]:
+            Plugin.apply_cutting_blade_offset(paths,self.device['cutting_blade_offset'][0])
 
         data = []
         for path in paths:
             x,y = path.pop(0)[1]
             data.append('PU%i,%i'%(round(x),round(y)))
+            cmd = "PD"
             for line in path:
                 x,y = line[1]
-                data.append('PD%i,%i'%(round(x),round(y)))
+                cmd +='%i,%i,'%(round(x),round(y))
+            data.append(cmd[:-1])
 
         hpgl.extend(data)
         hpgl.extend(self.commands['send_after'])
 
         # Not friendly for large files!
-        return hpgl
+        self.output =  ";\n".join(hpgl)+";"
 
+class Import(Plugin):
+    def __init__(self):
+        super(Plugin,self).__init__()
+        self.name = "HPGL"
+        self.mode = "import"
+        self.filetypes = [".hpgl"]
+
+    def run(self):
+        """ Converts HPGL into SVG """
+        f = open(self.input)
+        hpgl = f.read().replace('\n','').strip()
+        f.close()
+
+        # Generate the path data from the HPGL data
+        pen_up = True
+        pen_up_data = "M 0,0 "
+        pen_down_data = ""
+        for cmd in hpgl.split(';'):
+            cmd,params = cmd[:2],cmd[2:]
+            if cmd in ['PU','PD','PA']:
+                if cmd == 'PU':pen_up = True                               
+                elif cmd == 'PD':pen_up = False
+                
+                # According to HPGL command definitions these commands can have repeated coordinates.
+                params = map(lambda x:float(x)/HPGL_SCALE,params.split(',')) # x,y[x,y[,...]]
+                log.debug(map(round,params))
+                
+                # Generate the path that the pen moves for this command.
+                d = 'L '
+                for i in range(0,len(params),2):
+                    d +='%i,%i '%(params[i],params[i+1])
+                if pen_up:
+                    pen_up_data += d
+                    pen_down_data += 'M %i,%i '%(params[-2],params[-1])
+                else:
+                    pen_up_data += 'M %i,%i '%(params[-2],params[-1])
+                    pen_down_data += d
+                log.debug("Data: " +d)    
+
+                
+                    
+
+        # Create the SVG using the HPGL path data
+        svg = etree.fromstring(SVG)
+        path = etree.Element('path')
+        path.set('d',pen_up_data)
+        path.set('style','fill:none; stroke: #36BFDC; stroke-dasharray: 9, 5;')
+        svg.append(path)
+
+        path = etree.Element('path')
+        path.set('d',pen_down_data)
+        svg.append(path)
+        self.output = etree.tostring(svg)
+        
 
 def parse(hgpl): # hpgl to polyline # todo, full parsing...
     if type(hpgl) == str:

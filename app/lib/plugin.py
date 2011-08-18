@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # App: Inkcut
@@ -25,6 +25,8 @@ import logging
 log = logging.getLogger(__name__)
 
 """
+8 August 2011: This documentation is outdated...
+
 1) Inkcut loads all plugins in the plugins folder into the application database.
     The plugin class name, mode, and attr's related to that mode are pickled.
         For either mode:
@@ -76,7 +78,7 @@ class Plugin(object):
         self.input = None
         self.output = None
 
-    def init_export(self,plot,device):
+    def export_init(self,plot,device):
         """
         Initializes the variables available to an export plugin.  This should
         be pushed into the Inkcut application.
@@ -90,8 +92,8 @@ class Plugin(object):
         self.plot.update(plot)
 
         self.device = {                                     # ==== Updated with value ====
-            'axis_translate':(0,0)                          # device.get_axis_translate()
-            'axis_scale':(1,1)                              # device.get_axis_scale()
+            'axis_translate':(0,0),                          # device.get_axis_translate()
+            'axis_scale':(1,1),                              # device.get_axis_scale()
             'axis_rotation':0,                              # device.get_axis_rotation()
             'cutting_overlap':(10,True),                    # device.get_cutting_overlap(),device.get_cutting_overlape_status()
             'cutting_blade_offset':(0.88582675,True),       # device.get_cutting_blade_offset(), device.get_cutting_blade_offset_status()
@@ -99,7 +101,7 @@ class Plugin(object):
             'cutting_speed':(8,False), # Value, Enabled     # device.get_cutting_speed(), device.get_cutting_speed_status()
         }
 
-        self.commands {           # ==== Updated with value ====
+        self.commands = {           # ==== Updated with value ====
             'send_before':[],     # inkcut.plugin.get_commands_before()
             'send_after':[],      # inkcut.plugin.get_commands_after()
         }
@@ -109,11 +111,38 @@ class Plugin(object):
         pass
 
     # ====================== Common Export Functions ==========================
-    def apply_cutting_overlap(self,data,overlap):
-        """Applies a cutting overlap to a Graphic.get_path_array(). Returns None."""
-        pass
-    def apply_cutting_blade_offset(self,data,offset):
-        """Applies a cutting blade offset to a Graphic.get_path_array(). Returns None."""
+    @staticmethod
+    def apply_cutting_overlap(data,overlap):
+        """
+        Applies a cutting overlap to a Graphic.get_path_array(). Returns None.
+        Note: this only supports polylines at the moment!
+        Todo: Add support for curves and arcs
+        """
+        assert type(overlap) in [int, float], "overlap must be an int or float. Got %s" % type(overlap)
+        assert overlap >= 0, "overlap cannot be a negative value. Got %s" %overlap
+        if overlap > 0:
+            for i in range(0,len(data)):
+                path = data[i]
+                if path_is_closed(path):
+                    overlap_left = overlap
+                    j=0
+                    while overlap_left > 0 and j < len(path)-1:
+                        distance = point_distance(path[j][1],path[j+1][1])
+                        if overlap_left > distance:
+                            path.append(path[j+1])
+                        else: # last point
+                            path.append(['L',list(point_at_time(path[j][1],path[j+1][1],overlap_left/distance))])
+                        overlap_left -= distance
+                        j += 1
+    @staticmethod                
+    def apply_cutting_blade_offset(data,offset):
+        """
+        Applies a cutting blade offset to a Graphic.get_path_array(). Returns None.
+        This should be applied after all cutting order sorting is applied
+        since it depends the on path order.
+        """
+        # for path in paths:
+        #  ... 
         pass
 
     # ===================== UI & Error Handling ===============================
@@ -129,4 +158,17 @@ class Plugin(object):
         """ Prompts the user for input with the given message type. """
         pass
 
+# ==================== Helpful Functions ===============================
+def path_is_closed(path):
+    """Returns true if the first and last point are equal."""
+    assert type(path) == list, "path must be a list of path segments"
+    return map(lambda x: round(x,10),path[0][1]) == map(lambda x: round(x,10),path[0][1])
 
+def point_distance((x1,y1),(x2,y2)):
+    """ Returns the distance between two points as a float. """
+    from math import sqrt
+    return sqrt((y2-y1)**2+(x2-x1)**2)
+
+def point_at_time((x1,y1),(x2,y2),t):
+    """ Returns the position at a time between a parametric line. """
+    return (x1+t*(x2-x1),y1+t*(y2-y1))

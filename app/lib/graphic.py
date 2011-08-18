@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # App: Inkcut
@@ -42,7 +42,9 @@ SVG = """
     version="1.1">
     <defs>
         <style type="text/css">
-            <![CDATA[path {fill: none;stroke: #000000;stroke-dasharray: 9, 5;}]]>
+            <![CDATA[
+                path {fill: none;stroke: #000000;opacity:0.7}
+            ]]>
         </style>
         <svg:filter id="filter1">
             <svg:feGaussianBlur id="feGaussianBlur1" stdDeviation="8"></svg:feGaussianBlur>
@@ -71,9 +73,12 @@ class Graphic:
         Creates a Graphic.  Takes svg as a string as a paramter, extracts all
         paths within the svg, and joins them into one simplepath.
         """
-        assert type(svg) in [str, etree._ElementTree, etree._Element] , "svg must be an xml string or an etree._Element or etree._ElementTree"
+        assert type(svg) in [str, etree._ElementTree, etree._Element] , "svg must be an svg file, svg string, etree._Element, or etree._ElementTree"
         if type(svg) == str:
-            svg = etree.fromstring(svg)
+            try: 
+                svg = etree.fromstring(svg)
+            except etree.XMLSyntaxError:
+                svg = etree.parse(svg)
         if type(svg) == etree._ElementTree:
             svg = svg.getroot()
         self._data = self._to_simplepaths(svg)
@@ -195,16 +200,20 @@ class Graphic:
         bbox = self.get_bounding_box(adjusted)
         return [bbox[0],bbox[2]]
 
-    def get_path_length(self):
-        """ Returns an estimate of the path length of the graphic. """
-        poly = self._to_polyline()
-        i = 1
+    def get_path_length(self,path=None):
+        """ 
+        Returns an estimate of the path length of the graphic. If
+        path is supplied, it will return the length of that path only.
+        """
+        if path:
+            assert type(path) == list, "path must be a list of path segments"
+            paths = [path]
+        else:
+            paths = self.get_polyline()
         d = 0
-        while i < len(poly):
-            last = poly[i-1][1]
-            cur = poly[i][1]
-            d += bezmisc.pointdistance(last,cur)
-            i+=1
+        for path in paths:
+            for i in range(0,len(path)-1):
+                d += bezmisc.pointdistance(path[i][1],path[i+1][1])
         return d
 
     def get_weedline_status(self):
