@@ -27,8 +27,7 @@ import os
 import logging
 
 dirname = os.path.dirname
-sys.path.append(os.path.join(os.path.abspath(dirname(dirname(__file__))),'app'))
-import inkcut
+sys.path.append(os.path.join(os.path.abspath(dirname(dirname(__file__)))))
 
 from lxml import etree
 from lib.graphic import Graphic
@@ -285,8 +284,8 @@ class TestPlot:
         w = graphic.get_width()
         graphic.set_weedline_padding(10)
         graphic.set_weedline(True)
-        assert  graphic.get_width(adjusted=True) == w
-        assert  graphic.get_height(adjusted=True) == h
+        assert  graphic.get_width(adjusted=True) == w, "%s != %s" %(graphic.get_width(adjusted=True),w)
+        assert  graphic.get_height(adjusted=True) == h, "%s != %s" %(graphic.get_height(adjusted=True),h)
         log.debug(bbox)
         log.debug(graphic.get_bounding_box(adjusted=True))
         assert  graphic.get_bounding_box(adjusted=True) == bbox

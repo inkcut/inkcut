@@ -27,8 +27,8 @@ import os
 import logging
 
 dirname = os.path.dirname
-sys.path.append(os.path.join(os.path.abspath(dirname(dirname(__file__))),'app'))
-import inkcut
+sys.path.append(os.path.join(os.path.abspath(dirname(dirname(__file__)))))
+
 
 from lxml import etree
 
@@ -275,5 +275,11 @@ class TestPlot:
         assert round(plot.get_position()[0],10) == 0, "%s != %s" % (round(plot.get_position()[0],10),0)
         assert round(plot.get_position()[1],10) == round((90*12-70-h)/2,10), "%s != %s" % (round(plot.get_position()[1],10),round((90*12-70-h)/2,10))
 
-
+    def test_set_copies(self):
+        """ Test set_copies(7) with no rotation should stack along y axis."""
+        plot = Plot(90*12*16,90*12*4)
+        plot.set_graphic(etree.tostring(etree.parse("fat-giraffes.svg")))
+        plot.set_copies(40) # two horizontal stacks and one extra
+        f = open("out/plot_%s.svg"%sys._getframe().f_code.co_name,"w")
+        f.write(plot.get_preview_xml())
 
