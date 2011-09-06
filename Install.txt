@@ -1,0 +1,9 @@
+# Install commands for deb package:
+# depends
+# python-lxml>=2.3
+# python-sqlalchemy>=0.6.8
+sudo apt-get install python-lxml    
+sudo apt-get install python-sqlalchemy 
+
+cp ext
+

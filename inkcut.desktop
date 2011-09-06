@@ -1,0 +1,21 @@
+[Desktop Entry]
+Version=2.0
+Name=Inkcut
+GenericName=Vector Cutting Tool
+X-GNOME-FullName=Inkcut Vector Cutting Tool
+Comment=A tool to generate plots from vector graphics and send them to a cutting or plotting device.
+Type=Application
+Categories=Graphics;VectorGraphics;GTK;
+MimeType=image/svg+xml;image/svg+xml-compressed;
+Exec=inkcut -o %F
+TryExec=inkcut
+Terminal=false
+StartupNotify=true
+Icon=inkcut
+X-Ayatana-Desktop-Shortcuts=Drawing
+X-Ubuntu-Gettext-Domain=inkcut
+
+[Drawing Shortcut Group]
+Name=Open Plot
+Exec=inkcut
+TargetEnvironment=Unity

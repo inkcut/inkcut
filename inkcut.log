@@ -1,11 +1,24 @@
-2011-09-03 23:38:53,555 - __main__ - INFO - App Dir: /home/jrm/Projects/inkcut
-2011-09-03 23:38:53,556 - __main__ - INFO - Config Dir: /home/jrm/Projects/inkcut/conf/app.cfg
-2011-09-03 23:38:53,556 - __main__ - INFO - Database: sqlite:////home/jrm/Projects/inkcut/data/development.db
-2011-09-03 23:38:53,929 - __main__ - DEBUG - callback: on_graphic_rotation_changed, blocked: True
-2011-09-03 23:38:53,944 - __main__ - DEBUG - callback: on_material_changed, blocked: True
-2011-09-03 23:38:53,954 - __main__ - INFO - US-Cutter-Refine-MH1351
-2011-09-03 23:38:53,954 - __main__ - INFO - MFCJ615W
-2011-09-03 23:38:53,954 - __main__ - INFO - HL2270DW
-2011-09-03 23:38:54,172 - __main__ - INFO - 
-2011-09-03 23:38:54,176 - __main__ - DEBUG - callback: on_graphic_scale_lock_toggled, blocked: True
-2011-09-03 23:39:40,041 - __main__ - DEBUG - Config written to: /home/jrm/Projects/inkcut/conf/app.cfg
+2011-09-06 08:00:42,483 - __main__ - INFO - App Dir: /home/jrm/Projects/inkcut
+2011-09-06 08:00:42,483 - __main__ - INFO - Config Dir: /home/jrm/Projects/inkcut/conf/app.cfg
+2011-09-06 08:00:42,486 - __main__ - INFO - Database: sqlite:////home/jrm/Projects/inkcut/data/development.db
+2011-09-06 08:00:42,720 - __main__ - DEBUG - callback: on_graphic_rotation_changed, blocked: True
+2011-09-06 08:00:42,732 - __main__ - DEBUG - callback: on_material_changed, blocked: True
+2011-09-06 08:00:42,736 - __main__ - INFO - US-Cutter-Refine-MH1351
+2011-09-06 08:00:42,736 - __main__ - INFO - MFCJ615W
+2011-09-06 08:00:42,736 - __main__ - INFO - HL2270DW
+2011-09-06 08:00:42,863 - __main__ - INFO - 
+2011-09-06 08:00:42,864 - __main__ - DEBUG - callback: on_graphic_scale_lock_toggled, blocked: False
+2011-09-06 08:00:42,874 - graphic - WARNING - Cannot handle tag '{http://www.w3.org/2000/svg}defs'
+2011-09-06 08:00:42,874 - graphic - WARNING - Cannot handle tag '{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}namedview'
+2011-09-06 08:00:42,874 - graphic - WARNING - Cannot handle tag '{http://www.w3.org/2000/svg}metadata'
+2011-09-06 08:00:42,955 - __main__ - INFO - Loaded fat-giraffes.svg
+2011-09-06 08:00:42,955 - __main__ - DEBUG - callback: on_plot_feed_distance_changed, blocked: False
+2011-09-06 08:00:42,957 - __main__ - INFO - Saving the plot feeding settings...
+2011-09-06 08:00:42,960 - __main__ - DEBUG - callback: on_graphic_width_changed, blocked: True
+2011-09-06 08:00:42,960 - __main__ - DEBUG - callback: on_graphic_height_changed, blocked: True
+2011-09-06 08:00:42,961 - __main__ - DEBUG - callback: on_plot_spacing_x_changed, blocked: True
+2011-09-06 08:00:42,961 - __main__ - DEBUG - callback: on_plot_spacing_y_changed, blocked: True
+2011-09-06 08:00:42,965 - __main__ - DEBUG - Preview loaded: /tmp/tmpLnFwXU.svg
+2011-09-06 08:00:44,365 - __main__ - INFO - 
+2011-09-06 08:00:45,361 - __main__ - INFO - 
+2011-09-06 08:01:22,730 - __main__ - DEBUG - Config written to: /home/jrm/Projects/inkcut/conf/app.cfg
