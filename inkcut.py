@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # App: Inkcut
@@ -21,8 +21,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
-
-import sys, os, traceback
+import argparse
+import sys, os, traceback, platform
 import logging,logging.config
 from gi.repository import Gtk, GObject,Gdk
 import ConfigParser
@@ -96,12 +96,16 @@ class Application():
         """Saves widgets with name in the list names into a group."""
         if type(names) == str:
             names = list(names)
-        if group not in self._widgets.keys():
-            self._widgets[group]={}
         for name in names:
             widget = builder.get_object(name)
-            if widget:
-                self._widgets[group][name] = widget
+            self.add_widget(widget,group,name)
+
+    def add_widget(self,widget,group,name):
+        """Saves widgets with name in the list names into a group. Doesn't require a builder."""
+        if group not in self._widgets.keys():
+            self._widgets[group]={}
+        if widget:
+            self._widgets[group][name] = widget
         
     def get_widget(self,group,name):
         """ Retrieves widget from widget group """
@@ -157,7 +161,8 @@ def callback(fn):
         if self._flags['block_callbacks']:
             return None
         else: # call by default, only block if false
-            self.get_window('inkcut').set_title("*%s - Inkcut"%self.job.name)
+            if self.job is not None:
+                self.get_window('inkcut').set_title("*%s - Inkcut"%self.job.name)
             fn(self,*args)
         """
         TODO: This needs to be moved somewhere to catch exceptions and send
@@ -192,7 +197,7 @@ class Inkcut(Application):
         self._flags = {'block_callbacks':True}
     
     # Builds the Inkcut user interface when Inkcut.run() is called
-    def run(self, data=None):
+    def run(self, filename=None):
         builder = Gtk.Builder()
         builder.add_from_file(os.path.join(APP_DIR,'ui','inkcut.ui'))
         window = builder.get_object('inkcut')
@@ -202,6 +207,8 @@ class Inkcut(Application):
         self.add_widgets(builder,'inkcut',['inkcut','devices','statusbar','preview','scale-lock-box','scale-x-label','spinner'])
         self.add_widgets(builder,'graphic-properties',['graphic-width','graphic-height','graphic-scale-x','graphic-scale-y','graphic-scale-lock','graphic-rotation','graphic-rotate-to-save','graphic-weedline-enable','graphic-weedline-padding'])
         self.add_widgets(builder,'plot-properties',['plot-width','plot-height','plot-copies','plot-weedline-enable','plot-weedline-padding','plot-col-spacing','plot-row-spacing','plot-position-x','plot-position-y','plot-feed','plot-feed-distance'])
+        self.add_widgets(builder,'material',['materials'])
+        
         
         # Connect signals and invoke any UI setup
         builder.connect_signals(self)
@@ -216,18 +223,19 @@ class Inkcut(Application):
         self.set_model_from_list(combobox,model)
         combobox.set_active(0)
 
-        model = []
-        material_active_index = 0
-        for material in self.session.query(Material).all():
-            name = material.name
-            if material.id == int(config.get('Inkcut','default_material')):
-                name += " (default)"
-                material_active_index = len(model)
-            model.append(name)
-            
-        combobox = builder.get_object('materials')
-        self.set_model_from_list(combobox,model)
-        combobox.set_active(material_active_index)
+        # Based on SQL Table: id, name, cost, width, length, margin_top, margin_right, margin_bottom, margin_left, velocity, force, color
+        active = 0
+        materials = Gtk.ListStore(int,str)
+        for m in self.session.query(Material).all():
+            materials.append([m.id,m.name])
+            if m.id == int(config.get('Inkcut','default_device')):
+                active = len(materials)
+        combobox = self.get_widget('material','materials')
+        combobox.set_model(materials)
+        cell = Gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 1)  
+        combobox.set_active(active)
 
         
         model = []
@@ -258,12 +266,15 @@ class Inkcut(Application):
         self.flash("",indicator=False)
         
         # Fix!
-        self.on_graphic_scale_lock_toggled(self.get_widget('graphic-properties','graphic-scale-lock'))
         self._flags['block_callbacks']=False
         self.add_window(window,'inkcut')
+        self.on_graphic_scale_lock_toggled(self.get_widget('graphic-properties','graphic-scale-lock'))
+        # From command line arguments
+        if filename is not None and os.path.isfile(filename):
+            self.create_job(filename)
+            
         Gtk.main()
 
-    
     # ===================================== Plot Callbacks ===============================================
     @callback
     def on_plot_feed_distance_changed(self,radio,data=None):
@@ -278,11 +289,6 @@ class Inkcut(Application):
         else:
             self.job.set_property('plot','finish_position',(0,0))
         GObject.timeout_add(1000,self.flash,"")
-        
-    @callback
-    def on_material_changed(self,combobox,data=None):
-        index = combobox.get_active()
-        #self._update_preview()
 
     @callback
     def on_plot_copies_changed(self,adjustment,data=None):
@@ -497,7 +503,7 @@ class Inkcut(Application):
         GObject.idle_add(self._update_graphic_ui)
     
     
-    # ===================================== Main Menu Callbacks ===============================================
+    # ===================================== File Menu Callbacks ===============================================
     @callback
     def on_job_review_activated(self,action,data=None):
         self.job.update_properties()
@@ -568,10 +574,7 @@ class Inkcut(Application):
         """Create a job and try to set the source. Returns bool success."""
         job = Job(**kwargs)
         # Get the default material
-        material = self.session.query(Material).filter(Material.id == int(config.get('Inkcut','default_material'))).first()
-        if material is None:
-            self.session.query(Material).first()
-        job.material = material
+        job.material = self.get_material()
         try:
             job.set_source(filename)
             self.job = job
@@ -709,13 +712,13 @@ class Inkcut(Application):
         GObject.timeout_add(1000,self.flash,"")
         return 0
 
-    def flash(self,msg,duration=10,context_id=None,indicator=False):
+    def flash(self,msg,duration=0,context_id=None,indicator=False):
         """ Flash a message in the statusbar for duration in s"""
         self.indicator(indicator)
         log.info(msg)
         if duration>0:
-            #GObject.timeout_add(duration*1000,self.flash,**kwargs)
-            pass
+            GObject.timeout_add(duration*1000,self.flash,"")
+            
         statusbar = self.get_widget('inkcut','statusbar')
         if context_id is None:
             context_id = statusbar.get_context_id(msg)
@@ -732,7 +735,7 @@ class Inkcut(Application):
             return 0
 
 
-    # ===================================== Main Window Callbacks ===============================================
+    # ===================================== Dialog Callbacks ===============================================
     def on_about_inkcut_action_activated(self,window,data=None):
         """ Display the about dialog """
         builder = Gtk.Builder()
@@ -741,7 +744,66 @@ class Inkcut(Application):
         dialog.show_all()
         dialog.run()
         dialog.destroy()
+
+
+    
+    # ===================================== Material Menu Callbacks ===============================================
+    @callback
+    def on_material_changed(self,combobox,data=None):
+        if self.job is not None:
+            self.flash("Updating the material settings...",indicator=True)
+            GObject.idle_add(self.job.set_material,self.get_material())
+            GObject.idle_add(self._update_ui)
+            
+    def on_material_add_activated(self,window,data=None):
+        """ Display the material properties dialog for a new material """
+        MaterialPropertiesDialog(app=self,action='add')
+        self.on_material_list_changed()
+
+    def on_material_edit_activated(self,window,id=None):
+        """ Display the material properties dialog for a given material """
+        m = self.session.query(Material).filter(Material.id == id).one()
+        MaterialPropertiesDialog(app=self,action='edit',material=m)
+        self.on_material_list_changed()
+
+    def on_material_properties_activated(self,window,data=None):
+        """ Display the material properties dialog for the currently selected material."""
+        MaterialPropertiesDialog(app=self,action='edit',material=self.get_material())
+        self.on_material_list_changed()
+
+    def on_material_delete_activated(self,window,id=None):
+        """ Delete a given material """
+        m = self.session.query(Material).filter(Material.id == id).one()
+        # TODO: Display are you sure confirmation dialog. if okay, continue
+        self.session.delete(m)
+        self.flash("Material: %s has been deleted.."%m.name,duration=5,indicator=True)
+        self.session.commit()
+
+    def on_material_list_activated(self,window,id=None):
+        """ Display the materials manager dialog """
+        MaterialManagerDialog(app=self)
+        self.on_material_list_changed()
+
+    def on_material_list_changed(self,widget=None,data=None):
+        """ Update the material liststore from the database """
+        combobox = self.get_widget('material','materials')
+        liststore = combobox.get_model()
+
+        # Save the current value (if any)
+        active = combobox.get_active()
+        if active >= 0:
+            acitve = liststore[active][0]
         
+        # Rebuild the model
+        materials = self.session.query(Material).all()
+        liststore.clear()
+        for m in materials:
+            liststore.append([m.id,m.name])
+            if m.id == active:
+                active = len(liststore)
+        combobox.set_active(active)
+
+    # ===================================== Common Callbacks ===============================================    
     def gtk_main_quit(self, window):
         """ Quit the application """
         Gtk.main_quit()
@@ -756,6 +818,19 @@ class Inkcut(Application):
         window.hide();
 
     # ===================Application Helper Functions ===================
+    def get_material(self):
+        """ Returns the current Material selected in the UI """
+        combobox = self.get_widget('material','materials')
+        liststore = combobox.get_model()
+        active = combobox.get_active()
+        if active >= 0:
+            return self.session.query(Material).filter(Material.id == liststore[active][0]).one()
+        else:
+            m =  self.session.query(Material).filter(Material.id == int(config.get('Inkcut','default_device'))).one()
+            if m is None:
+                m = self.session.query(Material).first()
+            return m
+            
     def unit_to(self,value):
         """ Converts the given units from user units to the current application default. """
         return UNITS[config.get('Inkcut','default_units')]*value
@@ -765,7 +840,209 @@ class Inkcut(Application):
         return value/UNITS[config.get('Inkcut','default_units')]
 
 
+class MaterialPropertiesDialog():
+        def __init__(self,app,action,material=None):
+            """
+            App should be Inkcut, this dialog needs access to the app.session and app.job.
+            If action=='add', the material argument is ignored, and a new material is added to the database on save.
+            If action=='edit', the material passed is edited.
+            """
+            self.app = app
+            builder = Gtk.Builder()
+            builder.add_from_file(os.path.join(APP_DIR,'ui','material.ui'))
+
+            self.ui = {}
+            widgets = ['name','cost','color','colorbutton','width','length','dialog1',
+                'length-sb','roll','velocity','force','use-material','speed-sb','force-sb',
+                'margin-top','margin-right','margin-bottom','margin-left','apply','ok','delete',
+                ]
+            for name in widgets:
+                self.ui[name] = builder.get_object(name)
+            # Populate the UI
+            self.ui['apply'].set_sensitive(False)
+
+            # Determine if we want to Add or Edit
+            if action == 'add':
+                material = Material()
+                self.app.session.add(material)
+                # Change the form slightly..
+                self.ui['ok'].set_label('gtk-add')
+                
+            # General Tab
+            if material.name:
+                self.ui['name'].set_text(str(material.name))
+            if material.cost:
+                self.ui['cost'].set_value(material.cost)
+            if material.color:
+                self.ui['color'].set_text(str(material.color))
+                self.ui['colorbutton'].set_color(Gdk.color_parse(material.color))
+
+            # Setup Tab
+            if material.width:
+                self.ui['width'].set_value(material.width)
+            if material.length:
+                self.ui['length'].set_value(material.length)
+            else:
+                self.ui['length-sb'].set_sensitive(False)
+                self.ui['roll'].set_active(True)
+            self.ui['margin-top'].set_value(material.margin[0])
+            self.ui['margin-right'].set_value(material.margin[1])
+            self.ui['margin-bottom'].set_value(material.margin[2])
+            self.ui['margin-left'].set_value(material.margin[3])
+
+            # Features Tab
+            if material.velocity or material.force:
+                self.ui['use-material'].set_active(True)
+                self.ui['velocity'].set_value(material.velocity)
+                self.ui['force'].set_value(material.force)
+            else:
+                self.ui['use-material'].set_active(False)
+                
+            self.material = material
+            dialog = self.ui['dialog1']
+            builder.connect_signals(self)
+            dialog.show_all()
+            if action=='add':
+                self.ui['apply'].hide()
+                self.ui['delete'].hide()
+            dialog.run() # throw away response
+            
+
+        # General Tab
+        def on_name_changed(self,widget,data=None):
+            self.material.name = widget.get_text()
+            self.ui['apply'].set_sensitive(True)
+                
+
+        def on_cost_changed(self,adjustment,data=None):
+            self.material.cost = adjustment.get_value()
+            self.ui['apply'].set_sensitive(True)    
+
+        def on_color_changed(self,widget,data=None):
+            val = widget.get_text()
+            if val[0] == '#':
+                if len(val) not in [4,7,10,13]:
+                    # not valid!
+                    return 0
+            self.material.color = val
+            self.ui['colorbutton'].set_color(Gdk.color_parse(self.material.color))
+            self.ui['apply'].set_sensitive(True)
+
+        def on_color_set(self,button):
+            c = button.get_color().to_string()
+            val = "#%s%s%s"%(c[1:3],c[5:7],c[9:11])
+            self.material.color = val.upper()
+            self.ui['color'].set_text(self.material.color)
+            self.ui['apply'].set_sensitive(True)
+
+        # Setup tab
+        def on_width_changed(self,adjustment,data=None):
+            self.material.width = adjustment.get_value()
+            self.ui['apply'].set_sensitive(True)
+                
+        def on_length_changed(self,adjustment,data=None):
+            self.material.length = adjustment.get_value()
+            self.ui['apply'].set_sensitive(True)
+        
+        def on_roll_toggled(self,checkbox):
+            if checkbox.get_active():
+                self.material.length = None
+                self.ui['length-sb'].set_sensitive(False)
+            else:
+                self.material.length = self.ui['length'].get_value()
+                self.ui['length-sb'].set_sensitive(True)
+            self.ui['apply'].set_sensitive(True)
+
+        def on_margin_changed(self,adjustment,data=None):
+            margin = [  self.ui['margin-top'].get_value(),
+                        self.ui['margin-right'].get_value(),
+                        self.ui['margin-bottom'].get_value(),
+                        self.ui['margin-left'].get_value()]
+            self.material.margin = margin
+            self.ui['apply'].set_sensitive(True)
+
+        # Features tab
+        def on_use_material_toggled(self,radio,data=None):
+            if radio.get_active():
+                self.material.velocity = self.ui['velocity'].get_value()
+                self.material.force = self.ui['force'].get_value()
+            else:
+                self.material.velocity = None
+                self.material.force = None
+            self.ui['apply'].set_sensitive(True)
+
+        def on_force_changed(self,adjustment,data=None):
+            self.material.force = adjustment.get_value()
+            self.ui['apply'].set_sensitive(True)
+
+        def on_velocity_changed(self,adjustment,data=None):
+            self.material.velocity = adjustment.get_value()
+            self.ui['apply'].set_sensitive(True)
+        
+        # Dialog buttons
+        def on_close_clicked(self,button=None,data=None):
+            # Cancels any changes not applied
+            self.app.session.rollback()
+            self.ui['dialog1'].destroy()
+
+        def validate_form(self):
+            error_msg = ''
+            if self.material.name is None or self.material.name=='':
+                error_msg +="Name: Cannot not be empty.\n"
+            if self.material.width <= 0:
+                error_msg +="Width: Must be greater than 0.\n"
+            if self.material.length is not None and self.material.length <=0:
+                error_msg +="Length: Must be greater than 0.\n"
+            if error_msg != '':
+                msg = Gtk.MessageDialog(type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.OK,
+                message_format="The following fields have invalid values")
+                msg.format_secondary_text(error_msg+"\nPlease correct the fields and try again.")
+                msg.run()
+                msg.destroy()
+                return False
+            return True
+
+        def on_apply_clicked(self,button,data=None):
+            if self.validate_form():
+                self.app.session.commit()
+                self.ui['apply'].set_sensitive(False)
+                self.app.flash("Applying changes...",indicator=True)
+                self.app.get_widget('material','materials').emit('changed')
+
+        def on_ok_clicked(self,button,data=None):
+            if button.get_label() == 'gtk-add':
+                if self.validate_form():
+                    self.app.session.commit()
+                    self.ui['dialog1'].destroy()
+            else: # Editing
+                if self.ui['apply'].get_sensitive():
+                    self.on_apply_clicked(button)
+                self.ui['dialog1'].destroy()
+
+        def on_delete_clicked(self,button):
+            msg = Gtk.MessageDialog(type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            message_format="Are you sure you want to delete?")
+            msg.format_secondary_text("This cannot be undone.")
+            response = msg.run()
+            msg.destroy()
+            if response == Gtk.ResponseType.YES:
+                self.app.on_material_delete_activated(button,id=self.material.id)
+                self.ui['dialog1'].destroy()
+        
+
 if __name__ == "__main__":
+    # Get command line args like filename and list of selected nodes
+    parser = argparse.ArgumentParser(description='A tool to generate plots from vector graphics and send them to a cutting or plotting device.')
+    parser.add_argument('-o', dest='filename',type=str,help='Absolute path of a file to open')
+    args = parser.parse_args()
+    
+    # Start the App
     app = Inkcut()
-    app.run()
+    app.run(filename=args.filename)
+    sys.exit(0)
+    
+        
+    
 

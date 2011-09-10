@@ -1,24 +1,158 @@
-2011-09-06 08:00:42,483 - __main__ - INFO - App Dir: /home/jrm/Projects/inkcut
-2011-09-06 08:00:42,483 - __main__ - INFO - Config Dir: /home/jrm/Projects/inkcut/conf/app.cfg
-2011-09-06 08:00:42,486 - __main__ - INFO - Database: sqlite:////home/jrm/Projects/inkcut/data/development.db
-2011-09-06 08:00:42,720 - __main__ - DEBUG - callback: on_graphic_rotation_changed, blocked: True
-2011-09-06 08:00:42,732 - __main__ - DEBUG - callback: on_material_changed, blocked: True
-2011-09-06 08:00:42,736 - __main__ - INFO - US-Cutter-Refine-MH1351
-2011-09-06 08:00:42,736 - __main__ - INFO - MFCJ615W
-2011-09-06 08:00:42,736 - __main__ - INFO - HL2270DW
-2011-09-06 08:00:42,863 - __main__ - INFO - 
-2011-09-06 08:00:42,864 - __main__ - DEBUG - callback: on_graphic_scale_lock_toggled, blocked: False
-2011-09-06 08:00:42,874 - graphic - WARNING - Cannot handle tag '{http://www.w3.org/2000/svg}defs'
-2011-09-06 08:00:42,874 - graphic - WARNING - Cannot handle tag '{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}namedview'
-2011-09-06 08:00:42,874 - graphic - WARNING - Cannot handle tag '{http://www.w3.org/2000/svg}metadata'
-2011-09-06 08:00:42,955 - __main__ - INFO - Loaded fat-giraffes.svg
-2011-09-06 08:00:42,955 - __main__ - DEBUG - callback: on_plot_feed_distance_changed, blocked: False
-2011-09-06 08:00:42,957 - __main__ - INFO - Saving the plot feeding settings...
-2011-09-06 08:00:42,960 - __main__ - DEBUG - callback: on_graphic_width_changed, blocked: True
-2011-09-06 08:00:42,960 - __main__ - DEBUG - callback: on_graphic_height_changed, blocked: True
-2011-09-06 08:00:42,961 - __main__ - DEBUG - callback: on_plot_spacing_x_changed, blocked: True
-2011-09-06 08:00:42,961 - __main__ - DEBUG - callback: on_plot_spacing_y_changed, blocked: True
-2011-09-06 08:00:42,965 - __main__ - DEBUG - Preview loaded: /tmp/tmpLnFwXU.svg
-2011-09-06 08:00:44,365 - __main__ - INFO - 
-2011-09-06 08:00:45,361 - __main__ - INFO - 
-2011-09-06 08:01:22,730 - __main__ - DEBUG - Config written to: /home/jrm/Projects/inkcut/conf/app.cfg
+2011-09-10 15:24:16,693 - __main__ - INFO - App Dir: /home/jrm/Projects/inkcut
+2011-09-10 15:24:16,693 - __main__ - INFO - Config Dir: /home/jrm/Projects/inkcut/conf/app.cfg
+2011-09-10 15:24:16,696 - __main__ - INFO - Database: sqlite:////home/jrm/Projects/inkcut/data/development.db
+2011-09-10 15:24:16,916 - __main__ - DEBUG - callback: on_graphic_rotation_changed, blocked: True
+2011-09-10 15:24:16,929 - __main__ - DEBUG - callback: on_material_changed, blocked: True
+2011-09-10 15:24:16,934 - __main__ - INFO - US-Cutter-Refine-MH1351
+2011-09-10 15:24:16,934 - __main__ - INFO - HL2270DW
+2011-09-10 15:24:16,934 - __main__ - INFO - Brother-MFC-J615W
+2011-09-10 15:24:16,934 - __main__ - INFO - MFCJ615W
+2011-09-10 15:24:17,058 - __main__ - INFO - 
+2011-09-10 15:24:17,059 - __main__ - DEBUG - callback: on_graphic_scale_lock_toggled, blocked: False
+2011-09-10 15:24:19,866 - __main__ - DEBUG - Set last_file_open_dir = /home/jrm/Pictures
+2011-09-10 15:24:19,868 - __main__ - INFO - Opening file: /home/jrm/Pictures/fat-giraffes.svg...
+2011-09-10 15:24:19,959 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:24:19,961 - graphic - WARNING - Cannot handle tag '{http://www.w3.org/2000/svg}defs'
+2011-09-10 15:24:19,962 - graphic - WARNING - Cannot handle tag '{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}namedview'
+2011-09-10 15:24:19,962 - graphic - WARNING - Cannot handle tag '{http://www.w3.org/2000/svg}metadata'
+2011-09-10 15:24:20,046 - __main__ - INFO - Loaded fat-giraffes.svg
+2011-09-10 15:24:20,046 - __main__ - DEBUG - callback: on_plot_feed_distance_changed, blocked: False
+2011-09-10 15:24:20,047 - __main__ - INFO - Saving the plot feeding settings...
+2011-09-10 15:24:20,056 - __main__ - DEBUG - callback: on_graphic_width_changed, blocked: True
+2011-09-10 15:24:20,056 - __main__ - DEBUG - callback: on_graphic_height_changed, blocked: True
+2011-09-10 15:24:20,057 - __main__ - DEBUG - callback: on_plot_spacing_x_changed, blocked: True
+2011-09-10 15:24:20,057 - __main__ - DEBUG - callback: on_plot_spacing_y_changed, blocked: True
+2011-09-10 15:24:20,062 - __main__ - DEBUG - Preview loaded: /tmp/tmp4SXdhI.svg
+2011-09-10 15:24:21,050 - __main__ - INFO - 
+2011-09-10 15:24:21,478 - __main__ - INFO - 
+2011-09-10 15:24:23,256 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:24:23,258 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:24:23,315 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:24:23,353 - __main__ - DEBUG - Preview loaded: /tmp/tmpYjeCRm.svg
+2011-09-10 15:24:24,980 - __main__ - INFO - 
+2011-09-10 15:24:32,863 - __main__ - INFO - Material: Delete me has been deleted..
+2011-09-10 15:24:32,991 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:24:32,994 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:24:33,000 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:24:33,000 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:24:33,086 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:24:33,164 - __main__ - DEBUG - Preview loaded: /tmp/tmpyEj_y0.svg
+2011-09-10 15:24:33,599 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:24:33,637 - __main__ - DEBUG - Preview loaded: /tmp/tmp36RLg5.svg
+2011-09-10 15:24:34,602 - __main__ - INFO - 
+2011-09-10 15:24:35,072 - __main__ - INFO - 
+2011-09-10 15:24:37,864 - __main__ - INFO - 
+2011-09-10 15:24:49,535 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:24:49,538 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:24:49,592 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:24:49,664 - __main__ - DEBUG - Preview loaded: /tmp/tmpqRSJO2.svg
+2011-09-10 15:24:51,074 - __main__ - INFO - 
+2011-09-10 15:25:53,759 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:25:53,763 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:25:53,765 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:25:53,766 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:25:53,768 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:25:53,769 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:25:53,772 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:25:53,772 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:25:53,775 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:25:53,775 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:25:53,778 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:25:53,778 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:25:53,783 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:25:53,784 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:25:53,835 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:25:53,910 - __main__ - DEBUG - Preview loaded: /tmp/tmpUPS6Wv.svg
+2011-09-10 15:25:54,348 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:25:54,386 - __main__ - DEBUG - Preview loaded: /tmp/tmpxTStzn.svg
+2011-09-10 15:25:54,824 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:25:54,862 - __main__ - DEBUG - Preview loaded: /tmp/tmprlLf12.svg
+2011-09-10 15:25:55,301 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:25:55,365 - __main__ - DEBUG - Preview loaded: /tmp/tmpuudkKl.svg
+2011-09-10 15:25:55,802 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:25:55,840 - __main__ - DEBUG - Preview loaded: /tmp/tmp2rFfGN.svg
+2011-09-10 15:25:56,277 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:25:56,315 - __main__ - DEBUG - Preview loaded: /tmp/tmp8fjgkG.svg
+2011-09-10 15:25:56,752 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:25:56,825 - __main__ - DEBUG - Preview loaded: /tmp/tmpoCix9q.svg
+2011-09-10 15:25:57,236 - __main__ - INFO - 
+2011-09-10 15:25:57,236 - __main__ - INFO - 
+2011-09-10 15:25:57,237 - __main__ - INFO - 
+2011-09-10 15:25:57,237 - __main__ - INFO - 
+2011-09-10 15:25:57,308 - __main__ - INFO - 
+2011-09-10 15:25:57,753 - __main__ - INFO - 
+2011-09-10 15:25:58,235 - __main__ - INFO - 
+2011-09-10 15:26:02,988 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:26:02,990 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:26:03,019 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:26:03,058 - __main__ - DEBUG - Preview loaded: /tmp/tmpPaPk7W.svg
+2011-09-10 15:26:04,465 - __main__ - INFO - 
+2011-09-10 15:26:05,794 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:26:05,796 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:26:05,831 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:26:05,869 - __main__ - DEBUG - Preview loaded: /tmp/tmp1RuP8l.svg
+2011-09-10 15:26:07,085 - __main__ - INFO - 
+2011-09-10 15:26:17,277 - __main__ - INFO - Material: Test Roll has been deleted..
+2011-09-10 15:26:17,390 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:26:17,393 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:26:17,398 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:26:17,398 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:26:17,483 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:26:17,559 - __main__ - DEBUG - Preview loaded: /tmp/tmp5_nSQF.svg
+2011-09-10 15:26:17,996 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:26:18,034 - __main__ - DEBUG - Preview loaded: /tmp/tmpeHbRsb.svg
+2011-09-10 15:26:18,997 - __main__ - INFO - 
+2011-09-10 15:26:19,471 - __main__ - INFO - 
+2011-09-10 15:26:22,278 - __main__ - INFO - 
+2011-09-10 15:26:24,151 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:26:24,154 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:26:24,187 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:26:24,259 - __main__ - DEBUG - Preview loaded: /tmp/tmpXhdRIa.svg
+2011-09-10 15:26:25,667 - __main__ - INFO - 
+2011-09-10 15:29:07,164 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:29:07,167 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:29:07,200 - plot - DEBUG - set_padding(20,20,20,20)
+2011-09-10 15:29:07,272 - __main__ - DEBUG - Preview loaded: /tmp/tmp8KrTxD.svg
+2011-09-10 15:29:09,111 - __main__ - INFO - 
+2011-09-10 15:29:33,225 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:29:33,228 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:29:33,233 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:29:33,234 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:29:33,280 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:29:33,354 - __main__ - DEBUG - Preview loaded: /tmp/tmpW59otn.svg
+2011-09-10 15:29:33,806 - plot - DEBUG - set_padding(20,20,20,20)
+2011-09-10 15:29:33,878 - __main__ - DEBUG - Preview loaded: /tmp/tmpkrskNU.svg
+2011-09-10 15:29:34,809 - __main__ - INFO - 
+2011-09-10 15:29:35,716 - __main__ - INFO - 
+2011-09-10 15:30:06,773 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:30:06,776 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:30:06,782 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:30:06,782 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:30:06,833 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:30:06,914 - __main__ - DEBUG - Preview loaded: /tmp/tmp91FZjA.svg
+2011-09-10 15:30:07,368 - plot - DEBUG - set_padding(20,20,20,20)
+2011-09-10 15:30:07,440 - __main__ - DEBUG - Preview loaded: /tmp/tmpr1HzRz.svg
+2011-09-10 15:30:08,370 - __main__ - INFO - 
+2011-09-10 15:30:09,276 - __main__ - INFO - 
+2011-09-10 15:30:12,061 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:30:12,065 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:30:12,114 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:30:12,156 - __main__ - DEBUG - Preview loaded: /tmp/tmp5zGrK5.svg
+2011-09-10 15:30:13,173 - __main__ - INFO - 
+2011-09-10 15:30:20,951 - __main__ - INFO - Material: Test has been deleted..
+2011-09-10 15:30:21,073 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:30:21,075 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:30:21,080 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:30:21,081 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:30:21,151 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:30:21,158 - __main__ - DEBUG - Preview loaded: /tmp/tmpe9I54S.svg
+2011-09-10 15:30:21,170 - plot - DEBUG - set_padding(0.0,0.0,20.0,0.0)
+2011-09-10 15:30:21,211 - __main__ - DEBUG - Preview loaded: /tmp/tmpEapLf4.svg
+2011-09-10 15:30:22,171 - __main__ - INFO - 
+2011-09-10 15:30:22,662 - __main__ - INFO - 
+2011-09-10 15:30:24,772 - __main__ - DEBUG - callback: on_material_changed, blocked: False
+2011-09-10 15:30:24,774 - __main__ - INFO - Updating the material settings...
+2011-09-10 15:30:24,828 - plot - DEBUG - set_padding(0,0,0,0)
+2011-09-10 15:30:24,901 - __main__ - DEBUG - Preview loaded: /tmp/tmpGC0g8i.svg
+2011-09-10 15:30:25,954 - __main__ - INFO - 
+2011-09-10 15:30:26,310 - __main__ - INFO - 

@@ -91,13 +91,13 @@ class Plot:
         plotted on the material.
         """
         svg = etree.fromstring(SVG)
-        svg.set('width',unicode(self.get_material_width(limited=self.get_rotation()==90)+100))
-        svg.set('height',unicode(self.get_material_height(limited=self.get_rotation()==0)+100))
+        svg.set('width',unicode(self.get_material_width(limited=self.get_rotation()==90)+20))
+        svg.set('height',unicode(self.get_material_height(limited=self.get_rotation()==0)+20))
         layer = etree.Element('g')
         layer.set('id','material')
         layer.set('{http://www.inkscape.org/namespaces/inkscape}label','Material')
         layer.set('{http://www.inkscape.org/namespaces/inkscape}groupmode','layer')
-        layer.set('transform','translate(%f,%f)'%(35,35))
+        layer.set('transform','translate(%f,%f)'%(10,10))
         layer.set('x','0')
         layer.set('y','0')
         layer.set('width',str(self.get_material_width(limited=self.get_rotation()==90)))

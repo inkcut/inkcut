@@ -80,8 +80,10 @@ class Job(Base):
         file. Uses input plugins to convert file to SVG. This disregards
         all previous settings, thus ui_updates should be called.
         """
-        height = self.material.width and self.material.width*UNITS[self.units] or None
-        p = Plot(width=self.material.length*UNITS[self.units],height=height,color=self.material.color)
+        height = self.material.length and self.material.length*UNITS[self.units] or None
+        p = Plot(width=self.material.width*UNITS[self.units],height=height,color=self.material.color)
+        m = self.material.margin
+        p.set_padding(top=m[0],right=m[1],bottom=m[2],left=m[3])
         if type(source) == etree._ElementTree:
             try:
                 # If certain nodes are selected, only plot them.
@@ -158,7 +160,12 @@ class Job(Base):
         return self.properties[group]
 
     def set_material(self,material):
-        pass
+        self.material = material
+        if self.plot is not None:
+            height = self.material.length and self.material.length*UNITS[self.units] or None
+            m = self.material.margin
+            self.plot.set_padding(top=m[0],right=m[1],bottom=m[2],left=m[3])
+            self.plot.set_material(width=self.material.width*UNITS[self.units],height=height,color=self.material.color)
 
     def set_plot_settings(self,settings={}):
         pass

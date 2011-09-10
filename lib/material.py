@@ -20,7 +20,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 from unit import unit
-from sqlalchemy import Table, Column, Integer, Float, Unicode
+from sqlalchemy import Table, Column, Integer, Float, String,PickleType
 from meta import Base
 
 class Material(Base):
@@ -30,21 +30,18 @@ class Material(Base):
     __tablename__ = 'materials'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Unicode)
+    name = Column(String)
     cost = Column(Float) # $
     width = Column(Float) # cm
     length = Column(Float) # cm
-    margin_top = Column(Float)
-    margin_right = Column(Float)
-    margin_bottom = Column(Float)
-    margin_left = Column(Float)
+    margin = Column(PickleType)
     velocity = Column(Integer) # cm/s
     force = Column(Integer) # g
-    color = Column(Unicode) # g
+    color = Column(String) # g
 
-    def __init__(self,id=None,name=None,cost=0,width=None,length=0,
-            margin_top=0,margin_right=0,margin_bottom=0,margin_left=0,
-            velocity=None,force=None,color=u'#FFF'
+    def __init__(self,id=None,name=None,cost=0,width=None,length=None,
+            margin=(0,0,0,0),
+            velocity=None,force=None,color='#FFF'
             ):
         """
         Create a device instance with it's properties.
@@ -54,10 +51,7 @@ class Material(Base):
         self.cost = cost
         self.width = width
         self.length = length
-        self.margin_top = margin_top
-        self.margin_right = margin_right
-        self.margin_bottom = margin_bottom
-        self.margin_left = margin_left
+        self.margin = margin
         self.velocity = velocity # usure of units
         self.force = force # grams
         self.color = color # grams

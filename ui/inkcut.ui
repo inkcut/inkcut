@@ -49,6 +49,30 @@
       </object>
       <accelerator key="p" modifiers="GDK_CONTROL_MASK"/>
     </child>
+    <child>
+      <object class="GtkAction" id="material-add">
+        <property name="stock_id">gtk-add</property>
+        <signal name="activate" handler="on_material_add_activated" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkAction" id="material-edit">
+        <property name="stock_id">gtk-edit</property>
+        <signal name="activate" handler="on_material_edit_activated" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkAction" id="material-delete">
+        <property name="stock_id">gtk-delete</property>
+        <signal name="activate" handler="on_material_delete_activated" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkAction" id="material-list">
+        <property name="stock_id">gtk-index</property>
+        <signal name="activate" handler="on_material_list_activated" swapped="no"/>
+      </object>
+    </child>
   </object>
   <object class="GtkAdjustment" id="graphic-height">
     <property name="upper">9999</property>
@@ -79,13 +103,6 @@
     <property name="upper">9999</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
-  </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="xalign">0.49000000953674316</property>
-    <property name="yalign">0.51999998092651367</property>
-    <property name="stock">gtk-index</property>
   </object>
   <object class="GtkWindow" id="inkcut">
     <property name="can_focus">False</property>
@@ -295,33 +312,7 @@
                         <property name="label">gtk-new</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="use_action_appearance">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem1">
-                        <property name="label" translatable="yes">Manage Materials</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_action_appearance">False</property>
-                        <property name="image">image1</property>
-                        <property name="use_stock">False</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkSeparatorMenuItem" id="menuitem7">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_action_appearance">False</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem9">
-                        <property name="label">gtk-select-color</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="related_action">material-add</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
@@ -335,6 +326,7 @@
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <signal name="activate" handler="on_material_properties_activated" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -401,9 +393,6 @@
         </child>
         <child>
           <object class="GtkToolbar" id="toolbar1">
-            <style>
-                <class name="primary-toolbar"/>
-            </style>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
@@ -496,6 +485,7 @@
                   <object class="GtkComboBox" id="materials">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="id_column">0</property>
                     <signal name="changed" handler="on_material_changed" object="materials" swapped="no"/>
                   </object>
                 </child>
@@ -1781,27 +1771,6 @@
                     <property name="tab_fill">False</property>
                   </packing>
                 </child>
-                <child>
-                  <object class="GtkLabel" id="label22">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">label</property>
-                  </object>
-                  <packing>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-                <child type="tab">
-                  <object class="GtkLabel" id="label3">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Advanced</property>
-                  </object>
-                  <packing>
-                    <property name="position">2</property>
-                    <property name="tab_fill">False</property>
-                  </packing>
-                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1885,18 +1854,6 @@
       </object>
     </child>
   </object>
-  <object class="GtkListStore" id="list-graphic-rotations">
-    <columns>
-      <!-- column-name Rotation -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="list-materials">
-    <columns>
-      <!-- column-name gchararray1 -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkAdjustment" id="plot-col-spacing">
     <property name="upper">9999</property>
     <property name="step_increment">1</property>
@@ -1940,8 +1897,5 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
     <signal name="value-changed" handler="on_plot_weedline_padding_changed" swapped="no"/>
-  </object>
-  <object class="GtkRecentManager" id="recentmanager1">
-    <property name="filename">/home/jrm/.local/share/recently-used.xbel</property>
   </object>
 </interface>
