@@ -1,0 +1,8 @@
+[Desktop Entry]
+_Name=Inkcut
+_Comment=Inkcut application
+Categories=GNOME;Utility;
+Exec=inkcut
+Icon=/usr/share/inkcut/media/inkcut.svg
+Terminal=false
+Type=Application

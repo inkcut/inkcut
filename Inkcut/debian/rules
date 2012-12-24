@@ -1,0 +1,8 @@
+#!/usr/bin/make -f
+DEB_PYTHON_SYSTEM := pysupport
+
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/python-distutils.mk
+# langpack.mk is relevant on Ubuntu only, not Debian; it does not matter if it's missing
+-include /usr/share/cdbs/1/rules/langpack.mk

@@ -1,0 +1,56 @@
+<settings>
+	<setting id="default">
+		<app>
+			<item id="spacing-row" val="0.25"/>
+			<item id="spacing-col" val="0.25"/>
+			<item id="posnx" val="0"/>
+			<item id="posny" val="0"/>
+			<item id="material-width" val="30.5"/>
+			<item id="material-length" val="400"/>
+			<item id="weed-box" val="false"/>
+			<item id="weed-page-box" val="false"/>
+			<item id="order-box" val="false"/>
+			<item id="overcut-box" val="true"/>
+			<item id="overcut" val="0.4"/>
+			<item id="offset-box" val="true"/>
+			<item id="offset" val="0.25"/>
+			<item id="smoothness" val="0.1"/>
+			<item id="smoothness" val="0.1"/>
+			<item id="cutter-box" val="true"/>
+			<item id="file-box" val="false"/>
+			<item id="velocity" val="4"/>
+			<item id="force" val="80"/>
+			<item id="feeding1" val="true"/>
+			<item id="feeding2" val="false"/>
+			<item id="feed" val="0"/>
+		</app>
+	</setting>
+	<setting id="last">
+		<app><item id="feed" val="1.0"/><item id="parity" val="0"/><item id="force" val="100.0"/><item id="plotdetails"/><item id="spacing-col" val="0.25"/><item id="device-length" val="300.0"/><item id="preview1"/><item id="preview2"/><item id="xonxoff" val="false"/><item id="file-box" val="false"/><item id="rtscts" val="false"/><item id="material-width" val="20.0"/><item id="stopbits" val="0"/><item id="port" val="32"/><item id="invert-box" val="true"/><item id="order_combo" val="0"/><item id="tile-col" val="1.0"/><item id="textviewlog"/><item id="pathw" val="0.0"/><item id="calibration" val="1.0"/><item id="copies" val="1.0"/><item id="material-length" val="4572.0"/><item id="posny" val="0.0"/><item id="posnx" val="0.0"/><item id="tile-row" val="1.0"/><item id="filechooserbutton1"/><item id="bytesize" val="0"/><item id="overcut" val="1.02"/><item id="pathh" val="0.0"/><item id="rotate-box"/><item id="overcut-box" val="true"/><item id="baudrate" val="2"/><item id="printer" val="0"/><item id="weed_box" val="false"/><item id="material" val="4"/><item id="cutter-box" val="true"/><item id="scale" val="1.0"/><item id="feeding1" val="false"/><item id="feeding2" val="true"/><item id="offset" val="0.25"/><item id="interface" val="1"/><item id="dsrdtr" val="false"/><item id="smoothness" val="0.1"/><item id="weed_h_box" val="false"/><item id="order_box" val="true"/><item id="inkscape_preview" val="false"/><item id="device-width" val="100.0"/><item id="offset-box" val="true"/><item id="weed_v_box" val="false"/><item id="plotdata"/><item id="velocity" val="15.0"/><item id="spacing-row" val="0.25"/><item id="margin" val="0.4"/></app></setting>
+	<setting id="saved">
+		<app>
+			<item id="spacing-row" val="0.25"/>
+			<item id="spacing-col" val="0.25"/>
+			<item id="posnx" val="0"/>
+			<item id="posny" val="0"/>
+			<item id="material-width" val="30.5"/>
+			<item id="material-length" val="400"/>
+			<item id="weed-box" val="false"/>
+			<item id="weed-page-box" val="false"/>
+			<item id="order-box" val="false"/>
+			<item id="overcut-box" val="true"/>
+			<item id="overcut" val="0.4"/>
+			<item id="offset-box" val="true"/>
+			<item id="offset" val="0.25"/>
+			<item id="smoothness" val="0.1"/>
+			<item id="smoothness" val="0.1"/>
+			<item id="cutter-box" val="true"/>
+			<item id="file-box" val="false"/>
+			<item id="velocity" val="4"/>
+			<item id="force" val="80"/>
+			<item id="feeding1" val="true"/>
+			<item id="feeding2" val="false"/>
+			<item id="feed" val="0"/>
+		</app>
+	</setting>
+</settings>

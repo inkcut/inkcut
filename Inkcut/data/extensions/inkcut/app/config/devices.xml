@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<devices>
+	<device>
+		<brand>US Cutter</brand>
+		<model width="121.92" length="0">MH1351</model>
+		<interface type="serial" baudrate="9600" />
+	</device>
+	<device>
+		<brand>Roland</brand>
+		<model width="76.2" length="0">Versacamm SP-300</model>
+		<interface type="printer" />
+	</device>
+</devices>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <_name>Device Setup...</_name>
+  <id>org.vinylmark.inkcut.devices</id>
+  <dependency type="executable" location="absolute">/media/Storage/Projects/inkcut/bin/inkcut</dependency>
+  <dependency type="executable" location="extensions">/media/Storage/Projects/inkcut/inkcut_lib/plugins/inkscape_devices.py</dependency>
+  <dependency type="executable" location="extensions">inkex.py</dependency>  
+  <effect needs-live-preview="false">
+    <object-type>all</object-type>
+    <effects-menu>
+       <submenu _name="Inkcut"/>
+    </effects-menu>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">/media/Storage/Projects/inkcut/inkcut_lib/plugins/inkscape_devices.py</command>
+  </script>
+</inkscape-extension>

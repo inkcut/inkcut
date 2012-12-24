@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="100%" height="100%" version="1.1">
+    <defs>
+        <style type="text/css">
+            
+                path {fill: none;stroke: #000000;opacity:0.7}
+            
+        </style>
+        <svg:filter id="filter1">
+            <svg:feGaussianBlur id="feGaussianBlur1" stdDeviation="8"/>
+        </svg:filter>
+    </defs>
+    <metadata>
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <dc:title/>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+<g id="data.56256416"><path d="M162.74554 14.870536L88.901786 57.558036L15.089286 100.27679L88.964286 142.83929L162.87054 185.43304L162.80804 100.15179L162.74554 14.870536Z"/><path d="M162.87054 77.308036L162.87054 123.02679L348.55804 123.02679L348.55804 77.308036L162.87054 77.308036Z"/><path d="M15.089286 14.870536L15.089286 185.43304L348.55804 185.43304L348.55804 14.870536Z"/></g></svg>

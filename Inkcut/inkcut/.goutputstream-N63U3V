@@ -1,0 +1,395 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+### BEGIN LICENSE
+# Copyright (C) 2011 Jairus Maritn - Vinylmark LLC <jrm@vinylmark.com>
+# This program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License version 3, as published 
+# by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranties of 
+# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+# PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along 
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+### END LICENSE
+from gi.repository import Gtk
+
+import json
+import logging
+logger = logging.getLogger('inkcut')
+from pprint import pprint
+
+from inkcut_lib.helpers import get_builder, get_unit_model,get_combobox_active_text,set_model_from_list,read_unit,scan
+from inkcut_lib.preferences import CONFIG_FILE # using data/preferences.json
+
+import gettext
+from gettext import gettext as _
+gettext.textdomain('inkcut')
+	
+def get_cmd_languages():
+	return ['HPGL','DMPL','GPGL','CAMM']
+	
+def callback(fn):
+    """
+    Checks if the field should be updated.
+    Catches errors and sends them to a UI message window.
+    """
+    def wrapped(self,*args):
+        
+        msg = "callback: %s, blocked: %s"%(fn.__name__,self._block_callbacks)
+        print msg
+        logging.debug(msg)
+        if self._block_callbacks:
+            return None
+        else: # call by default, only block if false
+            fn(self,*args)
+        """
+        TODO: This needs to be moved somewhere to catch exceptions and send
+        messages to the UI...
+            log.debug(traceback.format_exc())
+            msg = Gtk.MessageDialog(type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.OK,
+                message_format="Error")
+            msg.format_secondary_text("Fricking iditio")
+            msg.run()
+            msg.destroy()
+        """
+    return wrapped
+
+class DeviceDialog(Gtk.Dialog):
+    __gtype_name__ = "DeviceDialog"
+
+    def __new__(cls):
+        """Special static method that's automatically called by Python when 
+        constructing a new instance of this class.
+        
+        Returns a fully instantiated DeviceDialog object.
+        """
+        builder = get_builder('DeviceDialog')
+        new_object = builder.get_object('device_dialog')
+        new_object.finish_initializing(builder)
+        return new_object
+
+    def finish_initializing(self, builder):
+        """Called when we're finished initializing.
+
+        finish_initalizing should be called after parsing the ui definition
+        and creating a DeviceDialog object with it in order to
+        finish initializing the start of the new DeviceDialog
+        instance.
+        """
+        # Get a reference to the builder and set up the signals.
+        self.builder = builder
+        self.ui = builder.get_ui(self)
+        self.load_state()
+        self.block_all_handlers()
+        
+        # Initialize all of the unit comboboxes
+        length_units_model = get_unit_model()
+		for id in ['cmb_device_width_units','cmb_device_length_units', 'cmb_device_laser_x_units','cmb_device_laser_y_units', 'cmb_device_x_calibration_units','cmb_device_y_calibration_units','cmb_device_blade_offset_units','cmb_device_path_overcut_units']:
+			cmb = self.ui[id]
+			cmb.set_model(length_units_model)
+			cell = Gtk.CellRendererText()
+			cmb.pack_start(cell,True)
+			cmb.add_attribute(cell,'text',0)
+			cmb.set_active(4) # 'in'
+		
+		# Set the active values from the preferences
+		self.ui['device_name'].set_text(self.state['current']['device']['name'])
+		
+		v,u = read_unit(self.state['current']['device']['width'])
+		self.ui['adj_device_width'].set_value(v)
+		self.ui['cmb_device_width_units'].set_active(u)
+		
+		v,u = read_unit(self.state['current']['device']['length'])
+		self.ui['adj_device_length'].set_value(v)
+		self.ui['cmb_device_length_units'].set_active(u)
+		
+		if self.state['current']['device']['uses_roll']:
+			self.ui['label_length'].hide()
+			self.ui['sb_length'].hide()
+			self.ui['cmb_device_length_units'].hide()
+			self.ui['chk_device_uses_roll'].set_active(True)	
+		
+		v,u = read_unit(self.state['current']['device']['blade_offset'])
+		self.ui['adj_device_blade_offset'].set_value(v)
+		self.ui['cmb_device_blade_offset_units'].set_active(u)
+		
+		v,u = read_unit(self.state['current']['device']['path_overcut'])
+		self.ui['adj_device_path_overcut'].set_value(v)
+		self.ui['cmb_device_path_overcut_units'].set_active(u)
+		
+		units = ['g']
+		v,u = read_unit(self.state['current']['device']['cutting_force'],units)
+		self.ui['adj_device_force'].set_value(v)
+		cmb = self.ui['cmb_device_force_units']
+		set_model_from_list(cmb,units)
+		cmb.set_active(u)
+		
+		units = ['cm/s']
+		v,u = read_unit(self.state['current']['device']['cutting_speed'],units)
+		self.ui['adj_device_speed'].set_value(v)
+		cmb = self.ui['cmb_device_speed_units']
+		set_model_from_list(cmb,units)
+		cmb.set_active(u)
+		
+		units = ['KB','MB']
+		v,u = read_unit(self.state['current']['device']['data_packet_size'],units)
+		self.ui['adj_device_packet_size'].set_value(v)
+		cmb = self.ui['cmb_device_packet_size_units']
+		set_model_from_list(cmb,units)
+		cmb.set_active(u)
+		
+		units = ['steps/in']
+		v,u = read_unit(self.state['current']['device']['resolution'],units)
+		self.ui['adj_device_resolution'].set_value(v)
+		cmb = self.ui['cmb_device_resolution_units']
+		set_model_from_list(cmb,units)
+		cmb.set_active(u)
+		
+		
+		# Populate the rest of the comboboxes
+		cmb = self.ui['cmb_device_rotation']
+		set_model_from_list(cmb,['0 degrees','90 degrees'])
+		cmb.set_active(1 and int(self.state['current']['device']['rotation']) or 0)
+		
+		
+		ports = scan()
+        if len(ports):
+            model = Gtk.ListStore(int,str)
+            u = 0
+            for port in ports:
+                model.append(port)
+                if port[1] == self.state['current']['device']['serial_port']:
+                    u = port[0]
+            
+            cmb = self.ui['cmb_device_serial_port']
+            cmb.set_model(model)
+            cell = Gtk.CellRendererText()
+            cmb.pack_start(cell,True)
+            cmb.add_attribute(cell,'text',1)
+            cmb.set_active(u)
+        else:
+            self.ui['msg_port_box'].show()
+            """
+            overlay = Gtk.Overlay()
+            self.add(overlay)
+            label = Gtk.Label()
+            label.set_label("Test")
+            overlay.add(label)
+            overlay.add_overlay(label)
+            overlay.show_all()
+            """
+            
+            # TODO: DISPLAY OVERLAY NO COM PORTS FOUND MESSAGE IF NONE EXIST    
+        
+		# Connections Tab
+		units = ['2400','4800','9600','19200','38400','57600','115200']
+		cmb = self.ui['cmb_device_serial_baudrate']
+		set_model_from_list(cmb,units)
+		try: 
+			u = units.index(str(self.state['current']['device']['serial_baudrate']))
+		except ValueError:	
+			u = units.index(str(self.state['default']['device']['serial_baudrate']))
+		cmb.set_active(u)
+        
+        units = ['None','Odd','Even','Mark','Space']
+        cmb = self.ui['cmb_device_serial_parity']
+        set_model_from_list(cmb,units)
+        try: 
+			u = units.index(str(self.state['current']['device']['serial_parity']))
+		except ValueError:
+			u = units.index(str(self.state['default']['device']['serial_parity']))
+        cmb.set_active(u)
+        
+        units = ['1','1.5','2']
+        cmb = self.ui['cmb_device_serial_stopbits']
+        set_model_from_list(cmb,units)
+        try:
+			u = units.index(self.state['current']['device']['serial_stopbits'])
+		except ValueError:
+			u = units.index(self.state['default']['device']['serial_stopbits'])
+        cmb.set_active(u)
+		
+		units = ['8','7','6','5']
+        cmb = self.ui['cmb_device_serial_bytesize']
+        set_model_from_list(cmb,units)
+        try:
+			u = units.index(self.state['current']['device']['serial_bytesize'])
+		except ValueError:
+			u = units.index(self.state['default']['device']['serial_bytesize'])
+        cmb.set_active(u)
+
+        # Advanced tab
+        
+        units = ['Very High','High','Normal','Low','Very Low']
+        cmb = self.ui['cmb_device_curve_quality']
+        set_model_from_list(cmb,units)
+        try: 
+			u = units.index(self.state['current']['device']['curve_quality'])
+		except ValueError:
+			u = units.index(self.state['default']['device']['curve_quality'])
+        cmb.set_active(u)
+        
+        units = get_cmd_languages()
+        cmb = self.ui['cmb_device_command_language']
+        set_model_from_list(cmb,units)
+        try:
+			u = units.index(self.state['current']['device']['cmd_language'])
+		except ValueError:
+			u = units.index(self.state['default']['device']['cmd_language'])
+        cmb.set_active(u)
+        self.ui['btn_apply'].set_sensitive(False)
+        self.unblock_all_handlers()
+    # end of finish_initializing
+
+    # ===================== Callback helpers =============================
+    def block_all_handlers():
+        self._block_callbacks = True
+
+    def unblock_all_handlers():
+        self._block_callbacks = False
+
+    def set_apply_sensitivty(self):
+        pprint(self.state['saved']['device'])
+        pprint(self.state['current']['device'])
+        if self.state['saved']['device'] == self.state['current']['device']:
+            self.ui['btn_apply'].set_sensitive(False)
+        else:
+            self.ui['btn_apply'].set_sensitive(True)
+            
+        
+    # ===================== General Tab =============================
+	def on_device_name_changed(self,widget,data=None):
+        print "before %s"% ( self.state['saved']['device'] == self.state['current']['device'])
+        val = widget.get_text()
+		if len(val):
+			self.state['current']['device']['name'] = val
+            self.set_apply_sensitivty()
+
+    def on_adj_device_width_changed(self,widget,data=None):
+        val = "%s%s"%(self.ui['adj_device_width'].get_value(),get_combobox_active_text(self.ui['cmb_device_width_units']))
+        self.state['current']['device']['width'] = val
+        self.set_apply_sensitivty()
+
+    def on_adj_device_length_changed(self,widget,data=None):
+        val = "%s%s"%(self.ui['adj_device_length'].get_value(),get_combobox_active_text(self.ui['cmb_device_length_units']))
+        self.state['current']['device']['length'] = val
+        self.set_apply_sensitivty()
+
+    
+	def on_chk_device_uses_roll_toggled(self,widget,data=None):
+		""" Save the state"""
+		if widget.get_active():
+			self.ui['label_length'].hide()
+			self.ui['sb_length'].hide()
+			self.ui['cmb_device_length_units'].hide()
+		else:
+			self.ui['sb_length'].show()	
+			self.ui['label_length'].show()
+			self.ui['cmb_device_length_units'].show()
+			
+	# ===================== Dialog Buttons =============================		
+	def on_btn_apply_clicked(self,widget,data=None):
+		""" Save the state"""
+		self.save_state()
+		
+    def on_btn_ok_clicked(self, widget, data=None):
+        """The user has elected to save the changes.
+
+        Called before the dialog returns Gtk.ResponseType.OK from run().
+        """
+        self.on_btn_apply_clicked(widget,data)
+        self.destroy()
+
+    def on_btn_cancel_clicked(self, widget, data=None):
+        """The user has elected cancel changes.
+
+        Called before the dialog returns Gtk.ResponseType.CANCEL for run()
+        """
+        self.destroy()
+    
+    def on_destroy(self, widget, data=None):
+        Gtk.main_quit()
+
+    def load_state(self):
+        self.state = {
+            "default":{
+                "device":{ # Use this as a schema
+                    "name":"New Device",
+                    "width":"48in",
+                    "length":"36in",
+                    "uses_roll":True,
+                    "rotation":'0',
+                    "cutting_force":"80g",
+                    "cutting_speed":"12cm/s",
+                    "use_material_settings":True,
+                    "serial_port":"/dev/ttyUSB0",
+                    "serial_baudrate":'9600',
+                    "serial_bytesize":'8',
+                    "serial_parity":"None",
+                    "serial_stopbits":'1',
+                    "serial_xonxoff":False,
+                    "serial_rtscts":False,
+                    "serial_dsrdtr":False,
+                    "data_packet_size":"8MB",
+                    "resolution":"1016steps/in",
+                    "laser_x_offset":"0in",
+                    "laser_y_offset":"0in",
+                    "long_edge_cal":"0in",
+                    "short_edge_cal":"0in",
+                    "curve_quality":"Normal",
+                    "blade_offset":"0.25mm",
+                    "path_overcut":"5mm",
+                    "cmd_language":"HPGL",
+                    "use_cmd_before":False,
+                    "cmd_before":"",
+                    "use_cmd_after":False,
+                    "cmd_after":"",
+                }
+            },# current state, updated immediately
+            "current":{
+                "device":{}
+            },# current state, updated immediately
+            "saved":{"device":{}}, # previously saved state
+        }
+
+        # Load the previous config from the preferences
+        f = open(CONFIG_FILE)
+		preferences = json.load(f)
+		f.close()
+        try:
+			logging.info("Loaded device settings from preferences...")
+			self.state['current']['device'].update(preferences['device'])
+
+            # Do not make any changes to this!!
+			self.state['saved']['device'].update(preferences['device'])
+
+            if not self.check_data_integity(): raise KeyError
+		except KeyError,e:
+			logging.info("Loaded default device settings...\n(%s)"%e)
+			self.state['current']['device'].update(self.state['default']['device'])
+            self.state['saved']['device'].update(self.state['default']['device'])
+
+    def save_state(self):
+        self.state['saved'].update(self.state['current'])
+		f = open(CONFIG_FILE,'w+')
+		preferences = json.load(f)
+        preferences['device'].update(self.state['saved']['device'])
+        json.dump(preferences,f)
+		f.close()
+    
+	def check_data_integity(self):
+		"""Make sure our saved data state is in line with what we need"""
+		try:
+			for key in self.state['default']["device"].keys():
+				self.state['current']["device"][key]
+			return True
+		except KeyError:
+			return False
+
+if __name__ == "__main__":
+    dialog = DeviceDialog()
+    dialog.run()
+    dialog.destroy()

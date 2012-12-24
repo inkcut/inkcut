@@ -1,0 +1,22 @@
+Source: inkcut
+Section: python
+Priority: extra
+Build-Depends: cdbs (>= 0.4.43),
+ debhelper (>= 6),
+ python,
+ python-support (>= 0.6.4),
+ python-distutils-extra (>= 2.10)
+Maintainer: UNKNOWN <UNKNOWN>
+Standards-Version: 3.8.3
+XS-Python-Version: current
+
+Package: inkcut
+Architecture: all
+XB-Python-Version: ${python:Versions}
+Depends: ${misc:Depends},
+ ${python:Depends},
+ python-gobject,
+ python-desktopcouch-records,
+ yelp
+Description: UNKNOWN
+ UNKNOWN

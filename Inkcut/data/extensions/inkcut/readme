@@ -1,0 +1,37 @@
+# InkCut v1.0
+# Written by Jairus Martin, frmdstryr@gmail.com
+
+Requirements
+-------------------------------------------
+pyserial must be installed (UPDATE: this is now included in 1.0)
+visit http://pyserial.sourceforge.net/
+
+on ubuntu:
+sudo apt-get install python-serial
+
+Install
+-------------------------------------------
+
+copy the contents of this folder into
+the inkscape extensions folder
+
+on ubuntu:
+/home/username/.config/inkscape/extensions
+
+restart inskcape
+look for the extension under extensions-> cutter / plotter - > InkCut
+
+Enjoy! 
+
+Changelog
+-------------------------------------------
+completely redesigned!, a few bugs exists and will be worked out in newer versions
+
+
+
+# Todo in v1
+# box around copies does not work
+# groups are not handeled
+# transformations are not handled
+# rotate axis 90 off has not been tested
+

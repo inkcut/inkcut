@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<materials>
+	<material name="12 in by 50 yd roll" w="30.48" l="4572" />
+	<material name="15 in by 50 yd roll" w="38.1" l="4572" />
+	<material name="24 in by 50 yd roll" w="60.96" l="4572" />
+	<material name="30 in by 50 yd roll" w="76.2" l="4572" />
+	<material name="48 in by 50 yd roll" w="121.92" l="4572" />
+	<material name="12 in by 10 yd roll" w="30.48" l="914.4" />
+	<material name="15 in by 10 yd roll" w="38.1" l="914.4" />
+	<material name="24 in by 10 yd roll" w="60.96" l="914.4" />
+	<material name="30 in by 10 yd roll" w="76.2" l="914.4" />
+	<material name="48 in by 10 yd roll" w="121.96" l="914.4" />
+</materials>

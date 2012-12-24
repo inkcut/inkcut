@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <_name>Material Manager...</_name>
+  <id>org.vinylmark.inkcut.materials</id>
+  <dependency type="executable" location="extensions">inkcut/inkcutext.py</dependency>
+  <dependency type="executable" location="extensions">inkex.py</dependency>  
+  <effect needs-live-preview="false">
+    <object-type>all</object-type>
+    <effects-menu>
+       <submenu _name="Inkcut"/>
+    </effects-menu>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="bash">inkcut --show="material_dialog"</command>
+  </script>
+</inkscape-extension>
