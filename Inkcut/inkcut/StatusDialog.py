@@ -70,24 +70,24 @@ class StatusDialog(Gtk.Dialog):
         self.ui['btn_ok'].hide()
         
     def plot(self,job,plugin=None,device=None):
-		"""Controlls the process of converting a file and sending it to the device.
-		Always updating the user with status changes.
-		"""
-		tasks = self.tasks(job,plugin,device)
-		GObject.idle_add(tasks.next)
-	
-	def tasks(self,job,plugin,device):
-		""" A generator that controls the process and displays
-		the progress. 
-		"""
+        """Controls the process of converting a file and sending it to the device.
+        Always updating the user with status changes.
+        """
+        tasks = self.tasks(job,plugin,device)
+        GObject.idle_add(tasks.next)
+    
+    def tasks(self,job,plugin,device):
+        """ A generator that controls the process and displays
+        the progress. 
+        """
         prefs = preferences.load()
         if device is None:
             device = Device(prefs['device'])
         self.device = device
-		
-		self.status = 'running'
-		self.stage=1
-		self.ui['image1'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
+        
+        self.status = 'running'
+        self.stage=1
+        self.ui['image1'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
         if plugin=='inkscape':
             name = 'Inkscape Canvas'
         else:
@@ -96,25 +96,34 @@ class StatusDialog(Gtk.Dialog):
         self.ui['progressbar'].set_fraction(0.1)
         yield True
         # TODO: Make this a generator with actual progress!
-		converted_file = filters.convert(infile=job,preferences=prefs)
+        try:
+            converted_file = filters.convert(infile=job,preferences=prefs)
+        except AssertionError, e:
+            self.ui['step1'].set_markup('<span color="#A52A2A" weight="bold">Could not convert the test file.</span>\nThe file is corrupt or missing. Please make sure that a test plot file exists at:\n\n<i>%s</i>\n\nThen please try again, if the problem persists, contact the developer as this may be a bug.\n\n<span weight="bold">Details</span>\n%s'%(job,e))
+            self.ui['flash'].set_label('Error occurred...')
+            self.ui['image1'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
+            for item in ['step2','step3','step4','image2','image3','image4']:
+                self.ui[item].hide()
+            self.on_failure()
+            yield False
         self.ui['step1'].set_label('Finished processing data.')
         self.ui['flash'].set_label('Scheduling job on device queue...')
         self.ui['progressbar'].set_fraction(0.13)
         yield True
 
         device.schedule(converted_file)
-		self.ui['progressbar'].set_fraction(0.14)
-		self.ui['image1'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
-		self.ui['image2'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
-		yield True
-		
-		self.stage=2
-		self.ui['flash'].set_label('Connecting to %s@%s...'%(device.name.replace(" ",""),device.serial_port))
-		self.ui['progressbar'].set_fraction(0.15)
-		yield True
-		try:
-			device.connect()
-		except ValueError,e:
+        self.ui['progressbar'].set_fraction(0.14)
+        self.ui['image1'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
+        self.ui['image2'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
+        yield True
+        
+        self.stage=2
+        self.ui['flash'].set_label('Connecting to %s@%s...'%(device.name.replace(" ",""),device.serial_port))
+        self.ui['progressbar'].set_fraction(0.15)
+        yield True
+        try:
+            device.connect()
+        except ValueError,e:
             self.ui['step2'].set_markup('<span color="#A52A2A" weight="bold">Could not setup a connection to the device.</span>\nAn invalid device configuration was given. Please try again, if the problem persists, contact the developer as this may be a bug.\n\n<span weight="bold">Details</span>\n%s'%e)
             self.ui['flash'].set_label('Error occurred...')
             self.ui['image2'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
@@ -123,7 +132,7 @@ class StatusDialog(Gtk.Dialog):
             self.on_failure()
             yield False
             
-		except serial.SerialException,e:
+        except serial.SerialException,e:
             self.ui['step2'].set_markup('<span color="#A52A2A" weight="bold">Could not setup a connection to the device.</span>\nPlease ensure that the device is connected and turned on and try again.\n\n<span weight="bold">Details</span>\n%s'%e)
             self.ui['flash'].set_label('Connection failed...')
             self.ui['image2'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
@@ -133,29 +142,29 @@ class StatusDialog(Gtk.Dialog):
             yield False
             
         self.ui['step2'].set_label('Connected to %s@%s.'%(device.name.replace(" ",""),device.serial_port))
-		self.ui['progressbar'].set_fraction(0.2)
-		yield True
-		
-		self.stage=3
-		self.ui['flash'].set_label('Sending data...')
-		self.ui['image2'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
-		self.ui['image3'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
-		self.ui['progressbar'].set_fraction(0.25)
-		yield True
-		try: 
-			for task in device.execute():
-				self.ui['progressbar'].set_fraction(0.25+device.status['fraction']*.65) # leave 10% for last step
-				self.ui['flash'].set_label('Sending data... %s of %s (%i%%)'%(humanize_bytes(device.status['data_sent']),humanize_bytes(device.status['filesize']),int(device.status['fraction']*100)))
-				if self.status == 'cancelled':
-					self.ui['step4'].hide()
-					self.ui['image4'].hide()
-					self.ui['image3'].set_from_stock(Gtk.STOCK_STOP,Gtk.IconSize.BUTTON)
-					self.ui['flash'].set_label('Cancelled...')
-					yield False
-				
-				yield True
-				
-		except serial.SerialException,e:
+        self.ui['progressbar'].set_fraction(0.2)
+        yield True
+        
+        self.stage=3
+        self.ui['flash'].set_label('Sending data...')
+        self.ui['image2'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
+        self.ui['image3'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
+        self.ui['progressbar'].set_fraction(0.25)
+        yield True
+        try: 
+            for task in device.execute():
+                self.ui['progressbar'].set_fraction(0.25+device.status['fraction']*.65) # leave 10% for last step
+                self.ui['flash'].set_label('Sending data... %s of %s (%i%%)'%(humanize_bytes(device.status['data_sent']),humanize_bytes(device.status['filesize']),int(device.status['fraction']*100)))
+                if self.status == 'cancelled':
+                    self.ui['step4'].hide()
+                    self.ui['image4'].hide()
+                    self.ui['image3'].set_from_stock(Gtk.STOCK_STOP,Gtk.IconSize.BUTTON)
+                    self.ui['flash'].set_label('Cancelled...')
+                    yield False
+                
+                yield True
+                
+        except serial.SerialException,e:
             self.ui['step3'].set_markup('<span color="#A52A2A" weight="bold">Could complete sending data to the device.</span>\nPlease ensure that the device is connected and turned on and try again.\n\n<span weight="bold">Details</span>\n%s'%e)
             self.ui['flash'].set_label('Sending data failed...')
             self.ui['image3'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
@@ -165,7 +174,7 @@ class StatusDialog(Gtk.Dialog):
             yield False
         
         except:
-			msg = Gtk.MessageDialog(type=Gtk.MessageType.ERROR,
+            msg = Gtk.MessageDialog(type=Gtk.MessageType.ERROR,
                 buttons=Gtk.ButtonsType.OK,
                 message_format=_("An unexpected error occurred"))
             msg.format_secondary_text(_(traceback.format_exc()))
@@ -179,33 +188,33 @@ class StatusDialog(Gtk.Dialog):
             yield False
          
             
-		self.ui['step3'].set_label('Data sent.')
-		self.ui['flash'].set_label('Finializing...')
+        self.ui['step3'].set_label('Data sent.')
+        self.ui['flash'].set_label('Finializing...')
         os.remove(converted_file)
-		self.ui['image3'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
-		self.ui['image4'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
-		self.ui['progressbar'].set_fraction(0.95)
-		yield True
-		
-		"""
-		"""
-		self.stage=4
-		device.disconnect()
-		self.ui['step4'].set_label('Finalizing complete.')
-		self.ui['flash'].set_label('')
-		self.ui['image4'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
-		self.ui['progressbar'].set_fraction(1)
-		self.ui['btn_cancel'].hide()
-		self.ui['btn_pause'].hide()
-		self.ui['btn_resume'].hide()
-		self.ui['btn_ok'].show()
-		yield False
+        self.ui['image3'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
+        self.ui['image4'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
+        self.ui['progressbar'].set_fraction(0.95)
+        yield True
+        
+        """
+        """
+        self.stage=4
+        device.disconnect()
+        self.ui['step4'].set_label('Finalizing complete.')
+        self.ui['flash'].set_label('')
+        self.ui['image4'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
+        self.ui['progressbar'].set_fraction(1)
+        self.ui['btn_cancel'].hide()
+        self.ui['btn_pause'].hide()
+        self.ui['btn_resume'].hide()
+        self.ui['btn_ok'].show()
+        yield False
 
     def on_failure(self):
-		self.ui['btn_cancel'].hide()
-		self.ui['btn_pause'].hide()
-		self.ui['btn_resume'].hide()
-		self.ui['btn_ok'].show()
+        self.ui['btn_cancel'].hide()
+        self.ui['btn_pause'].hide()
+        self.ui['btn_resume'].hide()
+        self.ui['btn_ok'].show()
     
     def on_btn_pause_clicked(self, widget, data=None):
         self.pause = True
@@ -222,17 +231,17 @@ class StatusDialog(Gtk.Dialog):
         self.ui['btn_pause'].show()
 
     def on_btn_cancel_clicked(self, widget, data=None):
-		self.destroy()
+        self.destroy()
     
     def on_btn_ok_clicked(self, widget, data=None):
-		self.destroy()
+        self.destroy()
     
     def on_destroy(self, widget, data=None):
-		""" Disregard any unapplied changes and close the dialog."""
-		if self.status == "running":
-			self.status = "cancelled"
-			self.device.status['state'] = "idle"
-			Gtk.main_iteration()
+        """ Disregard any unapplied changes and close the dialog."""
+        if self.status == "running":
+            self.status = "cancelled"
+            self.device.status['state'] = "idle"
+            Gtk.main_iteration()
         if self.toplevel:
             Gtk.main_quit()
         else:
@@ -240,7 +249,7 @@ class StatusDialog(Gtk.Dialog):
 
 def humanize_bytes(bytes, precision=1):
     """Return a humanized string representation of a number of bytes.
-	Taken from http://code.activestate.com/recipes/577081-humanized-representation-of-a-number-of-bytes/
+    Taken from http://code.activestate.com/recipes/577081-humanized-representation-of-a-number-of-bytes/
     Assumes `from __future__ import division`.
 
     >>> humanize_bytes(1)

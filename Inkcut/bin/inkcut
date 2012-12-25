@@ -19,12 +19,7 @@ import sys
 import os
 
 import gettext
-from gettext import gettext as _
 gettext.textdomain('inkcut')
-
-import traceback
-
-from gi.repository import Gtk # pylint: disable=E0611
 
 # Add project root directory (enable symlink and trunk execution)
 PROJECT_ROOT_DIRECTORY = os.path.abspath(

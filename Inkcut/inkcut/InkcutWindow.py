@@ -27,7 +27,6 @@ logger = logging.getLogger('inkcut')
 import tempfile
 import os
 from lxml import etree
-import rsvg
 
 from inkcut_lib.helpers import get_builder, get_unit_model,get_unit_value,get_combobox_active_text,set_model_from_list,read_unit,callback
 from inkcut_lib import Window, Plot 
@@ -479,7 +478,7 @@ class InkcutWindow(Window):
         self.block_all_handlers() # So we don't call the callback when setting to the new value
         new_unit = get_combobox_active_text(self.ui['cmb_graphic_width_units'])
         # Convert value to equivalent value in new units
-        new_val = get_unit_value(self.plot.graphic.get_width(),new_unit)
+        new_val = get_unit_value("%spx"%self.plot.graphic.get_width(),new_unit)
         self.ui['adj_graphic_width'].set_value(new_val)
         #TODO Save units used to app here
         self.unblock_all_handlers()
@@ -500,7 +499,7 @@ class InkcutWindow(Window):
         self.block_all_handlers() # So we don't call the callback when setting to the new value
         new_unit = get_combobox_active_text(self.ui['cmb_graphic_height_units'])
         # Convert value to equivalent value in new units
-        new_val = get_unit_value(self.plot.graphic.get_height(),new_unit)
+        new_val = get_unit_value("%spx"%self.plot.graphic.get_height(),new_unit)
         self.ui['adj_graphic_height'].set_value(new_val)
         #TODO Save units used to app here
         self.unblock_all_handlers()
@@ -544,8 +543,8 @@ class InkcutWindow(Window):
         active = self.ui['chk_graphic_scale_lock'].get_active()
         self.state['current']['plot']['graphic_scale_lock'] = active
         
-        was_blocked = self._block_callbacks 
-        self.block_all_handlers()
+        #was_blocked = self._block_callbacks 
+        #self.block_all_handlers()
         if active:
             self.ui['sb_scale_x'].set_tooltip_text("Set the scale of the graphic")
             self.ui['sb_scale_y'].hide()
@@ -557,7 +556,7 @@ class InkcutWindow(Window):
             self.ui['lb_scale_y'].show()
             self.ui['adj_graphic_scale_y'].set_value(100*self.state['current']['plot']['graphic_scale_y'])
         
-        if not was_blocked: self.unblock_all_handlers()
+        #if not was_blocked: self.unblock_all_handlers()
     
     @callback
     def on_graphic_rotate_to_save_toggled(self,checkbox,data=None):

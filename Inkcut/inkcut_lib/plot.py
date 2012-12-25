@@ -113,7 +113,7 @@ class Plot:
         vinyl.set('y','0')
         vinyl.set('width',unicode(self.get_material_width(limited=self.get_rotation()==90)))
         vinyl.set('height',unicode(self.get_material_height(limited=self.get_rotation()==0)))
-        vinyl.set('style',"fill:%s;"% self.get_material_color())
+        vinyl.set('style',"fill:%s;stroke:#ffffff;"% self.get_material_color())
         shadow = deepcopy(vinyl)
         shadow.set('y','8')
         shadow.set('style',"fill:#000000;filter:url(#filter1);")

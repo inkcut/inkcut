@@ -72,7 +72,7 @@ def main():
             dialog.show()
             Gtk.main()
         elif args.dialog=='AboutInkcut':
-            dialog = AboutDialog.AboutDialog()
+            dialog = AboutInkcutDialog.AboutDialog()
             dialog.show()
             Gtk.main()
         """ Coming eventually...
