@@ -15,10 +15,8 @@
 ### END LICENSE
 import platform
 import os
-import io
 import serial
 import time
-from pprint import pprint
 import traceback
 
 CONNECTION_TYPES = ['Serial','Printer']
@@ -88,17 +86,16 @@ class Device():
     """
 
     def __init__(self,properties):
-       """Create a device instance with it's properties."""
-       p = DEFAULT_PROPERTIES
-       p.update(properties)
-       for k,v in p.iteritems():
-           setattr(self,k,v)
-       # now we can use self.name, etc...
-       # pprint(self.__dict__)
-       self.jobs = []
-       self.pen = Pen()
-       self.status = {'state':'idle','data_sent':0,'eta':0,'filesize':0,'fraction':0}
-       
+        """Create a device instance with it's properties."""
+        p = DEFAULT_PROPERTIES
+        p.update(properties)
+        for k,v in p.iteritems():
+            setattr(self,k,v)
+        # now we can use self.name, etc...
+        self.jobs = []
+        self.pen = Pen()
+        self.status = {'state':'idle','data_sent':0,'eta':0,'filesize':0,'fraction':0}
+        
     @staticmethod
     def get_printers():
         """Returns a list of printers installed on the system."""
@@ -125,7 +122,7 @@ class Device():
         elif platform.system() == 'Windows':
             import scanwin32
             ports = []
-            for order, port, desc, hwid in sorted(comports(False)):
+            for order, port, desc, hwid in sorted(scanwin32.comports(False)):
                 ports.append(port)
             return ports
 
@@ -160,30 +157,33 @@ class Device():
                 else:
                     data = f.read(buffer_size)
                     if data:
+                        # TODO: update Pen with position of data!
                         self.status['data_sent'] += self.write(data)
                         self.status['fraction'] = self.status['data_sent']/float(self.status['filesize'])
                         yield True
                     else:
-                        break
+                        self.status['state'] = 'idle'
+                        yield False
         
         yield False
                     
     def connect(self):
-        s = serial.Serial(
-                port=self.serial_port, 
-                baudrate=int(self.serial_baudrate), 
-                bytesize=bytesize_map[self.serial_bytesize], 
-                parity=parity_map[self.serial_parity], 
-                stopbits=stopbit_map[self.serial_stopbits], 
-                timeout=None, 
-                xonxoff=self.serial_xonxoff, 
-                rtscts=self.serial_rtscts, 
-                writeTimeout=None, 
-                dsrdtr=self.serial_dsrdtr, 
-                interCharTimeout=None
-            )
-        s.open()
-        self.s = s
+        if self.connection_type == 'Serial':
+            s = serial.Serial(
+                    port=self.serial_port, 
+                    baudrate=int(self.serial_baudrate), 
+                    bytesize=bytesize_map[self.serial_bytesize], 
+                    parity=parity_map[self.serial_parity], 
+                    stopbits=stopbit_map[self.serial_stopbits], 
+                    timeout=5, 
+                    xonxoff=self.serial_xonxoff, 
+                    rtscts=self.serial_rtscts, 
+                    writeTimeout=5, 
+                    dsrdtr=self.serial_dsrdtr, 
+                    interCharTimeout=5
+                )
+            s.open()
+            self.s = s
         
     def disconnect(self):
         if hasattr(self,'s'):
@@ -191,7 +191,7 @@ class Device():
         
     def write(self,data):
         """ General interface for sending data to the device """
-        if self.use_printer:
+        if self.connection_type != 'Serial':
             if platform.system() == 'Linux':
                 printer = os.popen('lpr -P %s'%(self.name),'w')
                 #TODO: Insert buffer here...

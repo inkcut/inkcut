@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-requires gtk+ 3.0 -->
   <!-- interface-requires status_dialog 1.0 -->
   <object class="StatusDialog" id="status_dialog">
     <property name="width_request">500</property>
@@ -27,7 +27,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -42,7 +41,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -57,7 +55,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -71,7 +68,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -110,14 +106,12 @@
                         <property name="can_focus">False</property>
                         <property name="row_spacing">6</property>
                         <property name="column_spacing">6</property>
-                        <property name="n_rows">4</property>
-                        <property name="n_columns">2</property>
                         <child>
                           <object class="GtkLabel" id="step1">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Processing data and initialzing device...</property>
+                            <property name="label" translatable="yes">1. Processing data and initialzing device...</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -186,7 +180,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Connecting to device@port...</property>
+                            <property name="label" translatable="yes">2. Connect to the device</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -200,7 +194,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Sending data to device...</property>
+                            <property name="label" translatable="yes">3. Send data to the device</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -214,12 +208,57 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Finishing job...</property>
+                            <property name="label" translatable="yes">4. Disconnect and cleanup  temporary files</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
                             <property name="top_attach">3</property>
                             <property name="width">1</property>
+                            <property name="height">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkExpander" id="exp_error">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
+                            <child>
+                              <object class="GtkScrolledWindow" id="scrolledwindow1">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="hexpand">True</property>
+                                <property name="vexpand">True</property>
+                                <property name="shadow_type">in</property>
+                                <property name="min_content_height">200</property>
+                                <child>
+                                  <object class="GtkViewport" id="viewport1">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <child>
+                                      <object class="GtkTextView" id="tv_error">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="editable">False</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="label">
+                              <object class="GtkLabel" id="Details">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">&lt;b&gt; Details&lt;/b&gt;</property>
+                                <property name="use_markup">True</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">4</property>
+                            <property name="width">2</property>
                             <property name="height">1</property>
                           </packing>
                         </child>

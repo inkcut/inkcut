@@ -17,10 +17,9 @@
 import logging
 log = logging.getLogger('inkcut')
 
-from filters import Filter
-from helpers import get_unit_value
-from plugin import Plugin
-from graphic import Graphic,SVG
+from inkcut_lib.filters.filter import Filter
+from inkcut_lib.helpers import get_unit_value
+from inkcut_lib.graphic import Graphic
 from lxml import etree
 
 class SVGtoHPGL(Filter):
@@ -41,8 +40,7 @@ class SVGtoHPGL(Filter):
         device = self.preferences['device']
         units = self.preferences['units']
         plot = self.preferences['plot']
-
-         # Set initial HPGL commands
+        # Set initial HPGL commands
         hpgl = ['IN;','SP1;']
 
         # If enabled , append Force and speed Commands
@@ -65,10 +63,10 @@ class SVGtoHPGL(Filter):
         HPGL_SCALE = get_unit_value(device['resolution'],units['resolution'])
         sx,sy = (device['cal_scale_x']*HPGL_SCALE,device['cal_scale_y']*HPGL_SCALE)
         g.set_scale(sx,sy)
-		
-        if plot['use_start_position']:
-			x,y = get_unit_value(plot['start_x'],units['length']),get_unit_value(plot['start_y'],units['length'])
-            device['rotation'] and g.set_position(y,x) or g.set_position(x,y)
+        
+        #if plot['plot_use_start_position']:
+        #    x,y = get_unit_value(plot['start_x'],units['length']),get_unit_value(plot['start_y'],units['length'])
+        #    device['rotation'] and g.set_position(y,x) or g.set_position(x,y)
         
         """
         # TODO: fix this
@@ -80,20 +78,25 @@ class SVGtoHPGL(Filter):
         # Set how smooth the curves are, a high number may make lines look like
         # polygon lines.
         smoothness_map = {'Very High':0.05*HPGL_SCALE,'High':0.1*HPGL_SCALE,'Normal':0.2*HPGL_SCALE,'Low':0.4*HPGL_SCALE,'Very Low':0.8*HPGL_SCALE}
-        smoothness = smoothness_map[device['curve_quality']]
+        try:
+            smoothness = smoothness_map[device['curve_quality']]
+        except KeyError,e:
+            smoothness = smoothness_map['Normal']
+            
         g.set_smoothness(smoothness)
 
         # This eliminates all curves, only use if you have to. Most (cheap) cutters 
         # don't support some of the curve HPGL commands so this is necessary.
-        paths = g.get_data()
+        #paths = g.get_data()
+        paths = g.get_polyline()
         
         # Apply device specific settings to the path, these methods do not support curves.
         
         if device['use_blade_offset']:
-			offset = get_unit_value(device['blade_offset'],units['length'])*HPGL_SCALE
-            self.apply_cutting_blade_offset(paths,offset,smoothness,angle=135)
+            offset = get_unit_value(device['blade_offset'],units['length'])*HPGL_SCALE
+            for i in range(0,len(paths)):
+                self.apply_cutting_blade_offset(paths[i],offset,smoothness,angle=135)
         
-        paths = g.get_polyline()
         if device['use_path_overcut']:
             self.apply_cutting_overcut(paths,get_unit_value(device['path_overcut'],units['length']))
         
@@ -101,16 +104,16 @@ class SVGtoHPGL(Filter):
         # Convert the SVG moveto and lineto commands to HPGL penup and pendown
         data = []
         for path in paths:
-			if device['rotation']:
-				y,x = path.pop(0)[1]
-			else:
-				x,y = path.pop(0)[1]
+            if device['rotation']:
+                y,x = path.pop(0)[1]
+            else:
+                x,y = path.pop(0)[1]
             data.append('PU%i,%i;'%(round(x),round(y)))
             for line in path:
-				if device['rotation']:
-					y,x = line[1]
-				else:
-					x,y = line[1]
+                if device['rotation']:
+                    y,x = line[1]
+                else:
+                    x,y = line[1]
                 cmd ='PD%i,%i;'%(round(x),round(y))
                 data.append(cmd)
 
@@ -118,10 +121,11 @@ class SVGtoHPGL(Filter):
         hpgl.extend(data)
 
         # Append the endpoint
-        if plot['use_final_position']:
-			x,y = round(get_unit_value(plot['final_y'],units['length'])*sy ),round(get_unit_value(plot['final_x'],units['length'])*sx)
-			device['rotation'] and hpgl.append('PU%i,%i;'%(y,x)) or hpgl.append('PU%i,%i;'%(x,y))
-            
+        if not plot['plot_return_origin']:
+            d = get_unit_value(plot['plot_feed_distance'],units['length'])
+            device['rotation'] and hpgl.append('PU%i,%i;'%(round(d*sx),0)) or hpgl.append('PU%i,%i;'%(0,round(d*sy)))
+        else:
+                hpgl.append('PU%i,%i;'%(0,0))
 
         # Get output file and write the HPGL data to it
         # Note we could get rid of the command set and just write everything at once

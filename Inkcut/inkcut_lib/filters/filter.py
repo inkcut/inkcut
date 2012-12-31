@@ -18,29 +18,7 @@ import os
 import logging
 logger = logging.getLogger('inkcut')
 
-from geom import geom,bezmisc
-
-def get_filters():
-    from hpgl import SVGtoHPGL,HPGLtoSVG
-    return [SVGtoHPGL,HPGLtoSVG,Filter]
-
-def convert(infile,preferences,outfile=None,inext=None,outext=None):
-	#TODO: read filter registration file to find filters
-    if inext is None:
-        inext = os.path.splitext(infile)[1][1:]
-    if outext is None:
-        if outfile:
-            outext = os.path.splitext(outfile)[1][1:]
-        else:
-            outext = preferences['device']['cmd_language'].lower()
-    logger.info("Searching for a %s to %s filter..."%(inext,outext))
-    for ftr in get_filters():
-        if (outext == ftr.outfiletype) and (inext in ftr.infiletypes):
-            logger.info("Found the %s filter."%ftr.name)
-            f = ftr(infile,outfile,preferences)
-            f.run()
-            return f.outfile
-    logger.info("No filter found...")
+from inkcut_lib.geom import geom,bezmisc
 
 class Filter(object):
     """
@@ -62,14 +40,14 @@ class Filter(object):
             self.outfile = outfile
         else:
             out = tempfile.NamedTemporaryFile(delete=False)
-            out.close()
+            #out.close()
             self.outfile = out.name
             
         self.preferences = preferences
 
     def run(self):
         """ Copies self.input to self.output. """
-        with open(self.outfile) as out:
+        with open(self.outfile,'w') as out:
             with open(self.infile) as f:
                 for line in f:
                     out.write(line)
@@ -121,7 +99,7 @@ class Filter(object):
                         path.append(['L',list(bezmisc.tpoint(path[j][1],path[j+1][1],left/distance))])
                     overlap_left -= distance
                     j += 1
-	"""
+    """
     @classmethod
     def apply_cutting_blade_offset(cls,data,offset,smoothness,angle=165):
         """
@@ -144,12 +122,9 @@ class Filter(object):
             of the next line by moving along the arc between the two lines.
         
         """
-        from pprint import pformat
-        logger.debug("REMOVE ME ^^")
-        
         assert type(offset) in [int, float], "offset must be an int or float. Got %s" % type(offset)
         assert offset >= 0, "offset cannot be a negative value. Got %s" %offset
-        eps = 1 # this  is assuming after scaling!
+        #eps = 1 # this  is assuming after scaling!
         max_theta = angle*0.017453292 # convert deg to radians
         if offset <= 0:
             return
@@ -159,8 +134,8 @@ class Filter(object):
             v1 = geom.subtract(p0,p1)
             v2 = geom.subtract(p2,p1)
             if (not geom.point_equal(v1,v2)) and geom.norm(v1)>0 and geom.norm(v2)>0:
-				# only apply if an offset if angle is great enough
-				t2 = offset/geom.norm(v2)
+                # only apply if an offset if angle is great enough
+                t2 = offset/geom.norm(v2)
                 if (geom.angle_between(v1,v2) < max_angle) and t2<1:
                     t1 = 1+offset/geom.norm(v1) # extend
                     pt1 = list(bezmisc.tpoint(p0,p1,t1))
@@ -176,18 +151,18 @@ class Filter(object):
             v2 = geom.subtract(p2,p1)
             
             # get the point one curve segment before p1
-            l = bezmisc.bezierlengthSimpson(curve)
+            #l = bezmisc.bezierlengthSimpson(curve)
             t = .5
             
             # vector from p1 to this point
             v0 = geom.subtract(bezmisc.bezierpointatt(curve,t),p1)
             
             if  geom.norm(v0)>0 and geom.norm(v2)>0:
-				# only apply if an offset if angle is great enough
-				t2 = offset/geom.norm(v2)
+                # only apply if an offset if angle is great enough
+                t2 = offset/geom.norm(v2)
                 if (geom.angle_between(v0,v2) < max_angle) and t2<1:
-					
-					# extend using the second control point since it's tangent
+                    
+                    # extend using the second control point since it's tangent
                     t1 = 1+offset/geom.norm(v1) # extend
                     pt1 = list(bezmisc.tpoint(c1,p1,t1))
                     pt2 = list(bezmisc.tpoint(p1,p2,t2))
@@ -203,8 +178,8 @@ class Filter(object):
             v1 = geom.subtract(p0,p1)
             v2 = geom.subtract(p2,p1)
             if (not geom.point_equal(v1,v2)) and geom.norm(v1)>0 and geom.norm(v2)>0:
-				# only apply if an offset if angle is great enough
-				t2 = offset/bezmisc.bezierlengthSimpson(curve)
+                # only apply if an offset if angle is great enough
+                t2 = offset/bezmisc.bezierlengthSimpson(curve)
                 if (geom.angle_between(v1,v2) < max_angle) and t2<1:
                     t1 = 1+offset/geom.norm(v1) # extend
                     pt1 = list(bezmisc.tpoint(p0,p1,t1))
@@ -212,7 +187,7 @@ class Filter(object):
                     c = bezmisc.beziersplitatt(curve,t2)[1]
                     new_curve = []
                     for p in c[1:]:
-						new_curve.extend(p)
+                        new_curve.extend(p)
                     # TODO: THIS SHOULD USE A CURVE TO WORK BETTER!
                     # insert extend point, then adjust curve to new start point
                     return [['L',pt1],['L',c[0]],['C',new_curve]]
@@ -228,85 +203,85 @@ class Filter(object):
         
         i=0
         while i < len(data)-1:
-			cmd,params = data[i]
-			cnext = data[i+1][0]
-			if cmd == 'M': 
-				pprev = params[-2:]
-				pstart = pprev
-			elif cmd == 'L' and cnext in ['L','Z']:
-				"""
-				Replace pcur by pcur extended by offset and insert a
-				point returning back to on track to pnext.
-				"""
-				pcur = params[-2:]
-				pnext = (cnext == 'Z' and pstart) or data[i+1][1][:2]
-				fix = get_line_offset_fix(pprev,pcur,pnext)
-				if len(fix)>0:
-					data.pop(i) # remove current point
-					for segment in fix:
-						data.insert(i,segment)
-						i+=1
-					i-=1 # adjust for the pop
-				pprev = params[-2:]
-			elif cmd == 'L' and cnext == 'C':
-				"""
-				Extend L by offset, then come back to curve at T
-				"""
-				pcur = params[-2:]
-				fix = get_curve_offset_fix(pprev,pcur,data[i+1][1][:2],data[i+1][1][2:4],data[i+1][1][-2:])
-				if len(fix)>0:
-					data.pop(i)
-					for segment in fix:
-						data.insert(i,segment)
-						i+=1
-					data.pop(i) # remove old curve
-					i-=2
-				pprev = params[-2:]
-			elif cmd == 'L':
-				pprev = params[-2:]
-			elif cmd == 'C' and cnext in ['L', 'Z']:
-				"""
-				Same as L to L but uses control point to end point of curve
-				as first vector (p0 to p1).
-				"""
-				pnext = (cnext == 'Z' and pstart) or data[i+1][1][:2]
-				fix = get_curve_to_line_offset_fix((pprev,params[:2],params[2:4],params[-2:]),pnext)
-				if len(fix)>0:
-					for segment in fix:
-						i+=1
-						data.insert(i,segment)
-				pprev = params[-2:]
-			elif cmd =='C' and cnext == 'C':
-				pprev = params[2:4]
-				pcur = params[-2:]
-				fix = get_curve_offset_fix(pprev,pcur,data[i+1][1][:2],data[i+1][1][2:4],data[i+1][1][-2:])
-				if len(fix)>0:
-					for segment in fix:
-						i+=1
-						data.insert(i,segment)
-					data.pop(i) # remove old curve
-					i-=1
-				pprev = params[-2:]
-			elif cmd =='C':
-				pprev = params[-2:]
-			elif cmd == 'Z':
-				# last point in path, skip
-				pprev = pstart
-			i+=1
-		"""
-		Cases:
-		M to L - n/a
-		M to C - n/a
-		L to L - works
-		L to Z - works
-		L to C - not yet! (why not?)
-		C to L - works!
-		C to Z - works!
-		C to C - not yet
-		L to Z - works
-		"""
-		#logger.debug('\n\n\n\n\n')
-		#logger.debug(pformat(data))
+            cmd,params = data[i]
+            cnext = data[i+1][0]
+            if cmd == 'M': 
+                pprev = params[-2:]
+                pstart = pprev
+            elif cmd == 'L' and cnext in ['L','Z']:
+                """
+                Replace pcur by pcur extended by offset and insert a
+                point returning back to on track to pnext.
+                """
+                pcur = params[-2:]
+                pnext = (cnext == 'Z' and pstart) or data[i+1][1][:2]
+                fix = get_line_offset_fix(pprev,pcur,pnext)
+                if len(fix)>0:
+                    data.pop(i) # remove current point
+                    for segment in fix:
+                        data.insert(i,segment)
+                        i+=1
+                    i-=1 # adjust for the pop
+                pprev = params[-2:]
+            elif cmd == 'L' and cnext == 'C':
+                """
+                Extend L by offset, then come back to curve at T
+                """
+                pcur = params[-2:]
+                fix = get_curve_offset_fix(pprev,pcur,data[i+1][1][:2],data[i+1][1][2:4],data[i+1][1][-2:])
+                if len(fix)>0:
+                    data.pop(i)
+                    for segment in fix:
+                        data.insert(i,segment)
+                        i+=1
+                    data.pop(i) # remove old curve
+                    i-=2
+                pprev = params[-2:]
+            elif cmd == 'L':
+                pprev = params[-2:]
+            elif cmd == 'C' and cnext in ['L', 'Z']:
+                """
+                Same as L to L but uses control point to end point of curve
+                as first vector (p0 to p1).
+                """
+                pnext = (cnext == 'Z' and pstart) or data[i+1][1][:2]
+                fix = get_curve_to_line_offset_fix((pprev,params[:2],params[2:4],params[-2:]),pnext)
+                if len(fix)>0:
+                    for segment in fix:
+                        i+=1
+                        data.insert(i,segment)
+                pprev = params[-2:]
+            elif cmd =='C' and cnext == 'C':
+                pprev = params[2:4]
+                pcur = params[-2:]
+                fix = get_curve_offset_fix(pprev,pcur,data[i+1][1][:2],data[i+1][1][2:4],data[i+1][1][-2:])
+                if len(fix)>0:
+                    for segment in fix:
+                        i+=1
+                        data.insert(i,segment)
+                    data.pop(i) # remove old curve
+                    i-=1
+                pprev = params[-2:]
+            elif cmd =='C':
+                pprev = params[-2:]
+            elif cmd == 'Z':
+                # last point in path, skip
+                pprev = pstart
+            i+=1
+        """
+        Cases:
+        M to L - n/a
+        M to C - n/a
+        L to L - works
+        L to Z - works
+        L to C - not yet! (why not?)
+        C to L - works!
+        C to Z - works!
+        C to C - not yet
+        L to Z - works
+        """
+        #logger.debug('\n\n\n\n\n')
+        #logger.debug(pformat(data))
         
     # ===================== UI & Error Handling ===============================
     def handle_failure(self,message):
@@ -326,3 +301,4 @@ def path_is_closed(path):
     """Returns true if the first and last point are equal."""
     assert type(path) == list, "path must be a list of path segments"
     return map(lambda x: round(x,6),path[0][1]) == map(lambda x: round(x,6),path[len(path)-1][1])
+

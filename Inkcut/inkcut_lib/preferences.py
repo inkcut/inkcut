@@ -21,10 +21,12 @@ applications settings.
 import json
 import os
 import logging
+from . inkcutconfig import get_data_file
 logger = logging.getLogger('inkcut')
 
 CONFIG_FILE = os.path.join(os.getenv("HOME"),'.config','inkcut','data','preferences.json')
-TEST_FILE = os.path.join(os.getenv("HOME"),'.config','inkcut','data','test.hpgl')
+DEFAULT_CONFIG_FILE = get_data_file('preferences.json') 
+TEST_FILE = get_data_file('test.hpgl')
 
 from device import DEFAULT_PROPERTIES as DEVICE_PROPERTIES
 #from inkcut_lib.plot import DEFAULT_PROPERTIES as PLOT_PROPERTIES
@@ -70,6 +72,7 @@ PLOT_PROPERTIES = {
     'plot_center_y':False,
     'plot_position_x':'0mm',
     'plot_position_y':'0mm',
+    'plot_use_start_position':False,
     'plot_return_origin':False,
     'plot_feed_distance':'0mm',
     'plot_order':PLOT_ORDERS[0],

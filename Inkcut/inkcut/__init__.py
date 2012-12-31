@@ -25,7 +25,7 @@ gettext.textdomain('inkcut')
 
 from gi.repository import Gtk # pylint: disable=E0611
 
-from inkcut import InkcutWindow,DeviceDialog, AboutInkcutDialog
+from inkcut import InkcutWindow,DeviceDialog, AboutInkcutDialog, StatusDialog
 
 from inkcut_lib import set_up_logging, get_version
 from inkcut_lib import filters,preferences

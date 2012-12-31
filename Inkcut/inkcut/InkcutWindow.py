@@ -95,7 +95,7 @@ class InkcutWindow(Window):
             scaled_buf = pixbuf.scale_simple(round(w*z),round(h*z),GdkPixbuf.InterpType.BILINEAR)
             self.ui['img_preview'].set_from_pixbuf(scaled_buf)
             
-    def on_act_zoom_restore_activate(self,widget=None,data=None):
+    def on_act_zoom_normal_activate(self,widget=None,data=None):
         if self.plot is None:
             return
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.preview_file.name)
@@ -136,12 +136,13 @@ class InkcutWindow(Window):
             scaled_buf = pixbuf.scale_simple(w,h,GdkPixbuf.InterpType.BILINEAR)
             self.ui['img_preview'].set_from_pixbuf(scaled_buf)
             self.ui['img_preview'].show()
-            """
+            
             # Remove the previous preview image it it exists
             try:
-                self.preview.remove()
+                os.remove(self.preview_file.name)
             except:
                 pass
+            """
             pb = Pixbuf.new_from_file(tmp.name)
             cont_left, cont_top, cont_right, cont_bottom = self.ui['canvas'].get_bounds()
             img_w = pb.get_width(); img_h = pb.get_height(); img_left = (cont_right - img_w)/2; img_top = (cont_bottom - img_h)/2
@@ -154,7 +155,7 @@ class InkcutWindow(Window):
     #####################################################################################
     # ================== file menu action items =========================
     @callback(False)
-    def on_mnu_open_activate(self,widget,data=None):
+    def on_act_plot_open_activate(self,widget,data=None):
         """
         Displays a file chooser dialog. When a file is selected, a new
         job is created using the file.
@@ -623,7 +624,7 @@ class InkcutWindow(Window):
         pass
 
     @callback
-    def on_mnu_print_activate(self,widget,data=None):
+    def on_act_plot_send_activate(self,widget,data=None):
         # Display the cut dialog
         try:
             os.remove(self.cutter_file.name)
@@ -631,9 +632,9 @@ class InkcutWindow(Window):
         except:
             pass
         logger.info('Creating new cutter file...')
-        self.cutter_file = tempfile.NamedTemporaryFile(delete=False)
-        self.cutter_file.file.write(self.plot.get_xml())
-        self.cutter_file.file.close()
+        self.cutter_file = tempfile.NamedTemporaryFile(suffix=".svg")
+        self.cutter_file.write(self.plot.get_xml())
+        self.cutter_file.file.flush()
         logger.info('Cutter file saved.')
         
         device = Device(self.state['global']['device'])
@@ -644,10 +645,9 @@ class InkcutWindow(Window):
         dialog.show()
     
     @callback
-    def on_mnu_print_preview_activate(self,widget,data=None):
+    def on_act_plot_preview_activate(self,widget,data=None):
         # Open the plot SVG file with Inkscape
-        self.context.finish()
-
+        pass
     # ================== view menu action items =========================
     
     # ========================== Toolbar callbacks ==========================

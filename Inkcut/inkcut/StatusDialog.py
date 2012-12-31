@@ -17,16 +17,16 @@
 This file serves two purposes, controlling the cutter progress and 
 displaying the status.
 """
-import time
 import traceback
+import getpass
 import serial
 import os.path
 from gi.repository import Gtk,GObject
 
-from inkcut_lib.helpers import get_builder,get_media_file
+from inkcut_lib.helpers import get_builder
 import inkcut_lib.preferences as preferences
 from inkcut_lib.device import Device
-import inkcut_lib.filters  as filters
+from inkcut_lib.filters import convert, NoFilterFoundException 
 
 import gettext
 from gettext import gettext as _
@@ -68,6 +68,7 @@ class StatusDialog(Gtk.Dialog):
         self.ui['image1'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
         self.ui['btn_resume'].hide()
         self.ui['btn_ok'].hide()
+        self.ui['exp_error'].hide()
         
     def plot(self,job,plugin=None,device=None):
         """Controls the process of converting a file and sending it to the device.
@@ -97,9 +98,19 @@ class StatusDialog(Gtk.Dialog):
         yield True
         # TODO: Make this a generator with actual progress!
         try:
-            converted_file = filters.convert(infile=job,preferences=prefs)
-        except AssertionError, e:
-            self.ui['step1'].set_markup('<span color="#A52A2A" weight="bold">Could not convert the test file.</span>\nThe file is corrupt or missing. Please make sure that a test plot file exists at:\n\n<i>%s</i>\n\nThen please try again, if the problem persists, contact the developer as this may be a bug.\n\n<span weight="bold">Details</span>\n%s'%(job,e))
+            converted_file = convert(infile=job,preferences=prefs)
+        except NoFilterFoundException, e:
+            self.ui['step1'].set_markup('<span color="#A52A2A" weight="bold">No filter plugin was found for your device command set.</span>\n\nCheck that the correct filters are installed and try again.\n If the problem persists, contact the developer as this may be a bug.')
+            self.show_error(e)
+            self.ui['flash'].set_label('Error occurred...')
+            self.ui['image1'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
+            for item in ['step2','step3','step4','image2','image3','image4']:
+                self.ui[item].hide()
+            self.on_failure()
+            yield False
+        except:
+            self.ui['step1'].set_markup('<span color="#A52A2A" weight="bold">Could not convert the test file.</span>\nAn unknown error occurred... Please try again, if the problem persists,\ncontact the developer as this may be a bug.')
+            self.show_error()
             self.ui['flash'].set_label('Error occurred...')
             self.ui['image1'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
             for item in ['step2','step3','step4','image2','image3','image4']:
@@ -110,8 +121,19 @@ class StatusDialog(Gtk.Dialog):
         self.ui['flash'].set_label('Scheduling job on device queue...')
         self.ui['progressbar'].set_fraction(0.13)
         yield True
-
-        device.schedule(converted_file)
+        
+        try:
+            device.schedule(converted_file)
+        except:
+            self.ui['step1'].set_markup('<span color="#A52A2A" weight="bold">Could not send the plot file to the device.</span>\nAn unknown error occurred... Please try again, if the problem persists,\ncontact the developer as this may be a bug.')
+            self.show_error()
+            self.ui['flash'].set_label('Error occurred...')
+            self.ui['image1'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
+            for item in ['step2','step3','step4','image2','image3','image4']:
+                self.ui[item].hide()
+            self.on_failure()
+            yield False
+        
         self.ui['progressbar'].set_fraction(0.14)
         self.ui['image1'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
         self.ui['image2'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
@@ -124,8 +146,9 @@ class StatusDialog(Gtk.Dialog):
         try:
             device.connect()
         except ValueError,e:
-            self.ui['step2'].set_markup('<span color="#A52A2A" weight="bold">Could not setup a connection to the device.</span>\nAn invalid device configuration was given. Please try again, if the problem persists, contact the developer as this may be a bug.\n\n<span weight="bold">Details</span>\n%s'%e)
+            self.ui['step2'].set_markup('<span color="#A52A2A" weight="bold">Could not setup a connection to the device.</span>\nAn invalid device configuration was given. Please try again, if the problem persists, \ncontact the developer as this may be a bug.')
             self.ui['flash'].set_label('Error occurred...')
+            self.show_error()
             self.ui['image2'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
             for item in ['step3','step4','image3','image4']:
                 self.ui[item].hide()
@@ -133,7 +156,21 @@ class StatusDialog(Gtk.Dialog):
             yield False
             
         except serial.SerialException,e:
-            self.ui['step2'].set_markup('<span color="#A52A2A" weight="bold">Could not setup a connection to the device.</span>\nPlease ensure that the device is connected and turned on and try again.\n\n<span weight="bold">Details</span>\n%s'%e)
+            if str(e).lower().find("permission")>=0:
+                self.ui['step2'].set_markup('<span color="#A52A2A" weight="bold">Could not setup a connection to the device.</span>\nCheck that you have permission to user the serial port.\nTry the following:\n\n\t<i>sudo usermod -a -G dialout %s</i>\n\nTo add the current user to the dialout group. Then logout, login, and retry.'%getpass.getuser())
+            else:
+                self.ui['step2'].set_markup('<span color="#A52A2A" weight="bold">Could not setup a connection to the device.</span>\nPlease ensure that the device is connected and turned on and try again.')
+            self.ui['flash'].set_label('Connection failed...')
+            self.show_error(e)
+            self.ui['image2'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
+            for item in ['step3','step4','image3','image4']:
+                self.ui[item].hide()
+            self.on_failure()
+            yield False
+            
+        except:
+            self.ui['step2'].set_markup('<span color="#A52A2A" weight="bold">Could not setup a connection to the device.</span>\nAn unknown error occurred... Please try again, if the problem persists,\ncontact the developer as this may be a bug.')
+            self.show_error()
             self.ui['flash'].set_label('Connection failed...')
             self.ui['image2'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
             for item in ['step3','step4','image3','image4']:
@@ -165,7 +202,8 @@ class StatusDialog(Gtk.Dialog):
                 yield True
                 
         except serial.SerialException,e:
-            self.ui['step3'].set_markup('<span color="#A52A2A" weight="bold">Could complete sending data to the device.</span>\nPlease ensure that the device is connected and turned on and try again.\n\n<span weight="bold">Details</span>\n%s'%e)
+            self.ui['step3'].set_markup('<span color="#A52A2A" weight="bold">Could complete sending data to the device.</span>\nPlease ensure that the device is connected and turned on, then try again.')
+            self.show_error(e)
             self.ui['flash'].set_label('Sending data failed...')
             self.ui['image3'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
             self.ui['step4'].hide()
@@ -174,13 +212,9 @@ class StatusDialog(Gtk.Dialog):
             yield False
         
         except:
-            msg = Gtk.MessageDialog(type=Gtk.MessageType.ERROR,
-                buttons=Gtk.ButtonsType.OK,
-                message_format=_("An unexpected error occurred"))
-            msg.format_secondary_text(_(traceback.format_exc()))
-            msg.run()
-            msg.destroy()
+            self.ui['step3'].set_markup('<span color="#A52A2A" weight="bold">Could complete sending data to the device.</span>\nAn unknown error occurred... Please try again, if the problem persists,\ncontact the developer as this may be a bug.')
             self.ui['flash'].set_label('Sending data failed...')
+            self.show_error()
             self.ui['image3'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
             self.ui['step4'].hide()
             self.ui['image4'].hide()
@@ -189,17 +223,33 @@ class StatusDialog(Gtk.Dialog):
          
             
         self.ui['step3'].set_label('Data sent.')
-        self.ui['flash'].set_label('Finializing...')
-        os.remove(converted_file)
         self.ui['image3'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
+        self.ui['flash'].set_label('Finalizing...')
+        try:
+            os.remove(converted_file)
+        except:
+            self.ui['step4'].set_markup('<span color="#A52A2A" weight="bold">Could complete sending data to the device.</span>\nAn unknown error occurred... Please try again, if the problem persists,\ncontact the developer as this may be a bug.')
+            self.show_error()
+            self.ui['flash'].set_label('Sending data failed...')
+            self.ui['image4'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
+            self.on_failure()
+            yield False
+            
         self.ui['image4'].set_from_stock(Gtk.STOCK_GO_FORWARD,Gtk.IconSize.BUTTON)
         self.ui['progressbar'].set_fraction(0.95)
         yield True
         
-        """
-        """
         self.stage=4
-        device.disconnect()
+        try:
+            device.disconnect()
+        except:
+            self.ui['step4'].set_markup('<span color="#A52A2A" weight="bold">Failed to disconnect from the device.</span>\nAn unknown error occurred... Please try again, if the problem persists,\ncontact the developer as this may be a bug.')
+            self.show_error()
+            self.ui['flash'].set_label('Failed to disconnect from the device.')
+            self.ui['image4'].set_from_stock(Gtk.STOCK_DIALOG_ERROR,Gtk.IconSize.BUTTON)
+            self.on_failure()
+            yield False
+            
         self.ui['step4'].set_label('Finalizing complete.')
         self.ui['flash'].set_label('')
         self.ui['image4'].set_from_stock(Gtk.STOCK_APPLY,Gtk.IconSize.BUTTON)
@@ -209,6 +259,13 @@ class StatusDialog(Gtk.Dialog):
         self.ui['btn_resume'].hide()
         self.ui['btn_ok'].show()
         yield False
+        
+    def show_error(self,error=None):
+        self.ui['exp_error'].show()
+        if error is None:
+            self.ui['tv_error'].get_buffer().set_text(traceback.format_exc())
+        else:
+            self.ui['tv_error'].get_buffer().set_text('%s'%error)
 
     def on_failure(self):
         self.ui['btn_cancel'].hide()

@@ -14,7 +14,8 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from gi.repository import Gtk, GObject # pylint: disable=E0611
+from gi.repository import Gtk, Gdk, GObject # pylint: disable=E0611
+
 import logging
 logger = logging.getLogger('inkcut_lib')
 
@@ -94,17 +95,17 @@ class Window(Gtk.Window,InkcutUIState):
         except ImportError:
             pass
 
-    def on_mnu_contents_activate(self, widget, data=None):
+    def on_act_help_activate(self, widget, data=None):
         show_uri(self, "ghelp:%s" % get_help_uri())
 
-    def on_mnu_about_activate(self, widget, data=None):
+    def on_act_about_activate(self, widget, data=None):
         """Display the about box for inkcut."""
         if self.AboutDialog is not None:
             about = self.AboutDialog() # pylint: disable=E1102
             response = about.run()
             about.destroy()
 
-    def on_mnu_preferences_activate(self, widget, data=None):
+    def on_act_inkcut_prefs_activate(self, widget, data=None):
         """Display the preferences window for inkcut."""
 
         """ From the PyGTK Reference manual
@@ -122,7 +123,7 @@ class Window(Gtk.Window,InkcutUIState):
             self.preferences_dialog.show()
         # destroy command moved into dialog to allow for a help button
         
-    def on_mnu_device_properties_activate(self,widget,data=None):
+    def on_act_device_manager_activate(self,widget,data=None):
         """Display the device dialog."""
         if self.device_dialog is not None:
             logger.debug('show existing device_dialog')
@@ -134,7 +135,7 @@ class Window(Gtk.Window,InkcutUIState):
             self.device_dialog.connect('destroy', self.on_device_dialog_destroyed)
             self.device_dialog.show()
             
-    def on_mnu_material_properties_activate(self,widget,data=None):
+    def on_act_media_manager_activate(self,widget,data=None):
         """Display the material dialog."""
         if self.material_dialog is not None:
             logger.debug('show existing material_dialog')
@@ -146,7 +147,7 @@ class Window(Gtk.Window,InkcutUIState):
             self.material_dialog.connect('destroy', self.on_material_dialog_destroyed)
             self.material_dialog.show()
 
-    def on_mnu_close_activate(self, widget, data=None):
+    def on_act_quit_activate(self, widget, data=None):
         """Signal handler for closing the InkcutWindow."""
         self.destroy()
 
@@ -160,8 +161,8 @@ class Window(Gtk.Window,InkcutUIState):
 
     def on_preferences_changed(self, widget, data=None):
         logger.debug('main window received preferences changed')
-        for key in data:
-            logger.debug('preference changed: %s = %s' % (key, preferences[key]))
+        #for key in data:
+        #    logger.debug('preference changed: %s = %s' % (key, preferences[key]))
 
     def on_preferences_dialog_destroyed(self, widget, data=None):
         """ Remove the preferences_dialog instance """
@@ -180,3 +181,8 @@ class Window(Gtk.Window,InkcutUIState):
         logger.debug('Window.on_material_dialog_destroyed()')
         # to determine whether to create or present material_dialog
         self.material_dialog = None
+        
+    def on_tb_compact_menu_clicked(self, widget, data=None):
+        """ Show the compact menu """
+        logger.debug('Window.on_tb_compact_menu_clicked()')
+        self.ui['compact_menu'].popup(None, None, None, None, Gdk.BUTTON_PRIMARY,0)
