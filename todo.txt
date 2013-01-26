@@ -1,0 +1,92 @@
+TODO List:  Steps that need to be taken to complete Inkcut 1.1
+===============================================================================
+1. Convert Input SVG,Job, & Requirements into an SVG Plot file - In Progress
+    1. Create a new Job - Done
+        1. Open an SVG file - Done
+        2. Set Requirement Selected Nodes - Not Started
+        3. Select Material - Done
+            1. Add New Material - Not Started
+            2. Edit A Material - Not Started
+            3. Delete A Material - Not Started
+        4. Select Device - Not Started
+            1. Add New Device - Not Started
+            2. Edit a device - Not Started
+            3. Delete a device - Not Started
+            4. Get Device Status - Not Started
+        5. Select Job Requirements - Not Started
+            1. Set Scale - Not Started
+            2. Set Copies - Not Started
+            3. Set Start Position - Not Started
+            4. Set Auto Center- Not Started
+            5. Set Invert Axis - Not Started
+            6. Set Plot Margin - Not Started
+            7. Set Copy Spacing - Not Started
+            8. Set Copy Rotation - Not Started
+            9. Set Weed Plot & Margin - Not Started
+            10. Set Weed Copy & Margin - Not Started
+    2. Make SVG from Job Requirements
+        1. Make Graphic
+            1. Get Paths from SVG - Done
+            2. Set Scale - Not Started
+            3. Set Mirror - Not Started
+            2. Set Rotate - Not Started
+            3. Translate to top left origin - Not Started
+        2. Get Graphic Dimensions - Not Started
+        3. Make Plot - In Progress
+            1. Set Margins - Not Started
+            2. Set Start Position - Not Started
+            3. Set Number of Copies - Not Started
+            4. Set Copy Spacing - Not Started
+            5. Set Auto Center - Not Started
+            6. Add Plot Weedlines - Not Started
+                1. Set Plot Weedline spacing - Not Started
+            7. Add Copy Weedlines - Not Started
+                2. Set Copy Weedline spacing - Not Started
+
+        4. Save Plot to SVG File - Done
+
+    3. Create a Preview - In Progress
+        1. Inkscape Preview - Not Started
+        2. Auto Refresh - In Progress
+        3. Update Preview - In Progress
+
+2. Make module to convert SVG into cutter output (HPGL) - Not Started
+    -------------------------------------------------------------------------------
+    SVG to Output Format Converstion
+    -------------------------------------------------------------------------------
+    For the device to plot, the svg file has to be converted into hpgl,gpgl or the
+    specific graphic language of the cutter.  The steps needed to achive this are:
+        1. make a method to apply a matrix transformations to a path
+        2. make methods to convert the pysvg shapes into paths
+        3. make script to convert paths to hpgl that can also do the following:
+            requirements:
+               * blade offset compensation
+               * overcut compensation
+               * speed adjustment (variable)
+               * force adjustment
+               * final axis rotation and mirroring
+    1. Write a script to convert SVG to Output - Not Started
+        1. Open SVG file
+        2. Set Device Axis Requirements
+            1. Add transformations for axis rotation and mirroring
+            2. Translate back to origin
+            3. Apply Final Calibration scaling to path data
+        2. Apply all transformations to path data
+        3. Break all paths up into a list of single paths
+        4. Set Device Cutting Requirements
+            1. Set Blade Offset
+            2. Set Overcut
+        5. Create Output Data
+            1. Set Cutting Force
+            2. Set Cutting Speed/Speeds
+            3. Set Cutting Order
+
+3. Send to Device / Job Queue - Not Started
+
+4. Import Output languages (HPGL,GPGL, etc) and convert back to SVG - Not Started
+
+Job and JobRequirements to SVG
+-------------------------------------------------------------------------------
+We need to be able to produce an SVG of only path elements (or possilby shapes
+if that can be handled below)
+

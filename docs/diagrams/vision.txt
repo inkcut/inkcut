@@ -1,0 +1,28 @@
+Introduction
+    We envision a software application that can make it easy for a user to
+    convert a vector design into a plottable, printable, or cutable material.
+    A simple user interface with advanced features for adjustment to specific
+    needs.
+
+Positioning
+
+Business Opportunity
+    Other products are incompatible with operating systems other than windows,
+    Their software is expensive, slow, and doesn't integrate with popular vector
+    editors.  They often have a lot of complexity that is generally unused with
+    very little error checking and notifications.  Very little information is
+    provided prior to producing the job.
+
+Problem Statement
+    Other systems are incompatible, have strict requirements for their own editors
+    and design programs and have errors or cause users to cut things that are
+    not expected.  Many products require monthly payments for advanced features
+    and/or software updates.
+
+Product Position Statement
+    The system is for users that want adaptibility at a low cost that is easy
+    to use and understand. Quick and simple interfaces.
+
+
+
+
