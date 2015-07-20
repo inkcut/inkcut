@@ -1,0 +1,91 @@
+#------------------------------------------------------------------------------
+# Copyright (c) 2013, Nucleic Development Team.
+#
+# Distributed under the terms of the Modified BSD License.
+#
+# The full license is in the file COPYING.txt, distributed with this software.
+#------------------------------------------------------------------------------
+from enaml.widgets.api import MenuBar,StatusBar
+from enaml.core.include import Include
+from enaml.workbench.api import Extension, PluginManifest
+from enaml.workbench.ui.api import ActionItem, Branding, MenuItem, ItemGroup
+from enaml.workbench.ui.workbench_window import WorkbenchWindow, Workbench, WindowModel, make_title
+
+def main_view_factory(workbench):
+    from inkcut.workbench.ui.workspace import InkcutWorkspace
+    from inkcut.workbench.ui.plugin import MainViewPlugin
+    import enaml
+    with enaml.imports():
+        from inkcut.workbench.ui.manifest import MainViewManifest
+        from inkcut.workbench.ui.main_view import MainView 
+    plugin = MainViewPlugin()
+    space = InkcutWorkspace()
+    space.window_title = 'Plot'
+    space.content_factory = lambda:MainView(model=plugin)
+    space.manifest_factory = MainViewManifest
+    return space
+
+def window_factory(workbench):
+    return InkcutWorkbenchWindow()
+
+enamldef InkcutWorkbenchWindow(WorkbenchWindow):
+    """ The custom MainWindow enamldef used by the Enaml studio.
+ 
+    """
+    attr workbench: Workbench
+    attr window_model: WindowModel
+    title << make_title(
+        window_model.branding.title,
+        window_model.workspace.window_title,
+    )
+    icon << window_model.branding.icon
+    MenuBar:
+        Include:
+            objects << window_model.menus
+    Include:
+        objects << filter(None, [window_model.workspace.content])
+    StatusBar:
+        visible << bool(window_model.workspace.status_items)
+        Include:
+            objects << window_model.workspace.status_items
+
+
+
+enamldef InkcutManifest(PluginManifest):
+    """ The plugin manifest for the primary example plugin.
+
+    This plugin acts as the entry point for all other plugins in this
+    example. It contributes the window branding, default actions, and
+    the workspace definitions.
+
+    """
+    id = 'inkcut.workbench.core'
+    Extension:
+        id = 'branding'
+        point = 'enaml.workbench.ui.branding'
+        Branding:
+            title = 'Inkcut'
+    Extension:
+        id = 'actions'
+        point = 'enaml.workbench.ui.actions'
+        MenuItem:
+            path = '/file'
+            label = 'File'
+            ItemGroup:
+                id = 'user'
+        MenuItem:
+            path = '/help'
+            label = 'Help'
+        ActionItem:
+            path = '/file/close'
+            label = 'Close'
+            shortcut = 'Ctrl+Q'
+            command = 'enaml.workbench.ui.close_window'
+    Extension:
+        id = 'window_factory'
+        point = 'enaml.workbench.ui.window_factory'
+        factory = window_factory
+    Extension:
+        id = 'main_view'
+        point = 'enaml.workbench.ui.workspaces'
+        factory = main_view_factory

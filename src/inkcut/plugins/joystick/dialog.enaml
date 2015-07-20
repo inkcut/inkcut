@@ -1,0 +1,62 @@
+from atom.api import atomref
+from enaml.image import Image
+from enaml.layout.api import align, hbox, vbox,spacer
+from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
+from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet)
+from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
+    ImageView, PushButton, RadioButton, Window,ProgressBar)
+from inkcut.workbench.ui.widgets.plot_view import PlotView
+from inkcut.workbench.core.svg import QtSvgDoc
+from inkcut.workbench.core.utils import load_icon
+
+enamldef JoystickDialog(Dialog):
+    title = 'Plotter Control'
+    attr model
+    TaskDialogStyleSheet:
+            pass
+    TaskDialogBody:
+        TaskDialogContentArea:
+            padding = 0
+            PlotView:
+                minimum_size = (540,320)
+                data := model.plot
+                axis_scales << {'left':QtSvgDoc.convertToUnit(1, model.units),'bottom':QtSvgDoc.convertToUnit(1, model.units)}
+        
+        TaskDialogCommandArea:
+            constraints = [
+                hbox(lbl, spacer, vbox(pb1,
+                                       hbox(pb2,pb3,pb4))),
+                #align('v_center', lbl, pb1,pb2),
+            ]
+            Label: lbl:
+                text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(model.device.position[0],model.device.position[1],model.device.position[2] and 'down' or 'up')
+                #checked := details.visible
+            PushButton: pb1:
+                clicked :: model.move_up()
+                icon = load_icon('arrow_up')
+            PushButton: pb2:
+                clicked :: model.move_left()
+                icon = load_icon('arrow_left')
+            PushButton: pb3:
+                clicked :: model.move_down()
+                icon = load_icon('arrow_down')
+            PushButton: pb4:
+                clicked :: model.move_right()
+                icon = load_icon('arrow_right') 
+            
+            #DialogButtonBox: bbox:
+            #    buttons = [
+            #        DialogButton('OK', 'accept'),
+            #        DialogButton('Cancel', 'reject'),
+            #    ]
+
+
+#enamldef Main(Window):
+#    title = 'T'
+#    Container:
+#        PushButton:
+#            text = 'Launch Dialog'
+#            clicked :: JobTaskDialog(self).exec_()
+            
