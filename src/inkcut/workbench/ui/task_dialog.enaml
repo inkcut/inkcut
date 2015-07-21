@@ -75,10 +75,10 @@ enamldef JobTaskDialog(Dialog):
                 icon = load_icon('control_stop')
                 clicked :: model.cancelled = True
             PushButton: pb2:
-                icon << load_icon(model.running and 'control_pause' or 'control_play')
+                icon << load_icon((not model.running or model.paused) and 'control_play' or 'control_pause')
                 clicked :: 
                             if model.running:
-                                model.paused = True
+                                model.paused = not model.paused
                             else:
                                 model.start_plot()
             

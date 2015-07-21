@@ -168,8 +168,8 @@ class LivePlot(PlotBase):
         
         if self.job.media:
             # Also observe any change to job.media and job.device
-            view_items.append(PainterPathPlotItem(self.job.media.path*t,pen=self.pen_media))
-            view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,pen=self.pen_media_padding))
+            view_items.append(PainterPathPlotItem(self.job.media.path*t,pen=self.pen_media,skip_autorange=True))
+            view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
         self.plot = view_items
         return view_items
     
@@ -214,9 +214,9 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
                 view_items.append(PainterPathPlotItem(self.job.offset_path,pen=self.pen_offset))
         if self.job.media:
             # Also observe any change to job.media and job.device
+            view_items.append(PainterPathPlotItem(self.job.media.path*t,pen=self.pen_media,skip_autorange=(False,[0,self.job.size[1]])))
+            view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
             
-            view_items.append(PainterPathPlotItem(self.job.media.path*t,pen=self.pen_media))
-            view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,pen=self.pen_media_padding))
         self.plot = view_items
         
     

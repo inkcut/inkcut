@@ -38,8 +38,8 @@ class JoystickPlugin(Plugin,PlotBase):
         
         if self.device:
             # Also observe any change to job.media and job.device
-            view_items.append(PainterPathPlotItem(self.device.path*t,pen=self.pen_media))
-            view_items.append(PainterPathPlotItem(self.device.padding_path*t,pen=self.pen_media_padding))
+            view_items.append(PainterPathPlotItem(self.device.path*t,pen=self.pen_media,skip_autorange=True))
+            view_items.append(PainterPathPlotItem(self.device.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
         
         self.plot = view_items
         return view_items

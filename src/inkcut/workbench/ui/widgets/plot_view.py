@@ -23,13 +23,26 @@ class PainterPathPlotItem(PlotCurveItem):
         self.path = path*QtGui.QTransform.fromScale(1,-1)
         
         # Trick the checks so it still paints
+        bbox = self.path.boundingRect()
+        self.xData = [bbox.left(),bbox.right()]
+        self.yData = [bbox.bottom(),bbox.top()]
+        
         if 'skip_autorange' in kargs:
-            self.xData = [0]
-            self.yData = [0]
-        else:
-            bbox = self.path.boundingRect()
-            self.xData = [bbox.left(),bbox.right()]
-            self.yData = [bbox.bottom(),bbox.top()]
+            skip = (True,True)
+            if isinstance(kargs['skip_autorange'], (list,tuple)):
+                skip = kargs['skip_autorange']
+            if skip[0]:
+                if isinstance(skip[0], (list,tuple)):
+                    self.xData = skip[0]
+                else:
+                    self.xData = [0]
+            if skip[1]:
+                if isinstance(skip[1], (list,tuple)):
+                    self.yData = skip[1]
+                else:
+                    self.yData = [0]
+        
+            
         
         ##    Test this bug with test_PlotWidget and zoom in on the animated plot
         self.invalidateBounds()
@@ -96,16 +109,13 @@ class PlotView(Control):
     
     multi_axis = d_(Bool(True))
     
-    @observe('data','multi_axis','antialiasing')
+    @observe('data','title','labels','multi_axis','antialiasing')
     def _update_proxy(self, change):
         """ An observer which sends state change to the proxy.
         """
         # The superclass handler implementation is sufficient.
         super(PlotView, self)._update_proxy(change)
         
-    @observe('title','labels')
-    def _labels_changed(self,change):
-        self.proxy.widget.setLabels(title=self.title,**self.labels)
         
     @observe('grid','grid_alpha')
     def _grid_changed(self,change):
@@ -128,9 +138,18 @@ class QtPlotView(QtControl, ProxyPlotView):
         self.set_antialiasing(d.antialiasing)
         self.set_aspect_locked(d.aspect_locked)
         self.set_axis_scales(d.axis_scales)
+        self.set_labels(d.labels)
         self.widget.showGrid(d.grid[0],d.grid[1],d.grid_alpha)
-        self.widget.setLabels(title=d.title,**d.labels)
+        
         d.setup(self.widget)
+        
+    def set_title(self,title):
+        self.set_labels(self.declaration.labels)
+        
+    def set_labels(self,labels):
+        if self.declaration.title:
+            labels['title'] =  self.declaration.title
+        self.widget.setLabels(**labels)
         
     def set_antialiasing(self,enabled):
         self.widget.setAntialiasing(enabled)
