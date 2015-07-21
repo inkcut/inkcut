@@ -89,7 +89,7 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
                         dotted notation. Ex 'inkcut.plugins'
         """
         self.log.debug("Loading plugins from %s"%(path,))
-        for plugin_def in collect_plugins(path,prefix='inkcut',log=self.log):
+        for plugin_def in collect_plugins(path,prefix='',log=self.log):
             try:
                 self.register(plugin_def())
             except:

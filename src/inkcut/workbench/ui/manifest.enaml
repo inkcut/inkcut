@@ -69,6 +69,8 @@ enamldef MainViewManifest(PluginManifest):
             path = '/file/cut'
             label = 'Cut'
             shortcut = 'Ctrl+P'
+            after = 'open'
+            before = 'close'
             command = 'inkcut.workbench.ui.start_job'
             icon = load_icon('chart_curve_go')
         ActionItem:
@@ -79,5 +81,5 @@ enamldef MainViewManifest(PluginManifest):
         ActionItem:
             path = '/edit/redo'
             label = 'Redo'
-            shortcut = 'Ctrl+Shift+Z'
+            shortcut = 'Ctrl+Y'
             icon = load_icon('arrow_redo')

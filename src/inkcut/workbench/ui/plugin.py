@@ -198,7 +198,7 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
     pages = ContainerList(Instance(Page))
     
     def start(self):
-        self.workbench.register_plugins('plugins')
+        self.workbench.register_plugins('inkcut/plugins')
     
     def _default_job(self):
         return Job(document=self.current_document)

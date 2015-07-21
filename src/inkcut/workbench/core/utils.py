@@ -4,24 +4,23 @@ Created on Jul 14, 2015
 
 @author: jrm
 '''
-# -*- coding: utf-8 -*-
-from enaml.workbench.ui.ui_workbench import UIWorkbench
-'''
-Created on Jun 11, 2015
-
-@author: jrm
-'''
 import os
+import sys
 import logging
 from logging import Logger
 from atom.api import Atom,Instance
 from enaml.image import Image
 from enaml.icon import Icon,IconImage
 from enaml.workbench.plugin import Plugin as EnamlPlugin
+from enaml.workbench.ui.ui_workbench import UIWorkbench
 from IPython.config.loader import Config
 
 def icon_path(name):
-    return os.path.join(os.path.dirname(os.getcwd()),'res','icons','%s.png'%name)
+    if hasattr(sys, 'frozen'):
+        path =os.getcwd() # TODO: Do this
+    else:
+        path = os.getcwd()
+    return os.path.join(path,'res','icons','%s.png'%name)
 
 def load_image(name):
     with open(icon_path(name),'rb') as f:

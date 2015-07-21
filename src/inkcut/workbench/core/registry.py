@@ -26,7 +26,7 @@ def collect_data_files(path,inc=['*.*'],exc=['*.pyc','*.enamlc']):
                      
     return data_files
 
-def collect_plugins(path,prefix='inkcut',log=None):
+def collect_plugins(path,prefix='',log=None):
     plugins = []
     for plugin_file in collect_data_files(path, inc=['*.enaml']):
         with enaml.imports():
@@ -34,7 +34,9 @@ def collect_plugins(path,prefix='inkcut',log=None):
                 
                 # Import the file
                 plugin_path = os.path.splitext(plugin_file)[0].replace("\\","/").split("/")
-                plugin_path = '.'.join([prefix]+plugin_path)
+                plugin_path = '.'.join(plugin_path)
+                if prefix:
+                    plugin_path = prefix+'.'+plugin_path
                 mod = importlib.import_module(plugin_path)
                 
                 # Find any PluginManifest subclasses
