@@ -11,3 +11,4 @@ from .parameter_tree_view import ParameterTreeView
 from .data_tree_view import DataTreeView
 from .double_spin_box import DoubleSpinBox
 from .shortcut import Shortcut
+from .key_event import KeyEvent

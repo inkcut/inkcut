@@ -7,13 +7,33 @@ from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
     TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet)
 from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
     ImageView, PushButton, RadioButton, Window,ProgressBar)
-from inkcut.workbench.ui.widgets.plot_view import PlotView
+from inkcut.workbench.ui.widgets.api import PlotView,KeyEvent
 from inkcut.workbench.core.svg import QtSvgDoc
 from inkcut.workbench.core.utils import load_icon
+from enaml.qt import QtGui, QtCore
+from enaml.widgets.spin_box import SpinBox
 
 enamldef JoystickDialog(Dialog):
     title = 'Plotter Control'
     attr model
+    
+    
+    KeyEvent:
+        key_code = QtCore.Qt.Key.Key_Up
+        pressed :: model.move_up()
+        
+    KeyEvent:
+        key_code = QtCore.Qt.Key.Key_Left
+        pressed :: model.move_left()
+        
+    KeyEvent:
+        key_code = QtCore.Qt.Key.Key_Right
+        pressed :: model.move_right()
+    
+    KeyEvent:
+        key_code = QtCore.Qt.Key.Key_Down
+        pressed :: model.move_down()
+    
     TaskDialogStyleSheet:
             pass
     TaskDialogBody:
@@ -26,25 +46,63 @@ enamldef JoystickDialog(Dialog):
         
         TaskDialogCommandArea:
             constraints = [
-                hbox(lbl, spacer, vbox(pb1,
-                                       hbox(pb2,pb3,pb4))),
-                #align('v_center', lbl, pb1,pb2),
+                hbox(vbox(hbox(lbl2,spb1),
+                          lbl1,),spacer,vbox(hbox(lbl3,spb2),
+                                             hbox(lbl4,spb3),),  vbox(hbox(pb5,pb1,pb6),
+                                                         hbox(pb2,pb3,pb4))),
+                align('v_center', lbl2, spb1),
+                align('v_center', lbl3, spb2),
+                align('v_center', lbl4, spb3),
             ]
-            Label: lbl:
+            Label: lbl1:
                 text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(model.device.position[0],model.device.position[1],model.device.position[2] and 'down' or 'up')
-                #checked := details.visible
+            Label: lbl2:
+                text = 'Step'
+            SpinBox: spb1:
+                maximum = 10000
+                single_step = 10
+                value := model.rate
+            
+            Label: lbl3:
+                text = 'Speed'
+            SpinBox: spb2:
+                maximum = 10000
+                single_step = 4
+                value := model.device.speed
+            
+            Label: lbl4:
+                text = 'Force'
+            SpinBox: spb3:
+                maximum = 10000
+                single_step = 10
+                value := model.device.force
+            
+            
+            PushButton: pb5:
+                clicked :: model.set_origin()
+                icon = load_icon('arrow_in')
+                tool_tip = 'set origin'
             PushButton: pb1:
                 clicked :: model.move_up()
                 icon = load_icon('arrow_up')
+                tool_tip = 'move up'
+            PushButton: pb6:
+                clicked :: model.move_to_origin()
+                icon = load_icon('arrow_undo')
+                tool_tip = 'return to origin'
+            
             PushButton: pb2:
                 clicked :: model.move_left()
                 icon = load_icon('arrow_left')
+                tool_tip = 'move left'
             PushButton: pb3:
                 clicked :: model.move_down()
                 icon = load_icon('arrow_down')
+                tool_tip = 'move down'
             PushButton: pb4:
                 clicked :: model.move_right()
-                icon = load_icon('arrow_right') 
+                icon = load_icon('arrow_right')
+                tool_tip = 'move right' 
             
             #DialogButtonBox: bbox:
             #    buttons = [

@@ -9,6 +9,7 @@ import serial
 from inkcut.workbench.core.utils import ConfigurableAtom, LoggingAtom
 from enaml.qt import QtCore
 from inkcut.workbench.core.svg import QtSvgDoc
+from inkcut.workbench.core.area import AreaBase
 
 class IDeviceTransport(LoggingAtom):
     def connect(self,*args,**kwargs):
@@ -54,15 +55,13 @@ class IDeviceProtocol(LoggingAtom):
         self.transport.write(cmd)
         
     
-class Device(ConfigurableAtom):
+class Device(AreaBase):
     name = Unicode('').tag(config=True)
     
-    size = ContainerList(Float(),default=[1000,1000]).tag(config=True)
     scale = ContainerList(Float(),default=[1,1]).tag(config=True)
     uses_roll = Bool(False).tag(config=True)
     
     position = ContainerList(Float(),default=[0.0,0.0,0.0]).tag(config=True)
-    padding = ContainerList(Float(),default=[0.0,0.0,0.0,0.0]).tag(config=True)
     
     model = Instance(QtCore.QRectF)
     
@@ -84,22 +83,6 @@ class Device(ConfigurableAtom):
     
     def _default_transport(self):
         return IDeviceTransport()
-    
-    @property
-    def padding_left(self):
-        return self.padding[0]
-    
-    @property
-    def padding_top(self):
-        return self.padding[1]
-    
-    @property
-    def padding_right(self):
-        return self.padding[2]
-    
-    @property
-    def padding_bottom(self):
-        return self.padding[3]
     
     def connect(self, *args, **kwargs):
         self.transport.connect(self, *args, **kwargs)

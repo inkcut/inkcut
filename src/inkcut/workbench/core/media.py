@@ -4,17 +4,14 @@ Created on Jan 16, 2015
 
 @author: jrm
 '''
-from atom.api import Float,Bool, Instance,Unicode,Int,ContainerList,observe
-from enaml.qt import QtCore, QtGui
-from inkcut.workbench.core.utils import ConfigurableAtom
+from atom.api import Float,Bool, Unicode,Int,ContainerList,observe
+from inkcut.workbench.core.area import AreaBase
 
-class Media(ConfigurableAtom):
+class Media(AreaBase):
     """ Model represnting the plot media """
     name = Unicode().tag(config=True)
     color = Unicode('#000000').tag(config=True)
     
-    size = ContainerList(Float(),default=[1800,2700]).tag(config=True)
-    padding = ContainerList(Float(),default=[10,10,10,10]).tag(config=True) # Left, Top, Right, Bottom
     is_roll = Bool(False).tag(config=True)
     
     used = ContainerList(Float(),default=[0,0]).tag(config=True,help="amount used already (to determine available size)")
@@ -25,65 +22,15 @@ class Media(ConfigurableAtom):
     force = Int(10).tag(config=True)
     speed = Int(10).tag(config=True)
     
-    model = Instance(QtCore.QRectF,())
-    
-        
-    @observe('size','padding')
-    def _sync_size(self,change):
-        self.model.setWidth(self.size[0]-self.used[0])
-        self.model.setHeight(self.size[1]-self.used[1])
-        
-    @property
-    def padding_left(self):
-        return self.padding[0]
-    
-    @property
-    def padding_top(self):
-        return self.padding[1]
-    
-    @property
-    def padding_right(self):
-        return self.padding[2]
-    
-    @property
-    def padding_bottom(self):
-        return self.padding[3]
-        
-    @property
-    def area(self):
-        return self.model
-    
-    def width(self):
-        return self.size[0]
-    
-    def height(self):
-        return self.size[1]
-    
-    
-    @property
-    def available_area(self):
-        x,y = self.padding_left,self.padding_bottom
-        w,h = self.size[0]-(self.padding_right+self.padding_left),self.size[1]-(self.padding_bottom+self.padding_top)
-        return QtCore.QRectF(x,y,w,h)
-        
     def reset(self):
         self.used = (0.0,0.0)
         
-    @property
-    def path(self):
-        media = QtGui.QPainterPath()
-        media.addRect(self.area)
-        return media
-        
-    @property
-    def padding_path(self):
-        # Add a box around the plot
-        # Show plot area
-        media_padding = QtGui.QPainterPath()
-        media_padding.addRect(self.available_area)
-        return media_padding
-        
+    @observe('size','padding')
+    def _sync_size(self,change):
+        self.area.setWidth(self.size[0])
+        self.area.setHeight(self.size[1])
     
+   
         
         
 # class MediaListModel(LoggingConfigurable,QtCore.QAbstractListModel):

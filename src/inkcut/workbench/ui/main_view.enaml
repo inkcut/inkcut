@@ -36,7 +36,7 @@ enamldef MainView(Container):
                     Form:
                         padding = 0
                         ImageView:
-                            image = load_image('shape_square_width')
+                            image = load_image('text_letterspacing')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.size[0], model.units)
                             value ::
@@ -53,7 +53,7 @@ enamldef MainView(Container):
                             minimum = 0.00001
                             maximum = 99999.9
                         ImageView:
-                            image = load_image('shape_square_height')
+                            image = load_image('text_linespacing')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.size[1], model.units)
                             value ::
@@ -68,7 +68,7 @@ enamldef MainView(Container):
                             minimum = 0.00001
                             maximum = 99999.9
                         ImageView:
-                            image = load_image('shape_square_width')
+                            image << load_image(model.job.lock_scale and 'text_kerning' or 'text_letterspacing')
                         DoubleSpinBox:
                             value << 100*model.job.scale[0]
                             value ::
@@ -83,7 +83,7 @@ enamldef MainView(Container):
                             maximum = 99999.9
                         ImageView:
                             visible << not model.job.lock_scale
-                            image = load_image('shape_square_height')
+                            image = load_image('text_linespacing')
                         DoubleSpinBox:
                             visible << not model.job.lock_scale
                             value << 100*model.job.scale[1]
@@ -222,28 +222,28 @@ enamldef MainView(Container):
                     Form:
                         padding = 0
                         ImageView:
-                            image = load_image('shape_align_left')
+                            image = load_image('text_padding_left')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.copy_weedline_padding[0], model.units)
                             value :: model.job.copy_weedline_padding[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                         ImageView:
-                            image = load_image('shape_align_top')
+                            image = load_image('text_padding_top')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.copy_weedline_padding[1], model.units)
                             value :: model.job.copy_weedline_padding[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                         ImageView:
-                            image = load_image('shape_align_right')
+                            image = load_image('text_padding_right')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.copy_weedline_padding[2], model.units)
                             value :: model.job.copy_weedline_padding[2] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                         ImageView:
-                            image = load_image('shape_align_bottom')
+                            image = load_image('text_padding_bottom')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.copy_weedline_padding[3], model.units)
                             value :: model.job.copy_weedline_padding[3] = QtSvgDoc.convertFromUnit(change['value'],model.units)
@@ -284,28 +284,28 @@ enamldef MainView(Container):
                     Form:
                         padding = 0
                         ImageView:
-                            image = load_image('shape_align_left')
+                            image = load_image('text_padding_left')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.media.padding[0], model.units)
                             value :: model.job.media.padding[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                         ImageView:
-                            image = load_image('shape_align_top')
+                            image = load_image('text_padding_top')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.media.padding[1], model.units)
                             value :: model.job.media.padding[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                         ImageView:
-                            image = load_image('shape_align_right')
+                            image = load_image('text_padding_right')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.media.padding[2], model.units)
                             value :: model.job.media.padding[2] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                         ImageView:
-                            image = load_image('shape_align_bottom')
+                            image = load_image('text_padding_bottom')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.media.padding[3], model.units)
                             value :: model.job.media.padding[3] = QtSvgDoc.convertFromUnit(change['value'],model.units)
