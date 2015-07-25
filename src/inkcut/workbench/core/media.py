@@ -25,13 +25,6 @@ class Media(AreaBase):
     def reset(self):
         self.used = (0.0,0.0)
         
-    @observe('size','padding')
-    def _sync_size(self,change):
-        self.area.setWidth(self.size[0])
-        self.area.setHeight(self.size[1])
-    
-   
-        
         
 # class MediaListModel(LoggingConfigurable,QtCore.QAbstractListModel):
 #     class MediaListModelMeta(type(LoggingConfigurable),type(QtCore.QAbstractListModel)):

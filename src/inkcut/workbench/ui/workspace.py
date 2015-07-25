@@ -7,8 +7,7 @@
 #------------------------------------------------------------------------------
 from atom.api import  Unicode, Callable
 
-from enaml.widgets.api import Container,StatusItem
-from enaml.workbench.api import PluginManifest
+from enaml.widgets.api import StatusItem
 from enaml.workbench.ui.api import Workspace
 
 

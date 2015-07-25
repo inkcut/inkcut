@@ -34,7 +34,7 @@ class AreaBase(ConfigurableAtom):
         self.area.setWidth(self.size[0])
         self.area.setHeight(self.size[1])
         self.path = self._default_path()
-        self.padding_path = self._default_path()
+        self.padding_path = self._default_padding_path()
         
     @property
     def padding_left(self):

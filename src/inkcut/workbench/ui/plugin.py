@@ -219,6 +219,11 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
             
         self.plot = view_items
         
+    @observe('job','job.media')
+    def _media_changed(self,change):
+        self.job.media.observe('padding',self._view_changed)
+        self.job.media.observe('size',self._view_changed)
+        
     
     @property
     def window(self):
@@ -226,7 +231,7 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         return ui.window.proxy.widget
     
     def close_document(self):
-        pass
+        self.job = Job()
     
     def open_document(self, path=""):
         """ Sets the current file path, which fires _current_document_changed """
@@ -266,4 +271,22 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         
     def _observe_current_document(self,change):
         self.job = Job(document=self.current_document)
-        
+    
+    def _observe_recent_documents(self,change):
+        print("HELLO",change)
+        if change['type']!='create':
+            ui = self.workbench.get_plugin('enaml.workbench.ui')
+            ui._refresh_actions()
+#         # Trigger a ui action refresh when this changes
+#         return
+#         try:
+#             self.workbench.unregister('inkcut.workspace.ui.recent_docs')
+#         except ValueError:
+#             pass
+#         try:
+#             import enaml
+#             with enaml.imports():
+#                 from inkcut.workbench.ui.manifest import RecentDocsManifest
+#             self.workbench.register(RecentDocsManifest())
+#         except ValueError:
+#             pass

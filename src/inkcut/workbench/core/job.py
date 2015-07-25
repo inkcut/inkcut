@@ -138,7 +138,7 @@ class Job(ConfigurableAtom):
         if change['name']=='copies':
             self._desired_copies = self.copies
         
-        print(change)
+        #print(change)
         #try:
         model = QtGui.QPainterPath()
         
@@ -259,7 +259,7 @@ class Job(ConfigurableAtom):
              
         tl = bbox.topLeft()
         x = tl.x() - padding[Padding.LEFT]
-        y = tl.y() - padding[Padding.BOTTOM]
+        y = tl.y() - padding[Padding.TOP]
         
         w += padding[Padding.LEFT] + padding[Padding.RIGHT]
         h += padding[Padding.TOP] + padding[Padding.BOTTOM]

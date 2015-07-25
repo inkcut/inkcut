@@ -22,7 +22,7 @@ def main_view_factory(workbench):
     space = InkcutWorkspace()
     space.window_title = 'Plot'
     space.content_factory = lambda:MainView(model=plugin)
-    space.manifest_factory = MainViewManifest
+    space.manifest_factory = lambda:MainViewManifest(plugin=plugin)
     return space
 
 def window_factory(workbench):
