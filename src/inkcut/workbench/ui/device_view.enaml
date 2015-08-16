@@ -1,0 +1,56 @@
+
+from atom.api import atomref
+from enaml.image import Image
+from enaml.layout.api import align, hbox, spacer
+from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
+from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet)
+from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
+    ImageView, PushButton, RadioButton, Window,ProgressBar, Form,
+    Notebook, Page, CheckBox,
+)
+from inkcut.workbench.core.svg import QtSvgDoc
+from inkcut.workbench.core.utils import load_icon
+
+
+enamldef DeviceDialog(Dialog):
+    attr device
+    title << '%s - Configure'%device.name
+    TaskDialogBody:
+        TaskDialogContentArea:
+            Notebook: notebook:
+                tab_style = 'document'
+                tab_position = 'left'
+                Page:
+                    title = 'General'
+                    closable = False
+                    Form:
+                        Label:
+                            text = 'Name'
+                        Field:
+                            text := device.name
+                Page:
+                    title = 'Connection'
+                    closable = False
+                Page:
+                    title = 'Registration'
+                    closable = False
+                Page:
+                    title = 'Advanced'
+                    closable = False
+                    
+        
+        TaskDialogCommandArea:
+            constraints = [
+                hbox(spacer, bbox),
+            ]
+        
+            DialogButtonBox: bbox:
+                buttons = [
+                    DialogButton('OK', 'accept'),
+                    DialogButton('Cancel', 'reject'),
+                ]
+            
+
+    

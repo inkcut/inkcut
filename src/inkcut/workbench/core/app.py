@@ -5,15 +5,16 @@ Created on Jul 12, 2015
 @author: jrm
 '''
 import os
-import json
 import logging
 import traceback
-from atom.api import Unicode,Atom
+from atom.api import Unicode,Int
 from enaml.workbench.ui.api import UIWorkbench
 from enaml.qt import QtGui
-from inkcut.workbench.core.utils import SingletonAtom
-from IPython.config.loader import JSONFileConfigLoader,Config
+from enaml.application import timed_call
+from inkcut.workbench.core.utils import SingletonAtom, config_to_json
 from inkcut.workbench.core.registry import collect_plugins
+from IPython.config.loader import JSONFileConfigLoader,Config
+
 
 
 
@@ -22,9 +23,10 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
     status = Unicode()
     app_icon = Unicode('')
     config_file = Unicode('inkcut_config.json')
-    log_dir = Unicode('~/.config/inkcut/workspace/profile_default/logs')
-    working_dir = Unicode('~/.config/inkcut/workspace/profile_default')
-    config_dir = Unicode('~/.config/inkcut/workspace/profile_default')
+    log_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default/logs'))
+    working_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default'))
+    config_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default'))
+    _save_lock = Int()
     
     def _default_log(self):
         log = logging.getLogger()
@@ -37,31 +39,37 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
     def _default_config(self):
         try:
             loader = JSONFileConfigLoader(filename=self.config_file,path=self.config_dir)
-            return loader.load_config()
+            config =  loader.load_config()
+            self.log.debug("Loaded config %s"%config)
+            return config
         except:
             self.log.error(traceback.format_exc())
             return Config()
         
     def _observe_config(self, change):
+        if not self.config:
+            return
         super(InkcutWorkbench, self)._observe_config(change)
-        if 'oldvalue' in change and len(self.config):
-            self.save_config()
+        if 'oldvalue' in change and change['oldvalue']!=change['value']:
+            # Schedule a save to occur, if one is waiting, cancel it
+            def save_job():
+                """ If this is the last one scheduled, actually save 
+                otherwise wait for the latest config (as more changes have occurred).
+                """
+                if self._save_lock==1:
+                    self._save_config()
+                self._save_lock-=1
+            self._save_lock+=1
+            timed_call(500,save_job)
             
-    def save_config(self):
+    def _save_config(self):
         """ Save the instances config variables that are tagged as config """
-        config = {}
-        for k in self.config.keys():
-            for inst in self.config[k]['__config_instances__']:
-                if not isinstance(inst, Atom):
-                    continue
-                for member in inst.members():
-                    if 'config' in member.metadata and member.metadata['config']:
-                        config[k][member.name] = getattr(inst,member.name)
-        
         config_path = os.path.join(self.config_dir,self.config_file)
         self.log.debug("Saving config to %s..."%config_path)
+        if not os.path.exists(self.config_dir):
+            os.makedirs(self.config_dir)
         with open(config_path,'w') as f:
-            json.dump(config, f, indent=3, sort_keys=True)
+            config_to_json(self.config,f)
         
     @property
     def window(self):
@@ -92,6 +100,8 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
         for plugin_def in collect_plugins(path,prefix='',log=self.log):
             try:
                 self.register(plugin_def())
+            except ValueError:
+                pass
             except:
                 self.log.error(traceback.format_exc())
     

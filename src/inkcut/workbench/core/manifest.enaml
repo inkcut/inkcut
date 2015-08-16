@@ -7,7 +7,7 @@
 #------------------------------------------------------------------------------
 from enaml.widgets.api import MenuBar,StatusBar
 from enaml.core.include import Include
-from enaml.workbench.api import Extension, PluginManifest
+from enaml.workbench.api import ExtensionPoint, Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, Branding, MenuItem, ItemGroup
 from enaml.workbench.ui.workbench_window import WorkbenchWindow, Workbench, WindowModel, make_title
 
@@ -27,6 +27,10 @@ def main_view_factory(workbench):
 
 def window_factory(workbench):
     return InkcutWorkbenchWindow()
+
+def plugin_factory():
+    from inkcut.workbench.core.plugin import InkcutCorePlugin
+    return InkcutCorePlugin()
 
 enamldef InkcutWorkbenchWindow(WorkbenchWindow):
     """ The custom MainWindow enamldef used by the Enaml studio.
@@ -60,6 +64,17 @@ enamldef InkcutManifest(PluginManifest):
 
     """
     id = 'inkcut.workbench.core'
+    factory =  plugin_factory
+    
+    ExtensionPoint:
+        id = 'inkcut.workbench.core.devices'
+        
+    ExtensionPoint:
+        id = 'inkcut.workbench.core.protocols'
+        
+    ExtensionPoint:
+        id = 'inkcut.workbench.core.transports'
+    
     Extension:
         id = 'branding'
         point = 'enaml.workbench.ui.branding'

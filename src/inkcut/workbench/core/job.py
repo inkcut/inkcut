@@ -7,7 +7,7 @@ Created on Jan 17, 2015
 from __future__ import division
 import os
 import numpy as np
-from atom.api import Dict,Float,Int,Bool,Instance,ContainerList,Unicode,observe
+from atom.api import Enum,Float,Int,Bool,Instance,ContainerList,Unicode,observe
 from enaml.qt import QtGui, QtCore
 from inkcut.workbench.core.utils import ConfigurableAtom
 from inkcut.workbench.core.media import Media
@@ -34,7 +34,7 @@ class Job(ConfigurableAtom):
     document = Unicode() # Path to document
     
     # Job properties
-    size = ContainerList(Float(),default=[1,1]).tag(config=True) # TODO: hooookk
+    size = ContainerList(Float(),default=[1,1])# TODO: hooookk
     scale = ContainerList(Float(),default=[1,1]).tag(config=True)
     auto_scale = Bool(False).tag(config=True,help="automatically scale if it's too big for the area")
     lock_scale = Bool(True).tag(config=True,help="automatically scale if it's too big for the area")
@@ -54,6 +54,8 @@ class Job(ConfigurableAtom):
     plot_weedline = Bool(False).tag(config=True)
     plot_weedline_padding = ContainerList(Float(),default=[10,10,10,10]).tag(config=True)
     
+    order = Enum('Normal','Reversed').tag(config=True)
+    
     feed_to_end = Bool(True).tag(config=True)
     feed_after = Float(0).tag(config=True)
     
@@ -66,10 +68,12 @@ class Job(ConfigurableAtom):
     _desired_copies = Int(1) # required for auto copies
     
     def _default_device(self):
-        return Device()
+        plugin = self.workbench.get_plugin('inkcut.workbench.core')
+        return plugin.get_device()
     
     def _default_media(self):
-        return Media()
+        plugin = self.workbench.get_plugin('inkcut.workbench.core')
+        return plugin.get_media()
     
     def _observe_document(self,change):
         if self.document and os.path.exists(self.document):
@@ -96,6 +100,9 @@ class Job(ConfigurableAtom):
         
         # Apply transform
         path = self.path * t
+        
+        if self.order=='Reversed':
+            path = path.toReversed()
          
         # Add weedline to copy
         if self.copy_weedline:
@@ -122,10 +129,11 @@ class Job(ConfigurableAtom):
         
         path = path * QtGui.QTransform.fromTranslate(-p.x(),-p.y())
         
+        
         return path
     
     @observe('path','scale','auto_scale','lock_scale','mirror',
-             'align_center','rotation','auto_rotate','copies',
+             'align_center','rotation','auto_rotate','copies','order',
              'copy_spacing','copy_weedline','copy_weedline_padding',
              'plot_weedline','plot_weedline_padding','feed_to_end','feed_after',
              'media','media.size','media.padding','auto_copies')
@@ -138,7 +146,6 @@ class Job(ConfigurableAtom):
         if change['name']=='copies':
             self._desired_copies = self.copies
         
-        #print(change)
         #try:
         model = QtGui.QPainterPath()
         

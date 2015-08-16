@@ -1,0 +1,23 @@
+from enaml.workbench.plugin_manifest import PluginManifest
+from enaml.workbench.api import Extension
+from inkcut.workbench.core.device import DeviceDriver
+
+def jeffy_factory(protocol):
+    from inkcut.plugins.devices.jeffy import JeffyDevice
+    return JeffyDevice(protocol=protocol)
+
+
+enamldef DeviceManifest(PluginManifest):
+    id = 'inkcut.plugins.devices.jeffy'
+    
+    Extension:
+        id = 'protocols'
+        point = 'inkcut.workbench.core.devices'
+        
+        DeviceDriver:
+            id = 'inkcut.plugins.devices.jeffy'
+            model = 'V1'
+            width = '32in'
+            length = '32in'
+            factory = jeffy_factory
+    

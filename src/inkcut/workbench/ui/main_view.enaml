@@ -40,14 +40,15 @@ enamldef MainView(Container):
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.size[0], model.units)
                             value ::
-                                    print("callback",change)
-                                    #changed = QtSvgDoc.convertToUnit(model.job.size[0], model.units) == change['value']
-                                    #if change['oldvalue']>0 and change['value']>0:
-                                    #    s = model.job.scale[0] * change['value']/change['oldvalue']
-                                    #    if model.job.lock_scale:
-                                    #        model.job.scale = [s,s]
-                                    #    else:
-                                    #        model.job.scale[0] = s
+                                    #print("callback",change)
+                                    v = QtSvgDoc.convertToUnit(model.job.size[0], model.units)
+                                    changed = v != change['value']
+                                    if changed and change['oldvalue']>0 and change['value']>0:
+                                        s = model.job.scale[0] * change['value']/change['oldvalue']
+                                        if model.job.lock_scale:
+                                            model.job.scale = [s,s]
+                                        else:
+                                            model.job.scale[0] = s
                                             
                             suffix << " "+model.units
                             minimum = 0.00001
@@ -57,13 +58,15 @@ enamldef MainView(Container):
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.size[1], model.units)
                             value ::
-                                    print("callback",change)
-                                    #if change['oldvalue']>0 and change['value']>0: 
-                                    #    s = model.job.scale[1] * change['value']/change['oldvalue']
-                                    #    if model.job.lock_scale:
-                                    #        model.job.scale = [s,s]
-                                    #    else:
-                                    #        model.job.scale[1] = s
+                                    #print("callback",change)
+                                    v = QtSvgDoc.convertToUnit(model.job.size[1], model.units)
+                                    changed = v != change['value']
+                                    if changed and change['oldvalue']>0 and change['value']>0:
+                                        s = model.job.scale[1] * change['value']/change['oldvalue']
+                                        if model.job.lock_scale:
+                                            model.job.scale = [s,s]
+                                        else:
+                                            model.job.scale[1] = s
                             suffix << " "+model.units
                             minimum = 0.00001
                             maximum = 99999.9
@@ -163,6 +166,7 @@ enamldef MainView(Container):
                             value :: model.job.copy_spacing[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                         Label:
                             text = "Col"
                         DoubleSpinBox:
@@ -170,6 +174,7 @@ enamldef MainView(Container):
                             value :: model.job.copy_spacing[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
         Page:
             title = 'Setup'
             closable = False
@@ -199,7 +204,9 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('chart_line')
                         ComboBox:
-                            items = ['One at a time']
+                            items = list(model.job.__class__.order.items)
+                            index << model.job.__class__.order.items.index(model.job.order)
+                            index :: model.job.order = model.job.__class__.order.items[change['value']]
                             hug_width = 'ignore' # Expanding
                 Container:
                     padding = 0
@@ -228,6 +235,7 @@ enamldef MainView(Container):
                             value :: model.job.copy_weedline_padding[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_top')
                         DoubleSpinBox:
@@ -235,6 +243,7 @@ enamldef MainView(Container):
                             value :: model.job.copy_weedline_padding[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_right')
                         DoubleSpinBox:
@@ -242,6 +251,7 @@ enamldef MainView(Container):
                             value :: model.job.copy_weedline_padding[2] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_bottom')
                         DoubleSpinBox:
@@ -249,6 +259,7 @@ enamldef MainView(Container):
                             value :: model.job.copy_weedline_padding[3] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
 
         Page:
             title = 'Area'
@@ -269,6 +280,7 @@ enamldef MainView(Container):
                             value :: model.job.media.size[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                         ImageView:
                             image = load_image('shape_square_height')
                         DoubleSpinBox:
@@ -276,6 +288,7 @@ enamldef MainView(Container):
                             value :: model.job.media.size[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                 Container:
                     padding = 0
                     
@@ -290,6 +303,7 @@ enamldef MainView(Container):
                             value :: model.job.media.padding[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_top')
                         DoubleSpinBox:
@@ -297,6 +311,7 @@ enamldef MainView(Container):
                             value :: model.job.media.padding[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_right')
                         DoubleSpinBox:
@@ -304,13 +319,15 @@ enamldef MainView(Container):
                             value :: model.job.media.padding[2] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_bottom')
                         DoubleSpinBox:
                             value << QtSvgDoc.convertToUnit(model.job.media.padding[3], model.units)
                             value :: model.job.media.padding[3] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
-                            maximum = 99999.9    
+                            maximum = 99999.9
+                            single_step = 0.1    
                 Container:
                     padding = 0
                     
@@ -346,6 +363,7 @@ enamldef MainView(Container):
                         value :: model.job.feed_after = QtSvgDoc.convertFromUnit(change['value'],model.units)
                         suffix << " "+model.units
                         maximum = 99999.9
+                        single_step = 0.1
         Include:
             objects << filter(None,model.pages)
             

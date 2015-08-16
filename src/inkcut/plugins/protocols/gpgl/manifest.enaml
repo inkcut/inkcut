@@ -1,0 +1,19 @@
+from enaml.workbench.plugin_manifest import PluginManifest
+from enaml.workbench.api import Extension
+from inkcut.workbench.core.device import DeviceProtocol
+
+def gpgl_factory(transport):
+    from inkcut.plugins.protocols.gpgl.plugin import GPGLProtocol
+    return GPGLProtocol(transport=transport)
+
+enamldef GPGLProtocolManifest(PluginManifest):
+    id = 'inkcut.plugins.protocols.gpgl'
+    
+    Extension:
+        id = 'protocols'
+        point = 'inkcut.workbench.core.protocols'
+        
+        DeviceProtocol:
+            id = 'gpgl'
+            name = 'GPGL'
+            factory = gpgl_factory

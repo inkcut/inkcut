@@ -13,7 +13,7 @@ def plugin_factory():
 
 def open_document(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
-    plugin.open_document()
+    plugin.open_document(**event.parameters)
     
 def start_job(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
@@ -27,6 +27,21 @@ def redo(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     plugin.redo()
     
+def device_setup(event):
+    import enaml
+    with enaml.imports():
+        from inkcut.workbench.ui.device_view import DeviceDialog
+    plugin = event.workbench.get_plugin('inkcut.workbench.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    DeviceDialog(ui.window,device=plugin.job.device).exec_()
+
+def media_setup(event):
+    import enaml
+    with enaml.imports():
+        from inkcut.workbench.ui.media_view import MediaDialog
+    plugin = event.workbench.get_plugin('inkcut.workbench.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    MediaDialog(ui.window,media=plugin.job.media).exec_()    
 # def recent_documents_menu(workspace):
 #     plugin = workspace.get_plugin('inkcut.workbench.ui')
 #     return [ ActionItem(
@@ -76,6 +91,12 @@ enamldef MainViewManifest(PluginManifest):
         Command:
             id = 'inkcut.workbench.ui.redo'
             handler = redo
+        Command:
+            id = 'inkcut.workbench.ui.device_setup'
+            handler = device_setup
+        Command:
+            id = 'inkcut.workbench.ui.media_setup'
+            handler = media_setup
             
     Extension:
         id = 'autostart'
@@ -130,6 +151,7 @@ enamldef MainViewManifest(PluginManifest):
             before = 'close'
             command = 'inkcut.workbench.ui.start_job'
             icon = load_icon('chart_curve_go')
+            
         ActionItem:
             path = '/edit/undo'
             label = 'Undo'
@@ -142,3 +164,10 @@ enamldef MainViewManifest(PluginManifest):
             shortcut = 'Ctrl+Y'
             icon = load_icon('arrow_redo')
             command = 'inkcut.workbench.ui.redo'
+            
+        ActionItem:
+            path = '/device/setup'
+            label = 'Setup...'
+            shortcut = 'Ctrl+Alt+P'
+            command = 'inkcut.workbench.ui.device_setup'
+            icon = load_icon('printer')

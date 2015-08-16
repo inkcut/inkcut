@@ -34,8 +34,6 @@ enamldef JoystickDialog(Dialog):
         key_code = QtCore.Qt.Key.Key_Down
         pressed :: model.move_down()
     
-    TaskDialogStyleSheet:
-            pass
     TaskDialogBody:
         TaskDialogContentArea:
             padding = 0

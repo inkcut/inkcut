@@ -143,6 +143,8 @@ class LivePlot(PlotBase):
                         yield step_time # ms
                     
                     _p = p
+        except GeneratorExit:
+            pass
         except:
             self.log.error(traceback.format_exc())
                 
@@ -191,17 +193,23 @@ class LivePlot(PlotBase):
 class MainViewPlugin(SingletonPlugin,PlotBase):
     status = Unicode('None')
     
-    current_document = Unicode('/home/jrm/Pictures/rome.svg')
-    recent_documents = ContainerList(Unicode())
-    show_offset_path = Bool()
+    current_document = Unicode().tag(config=True)
+    recent_documents = ContainerList(Unicode()).tag(config=True)
+    show_offset_path = Bool().tag(config=True)
     
     pages = ContainerList(Instance(Page))
     
     def start(self):
         self.workbench.register_plugins('inkcut/plugins')
+        
+        # Link core device and media to the job
+        core = self.workbench.get_plugin('inkcut.workbench.core')
+        core.observe('device',lambda change:setattr(self.job,'device',change['value']))
+        core.observe('media',lambda change:setattr(self.job,'media',change['value']))
     
     def _default_job(self):
-        return Job(document=self.current_document)
+        core = self.workbench.get_plugin('inkcut.workbench.core')
+        return Job(document=self.current_document,device=core.device,media=core.media)
     
     @observe('job','job.model','job.media','job.device')
     def _view_changed(self,change):
@@ -218,11 +226,13 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
             view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
             
         self.plot = view_items
+        #self.workbench.save_config()
         
     @observe('job','job.media')
     def _media_changed(self,change):
         self.job.media.observe('padding',self._view_changed)
         self.job.media.observe('size',self._view_changed)
+        #self.workbench.save_config()
         
     
     @property
@@ -231,7 +241,10 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         return ui.window.proxy.widget
     
     def close_document(self):
-        self.job = Job()
+        if self.job:
+            self.job._uninit_config()
+            self.job.media.unobserve('padding',self._view_changed)
+            self.job.media.unobserve('size',self._view_changed)
     
     def open_document(self, path=""):
         """ Sets the current file path, which fires _current_document_changed """
@@ -252,7 +265,8 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         self.close_document()
         
         # Instead of append so we get a changed event
-        self.recent_documents.append(path)
+        if path not in self.recent_documents:
+            self.recent_documents.append(path)
         self.current_document = path
         # Plot actually opened in _current_document_changed
         
@@ -270,13 +284,12 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         task = JobTaskDialog(ui.window,model=model).exec_()
         
     def _observe_current_document(self,change):
-        self.job = Job(document=self.current_document)
+        self.job = self._default_job()
     
-    def _observe_recent_documents(self,change):
-        print("HELLO",change)
-        if change['type']!='create':
-            ui = self.workbench.get_plugin('enaml.workbench.ui')
-            ui._refresh_actions()
+    #def _observe_recent_documents(self,change):
+    #    if change['type']!='create':
+    #        ui = self.workbench.get_plugin('enaml.workbench.ui')
+    #        ui._refresh_actions()
 #         # Trigger a ui action refresh when this changes
 #         return
 #         try:

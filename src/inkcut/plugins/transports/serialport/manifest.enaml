@@ -1,0 +1,44 @@
+from enaml.widgets.api import Container,Form,Field,Label,SpinBox,CheckBox,ComboBox
+from enaml.workbench.plugin_manifest import PluginManifest
+from enaml.workbench.api import Extension
+from inkcut.workbench.core.device import  DeviceTransport
+
+def settings_factory():
+    from inkcut.plugins.transports.serialport.plugin import SerialPortSettings
+    return SerialPortSettings
+
+def serial_factory(settings):
+    from inkcut.plugins.transports.serialport.plugin import SerialTransport
+    return SerialTransport(settings=settings)
+
+
+enamldef SerialPortSettingsPage(Container):
+    attr settings
+    Form:
+        Label:
+            text = 'Port'
+        ComboBox: 
+            items << settings.ports
+            index << settings.ports.index(settings.port)
+            index :: settings.port = settings.ports[change['value']]
+        Label:
+            text = 'Baudrate'
+        SpinBox:
+            value := settings.baudrate
+            single_step = 400
+            maximum = 900000
+        # TODO: advanced options
+            
+
+enamldef SerialPortTransportManifest(PluginManifest):
+    id = 'inkcut.plugins.transports.serialport'
+    
+    Extension:
+        id = 'protocols'
+        point = 'inkcut.workbench.core.protocols'
+        
+        DeviceTransport:
+            id = 'serial'
+            name = 'Serial'
+            factory = serial_factory
+            settings = settings_factory

@@ -22,6 +22,9 @@ class DoubleSpinBox(SpinBox):
 
     #: The maximum value for the spin box. Defaults to 100.
     maximum = d_(Float(100))
+    
+    #: The maximum value for the spin box. Defaults to 100.
+    single_step = d_(Float(1.0))
 
     #: The position value of the spin box. The value will be clipped to
     #: always fall between the minimum and maximum.

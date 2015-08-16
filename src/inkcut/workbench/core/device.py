@@ -4,12 +4,13 @@ Created on Jan 16, 2015
 
 @author: jrm
 '''
-from atom.api import Float,Instance,Unicode,Bool,ContainerList,Int
-import serial
-from inkcut.workbench.core.utils import ConfigurableAtom, LoggingAtom
+from atom.api import Atom,Float,Instance,Unicode,Bool,Tuple,ContainerList,Int,Callable
 from enaml.qt import QtCore
+from enaml.core.declarative import Declarative,d_
 from inkcut.workbench.core.svg import QtSvgDoc
 from inkcut.workbench.core.area import AreaBase
+from inkcut.workbench.core.utils import LoggingAtom
+
 
 class IDeviceTransport(LoggingAtom):
     def connect(self,*args,**kwargs):
@@ -30,6 +31,9 @@ class IDeviceTransport(LoggingAtom):
 
 class IDeviceProtocol(LoggingAtom):
     transport = Instance(IDeviceTransport)
+    
+    def _default_transport(self):
+        return IDeviceTransport()
     
     def init(self):
         self.log.debug("device.init()")
@@ -60,8 +64,8 @@ class Device(AreaBase):
     
     scale = ContainerList(Float(),default=[1,1]).tag(config=True)
     uses_roll = Bool(False).tag(config=True)
-    
-    position = ContainerList(Float(),default=[0.0,0.0,0.0]).tag(config=True)
+
+    position = ContainerList(Float(),default=[0.0,0.0,0.0])
     
     model = Instance(QtCore.QRectF)
     
@@ -70,22 +74,16 @@ class Device(AreaBase):
     force = Int(10).tag(config=True)
     speed = Int(20).tag(config=True)
     
-    blade_offset = Float(QtSvgDoc.convertFromUnit(0.25, 'mm'))
-    overcut = Float(QtSvgDoc.convertFromUnit(2, 'mm'))
+    blade_offset = Float(QtSvgDoc.convertFromUnit(0.25, 'mm')).tag(config=True)
+    overcut = Float(QtSvgDoc.convertFromUnit(2, 'mm')).tag(config=True)
     
-    transport_def = Unicode('vycut.core.device.DebugTransport')
-    transport = Instance(IDeviceTransport)
-    protocol_def = Unicode('vycut.core.device.HPGLProtocol')
     protocol = Instance(IDeviceProtocol)
     
     def _default_protocol(self):
         return IDeviceProtocol()
     
-    def _default_transport(self):
-        return IDeviceTransport()
-    
     def connect(self, *args, **kwargs):
-        self.transport.connect(self, *args, **kwargs)
+        self.protocol.transport.connect(self, *args, **kwargs)
     
     def init(self):
         self.protocol.init()
@@ -104,91 +102,73 @@ class Device(AreaBase):
         self.protocol.set_pen(p)
     
     def write(self,cmd):
-        self.transport.write(cmd)
+        self.protocol.transport.write(cmd)
         
     def read(self):
-        return self.transport.read()
+        return self.protocol.transport.read()
         
     def close(self):
-        self.transport.close() 
+        self.protocol.transport.close() 
 
 
-class HPGLProtocol(IDeviceProtocol):
-    def init(self):
-        self.write("IN;")
+class DeviceDriver(Declarative):
+    """ Provide meta info about this device """
+    # ID of the device
+    id = d_(Unicode())
     
-    def move(self,x,y,z):
-        self.write("%s%i,%i;"%(z and "PD" or "PU",x,y))
-        
-    def set_force(self, f):
-        self.write("FS%i;"%f)
-        
-    def set_velocity(self, v):
-        self.write("VS%i;"%v)
-        
-    def set_pen(self, p):
-        self.write("SP%i;"%p)
-        
-class DMPLProtocol(IDeviceProtocol):
-    def init(self):
-        self.write(" ;:H A L0 ")
+    # Name of the device (optional)
+    name = d_(Unicode())
+    # Model of the device (optional)
+    model = d_(Unicode())
     
-    def move(self,x,y,z):
-        self.write("%s%i,%i "%(z and "D" or "U",x,y))
-        
-    def set_pen(self, p):
-        self.write("EC%i "%p)
-        
-    def set_velocity(self, v):
-        self.write("V%i "%v)
-        
-    def set_force(self, f):
-        self.write("BP%i "%f)
-
-class GPGLProtocol(IDeviceProtocol):
-    def init(self):
-        self.write("H")
-        
-    def move(self,x,y,z):
-        self.write("%s%i,%i;"%(z and "M" or "D",x,y))
-        
-    def set_velocity(self, v):
-        self.write("!%i"%v)
-        
-    def set_force(self, f):
-        self.write("*%i"%f)
+    # Manufacturer of the device (optional)
+    manufacturer = d_(Unicode())
     
+    # Width of the device (required)
+    width = d_(Unicode())
+    
+    # Length of the device, if it uses a roll, leave blank
+    length = d_(Unicode())
+    
+    # Step resolution 
+    resolution = d_(Unicode())
+    
+    # Factory to construct the device, 
+    # takes a single argument for the protocol
+    factory = d_(Callable())
+    
+    # IDs of the protocols supported by this device
+    protocols = d_(ContainerList(Unicode()))
+    
+    # IDs of the transports supported by this device
+    connections = d_(ContainerList(Unicode()))  
 
 
-class DebugTransport(IDeviceTransport):
-    pass
-
-class SerialTransport(IDeviceTransport):
-    port = Instance(serial.Serial)
+class DeviceProtocol(Declarative):
+    # Id of the protocol
+    id = d_(Unicode())
     
-    def init(self):
-        self.connect()
+    # Name of the protocol (optional)
+    name = d_(Unicode())
     
-    def connect(self, *args, **kwargs):
-        self.port = serial.Serial(*args, **kwargs)
+    # Factory to construct the protocol, 
+    # takes a single argument for the transport
+    factory = d_(Callable())
     
-    def read(self):
-        return self.port.read()
+class DeviceTransport(Declarative):
+    # Id of the transport
+    id = d_(Unicode())
     
-    def write(self,cmd):
-        self.port.write(cmd)
-        
-    def close(self):
-        self.port.close()
-        
-
-class PrinterTransport(IDeviceTransport):
-    """ TODO: Implement for windows """
-    printer = None
+    # Name of the transport (optional)
+    name = d_(Unicode())
     
-    def connect(self, *args, **kwargs):
-        self.printer = None
+    # Factory to construct the transport
+    factory = d_(Callable())
     
-    def write(self,cmd):
-        pass
+    _transport = Instance(IDeviceTransport)
+    
+    settings = d_(Callable())
+    
+    _settings = Instance(Atom) 
+    
     
