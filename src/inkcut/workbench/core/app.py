@@ -8,6 +8,7 @@ import os
 import logging
 import traceback
 from atom.api import Unicode,Int
+from inkcut.workbench.ui.widgets.api import *
 from enaml.workbench.ui.api import UIWorkbench
 from enaml.qt import QtGui
 from enaml.application import timed_call
@@ -21,6 +22,7 @@ from IPython.config.loader import JSONFileConfigLoader,Config
 class InkcutWorkbench(UIWorkbench,SingletonAtom):
     
     status = Unicode()
+    app_name = Unicode('Inkcut')
     app_icon = Unicode('')
     config_file = Unicode('inkcut_config.json')
     log_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default/logs'))
@@ -47,6 +49,8 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
             return Config()
         
     def _observe_config(self, change):
+        """ This gets called a lot, so to minimize actual writes to the config file
+        only write after a timer expires. """
         if not self.config:
             return
         super(InkcutWorkbench, self)._observe_config(change)
@@ -73,6 +77,7 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
         
     @property
     def window(self):
+        """ Return the main UI window or a dialog if it wasn't made yet (during loading) """
         try:
             ui = self.get_plugin('enaml.workbench.ui')
             return ui.window.proxy.widget
@@ -80,16 +85,17 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
             return QtGui.QDialog()
     
     def show_critical(self,title,message,*args):
-        return QtGui.QMessageBox.critical(self.window,title,message,*args)
+        """ Popup a error dialog box """
+        return QtGui.QMessageBox.critical(self.window,"{0} - {1}".format(self.app_name,title),message,*args)
         
     def show_warning(self,title,message,*args):
-        return QtGui.QMessageBox.warning(self.window,title,message,*args)
+        return QtGui.QMessageBox.warning(self.window,"{0} - {1}".format(self.app_name,title),message,*args)
         
     def show_information(self,title,message,*args):
-        return QtGui.QMessageBox.information(self.window,title,message,*args)
+        return QtGui.QMessageBox.information(self.window,"{0} - {1}".format(self.app_name,title),message,*args)
     
     def show_about(self,title,message,*args):
-        return QtGui.QMessageBox.about(self.window,title,message,*args)
+        return QtGui.QMessageBox.about(self.window,"{0} - {1}".format(self.app_name,title),message,*args)
     
     def register_plugins(self,path):
         """ Register all plugins found in the given path 

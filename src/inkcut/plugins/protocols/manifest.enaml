@@ -1,0 +1,53 @@
+from enaml.workbench.plugin_manifest import PluginManifest
+from enaml.workbench.api import Extension
+from inkcut.workbench.core.device import DeviceProtocol
+
+def gpgl_factory(transport):
+    from inkcut.plugins.protocols.gpgl import GPGLProtocol
+    return GPGLProtocol(transport=transport)
+
+def hpgl_factory(transport):
+    from inkcut.plugins.protocols.hpgl import HPGLProtocol
+    return HPGLProtocol(transport=transport)
+
+def dmpl_factory(transport):
+    from inkcut.plugins.protocols.dmpl import DMPLProtocol
+    return DMPLProtocol(transport=transport)
+
+def mock_factory(transport):
+    from inkcut.plugins.protocols.mock import MockProtocol
+    return MockProtocol(transport=transport)
+
+enamldef ProtocolPluginManifest(PluginManifest):
+    """ Add new protocols here
+    
+    All protocols should implement the IDeviceProtocol
+    
+    """
+    id = 'inkcut.plugins.protocols.builtin'
+    
+    Extension:
+        id = 'protocols'
+        point = 'inkcut.workbench.core.protocols'
+        
+        DeviceProtocol:
+            id = 'gpgl'
+            name = 'GPGL'
+            factory = gpgl_factory
+            
+        DeviceProtocol:
+            id = 'hpgl'
+            name = 'HPGL'
+            factory = hpgl_factory
+            
+        DeviceProtocol:
+            id = 'dmpl'
+            name = 'DMPL'
+            factory = dmpl_factory
+            
+        DeviceProtocol:
+            id = 'mock'
+            name = 'Mock'
+            factory = mock_factory
+            
+        

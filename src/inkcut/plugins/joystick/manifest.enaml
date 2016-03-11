@@ -2,7 +2,7 @@ import traceback
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
 from enaml.workbench.core.command import Command
-from inkcut.workbench.core.utils import load_icon
+from inkcut.workbench.core.utils import menu_icon, load_icon
 
 def plugin_factory():
     from inkcut.plugins.joystick.plugin import JoystickPlugin

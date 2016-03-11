@@ -69,11 +69,11 @@ class Job(ConfigurableAtom):
     
     def _default_device(self):
         plugin = self.workbench.get_plugin('inkcut.workbench.core')
-        return plugin.get_device()
+        return plugin.device
     
     def _default_media(self):
         plugin = self.workbench.get_plugin('inkcut.workbench.core')
-        return plugin.get_media()
+        return plugin.media
     
     def _observe_document(self,change):
         if self.document and os.path.exists(self.document):
@@ -286,9 +286,9 @@ class Job(ConfigurableAtom):
         for i in range(self.model.elementCount()):
             e = self.model.elementAt(i)
             if e.isMoveTo():
-                path.lineTo(e)
+                path.lineTo(e.x,e.y)
             else:
-                path.moveTo(e)
+                path.moveTo(e.x,e.y)
         return path
     
     @property        

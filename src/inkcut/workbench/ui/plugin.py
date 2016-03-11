@@ -200,8 +200,6 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
     pages = ContainerList(Instance(Page))
     
     def start(self):
-        self.workbench.register_plugins('inkcut/plugins')
-        
         # Link core device and media to the job
         core = self.workbench.get_plugin('inkcut.workbench.core')
         core.observe('device',lambda change:setattr(self.job,'device',change['value']))
@@ -209,7 +207,13 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
     
     def _default_job(self):
         core = self.workbench.get_plugin('inkcut.workbench.core')
-        return Job(document=self.current_document,device=core.device,media=core.media)
+        try:
+            return Job(document=self.current_document,device=core.device,media=core.media)
+        except Exception as e:
+            context = dict(doc=self.current_document,msg=e)
+            self.log.error(traceback.format_exc())
+            self.workbench.show_critical("Error opening {doc}".format(**context),"Sorry, could not open {doc}.\n\nError: {msg}".format(**context))
+            return Job()
     
     @observe('job','job.model','job.media','job.device')
     def _view_changed(self,change):
@@ -255,7 +259,10 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
                     open_dir = document
                     break
             
-            path = QtGui.QFileDialog.getOpenFileName(self.window, self.window.tr("Open SVG File"),open_dir, "*.svg")[0]
+            result = QtGui.QFileDialog.getOpenFileName(self.window, self.window.tr("Open SVG File"),open_dir, "*.svg") 
+            if not result:
+                return # Cancelled
+            path = result
         
         if not os.path.exists(path):
             self.log.debug("Cannot open %s, it does not exist!"%path)
@@ -267,6 +274,7 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         # Instead of append so we get a changed event
         if path not in self.recent_documents:
             self.recent_documents.append(path)
+        self.log.info("Opening {doc}".format(doc=path))
         self.current_document = path
         # Plot actually opened in _current_document_changed
         
@@ -285,7 +293,6 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         
     def _observe_current_document(self,change):
         self.job = self._default_job()
-    
     #def _observe_recent_documents(self,change):
     #    if change['type']!='create':
     #        ui = self.workbench.get_plugin('enaml.workbench.ui')

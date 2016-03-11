@@ -2,13 +2,19 @@
 '''
 Created on Jan 5, 2015
 
-@author: frmdstryr@gmail.com
+Parses an SVG document into a QPainterPath.
+
+Adapted from inkscape's path parsers written by Aaron Spike.
+
+@author: Jairus Martin, frmdstryr@gmail.com
+@author: Aaron Spike, aaron@ekips.org
 '''
 import re
 import math
 from lxml import etree
-from enaml.qt import QtCore,QtGui
 from copy import deepcopy
+from enaml.qt import QtGui,QtCore
+
 
 class QtSvgItem(QtGui.QPainterPath):
     tag = None

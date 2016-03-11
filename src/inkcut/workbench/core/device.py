@@ -172,3 +172,6 @@ class DeviceTransport(Declarative):
     _settings = Instance(Atom) 
     
     
+class DeviceMedia(Declarative):
+    # Id of the media
+    id = d_(Unicode())

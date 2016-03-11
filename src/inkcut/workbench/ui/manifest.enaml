@@ -2,10 +2,10 @@ import traceback
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
 from enaml.workbench.core.command import Command
-from inkcut.workbench.core.utils import load_icon
 from enaml.workbench.ui.autostart import Autostart
 from enaml.core.looper import Looper
 from enaml.core.include import Include
+from inkcut.workbench.core.utils import menu_icon
 
 def plugin_factory():
     from inkcut.workbench.ui.plugin import MainViewPlugin
@@ -133,7 +133,7 @@ enamldef MainViewManifest(PluginManifest):
             label = 'Open'
             shortcut = 'Ctrl+O'
             command = 'inkcut.workbench.ui.open'
-            icon = load_icon('folder_page')
+            icon = menu_icon('folder_page')
         
         Looper:
             iterable << plugin.recent_documents
@@ -150,19 +150,19 @@ enamldef MainViewManifest(PluginManifest):
             after = 'open'
             before = 'close'
             command = 'inkcut.workbench.ui.start_job'
-            icon = load_icon('chart_curve_go')
+            icon = menu_icon('chart_curve_go')
             
         ActionItem:
             path = '/edit/undo'
             label = 'Undo'
             shortcut = 'Ctrl+Z'
-            icon = load_icon('arrow_undo')
+            icon = menu_icon('arrow_undo')
             command = 'inkcut.workbench.ui.undo'
         ActionItem:
             path = '/edit/redo'
             label = 'Redo'
             shortcut = 'Ctrl+Y'
-            icon = load_icon('arrow_redo')
+            icon = menu_icon('arrow_redo')
             command = 'inkcut.workbench.ui.redo'
             
         ActionItem:
@@ -170,4 +170,4 @@ enamldef MainViewManifest(PluginManifest):
             label = 'Setup...'
             shortcut = 'Ctrl+Alt+P'
             command = 'inkcut.workbench.ui.device_setup'
-            icon = load_icon('printer')
+            icon = menu_icon('printer')

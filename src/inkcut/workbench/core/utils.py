@@ -34,6 +34,12 @@ def load_icon(name):
     icg = IconImage(image=img) 
     return Icon(images=[icg])
 
+def menu_icon(name):
+    """ Icons don't look good on Linux/osx menu's """
+    if sys.platform=='win32':
+        return load_icon(name)
+    return None
+
 class SafeJsonEncoder(JSONEncoder):
     def default(self, o):
         return o

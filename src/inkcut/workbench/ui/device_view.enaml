@@ -21,7 +21,7 @@ enamldef DeviceDialog(Dialog):
         TaskDialogContentArea:
             Notebook: notebook:
                 tab_style = 'document'
-                tab_position = 'left'
+                #tab_position = 'left'
                 Page:
                     title = 'General'
                     closable = False

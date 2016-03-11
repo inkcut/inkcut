@@ -8,5 +8,5 @@ from inkcut.workbench.core.device import Device
 
 
 class GenericDevice(Device):
-    
+    pass
     
