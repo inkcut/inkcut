@@ -7,8 +7,7 @@ Created on Aug 2, 2015
 from atom.api import Instance, List, Unicode
 from inkcut.workbench.core.utils import SingletonPlugin
 from inkcut.workbench.core.media import Media
-from inkcut.workbench.core.device import Device, DeviceTransport, DeviceProtocol,\
-    DeviceDriver
+from inkcut.workbench.core.device import Device, DeviceProtocol,DeviceDriver
 
 
 DEVICES_POINT = 'inkcut.workbench.core.devices'

@@ -6,7 +6,7 @@ def generic_factory(protocol):
     from inkcut.plugins.devices.generic import GenericDevice
     return GenericDevice(protocol=protocol)
 
-enamldef BuiltinDeviceManifest(PluginManifest):
+enamldef DeviceManifest(PluginManifest):
     id = 'inkcut.plugins.devices.builtin'
     
     Extension:

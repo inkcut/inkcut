@@ -6,16 +6,18 @@ Created on Jul 14, 2015
 '''
 import os
 import sys
+import json
 import logging
 from logging import Logger
+from json.encoder import JSONEncoder
 from atom.api import Atom,Instance,Bool
 from enaml.image import Image
 from enaml.icon import Icon,IconImage
 from enaml.workbench.plugin import Plugin as EnamlPlugin
 from enaml.workbench.ui.ui_workbench import UIWorkbench
-from IPython.config.loader import Config
-import json
-from json.encoder import JSONEncoder
+from traitlets.config.loader import Config
+from twisted.internet.defer import Deferred
+from twisted.internet import reactor
 
 def icon_path(name):
     if hasattr(sys, 'frozen'):
@@ -47,6 +49,11 @@ class SafeJsonEncoder(JSONEncoder):
 
 def config_to_json(config,fp):
     return json.dump(config,fp,cls=SafeJsonEncoder,indent=3,sort_keys=True)
+
+def async_sleep(sec):
+    d = Deferred()
+    reactor.callLater(sec,d.callback,None)
+    return d
 
 
 class WorkbenchAtom(Atom):

@@ -9,7 +9,7 @@ from inkcut.workbench.core.utils import ConfigurableAtom
 from enaml.qt import QtCore,QtGui
 
 class AreaBase(ConfigurableAtom):
-    
+    model = Instance(QtCore.QRectF) # Qt model representing this area
     size = ContainerList(Float(),default=[1800,2700]).tag(config=True)
     padding = ContainerList(Float(),default=[10,10,10,10]).tag(config=True) # Left, Top, Right, Bottom
     area = Instance(QtCore.QRectF)

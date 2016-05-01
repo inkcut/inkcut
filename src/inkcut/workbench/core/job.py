@@ -7,12 +7,13 @@ Created on Jan 17, 2015
 from __future__ import division
 import os
 import numpy as np
-from atom.api import Enum,Float,Int,Bool,Instance,ContainerList,Unicode,observe
+from atom.api import Enum,Float,Int,Bool,Instance,ContainerList,Range,Unicode,observe
 from enaml.qt import QtGui, QtCore
 from inkcut.workbench.core.utils import ConfigurableAtom
 from inkcut.workbench.core.media import Media
 from inkcut.workbench.core.device import Device
 from inkcut.workbench.core.svg import QtSvgDoc
+from datetime import datetime
 
 class Padding:
     LEFT = 0
@@ -22,6 +23,16 @@ class Padding:
 
 class JobError(Exception):
     pass
+
+class JobInfo(ConfigurableAtom):
+    """ Job metadata """
+    done = Bool(False)
+    cancelled = Bool(False)
+    paused = Bool(False)
+    started = Instance(datetime)
+    ended = Instance(datetime)
+    progress = Range(0,100,0)
+    data = Unicode()
 
 class Job(ConfigurableAtom):
     """ 
@@ -33,7 +44,9 @@ class Job(ConfigurableAtom):
     device = Instance(Device)
     document = Unicode() # Path to document
     
-    # Job properties
+    info = Instance(JobInfo,(),{})
+    
+    # Job properties used for generating the plot
     size = ContainerList(Float(),default=[1,1])# TODO: hooookk
     scale = ContainerList(Float(),default=[1,1]).tag(config=True)
     auto_scale = Bool(False).tag(config=True,help="automatically scale if it's too big for the area")
@@ -63,8 +76,9 @@ class Job(ConfigurableAtom):
     
     path = Instance(QtGui.QPainterPath) # Original path
     model = Instance(QtGui.QPainterPath) # Copy using job properties
+    device_model = Instance(QtGui.QPainterPath) # Device's copy of the job
     
-    _blocked = Bool(False)
+    _blocked = Bool(False) # block change events
     _desired_copies = Int(1) # required for auto copies
     
     def _default_device(self):
@@ -203,6 +217,9 @@ class Job(ConfigurableAtom):
         
         # Set new model
         self.model = model#.simplified()
+        
+        # Set device model
+        self.device_model = self.device.prepare_job(self)
         #except:
         #    # Undo the change
         #    if 'oldvalue' in change:
@@ -340,11 +357,15 @@ class Job(ConfigurableAtom):
         else: # Fill stack
             self.copies = self.copies - copies_left
     
-    
-    
     def clone(self):
         """ Return a cloned instance of this object """
         clone = Job(**self.members())
         return clone
+    
+    def submit(self):
+        self.device.add_job(self)
         
+    def cancel(self):
+        self.device.cancel_job(self)
+            
         

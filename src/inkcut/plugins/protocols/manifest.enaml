@@ -1,5 +1,11 @@
-from enaml.workbench.plugin_manifest import PluginManifest
+# -*- coding: utf-8 -*-
+'''
+Created on Jul 25, 2015
+
+@author: jrm
+'''
 from enaml.workbench.api import Extension
+from enaml.workbench.plugin_manifest import PluginManifest
 from inkcut.workbench.core.device import DeviceProtocol
 
 def gpgl_factory(transport):
@@ -21,7 +27,8 @@ def mock_factory(transport):
 enamldef ProtocolPluginManifest(PluginManifest):
     """ Add new protocols here
     
-    All protocols should implement the IDeviceProtocol
+    All protocols should implement the IDeviceProtocol and then
+    register as an extension to the point 'inkcut.workbench.core.protocols'
     
     """
     id = 'inkcut.plugins.protocols.builtin'

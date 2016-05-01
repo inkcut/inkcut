@@ -16,12 +16,11 @@ from inkcut.workbench.core.utils import load_icon
 
 enamldef DeviceDialog(Dialog):
     attr device
-    title << '%s - Configure'%device.name
+    title << '{} - Configure'.format(device.name or "Unamed")
     TaskDialogBody:
         TaskDialogContentArea:
             Notebook: notebook:
                 tab_style = 'document'
-                #tab_position = 'left'
                 Page:
                     title = 'General'
                     closable = False
@@ -30,6 +29,15 @@ enamldef DeviceDialog(Dialog):
                             text = 'Name'
                         Field:
                             text := device.name
+                        Label:
+                            text = 'Width'
+                        Field:
+                            text << str(device.size[0])
+                        Label:
+                            text = 'Length'
+                        Field:
+                            text << str(device.size[1])
+                            
                 Page:
                     title = 'Connection'
                     closable = False
