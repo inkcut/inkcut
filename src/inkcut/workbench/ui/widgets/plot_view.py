@@ -128,7 +128,7 @@ class QtPlotView(QtControl, ProxyPlotView):
     _views = List()
     _colors = List(default=['r','g','b'])
     def create_widget(self):
-        self.widget = PlotWidget(self.parent_widget())
+        self.widget = PlotWidget(self.parent_widget(),background='w')
 
     def init_widget(self):
         super(QtPlotView, self).init_widget()
