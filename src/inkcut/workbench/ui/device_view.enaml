@@ -1,5 +1,5 @@
 
-from atom.api import atomref
+from atom.api import atomref,Unicode,Instance,List,Bool
 from enaml.image import Image
 from enaml.layout.api import align, hbox, spacer
 from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
@@ -8,15 +8,43 @@ from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
     TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet)
 from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
     ImageView, PushButton, RadioButton, Window,ProgressBar, Form,
-    Notebook, Page, CheckBox,
+    Notebook, Page, CheckBox, ObjectCombo
 )
 from inkcut.workbench.core.svg import QtSvgDoc
-from inkcut.workbench.core.utils import load_icon
+from inkcut.workbench.core.utils import load_icon, LoggingAtom
+from inkcut.workbench.core.device import DeviceDriver,DeviceProtocol,\
+    DeviceTransport
+from enaml.core.conditional import Conditional
+from inkcut.workbench.ui.widgets.double_spin_box import DoubleSpinBox
+from enaml.core.include import Include
 
+class DeviceConfiguration(LoggingAtom):
+    devices = List()
+    manufacturer = Unicode()
+    model = Unicode()
+    driver = Instance(DeviceDriver)
+    show_advanced = Bool(False)
+    connection_type = Unicode()
+    connection = Instance(DeviceTransport)
+    protocol_id = Unicode()
+    protocol = Instance(DeviceProtocol)
+    
+    def _observe_manufacturer(self,change):
+        self.model = ""
+        self.driver = None
+    
+    def _observe_model(self,change):
+        if not self.devices:
+            return
+        drivers = [dev for dev in self.devices 
+                        if dev.manufacturer==self.manufacturer and dev.model==self.model]
+        self.driver = drivers[0] if drivers else None
 
 enamldef DeviceDialog(Dialog):
+    attr plugin
     attr device
-    title << '{} - Configure'.format(device.name or "Unamed")
+    attr model = DeviceConfiguration()
+    title << '{}{} - Setup'.format(model.manufacturer if model.manufacturer else "Device"," "+model.model if model.model else "")
     TaskDialogBody:
         TaskDialogContentArea:
             Notebook: notebook:
@@ -26,29 +54,71 @@ enamldef DeviceDialog(Dialog):
                     closable = False
                     Form:
                         Label:
-                            text = 'Name'
-                        Field:
-                            text := device.name
+                            text = 'Manufacturer'
+                        ObjectCombo:
+                            items << sorted(set([dev.manufacturer for dev in plugin._devices]))
+                            selected := model.manufacturer
                         Label:
-                            text = 'Width'
-                        Field:
-                            text << str(device.size[0])
-                        Label:
-                            text = 'Length'
-                        Field:
-                            text << str(device.size[1])
+                            text = 'Model'
+                        ObjectCombo:
+                            items << sorted(set([dev.model for dev in plugin._devices if dev.manufacturer==model.manufacturer]))
+                            selected :: 
+                                        model.devices = plugin._devices
+                                        model.model = change['value']
+                            selected << model.model
+                                        
+                        Conditional:
+                            condition<< model.driver is not None
+                            Label:
+                                text = 'Width'
+                            Label:
+                                text << model.driver.width if model.driver else ""
+
+                            Conditional:
+                                condition << bool(model.driver and model.driver.length)
+                                Label:
+                                    text = 'Length'
+                                Label:
+                                    text << str(model.driver.length)
+                            CheckBox:
+                                text << "Show advanced settings"
+                                checked := model.show_advanced
+                Conditional:
+                    condition<< model.driver is not None    
+                    Page:
+                        title = 'Connection'
+                        closable = False
+                        Form:
+                            Label:
+                                text = 'Type'
+                            ObjectCombo:
+                                items << model.driver.connections
+                                selected := model.connection_type
                             
-                Page:
-                    title = 'Connection'
-                    closable = False
-                Page:
-                    title = 'Registration'
-                    closable = False
-                Page:
-                    title = 'Advanced'
-                    closable = False
-                    
-        
+                        Conditional:
+                            condition << bool(model.connection_type)
+                            Label:
+                                text << "Selected {}".format(model.connection_type)
+                            #Include:
+                            #    objects << model.driver
+                    Page:
+                        title = 'Calibration'
+                        closable = False
+                    Conditional:
+                        condition << model.show_advanced
+                        Page:
+                            title = 'Advanced'
+                            closable = False
+                            
+                            Form:
+                                Label:
+                                    text = 'Protocol'
+                                
+                                ObjectCombo:
+                                    items << model.driver.protocols
+                                    selected := model.protocol_id
+                            
+            
         TaskDialogCommandArea:
             constraints = [
                 hbox(spacer, bbox),

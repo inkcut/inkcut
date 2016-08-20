@@ -1,10 +1,6 @@
 from enaml.workbench.plugin_manifest import PluginManifest
 from enaml.workbench.api import Extension
-from inkcut.workbench.core.device import DeviceDriver
-
-def generic_factory(protocol):
-    from inkcut.plugins.devices.generic import GenericDevice
-    return GenericDevice(protocol=protocol)
+from inkcut.workbench.core.device import DeviceDriver, generic_factory
 
 enamldef DeviceManifest(PluginManifest):
     id = 'inkcut.plugins.devices.builtin'
@@ -17,7 +13,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Inkcut'
             model = 'Virtual device'
             width = '60cm'
-            factory = generic_factory
             protocols = ['debug']
             connections = ['virtual']
         
@@ -25,7 +20,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'US Cutter'
             model = 'Refine MH-1351'
             width = '120cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -33,15 +27,13 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'US Cutter'
             model = 'Refine MH-721'
             width = '60cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
-            connections = ['serial']
+            connections = ['serial','printer']
             
         DeviceDriver:
             manufacturer = 'US Cutter'
             model = 'Laser Point'
             width = '61cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -49,7 +41,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Graphtec'
             model = 'CE5000-60'
             width = '60cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl','gpgl']
             connections = ['serial']
             
@@ -58,7 +49,6 @@ enamldef DeviceManifest(PluginManifest):
             model = '8000-130'
             width = '130cm'
             length = '700cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl','gpgl']
             connections = ['serial']
             
@@ -66,7 +56,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Ioline'
             model = 'Classic'
             width = '60cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -74,7 +63,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Creation'
             model = 'PCut CT-630'
             width = '61cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -82,7 +70,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Mimaki'
             model = 'CG-60ST'
             width = '60cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -90,7 +77,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Gcc'
             model = 'Bob cat 60'
             width = '60cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -98,7 +84,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Summa'
             model = 'D120R'
             width = '120cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -106,7 +91,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Summa'
             model = 'T600'
             width = '575cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -114,7 +98,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Roland'
             model = 'CM 24'
             width = '610cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -123,7 +106,6 @@ enamldef DeviceManifest(PluginManifest):
             model = 'CX-24'
             width = '60cm'
             length = '50cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -131,7 +113,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'SeikiTech'
             model = 'SK-870T'
             width = '86cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -139,7 +120,6 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Redsail'
             model = 'RS1360C'
             width = '120cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']
             
@@ -147,6 +127,5 @@ enamldef DeviceManifest(PluginManifest):
             manufacturer = 'Rheinstern'
             model = ' LB-720A'
             width = '720cm'
-            factory = generic_factory
             protocols = ['hpgl','dmpl']
             connections = ['serial']

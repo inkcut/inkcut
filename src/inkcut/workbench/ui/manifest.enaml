@@ -33,7 +33,7 @@ def device_setup(event):
         from inkcut.workbench.ui.device_view import DeviceDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
-    DeviceDialog(ui.window,device=plugin.job.device).exec_()
+    DeviceDialog(ui.window,plugin=event.workbench.get_plugin('inkcut.workbench.core'),device=plugin.job.device).exec_()
 
 def media_setup(event):
     import enaml

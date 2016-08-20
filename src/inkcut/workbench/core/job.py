@@ -219,7 +219,7 @@ class Job(ConfigurableAtom):
         self.model = model#.simplified()
         
         # Set device model
-        self.device_model = self.device.prepare_job(self)
+        self.device_model = self.device.driver.prepare_job(self)
         #except:
         #    # Undo the change
         #    if 'oldvalue' in change:

@@ -8,21 +8,21 @@ from enaml.workbench.api import Extension
 from enaml.workbench.plugin_manifest import PluginManifest
 from inkcut.workbench.core.device import DeviceProtocol
 
-def gpgl_factory(transport):
+def gpgl_factory():
     from inkcut.plugins.protocols.gpgl import GPGLProtocol
-    return GPGLProtocol(transport=transport)
+    return GPGLProtocol()
 
-def hpgl_factory(transport):
+def hpgl_factory():
     from inkcut.plugins.protocols.hpgl import HPGLProtocol
-    return HPGLProtocol(transport=transport)
+    return HPGLProtocol()
 
-def dmpl_factory(transport):
+def dmpl_factory():
     from inkcut.plugins.protocols.dmpl import DMPLProtocol
-    return DMPLProtocol(transport=transport)
+    return DMPLProtocol()
 
-def mock_factory(transport):
-    from inkcut.plugins.protocols.mock import MockProtocol
-    return MockProtocol(transport=transport)
+def mock_factory():
+    from inkcut.plugins.protocols.debug import DebugProtocol
+    return DebugProtocol()
 
 enamldef ProtocolPluginManifest(PluginManifest):
     """ Add new protocols here

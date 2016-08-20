@@ -7,7 +7,7 @@ Created on Jan 16, 2015
 import sys
 import traceback
 from datetime import datetime
-from atom.api import Float,Instance,Unicode,Bool,ForwardInstance,ContainerList,Int,Callable
+from atom.api import observe,Float,Instance,Unicode,Bool,ForwardInstance,ContainerList,Int,Callable
 from enaml.core.declarative import Declarative,d_
 from enaml.qt import QtCore, QtGui
 from inkcut.workbench.core.svg import QtSvgDoc
@@ -69,7 +69,10 @@ class Device(AreaBase):
     position = ContainerList(Float(),default=[0.0,0.0,0.0])
     
     # Driver handles 
-    jobs = ContainerList()
+    jobs = ContainerList(ForwardInstance(deferred_job))
+    
+    # Active driver 
+    driver = ForwardInstance(lambda:Driver)
     
     def is_supported(self):
         """ Return True if the device is supported. """
@@ -84,10 +87,7 @@ class Device(AreaBase):
         if job in self.jobs and not job.info.done:
             job.info.cancelled = True
         
-    def _jobs_changed(self,change):
-        """ When a job is added, start to process it, or add it to the queue"""
-        self._process_jobs()
-    
+    @observe('jobs')
     @inlineCallbacks
     def _process_jobs(self):
         """ Loop that handles any jobs"""
@@ -106,13 +106,17 @@ class Device(AreaBase):
         job.info.progress = 0
         self.busy = True
         try:
-            yield self.process_job()
+            yield self.driver.process_job(job)
         except Exception as e:
             job.info.status = str(e)
             self.log.error(traceback.format_exc())
         finally:
             self.busy = False
             job.info.ended = datetime.now()
+    
+
+class Driver(LoggingAtom):
+    """ A Driver is a class that handles processing a Job"""
     
     @inlineCallbacks
     def process_job(self,job):
@@ -133,8 +137,8 @@ class Device(AreaBase):
         @return: Instance of QPainterPath 
         """
         return job.model
-        
-class StreamDevice(Device):
+       
+class StreamDriver(Driver):
     """ A device that sends data in real time.  It handles the entire process of iterating over 
         the job's path, interpolating it at equal distances and sending each point to the device 
         using the correct protocol.
@@ -213,7 +217,7 @@ class StreamDevice(Device):
         """ Called after iterating over the path. Used to close the connection or send any finalization commands."""
         pass
     
-class SerialDevice(StreamDevice):
+class SerialDriver(StreamDriver):
     serial_port = ForwardInstance(lambda:SerialPort)
     
     def is_supported(self):
@@ -224,7 +228,7 @@ class SerialDevice(StreamDevice):
             return False
 
     def make_connection(self, job):
-        protocol = super(SerialDevice, self).make_connection()
+        protocol = super(SerialDriver, self).make_connection()
         self.serial_port = SerialPort(protocol,self.job.device.port)
         return protocol
     
@@ -232,13 +236,13 @@ class SerialDevice(StreamDevice):
         if self.serial_port:
             self.serial_port.loseConnection()
 
-class PrinterDevice(StreamDevice):
+class PrinterDriver(StreamDriver):
     """ Device that simply sends the raw data to a system printer device."""
     
     def is_supported(self):
         try:
             if sys.platform=='win32':
-                pass
+                return False
             else:
                 global cups
                 import cups
@@ -250,24 +254,30 @@ class PrinterDevice(StreamDevice):
         """ When the job is complete, write all the data to the printer device """
         pass
 
-class INetDevice(StreamDevice):
+class INetDriver(StreamDriver):
     """ """
     address = Unicode()
     port = Int()
     endpoint = Instance(TCP4ClientEndpoint)
     def make_connection(self, job):
         self.endpoint = TCP4ClientEndpoint(reactor, self.address, self.port)
-        protocol = super(INetDevice, self).make_connection(job)
+        protocol = super(INetDriver, self).make_connection(job)
         yield connectProtocol(self.endpoint,protocol)
         #return protocol
     
     def lose_connection(self,protocol):
         protocol.transport.loseConnection()
-        
+
+def generic_factory(driver_def,protocol):
+    """ Generate the correct device from the Driver """
+    from inkcut.workbench.core import device
+    DriverFactory = getattr(device,"{}Driver".format(driver_def.connections[0].title()))
+    return DriverFactory(protocol=protocol)
         
 class DeviceDriver(Declarative):
     """ Provide meta info about this device """
     # ID of the device
+    # If none exits one i created from manufacturer.model
     id = d_(Unicode())
     
     # Name of the device (optional)
@@ -289,7 +299,7 @@ class DeviceDriver(Declarative):
     
     # Factory to construct the device, 
     # takes a single argument for the protocol
-    factory = d_(Callable())
+    factory = d_(Callable(default=generic_factory))
     
     # IDs of the protocols supported by this device
     protocols = d_(ContainerList(Unicode()))
@@ -309,9 +319,22 @@ class DeviceProtocol(Declarative):
     # takes a single argument for the transport
     factory = d_(Callable())
     
-    # Settings to configure the protocol
+    # Settings to configure the protocol, must return enaml widgets!
     options = d_(Callable())
     
+class DeviceTransport(Declarative):
+    # Id of the protocol
+    id = d_(Unicode())
+    
+    # Name of the protocol (optional)
+    name = d_(Unicode())
+    
+    # Factory to construct the protocol, 
+    # takes a single argument for the transport
+    factory = d_(Callable())
+    
+    # Settings to configure the protocol, must return enaml widgets!
+    options = d_(Callable())
     
 class DeviceMedia(Declarative):
     # Id of the media

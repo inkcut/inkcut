@@ -5,14 +5,14 @@ from inkcut.workbench.core.device import  DeviceTransport
 
 def settings_factory():
     from inkcut.plugins.transports.serialport.plugin import SerialPortSettings
-    return SerialPortSettings
+    return SerialPortSetup
 
 def serial_factory(settings):
     from inkcut.plugins.transports.serialport.plugin import SerialTransport
     return SerialTransport(settings=settings)
 
 
-enamldef SerialPortSettingsPage(Container):
+enamldef SerialPortSetup(Container):
     attr settings
     Form:
         Label:

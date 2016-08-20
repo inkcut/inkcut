@@ -14,7 +14,7 @@ from enaml.qt import QtGui
 from enaml.application import timed_call
 from inkcut.workbench.core.utils import SingletonAtom, config_to_json
 from inkcut.workbench.core.registry import collect_plugins
-from IPython.config.loader import JSONFileConfigLoader,Config
+from traitlets.config.loader import JSONFileConfigLoader,Config
 
 
 
