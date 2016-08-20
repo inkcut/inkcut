@@ -45,10 +45,12 @@ enamldef DeviceDialog(Dialog):
     attr device
     attr model = DeviceConfiguration()
     title << '{}{} - Setup'.format(model.manufacturer if model.manufacturer else "Device"," "+model.model if model.model else "")
+    minimum_size = (540,360)
     TaskDialogBody:
         TaskDialogContentArea:
+            padding = 8
             Notebook: notebook:
-                tab_style = 'document'
+                tab_style = 'preferences'
                 Page:
                     title = 'General'
                     closable = False
@@ -68,7 +70,7 @@ enamldef DeviceDialog(Dialog):
                             selected << model.model
                                         
                         Conditional:
-                            condition<< model.driver is not None
+                            condition << model.driver is not None
                             Label:
                                 text = 'Width'
                             Label:
@@ -79,7 +81,7 @@ enamldef DeviceDialog(Dialog):
                                 Label:
                                     text = 'Length'
                                 Label:
-                                    text << str(model.driver.length)
+                                    text << str(model.driver.length) if model.driver else ''
                             CheckBox:
                                 text << "Show advanced settings"
                                 checked := model.show_advanced
@@ -92,7 +94,7 @@ enamldef DeviceDialog(Dialog):
                             Label:
                                 text = 'Type'
                             ObjectCombo:
-                                items << model.driver.connections
+                                items << model.driver.connections if model.driver else []
                                 selected := model.connection_type
                             
                         Conditional:
