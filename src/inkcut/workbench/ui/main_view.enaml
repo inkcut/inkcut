@@ -1,5 +1,9 @@
 import traceback
-from enaml.widgets.api import Container, Notebook, Page, Label, ImageView, StatusItem, SpinBox, CheckBox, PushButton, RadioButton, Form, ComboBox
+from enaml.widgets.api import (
+    Container, Notebook, Page, Label, ImageView, StatusItem, 
+    SpinBox, CheckBox, PushButton, RadioButton, Form, ComboBox,
+    Menu, Action
+)
 from enaml.core.include import Include
 from enaml.layout.api import hbox,vbox,spacer,align
 from enaml.workbench.api import Extension, PluginManifest
@@ -280,7 +284,7 @@ enamldef MainView(Container):
                             value :: model.job.media.size[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
-                            single_step = 0.1
+                            #single_step = 0.1
                         ImageView:
                             image = load_image('shape_square_height')
                         DoubleSpinBox:
@@ -288,7 +292,7 @@ enamldef MainView(Container):
                             value :: model.job.media.size[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
-                            single_step = 0.1
+                            #single_step = 0.1
                 Container:
                     padding = 0
                     
@@ -371,6 +375,11 @@ enamldef MainView(Container):
         minimum_size = (360,None)
         data := model.plot
         axis_scales << {'left':QtSvgDoc.convertToUnit(1, model.units),'bottom':QtSvgDoc.convertToUnit(1, model.units)}
+        Menu:
+            context_menu = True
+            Action:
+                text = 'View all'
+                triggered :: plot.proxy.widget.autoRange()
     #StatusItem:
     #    Label:
     #       text << model.status
