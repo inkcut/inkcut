@@ -228,7 +228,6 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
             # Also observe any change to job.media and job.device
             view_items.append(PainterPathPlotItem(self.job.media.path*t,pen=self.pen_media,skip_autorange=(False,[0,self.job.size[1]])))
             view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
-            
         self.plot = view_items
         #self.workbench.save_config()
         
@@ -245,6 +244,7 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         return ui.window.proxy.widget
     
     def close_document(self):
+        self.current_document = ''
         if self.job:
             self.job._uninit_config()
             self.job.media.unobserve('padding',self._view_changed)
@@ -292,7 +292,8 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         task = JobTaskDialog(ui.window,model=model).exec_()
         
     def _observe_current_document(self,change):
-        self.job = self._default_job()
+        if self.current_document:
+            self.job = self._default_job()
     #def _observe_recent_documents(self,change):
     #    if change['type']!='create':
     #        ui = self.workbench.get_plugin('enaml.workbench.ui')

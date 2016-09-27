@@ -153,7 +153,7 @@ class Job(ConfigurableAtom):
              'media','media.size','media.padding','auto_copies')
     def _job_changed(self,change):
         """ Recreate an instance of of the plot using the current settings """
-        #self.log.debug("name=%s, old=%s, new=%s"%(name,old,new))
+        #self.log.debug("{},{}".format(self,change))
         if self._blocked:
             return
         
