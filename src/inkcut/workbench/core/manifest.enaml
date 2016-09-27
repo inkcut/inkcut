@@ -96,8 +96,8 @@ enamldef InkcutManifest(PluginManifest):
             path = '/help'
             label = 'Help'
         ActionItem:
-            path = '/file/close'
-            label = 'Close'
+            path = '/file/quit'
+            label = 'Quit'
             shortcut = 'Ctrl+Q'
             command = 'enaml.workbench.ui.close_window'
     Extension:

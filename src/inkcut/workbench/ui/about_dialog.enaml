@@ -1,0 +1,34 @@
+from atom.api import atomref
+from enaml.image import Image
+from enaml.layout.api import align, hbox, spacer
+from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
+from enaml.stdlib.task_dialog import (
+    TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet
+)
+from enaml.widgets.api import (
+    Container, Dialog, Html,ImageView, Window
+)
+from inkcut.workbench.core.svg import QtSvgDoc
+from inkcut.workbench.core.utils import load_icon
+
+enamldef AboutDialog(Dialog):
+    title = 'About Inkcut'
+    attr plugin
+    attr model
+    TaskDialogBody:
+        TaskDialogContentArea:
+            padding = 0
+            Html:
+                source = "About info and credits"
+        
+        TaskDialogCommandArea:
+            constraints = [
+                hbox(spacer,bbox)
+            ]
+            DialogButtonBox: bbox:
+                buttons = [
+                    DialogButton('OK', 'accept'),
+                ]
+

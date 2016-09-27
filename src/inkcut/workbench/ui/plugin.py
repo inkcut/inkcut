@@ -249,6 +249,7 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
             self.job._uninit_config()
             self.job.media.unobserve('padding',self._view_changed)
             self.job.media.unobserve('size',self._view_changed)
+            self.job = Job()
     
     def open_document(self, path=""):
         """ Sets the current file path, which fires _current_document_changed """
@@ -268,12 +269,17 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
             self.log.debug("Cannot open %s, it does not exist!"%path)
             return
         
+        if not os.path.isfile(path):
+            self.log.debug("Cannot open %s, it is not a file!"%path)
+            return
+        
         # Close any old docs
         self.close_document()
         
         # Instead of append so we get a changed event
         if path not in self.recent_documents:
             self.recent_documents.append(path)
+            
         self.log.info("Opening {doc}".format(doc=path))
         self.current_document = path
         # Plot actually opened in _current_document_changed
@@ -294,6 +300,11 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
     def _observe_current_document(self,change):
         if self.current_document:
             self.job = self._default_job()
+            
+    def _observe_recent_documents(self,change):
+        self.recent_documents = [doc for doc in self.recent_documents 
+                                        if os.path.isfile(doc)]
+                
     #def _observe_recent_documents(self,change):
     #    if change['type']!='create':
     #        ui = self.workbench.get_plugin('enaml.workbench.ui')

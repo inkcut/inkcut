@@ -15,6 +15,11 @@ def open_document(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     plugin.open_document(**event.parameters)
     
+def close_document(event):
+    plugin = event.workbench.get_plugin('inkcut.workbench.ui')
+    plugin.close_document()
+    
+    
 def start_job(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     plugin.start_job()
@@ -26,6 +31,7 @@ def undo(event):
 def redo(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     plugin.redo()
+    
     
 def device_setup(event):
     import enaml
@@ -41,7 +47,16 @@ def media_setup(event):
         from inkcut.workbench.ui.media_view import MediaDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
-    MediaDialog(ui.window,media=plugin.job.media).exec_()    
+    MediaDialog(ui.window,media=plugin.job.media).exec_()
+    
+def about_inkcut(event):
+    import enaml
+    with enaml.imports():
+        from inkcut.workbench.ui.about_dialog import AboutDialog
+    plugin = event.workbench.get_plugin('inkcut.workbench.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    AboutDialog(ui.window,plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
+    
 # def recent_documents_menu(workspace):
 #     plugin = workspace.get_plugin('inkcut.workbench.ui')
 #     return [ ActionItem(
@@ -83,20 +98,26 @@ enamldef MainViewManifest(PluginManifest):
             id = 'inkcut.workbench.ui.open'
             handler = open_document
         Command:
+            id = 'inkcut.workbench.ui.close_document'
+            handler = close_document
+        Command:
             id = 'inkcut.workbench.ui.start_job'
             handler = start_job
-        Command:
-            id = 'inkcut.workbench.ui.undo'
-            handler = undo
-        Command:
-            id = 'inkcut.workbench.ui.redo'
-            handler = redo
+#         Command:
+#             id = 'inkcut.workbench.ui.undo'
+#             handler = undo
+#         Command:
+#             id = 'inkcut.workbench.ui.redo'
+#             handler = redo
         Command:
             id = 'inkcut.workbench.ui.device_setup'
             handler = device_setup
         Command:
             id = 'inkcut.workbench.ui.media_setup'
             handler = media_setup
+        Command:
+            id = 'inkcut.workbench.ui.about_inkcut'
+            handler = about_inkcut
             
     Extension:
         id = 'autostart'
@@ -107,23 +128,23 @@ enamldef MainViewManifest(PluginManifest):
     Extension:
         id = 'actions'
         point = 'enaml.workbench.ui.actions'
-        MenuItem:
-            path = '/edit'
-            label = 'Edit'
-            after = 'file'
-            before = 'help'
-            ItemGroup:
-                id = 'edit'
+#         MenuItem:
+#             path = '/edit'
+#             label = 'Edit'
+#             after = 'file'
+#             before = 'help'
+#             ItemGroup:
+#                 id = 'edit'
         MenuItem:
             path = '/file/recent'
             label = 'Recent'
             after = 'open'
-            before = 'cut'
+            before = 'close'
             visible << bool(plugin.recent_documents)
         MenuItem:
             path = '/device'
             label = 'Device'
-            after = 'edit'
+            after = 'file'
             before = 'help'
             ItemGroup:
                 id = 'device'
@@ -142,29 +163,37 @@ enamldef MainViewManifest(PluginManifest):
                 label = loop_item
                 command = 'inkcut.workbench.ui.open'
                 parameters = {'path':loop_item}
-            
         ActionItem:
-            path = '/file/cut'
+            path = '/file/close'
+            label = 'Close'
+            before = 'quit'
+            shortcut = 'Ctrl+W'
+            command = 'inkcut.workbench.ui.close_document'
+        ActionItem:
+            path = '/device/cut'
             label = 'Cut'
             shortcut = 'Ctrl+P'
-            after = 'open'
-            before = 'close'
+            after = 'setup'
             command = 'inkcut.workbench.ui.start_job'
             icon = menu_icon('chart_curve_go')
-            
         ActionItem:
-            path = '/edit/undo'
-            label = 'Undo'
-            shortcut = 'Ctrl+Z'
-            icon = menu_icon('arrow_undo')
-            command = 'inkcut.workbench.ui.undo'
-        ActionItem:
-            path = '/edit/redo'
-            label = 'Redo'
-            shortcut = 'Ctrl+Y'
-            icon = menu_icon('arrow_redo')
-            command = 'inkcut.workbench.ui.redo'
+            path = '/help/about'
+            label = 'About'
+            command = 'inkcut.workbench.ui.about_inkcut'
             
+#         ActionItem:
+#             path = '/edit/undo'
+#             label = 'Undo'
+#             shortcut = 'Ctrl+Z'
+#             icon = menu_icon('arrow_undo')
+#             command = 'inkcut.workbench.ui.undo'
+#         ActionItem:
+#             path = '/edit/redo'
+#             label = 'Redo'
+#             shortcut = 'Ctrl+Y'
+#             icon = menu_icon('arrow_redo')
+#             command = 'inkcut.workbench.ui.redo'
+#             
         ActionItem:
             path = '/device/setup'
             label = 'Setup...'
