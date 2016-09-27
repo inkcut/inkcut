@@ -31,7 +31,14 @@ def undo(event):
 def redo(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     plugin.redo()
-    
+
+def open_preferences(event):
+    import enaml
+    with enaml.imports():
+        from inkcut.workbench.ui.preferences_view import PreferencesDialog
+    plugin = event.workbench.get_plugin('inkcut.workbench.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    PreferencesDialog(ui.window,plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
     
 def device_setup(event):
     import enaml
@@ -57,30 +64,6 @@ def about_inkcut(event):
     ui = event.workbench.get_plugin('enaml.workbench.ui')
     AboutDialog(ui.window,plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
     
-# def recent_documents_menu(workspace):
-#     plugin = workspace.get_plugin('inkcut.workbench.ui')
-#     return [ ActionItem(
-#              path = '/file/recent/%s'%i,
-#              label = it,
-#              command = 'inkcut.workbench.ui.open',
-#              paramters = {'path':it}
-#             )
-#             for i,it in enumerate(plugin.recent_documents)]
-# 
-# enamldef RecentDocsManifest(PluginManifest):
-#     """ The manifest which is registered when the view is loaded.
-# 
-#     This manifest contributes extra menu items to the menu bar.
-# 
-#     """
-#     id = 'inkcut.workbench.ui.recent_docs'
-#     
-#     Extension:
-#         id = 'actions'
-#         point = 'enaml.workbench.ui.actions'
-#         factory = recent_documents_menu
-    
-    
 
 enamldef MainViewManifest(PluginManifest):
     """ The manifest which is registered when the view is loaded.
@@ -95,11 +78,14 @@ enamldef MainViewManifest(PluginManifest):
         id = 'commands'
         point = 'enaml.workbench.core.commands'
         Command:
-            id = 'inkcut.workbench.ui.open'
+            id = 'inkcut.workbench.ui.open_document'
             handler = open_document
         Command:
             id = 'inkcut.workbench.ui.close_document'
             handler = close_document
+        Command:
+            id = 'inkcut.workbench.ui.open_preferences'
+            handler = open_preferences
         Command:
             id = 'inkcut.workbench.ui.start_job'
             handler = start_job
@@ -139,7 +125,7 @@ enamldef MainViewManifest(PluginManifest):
             path = '/file/recent'
             label = 'Recent'
             after = 'open'
-            before = 'close'
+            before = 'prefs'
             visible << bool(plugin.recent_documents)
         MenuItem:
             path = '/device'
@@ -148,12 +134,19 @@ enamldef MainViewManifest(PluginManifest):
             before = 'help'
             ItemGroup:
                 id = 'device'
+        MenuItem:
+            path = '/media'
+            label = 'Media'
+            after = 'device'
+            before = 'help'
+            ItemGroup:
+                id = 'media'
                 
         ActionItem:
             path = '/file/open'
             label = 'Open'
             shortcut = 'Ctrl+O'
-            command = 'inkcut.workbench.ui.open'
+            command = 'inkcut.workbench.ui.open_document'
             icon = menu_icon('folder_page')
         
         Looper:
@@ -170,12 +163,34 @@ enamldef MainViewManifest(PluginManifest):
             shortcut = 'Ctrl+W'
             command = 'inkcut.workbench.ui.close_document'
         ActionItem:
+            path = '/file/prefs'
+            label = 'Preferences'
+            after = 'close'
+            before = 'quit'
+            command = 'inkcut.workbench.ui.open_preferences'
+
+        ActionItem:
+            path = '/device/setup'
+            label = 'Setup...'
+            shortcut = 'Ctrl+Alt+P'
+            command = 'inkcut.workbench.ui.device_setup'
+            icon = menu_icon('printer')
+            
+        ActionItem:
             path = '/device/cut'
             label = 'Cut'
             shortcut = 'Ctrl+P'
             after = 'setup'
             command = 'inkcut.workbench.ui.start_job'
             icon = menu_icon('chart_curve_go')
+
+        ActionItem:
+            path = '/media/manage'
+            label = 'Manage'
+            shortcut = 'Ctrl+M'
+            command = 'inkcut.workbench.ui.media_setup'
+            icon = menu_icon('chart_curve_go')
+            
         ActionItem:
             path = '/help/about'
             label = 'About'
@@ -194,9 +209,3 @@ enamldef MainViewManifest(PluginManifest):
 #             icon = menu_icon('arrow_redo')
 #             command = 'inkcut.workbench.ui.redo'
 #             
-        ActionItem:
-            path = '/device/setup'
-            label = 'Setup...'
-            shortcut = 'Ctrl+Alt+P'
-            command = 'inkcut.workbench.ui.device_setup'
-            icon = menu_icon('printer')
