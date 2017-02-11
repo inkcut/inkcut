@@ -84,18 +84,21 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
         except:
             return QtGui.QDialog()
     
-    def show_critical(self,title,message,*args):
+    def show_critical(self,title,message,*args,**kwargs):
         """ Popup a error dialog box """
-        return QtGui.QMessageBox.critical(self.window,"{0} - {1}".format(self.app_name,title),message,*args)
+        return QtGui.QMessageBox.critical(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
         
-    def show_warning(self,title,message,*args):
-        return QtGui.QMessageBox.warning(self.window,"{0} - {1}".format(self.app_name,title),message,*args)
+    def show_warning(self,title,message,*args,**kwargs):
+        return QtGui.QMessageBox.warning(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
         
-    def show_information(self,title,message,*args):
-        return QtGui.QMessageBox.information(self.window,"{0} - {1}".format(self.app_name,title),message,*args)
+    def show_information(self,title,message,*args,**kwargs):
+        return QtGui.QMessageBox.information(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
     
-    def show_about(self,title,message,*args):
-        return QtGui.QMessageBox.about(self.window,"{0} - {1}".format(self.app_name,title),message,*args)
+    def show_about(self,title,message,*args,**kwargs):
+        return QtGui.QMessageBox.about(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
+    
+    def show_question(self,title,message,*args,**kwargs):
+        return QtGui.QMessageBox.question(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
     
     def register_plugins(self,path):
         """ Register all plugins found in the given path 
@@ -123,10 +126,12 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
         with enaml.imports():
             from enaml.workbench.core.core_manifest import CoreManifest
             from enaml.workbench.ui.ui_manifest import UIManifest
+            from inkcut.workbench.preferences.manifest import PreferencesManifest
             from inkcut.workbench.core.manifest import InkcutManifest
 
         self.register(CoreManifest())
         self.register(UIManifest())
+        self.register(PreferencesManifest())
         self.register(InkcutManifest())
         
 

@@ -5,6 +5,7 @@ from enaml.workbench.core.command import Command
 from enaml.workbench.ui.autostart import Autostart
 from enaml.core.looper import Looper
 from enaml.core.include import Include
+from inkcut.workbench.preferences.plugin import Preference
 from inkcut.workbench.core.utils import menu_icon
 
 def plugin_factory():
@@ -38,7 +39,8 @@ def open_preferences(event):
         from inkcut.workbench.ui.preferences_view import PreferencesDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
-    PreferencesDialog(ui.window,plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
+    PreferencesDialog(ui.window,
+                      plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
     
 def device_setup(event):
     import enaml
@@ -46,7 +48,9 @@ def device_setup(event):
         from inkcut.workbench.ui.device_view import DeviceDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
-    DeviceDialog(ui.window,plugin=event.workbench.get_plugin('inkcut.workbench.core'),device=plugin.job.device).exec_()
+    DeviceDialog(ui.window,
+                 plugin=event.workbench.get_plugin('inkcut.workbench.core'),
+                 device=plugin.job.device).exec_()
 
 def media_setup(event):
     import enaml
@@ -54,7 +58,11 @@ def media_setup(event):
         from inkcut.workbench.ui.media_view import MediaDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
-    MediaDialog(ui.window,media=plugin.job.media).exec_()
+    dlg = MediaDialog(ui.window,
+                plugin=plugin,
+                media=plugin.job.media)
+    if dlg.exec_():
+        plugin.available_media = dlg.available_media
     
 def about_inkcut(event):
     import enaml
@@ -62,7 +70,8 @@ def about_inkcut(event):
         from inkcut.workbench.ui.about_dialog import AboutDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
-    AboutDialog(ui.window,plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
+    AboutDialog(ui.window,
+                plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
     
 
 enamldef MainViewManifest(PluginManifest):
@@ -110,6 +119,21 @@ enamldef MainViewManifest(PluginManifest):
         point = 'enaml.workbench.ui.autostart'
         Autostart:
             plugin_id = 'inkcut.workbench.ui'
+     
+    Extension:
+        id = 'preferences'
+        point = 'inkcut.preferences.items'
+        Preference:
+            plugin_id = "inkcut.workbench.ui"
+            attributes = ['current_document',
+                          'recent_documents',
+                          'show_offset_path',
+                          'available_media',
+                          'available_devices',
+                          'job',
+                          'media',
+                          'device'
+                          ]
     
     Extension:
         id = 'actions'

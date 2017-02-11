@@ -3,6 +3,7 @@
 	<name>Inkcut</name>
 	<comment></comment>
 	<projects>
+		<project>enamlx</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -12,11 +12,12 @@ from enaml.core.declarative import Declarative,d_
 from enaml.qt import QtCore, QtGui
 from inkcut.workbench.core.svg import QtSvgDoc
 from inkcut.workbench.core.area import AreaBase
-from inkcut.workbench.core.utils import LoggingAtom, async_sleep
+from inkcut.workbench.core.utils import async_sleep
 from twisted.internet.protocol import Protocol, connectionDone
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet import reactor, defer
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
+from inkcut.workbench.preferences.plugin import Model
 
 
 def deferred_job():
@@ -24,7 +25,7 @@ def deferred_job():
     from inkcut.workbench.core.job import Job
     return Job
 
-class IDeviceProtocol(LoggingAtom,Protocol):
+class IDeviceProtocol(Model,Protocol):
     """ Basic interface a protocol must implement is to override the 
         move() method. 
     
@@ -40,6 +41,9 @@ class IDeviceProtocol(LoggingAtom,Protocol):
     
     def connectionLost(self, reason=connectionDone):
         Protocol.connectionLost(self, reason=reason)
+        
+    def querySize(self):
+        raise NotImplementedError("IDeviceProtocol.querySize() is not implemented by {}".format(self))
         
     def write(self,data):
         """ Utility function that writes to the transport
@@ -115,7 +119,7 @@ class Device(AreaBase):
             job.info.ended = datetime.now()
     
 
-class Driver(LoggingAtom):
+class Driver(Model):
     """ A Driver is a class that handles processing a Job"""
     
     @inlineCallbacks
@@ -214,8 +218,13 @@ class StreamDriver(Driver):
         return protocol
     
     def lose_connection(self,protocol):
-        """ Called after iterating over the path. Used to close the connection or send any finalization commands."""
+        """ Called after iterating over the path. 
+        Used to close the connection or send any finalization commands.
+        """
         pass
+    
+class VirtualDriver(StreamDriver):
+    pass
     
 class SerialDriver(StreamDriver):
     serial_port = ForwardInstance(lambda:SerialPort)
@@ -299,6 +308,7 @@ class DeviceDriver(Declarative):
     
     # Factory to construct the device, 
     # takes a single argument for the protocol
+    # implement __setstate__ to load parameters. 
     factory = d_(Callable(default=generic_factory))
     
     # IDs of the protocols supported by this device
@@ -334,7 +344,7 @@ class DeviceTransport(Declarative):
     factory = d_(Callable())
     
     # Settings to configure the protocol, must return enaml widgets!
-    options = d_(Callable())
+    view_factory = d_(Callable())
     
 class DeviceMedia(Declarative):
     # Id of the media

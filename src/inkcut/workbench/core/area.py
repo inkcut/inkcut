@@ -5,10 +5,11 @@ Created on Jul 20, 2015
 @author: jrm
 '''
 from atom.api import observe,ContainerList,Float,Instance
-from inkcut.workbench.core.utils import ConfigurableAtom
 from enaml.qt import QtCore,QtGui
 
-class AreaBase(ConfigurableAtom):
+from inkcut.workbench.preferences.plugin import Model
+
+class AreaBase(Model):
     model = Instance(QtCore.QRectF) # Qt model representing this area
     size = ContainerList(Float(),default=[1800,2700]).tag(config=True)
     padding = ContainerList(Float(),default=[10,10,10,10]).tag(config=True) # Left, Top, Right, Bottom

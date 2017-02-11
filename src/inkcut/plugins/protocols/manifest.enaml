@@ -20,12 +20,21 @@ def dmpl_factory():
     from inkcut.plugins.protocols.dmpl import DMPLProtocol
     return DMPLProtocol()
 
+def cammgl1_factory():
+    from inkcut.plugins.protocols.camm import CAMMGL1Protocol
+    return CAMMGL1Protocol()
+
+def gcode_factory():
+    from inkcut.plugins.protocols.gcode import GCodeProtocol
+    return GCodeProtocol()
+
+
 def mock_factory():
     from inkcut.plugins.protocols.debug import DebugProtocol
     return DebugProtocol()
 
 enamldef ProtocolPluginManifest(PluginManifest):
-    """ Add new protocols here
+    """ Add new protocols here or within any other plugin.
     
     All protocols should implement the IDeviceProtocol and then
     register as an extension to the point 'inkcut.workbench.core.protocols'
@@ -51,10 +60,21 @@ enamldef ProtocolPluginManifest(PluginManifest):
             id = 'dmpl'
             name = 'DMPL'
             factory = dmpl_factory
+        
+        DeviceProtocol:
+            id = 'camm-gl1'
+            name = 'CAMM-GL I'
+            factory = cammgl1_factory
+        
+        DeviceProtocol:
+            id = 'gcode'
+            name = 'G-Code'
+            factory = gcode_factory
+            
             
         DeviceProtocol:
-            id = 'mock'
-            name = 'Mock'
+            id = 'debug'
+            name = 'Virtual'
             factory = mock_factory
             
         

@@ -10,12 +10,11 @@ import json
 import logging
 from logging import Logger
 from json.encoder import JSONEncoder
-from atom.api import Atom,Instance,Bool
+from atom.api import Atom,Instance
 from enaml.image import Image
 from enaml.icon import Icon,IconImage
 from enaml.workbench.plugin import Plugin as EnamlPlugin
 from enaml.workbench.ui.ui_workbench import UIWorkbench
-from traitlets.config.loader import Config
 from twisted.internet.defer import Deferred
 from twisted.internet import reactor
 
@@ -71,82 +70,82 @@ class LoggingAtom(WorkbenchAtom):
             return self.workbench.log
         return logging.getLogger(self.__class__.__name__)
     
-class ConfigurableAtom(LoggingAtom):
-    config = Instance(Config)
-    _config_lock = Bool()    
-    def __init__(self,*args,**kwargs):
-        super(ConfigurableAtom, self).__init__(*args,**kwargs)
-        self.config # Load it
-        self._init_config()
-    
-    def _default_config(self):
-        if not self.workbench:
-            raise RuntimeWarning("Cannot load config without a workbench!")
-        return self.workbench.config
-    
-    @property
-    def configurables(self):
-        configurables = []
-        for member in self.members().values():
-            if member.metadata and 'config' in member.metadata:
-                configurables.append(member)
-        return configurables
-    
-    def _init_config(self):
-        self.workbench.observe('config',self._observe_config)
-        for member in self.configurables:
-            self.observe(member.name,self._save_config)
-            
-    def _uninit_config(self):
-        self.workbench.unobserve('config',self._observe_config)
-        for member in self.configurables:
-            self.unobserve(member.name,self._save_config)
-    
-    def _observe_config(self,change):
-        """ Update this classes items when the config changes """
-        print(change)
-        if not self.config:
-            return
-        try:
-            self._config_lock = True
-            key = self.__class__.__name__
-            if key not in self.config:
-                self.config[key] = Config() 
-            
-            # Set instance attributes
-            for k,v in self.config[key].items():
-                if k in self.members() and v is not None:
-                    setattr(self,k,v)
-        finally:
-            self._config_lock = False
-                
-    def _save_config(self,change):
-        if self._config_lock or change['type']=='create':
-            return
-        print(change)
-        if self.config is None:
-            self.config = Config()
-        
-        config = self.config.copy()
-        
-        key = self.__class__.__name__
-        if key not in self.config:
-            config[key] = Config()
-            
-        for member in self.members().values():
-            if member.metadata and 'config' in member.metadata:
-                v = getattr(self,member.name)
-                config[key][member.name] = v
-                
-        new_config = config
-        if self.workbench.config:
-            new_config = self.workbench.config.copy()
-            new_config.merge(config)
-        
-        self.workbench.config = None
-        self.workbench.config = new_config 
+# class ConfigurableAtom(LoggingAtom):
+#     config = Instance(Config)
+#     _config_lock = Bool()    
+#     def __init__(self,*args,**kwargs):
+#         super(ConfigurableAtom, self).__init__(*args,**kwargs)
+#         self.config # Load it
+#         self._init_config()
+#     
+#     def _default_config(self):
+#         if not self.workbench:
+#             raise RuntimeWarning("Cannot load config without a workbench!")
+#         return self.workbench.config
+#     
+#     @property
+#     def configurables(self):
+#         configurables = []
+#         for member in self.members().values():
+#             if member.metadata and 'config' in member.metadata:
+#                 configurables.append(member)
+#         return configurables
+#     
+#     def _init_config(self):
+#         self.workbench.observe('config',self._observe_config)
+#         for member in self.configurables:
+#             self.observe(member.name,self._save_config)
+#             
+#     def _uninit_config(self):
+#         self.workbench.unobserve('config',self._observe_config)
+#         for member in self.configurables:
+#             self.unobserve(member.name,self._save_config)
+#     
+#     def _observe_config(self,change):
+#         """ Update this classes items when the config changes """
+#         print(change)
+#         if not self.config:
+#             return
+#         try:
+#             self._config_lock = True
+#             key = self.__class__.__name__
+#             if key not in self.config:
+#                 self.config[key] = Config() 
+#             
+#             # Set instance attributes
+#             for k,v in self.config[key].items():
+#                 if k in self.members() and v is not None:
+#                     setattr(self,k,v)
+#         finally:
+#             self._config_lock = False
+#                 
+#     def _save_config(self,change):
+#         if self._config_lock or change['type']=='create':
+#             return
+#         print(change)
+#         if self.config is None:
+#             self.config = Config()
+#         
+#         config = self.config.copy()
+#         
+#         key = self.__class__.__name__
+#         if key not in self.config:
+#             config[key] = Config()
+#             
+#         for member in self.members().values():
+#             if member.metadata and 'config' in member.metadata:
+#                 v = getattr(self,member.name)
+#                 config[key][member.name] = v
+#                 
+#         new_config = config
+#         if self.workbench.config:
+#             new_config = self.workbench.config.copy()
+#             new_config.merge(config)
+#         
+#         self.workbench.config = None
+#         self.workbench.config = new_config 
 
-class SingletonAtom(ConfigurableAtom):
+class SingletonAtom(LoggingAtom):
     _instance = None
 
     @classmethod
@@ -177,7 +176,7 @@ class SingletonAtom(ConfigurableAtom):
         return self
     
 
-class Plugin(EnamlPlugin,ConfigurableAtom):
+class Plugin(EnamlPlugin,LoggingAtom):
     """ Always include a logger in the plugin """
     
     @property

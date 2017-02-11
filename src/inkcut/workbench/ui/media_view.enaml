@@ -1,0 +1,238 @@
+
+from atom.api import atomref,Unicode,Instance,List,Bool
+from enaml.core.api import Conditional, Looper
+from enaml.image import Image
+from enaml.layout.api import align, vbox,hbox, spacer
+from enaml.stdlib.mapped_view import MappedView
+from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
+from enaml.stdlib.task_dialog import (
+    TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet
+)
+from enaml.qt import QtGui
+from enaml.widgets.api import (
+    CheckBox, Container, Dialog, Field, Label,
+    ImageView, PushButton, RadioButton, Window,ProgressBar, Form,
+    Notebook, Page, CheckBox, ObjectCombo, SpinBox, Menu, Action
+)
+from enamlx.widgets.api import TableView, TableViewRow, TableViewItem
+from inkcut.workbench.core.svg import QtSvgDoc
+from inkcut.workbench.core.utils import load_icon, LoggingAtom, load_image
+from inkcut.workbench.core.device import (
+    DeviceDriver,DeviceProtocol,DeviceTransport
+)
+from inkcut.workbench.ui.widgets.double_spin_box import DoubleSpinBox
+
+enamldef HeaderLabel(Label):
+    pass
+
+enamldef MediaDialog(Dialog): dialog:
+    attr plugin
+    attr device
+    attr available_media << plugin.available_media[:]
+    attr media << plugin.media
+    title = 'Available Media'
+    initial_size = (640,360)
+    TaskDialogBody:
+        TaskDialogContentArea:
+            constraints = [
+                hbox(dev_list, notebook),
+            ]
+            padding = 8
+            Container: dev_list:
+                padding = 0
+                TableView: table:
+                    hug_width = 'strong'
+                    horizontal_headers << ['Media']#,str(table.visible_rows)]
+                    horizontal_stretch = True
+                    show_vertical_header = False
+                    items << available_media
+                    Conditional:
+                        condition << not bool(table.items)
+                        Menu:
+                            context_menu = True
+                            Action:
+                                text = "Add"
+                                triggered ::
+                                    m = plugin.create_new_media() 
+                                    tmp = dialog.available_media[:]
+                                    tmp.append(m)
+                                    dialog.available_media = tmp
+                                    dialog.media = m
+                    Looper:
+                        #: Max number of visible rows
+                        #: If this number is too small, stuff will get jacked
+                        iterable << range(table.visible_rows)
+                        TableViewRow:
+                             row << table.visible_row+loop_index
+                             attr item << table.items[self.row]
+                             TableViewItem:
+                                text << "{} ({} {} x {} {})".format(item.name,
+                                                              QtSvgDoc.convertToUnit(item.size[0],plugin.units),plugin.units,
+                                                              QtSvgDoc.convertToUnit(item.size[1],plugin.units),plugin.units,)
+                                clicked :: dialog.media = item
+                                Menu:
+                                    Action:
+                                        text = "Add"
+                                        triggered ::
+                                            m = plugin.create_new_media() 
+                                            tmp = dialog.available_media[:]
+                                            tmp.append(m)
+                                            dialog.available_media = tmp
+                                            dialog.media = m
+                                    Action:
+                                        text = "Duplicate"
+                                        triggered ::
+                                            m = plugin.create_new_media()
+                                            m.__setstate__(item.__getstate__()) 
+                                            m.name = 'Copy of {}'.format(m.name)
+                                            tmp = dialog.available_media[:]
+                                            tmp.append(m)
+                                            dialog.available_media = tmp
+                                            dialog.media = m
+                                    
+                                    Action:
+                                        separator = True
+                                    Action:
+                                        text = "Remove"
+                                        triggered::
+                                            wb = plugin.workbench
+                                            r = wb.show_question("Remove Media", 
+                                                                 "Are you sure you want to remove this item?",
+                                                                 buttons=QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+                                            if r==QtGui.QMessageBox.Ok:
+                                                tmp = dialog.available_media[:]
+                                                tmp.remove(item)
+                                                if not tmp:
+                                                    #: Add a new one
+                                                    m = plugin.create_new_media()
+                                                    m.name = "Standard Vinyl"
+                                                    tmp = [m]
+                                                dialog.available_media = tmp
+                                                dialog.media = tmp[-1]
+                                                    
+#                 constraints = [
+#                     hbox(btn_add, btn_rem),
+#                 ]
+#                 hug_width = 'weak'
+#                 hug_height = 'weak'
+#                 padding = 8
+#                 Looper:
+#                     iterable << plugin.available_media
+#                     PushButton:
+#                         text << "{} ({}x{})".format(loop_item.name,loop_item.size[0],loop_item.size[1])
+#                         clicked :: dialog.media = loop_item
+#                 PushButton: btn_add:
+#                     text = "+"
+#                     clicked :: 
+#                         m = plugin.create_new_media()
+#                         plugin.available_media.append(m)
+#                         dialog.media = m 
+#                 PushButton: btn_rem:
+#                     text = "-" 
+#                     clicked :: 
+#                         m = dialog.media
+#                         dialog.media = plugin.available_media[0]
+#                         plugin.available_media.remove(m)
+            Notebook: notebook:
+                tab_style = 'preferences'
+                Page:
+                    title = 'General'
+                    closable = False
+                    Form:
+                        Label:
+                            text = 'Name:'
+                        Field:
+                            text := media.name
+                        Label:
+                            text = 'Color:'
+                        Container:
+                            padding = 0
+                            constraints = [hbox(colorlbl,colorbtn),
+                                           align('v_center',colorlbl,colorbtn)]
+                            Label: colorlbl:
+                                #text << media.color
+                                background << media.color
+                            PushButton: colorbtn:
+                                text = "Choose"
+                                clicked:: 
+                                    c = QtGui.QColorDialog.getColor()
+                                    if c.isValid():
+                                        media.color = c.name()
+                            
+                        ImageView:
+                            image = load_image('shape_square_width')
+                        DoubleSpinBox:
+                            value << QtSvgDoc.convertToUnit(media.size[0], plugin.units)
+                            value :: media.size[0] = QtSvgDoc.convertFromUnit(change['value'],plugin.units)
+                            suffix << " "+plugin.units
+                            maximum = 99999.9
+                            #single_step = 0.1
+                        ImageView:
+                            image = load_image('shape_square_height')
+                        DoubleSpinBox:
+                            value << QtSvgDoc.convertToUnit(media.size[1], plugin.units)
+                            value :: media.size[1] = QtSvgDoc.convertFromUnit(change['value'],plugin.units)
+                            suffix << " "+plugin.units
+                            maximum = 99999.9
+                            #single_step = 0.1
+    
+                            
+                Page:
+                    title = 'Settings'
+                    closable = False
+                    Form:
+                        
+                        CheckBox:
+                            text = 'Force:'
+                            checked := media.use_force
+                            tool_tip = 'If checked, the given force setting will be used when this media is selected. If unchecked, the device force setting will be unchanged.'
+                        SpinBox:
+                            value := media.force
+                            suffix = ' g'
+                            enabled:= media.use_force
+                        CheckBox:
+                            text = 'Speed:'
+                            checked := media.use_speed
+                            tool_tip = 'If checked, the given speed setting will be used when this media is selected. If unchecked, the device speed setting will be unchanged.'
+                        SpinBox:
+                            value := media.speed
+                            suffix = ' cm/s' #: TODO
+                            enabled:= media.use_speed
+                Page:
+                    title = 'Accounting'
+                    closable = False
+                    Form:
+                        #Label:
+                        #    text = 'Used'
+                        #DoubleSpinBox:
+                        #    value := media.cost
+                        Label:
+                            text = 'Cost:'
+                            tool_tip = 'Cost for this media. Used to compute job material costs.'
+                        DoubleSpinBox:
+                            prefix = '$'
+                            minimum = 0.0
+                            maximum = 9999999.0
+                            value := media.cost
+                        Label:
+                            text = 'Used:'
+                            tool_tip = 'Amount already used.'
+                        Label:
+                            text = '{} {}'.format(media.used[0],plugin.units)
+                        
+            
+        TaskDialogCommandArea: commands:
+            constraints = [
+                hbox(spacer, bbox),
+            ]
+        
+            DialogButtonBox: bbox:
+                buttons = [
+                    DialogButton('OK', 'accept'),
+                    DialogButton('Cancel', 'reject'),
+                ]
+            
+
+    

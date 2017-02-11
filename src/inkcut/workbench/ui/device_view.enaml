@@ -1,32 +1,53 @@
 
 from atom.api import atomref,Unicode,Instance,List,Bool
+from enaml.core.api import Conditional, Include
 from enaml.image import Image
 from enaml.layout.api import align, hbox, spacer
+from enaml.stdlib.mapped_view import MappedView
 from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
-from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
+from enaml.stdlib.task_dialog import (
+    TaskDialogBody, TaskDialogCommandArea,
     TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
-    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet)
-from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet
+)
+from enaml.widgets.api import (
+    CheckBox, Container, Dialog, Field, Label,
     ImageView, PushButton, RadioButton, Window,ProgressBar, Form,
     Notebook, Page, CheckBox, ObjectCombo
 )
 from inkcut.workbench.core.svg import QtSvgDoc
 from inkcut.workbench.core.utils import load_icon, LoggingAtom
-from inkcut.workbench.core.device import DeviceDriver,DeviceProtocol,\
-    DeviceTransport
-from enaml.core.conditional import Conditional
+from inkcut.workbench.core.device import (
+    DeviceDriver,DeviceProtocol,DeviceTransport
+)
 from inkcut.workbench.ui.widgets.double_spin_box import DoubleSpinBox
-from enaml.core.include import Include
 
 class DeviceConfiguration(LoggingAtom):
+    #: List of registered devices
     devices = List()
+    
+    #: Current device manufacturer filter
     manufacturer = Unicode()
+    
+    #: Current device model filter
     model = Unicode()
+    
+    #: Driver to be used 
     driver = Instance(DeviceDriver)
+    
+    #: Show advanced settings
     show_advanced = Bool(False)
+    
+    #: Connection type to use
     connection_type = Unicode()
+    
+    #: Connection instance
     connection = Instance(DeviceTransport)
+    
+    #: Protocol ID to use
     protocol_id = Unicode()
+    
+    #: Protocol instance
     protocol = Instance(DeviceProtocol)
     
     def _observe_manufacturer(self,change):
@@ -39,6 +60,9 @@ class DeviceConfiguration(LoggingAtom):
         drivers = [dev for dev in self.devices 
                         if dev.manufacturer==self.manufacturer and dev.model==self.model]
         self.driver = drivers[0] if drivers else None
+        
+    def _observe_connection_type(self,change):
+        pass
 
 enamldef DeviceDialog(Dialog):
     attr plugin
@@ -101,8 +125,9 @@ enamldef DeviceDialog(Dialog):
                             condition << bool(model.connection_type)
                             Label:
                                 text << "Selected {}".format(model.connection_type)
-                            #Include:
-                            #    objects << model.driver
+                            MappedView:
+                                model << model.connection
+                                typemap << {type(model.connection):model.connection.view_factory()}
                     Page:
                         title = 'Calibration'
                         closable = False

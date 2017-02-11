@@ -10,14 +10,18 @@ from atom.api import Instance,Bool,Int,Unicode,ContainerList,Enum, observe
 from enaml.qt import QtGui,QtCore
 from enaml.application import timed_call
 from enaml.widgets.page import Page
-from inkcut.workbench.core.utils import SingletonPlugin, ConfigurableAtom
+from inkcut.workbench.core.utils import SingletonPlugin
+from inkcut.workbench.preferences.plugin import Model
 from inkcut.workbench.ui.widgets.plot_view import PainterPathPlotItem
 from inkcut.workbench.core.job import Job
 from inkcut.workbench.core.svg import QtSvgDoc
+from inkcut.workbench.core.media import Media
+from inkcut.workbench.core.device import Device
+
 import pyqtgraph as pg
 
 
-class PlotBase(ConfigurableAtom):
+class PlotBase(Model):
     job = Instance(Job)
     plot = ContainerList()
     pen_media = Instance(QtGui.QPen)
@@ -194,26 +198,55 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
     status = Unicode('None')
     
     current_document = Unicode().tag(config=True)
+    
     recent_documents = ContainerList(Unicode()).tag(config=True)
     show_offset_path = Bool().tag(config=True)
+    
+    #: Media library list
+    available_media = ContainerList(Instance(Media)).tag(config=True)
+    
+    #: Configured devices
+    available_devices = ContainerList(Instance(Device)).tag(config=True)
+    
+    device = Instance(Device).tag(config=True)
+    media = Instance(Media).tag(config=True)
     
     pages = ContainerList(Instance(Page))
     
     def start(self):
+        pass
+#         if not self.available_devices:
+#             self.available_devices = [self.create_new_device()]
+#         if not self.available_media:
+#             self.available_media = [self.create_new_media()]
+#         print self.available_devices
         # Link core device and media to the job
-        core = self.workbench.get_plugin('inkcut.workbench.core')
-        core.observe('device',lambda change:setattr(self.job,'device',change['value']))
-        core.observe('media',lambda change:setattr(self.job,'media',change['value']))
+        #core = self.workbench.get_plugin('inkcut.workbench.core')
+        #self.observe('device',lambda change:setattr(self.job,'device',change['value']))
+        #core.observe('media',lambda change:setattr(self.job,'media',change['value']))
+    
+    def _default_device(self):
+        if not self.available_devices:
+            self.available_devices = [self.create_new_device()]
+        return self.available_devices[0]
+    
+    def _default_media(self):
+        if not self.available_media:
+            self.available_media = [self.create_new_media()]
+        return self.available_media[0]
     
     def _default_job(self):
-        core = self.workbench.get_plugin('inkcut.workbench.core')
+        #core = self.workbench.get_plugin('inkcut.workbench.core')
         try:
-            return Job(document=self.current_document,device=core.device,media=core.media)
+            return Job(document=self.current_document,
+                       device=self.device,
+                       media=self.media)
         except Exception as e:
             context = dict(doc=self.current_document,msg=e)
             self.log.error(traceback.format_exc())
             self.workbench.show_critical("Error opening {doc}".format(**context),"Sorry, could not open {doc}.\n\nError: {msg}".format(**context))
-            return Job()
+            return Job(device=self.device,
+                       media=self.media)
     
     @observe('job','job.model','job.media','job.device')
     def _view_changed(self,change):
@@ -236,6 +269,11 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         self.job.media.observe('padding',self._view_changed)
         self.job.media.observe('size',self._view_changed)
         #self.workbench.save_config()
+    
+    @observe('media','device')
+    def _area_changed(self,change):
+        self.job.media = self.media
+        self.job.device = self.device
         
     
     @property
@@ -246,10 +284,10 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
     def close_document(self):
         self.current_document = ''
         if self.job:
-            self.job._uninit_config()
+            #self.job._uninit_config()
             self.job.media.unobserve('padding',self._view_changed)
             self.job.media.unobserve('size',self._view_changed)
-            self.job = Job()
+            self.job = Job(media=self.media,device=self.device)
     
     def open_document(self, path=""):
         """ Sets the current file path, which fires _current_document_changed """
@@ -304,7 +342,14 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
     def _observe_recent_documents(self,change):
         self.recent_documents = [doc for doc in self.recent_documents 
                                         if os.path.isfile(doc)]
-                
+    
+    
+    def create_new_media(self):
+        return Media()
+    
+    def create_new_device(self):
+        return  Device()
+    
     #def _observe_recent_documents(self,change):
     #    if change['type']!='create':
     #        ui = self.workbench.get_plugin('enaml.workbench.ui')

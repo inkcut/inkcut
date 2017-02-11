@@ -122,7 +122,11 @@ class InkcutCorePlugin(SingletonPlugin):
     #@observe('device_id','protocol_id')
     def _default_device(self):
         """ Return the default device as configured """
-        dvr = self.get_driver_by_id(self.device_id)
+        try:
+            dvr = self.get_driver_by_id(self.device_id)
+        except KeyError:
+            dvr = self.get_driver_by_id('Inkcut Virtual device') 
+        
         self.log.debug("Loading {}".format(dvr.id))
         proto = self.get_protocol_by_id(dvr.protocols[0])
         driver = dvr.factory(dvr,proto.factory())

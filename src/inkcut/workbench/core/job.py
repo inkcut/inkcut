@@ -7,13 +7,13 @@ Created on Jan 17, 2015
 from __future__ import division
 import os
 import numpy as np
+from datetime import datetime
 from atom.api import Enum,Float,Int,Bool,Instance,ContainerList,Range,Unicode,observe
 from enaml.qt import QtGui, QtCore
-from inkcut.workbench.core.utils import ConfigurableAtom
 from inkcut.workbench.core.media import Media
 from inkcut.workbench.core.device import Device
 from inkcut.workbench.core.svg import QtSvgDoc
-from datetime import datetime
+from inkcut.workbench.preferences.plugin import Model
 
 class Padding:
     LEFT = 0
@@ -24,7 +24,7 @@ class Padding:
 class JobError(Exception):
     pass
 
-class JobInfo(ConfigurableAtom):
+class JobInfo(Model):
     """ Job metadata """
     done = Bool(False)
     cancelled = Bool(False)
@@ -34,7 +34,7 @@ class JobInfo(ConfigurableAtom):
     progress = Range(0,100,0)
     data = Unicode()
 
-class Job(ConfigurableAtom):
+class Job(Model):
     """ 
     Create a plot depending on the properties set. 
     Any property that is a traitlet will cause an update when the value is changed. 
@@ -45,49 +45,41 @@ class Job(ConfigurableAtom):
     document = Unicode() # Path to document
     
     info = Instance(JobInfo,(),{})
-    
+     
     # Job properties used for generating the plot
     size = ContainerList(Float(),default=[1,1])# TODO: hooookk
     scale = ContainerList(Float(),default=[1,1]).tag(config=True)
     auto_scale = Bool(False).tag(config=True,help="automatically scale if it's too big for the area")
     lock_scale = Bool(True).tag(config=True,help="automatically scale if it's too big for the area")
-    
+     
     mirror = ContainerList(Bool(),default=[False,False]).tag(config=True)
     align_center = ContainerList(Bool(),default=[False,False]).tag(config=True)
-    
+     
     rotation = Float(0).tag(config=True)
     auto_rotate = Bool(False).tag(config=True,help="automatically rotate if it saves space")
-    
+     
     copies = Int(1).tag(config=True)
     auto_copies = Bool(True).tag(config=True,help="always use a full stack")
     copy_spacing = ContainerList(Float(),default=[10,10]).tag(config=True)
     copy_weedline = Bool(False).tag(config=True)
     copy_weedline_padding = ContainerList(Float(),default=[10,10,10,10]).tag(config=True)
-    
+     
     plot_weedline = Bool(False).tag(config=True)
     plot_weedline_padding = ContainerList(Float(),default=[10,10,10,10]).tag(config=True)
-    
+     
     order = Enum('Normal','Reversed').tag(config=True)
-    
+     
     feed_to_end = Bool(True).tag(config=True)
     feed_after = Float(0).tag(config=True)
-    
+     
     stack_size = ContainerList(Int(),default=[0,0])
-    
+     
     path = Instance(QtGui.QPainterPath) # Original path
     model = Instance(QtGui.QPainterPath) # Copy using job properties
     device_model = Instance(QtGui.QPainterPath) # Device's copy of the job
-    
+     
     _blocked = Bool(False) # block change events
     _desired_copies = Int(1) # required for auto copies
-    
-    def _default_device(self):
-        plugin = self.workbench.get_plugin('inkcut.workbench.core')
-        return plugin.device
-    
-    def _default_media(self):
-        plugin = self.workbench.get_plugin('inkcut.workbench.core')
-        return plugin.media
     
     def _observe_document(self,change):
         if self.document and os.path.exists(self.document):
@@ -219,7 +211,7 @@ class Job(ConfigurableAtom):
         self.model = model#.simplified()
         
         # Set device model
-        self.device_model = self.device.driver.prepare_job(self)
+        #self.device_model = self.device.driver.prepare_job(self)
         #except:
         #    # Undo the change
         #    if 'oldvalue' in change:
@@ -329,6 +321,7 @@ class Job(ConfigurableAtom):
                 p = subpath.pointAtPercent(t)
                 a = subpath.angleAtPercent(t)+90
                 #path.moveTo(p)#QtCore.QPointF(x,y))
+                # TOOD: Do i need numpy here???
                 x = p.x()+np.multiply(self.device.blade_offset,np.sin(np.deg2rad(a)))
                 y = p.y()+np.multiply(self.device.blade_offset,np.cos(np.deg2rad(a)))
                 path.lineTo(QtCore.QPointF(x,y))

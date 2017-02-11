@@ -2,7 +2,7 @@ import traceback
 from enaml.widgets.api import (
     Container, Notebook, Page, Label, ImageView, StatusItem, 
     SpinBox, CheckBox, PushButton, RadioButton, Form, ComboBox,
-    Menu, Action
+    Menu, Action, ObjectCombo
 )
 from enaml.core.include import Include
 from enaml.layout.api import hbox,vbox,spacer,align
@@ -10,7 +10,6 @@ from enaml.workbench.api import Extension, PluginManifest
 from inkcut.workbench.core.utils import load_icon, load_image
 from inkcut.workbench.ui.widgets.api import PlotView,DoubleSpinBox
 from inkcut.workbench.core.svg import QtSvgDoc
-
 from inkcut.workbench.ui.task_dialog import JobTaskDialog
 
 
@@ -20,10 +19,32 @@ enamldef HeaderLabel(Label):
 
 enamldef MainView(Container):
     attr model
+    attr job << model.job
     
     constraints = [
-            hbox(notebook,plot)
+        vbox(toolbar,
+             hbox(notebook,plot)
+        )
     ]
+    Container: toolbar:
+        padding = 0
+        constraints = [
+             hbox(devlbl,devcmb,medlbl,medcmb,spacer),
+             align('v_center',devlbl,devcmb,medlbl,medcmb),
+        ]    
+        Label: devlbl:
+            text = "Device"
+        ObjectCombo: devcmb:
+            items << model.available_devices if model.available_devices else []
+            selected := model.device
+            to_string = lambda it:"{}".format(it.name)
+        Label: medlbl:
+            text = "Media"
+        ObjectCombo: medcmb:
+            items << model.available_media if model.available_media else []
+            selected := model.media
+            to_string = lambda it,model=model:"{} {} {}".format(it.name,QtSvgDoc.convertToUnit(it.size[0], model.units),model.units)
+
     
     Notebook: notebook:
         tab_style = 'preferences'
@@ -42,17 +63,17 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('text_letterspacing')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.size[0], model.units)
+                            value << QtSvgDoc.convertToUnit(job.size[0], model.units)
                             value ::
                                     #print("callback",change)
-                                    v = QtSvgDoc.convertToUnit(model.job.size[0], model.units)
+                                    v = QtSvgDoc.convertToUnit(job.size[0], model.units)
                                     changed = v != change['value']
                                     if changed and change['oldvalue']>0 and change['value']>0:
-                                        s = model.job.scale[0] * change['value']/change['oldvalue']
-                                        if model.job.lock_scale:
-                                            model.job.scale = [s,s]
+                                        s = job.scale[0] * change['value']/change['oldvalue']
+                                        if job.lock_scale:
+                                            job.scale = [s,s]
                                         else:
-                                            model.job.scale[0] = s
+                                            job.scale[0] = s
                                             
                             suffix << " "+model.units
                             minimum = 0.00001
@@ -60,55 +81,55 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('text_linespacing')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.size[1], model.units)
+                            value << QtSvgDoc.convertToUnit(job.size[1], model.units)
                             value ::
                                     #print("callback",change)
-                                    v = QtSvgDoc.convertToUnit(model.job.size[1], model.units)
+                                    v = QtSvgDoc.convertToUnit(job.size[1], model.units)
                                     changed = v != change['value']
                                     if changed and change['oldvalue']>0 and change['value']>0:
-                                        s = model.job.scale[1] * change['value']/change['oldvalue']
-                                        if model.job.lock_scale:
-                                            model.job.scale = [s,s]
+                                        s = job.scale[1] * change['value']/change['oldvalue']
+                                        if job.lock_scale:
+                                            job.scale = [s,s]
                                         else:
-                                            model.job.scale[1] = s
+                                            job.scale[1] = s
                             suffix << " "+model.units
                             minimum = 0.00001
                             maximum = 99999.9
                         ImageView:
-                            image << load_image(model.job.lock_scale and 'text_kerning' or 'text_letterspacing')
+                            image << load_image(job.lock_scale and 'text_kerning' or 'text_letterspacing')
                         DoubleSpinBox:
-                            value << 100*model.job.scale[0]
+                            value << 100*job.scale[0]
                             value ::
                                     s = change['value']/100.0  
-                                    if model.job.lock_scale:
-                                        model.job.scale = [s,s]
+                                    if job.lock_scale:
+                                        job.scale = [s,s]
                                     else:
-                                        model.job.scale[0] = s
+                                        job.scale[0] = s
                                         
                             suffix = ' %'
                             minimum = 0.00001
                             maximum = 99999.9
                         ImageView:
-                            visible << not model.job.lock_scale
+                            visible << not job.lock_scale
                             image = load_image('text_linespacing')
                         DoubleSpinBox:
-                            visible << not model.job.lock_scale
-                            value << 100*model.job.scale[1]
+                            visible << not job.lock_scale
+                            value << 100*job.scale[1]
                             value ::
                                     s = change['value']/100.0  
-                                    if model.job.lock_scale:
-                                        model.job.scale = [s,s]
+                                    if job.lock_scale:
+                                        job.scale = [s,s]
                                     else:
-                                        model.job.scale[1] = s
+                                        job.scale[1] = s
                             suffix = ' %'
                             minimum = 0.00001
                             maximum = 99999.9
                     CheckBox: 
                         text = 'Lock aspect ratio'
-                        checked := model.job.lock_scale
+                        checked := job.lock_scale
                     #CheckBox: 
                     #    text = 'Scale to fit'
-                    #    checked := model.job.auto_scale
+                    #    checked := job.auto_scale
                 Container:
                     constraints = [
                         vbox(hdr,
@@ -124,19 +145,19 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('shape_copy')
                         SpinBox:
-                            value := model.job.copies
+                            value := job.copies
                             minimum = 1
                             maximum = 99999
-                            suffix << model.job.auto_copies and "   (minimum set to %s)"%model.job._desired_copies or ""
+                            suffix << job.auto_copies and "   (minimum set to %s)"%job._desired_copies or ""
                     PushButton: pb1:
                         icon = load_icon('shape_square_add')
-                        clicked :: model.job.add_stack() 
+                        clicked :: job.add_stack() 
                     PushButton: pb2:
                         icon = load_icon('shape_square_delete')
-                        clicked :: model.job.remove_stack()
+                        clicked :: job.remove_stack()
                     CheckBox: cb1:
                         text = 'Fill to save space'
-                        checked := model.job.auto_copies
+                        checked := job.auto_copies
             
                 Container:
                     padding = 0
@@ -147,7 +168,7 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('shape_rotate_clockwise')
                         DoubleSpinBox:
-                            value := model.job.rotation
+                            value := job.rotation
                             suffix = " °"
                             maximum = 180
                             minimum = -180
@@ -155,7 +176,25 @@ enamldef MainView(Container):
                             single_step = 15
                     CheckBox:
                         text = 'Rotate to save space'
-                        checked := model.job.auto_rotate
+                        checked := job.auto_rotate
+                Container:
+                    padding = 0
+                    
+                    HeaderLabel:
+                        text = "Graphic Mirroring"
+                    CheckBox:
+                        text = 'Mirror about x-axis'
+                        icon = load_icon('shape_flip_vertical')
+                        checked := job.mirror[0]
+                    CheckBox:
+                        text = 'Mirror about y-axis'
+                        icon = load_icon('shape_flip_horizontal')
+                        checked := job.mirror[1]
+        Page:
+            title = 'Placement'
+            closable = False
+            
+            Container:
                 Container:
                     padding = 0
                     
@@ -166,37 +205,19 @@ enamldef MainView(Container):
                         Label:
                             text = "Row"
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.copy_spacing[0], model.units)
-                            value :: model.job.copy_spacing[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.copy_spacing[0], model.units)
+                            value :: job.copy_spacing[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
                         Label:
                             text = "Col"
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.copy_spacing[1], model.units)
-                            value :: model.job.copy_spacing[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.copy_spacing[1], model.units)
+                            value :: job.copy_spacing[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
-        Page:
-            title = 'Setup'
-            closable = False
-            
-            Container:
-                Container:
-                    padding = 0
-                    
-                    HeaderLabel:
-                        text = "Graphic Mirroring"
-                    CheckBox:
-                        text = 'Mirror about x-axis'
-                        icon = load_icon('shape_flip_vertical')
-                        checked := model.job.mirror[0]
-                    CheckBox:
-                        text = 'Mirror about y-axis'
-                        icon = load_icon('shape_flip_horizontal')
-                        checked := model.job.mirror[1]
                 
                 Container:
                     padding = 0
@@ -208,9 +229,9 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('chart_line')
                         ComboBox:
-                            items = list(model.job.__class__.order.items)
-                            index << model.job.__class__.order.items.index(model.job.order)
-                            index :: model.job.order = model.job.__class__.order.items[change['value']]
+                            items = list(job.__class__.order.items)
+                            index << job.__class__.order.items.index(job.order)
+                            index :: job.order = job.__class__.order.items[change['value']]
                             hug_width = 'ignore' # Expanding
                 Container:
                     padding = 0
@@ -220,11 +241,11 @@ enamldef MainView(Container):
                     CheckBox:
                         text = 'Add weedline to plot'
                         icon = load_icon('shape_group')
-                        checked := model.job.plot_weedline
+                        checked := job.plot_weedline
                     CheckBox:
                         text = 'Add weedline to copies'
                         icon = load_icon('shape_ungroup')
-                        checked := model.job.copy_weedline
+                        checked := job.copy_weedline
                 Container:
                     padding = 0
                     
@@ -235,32 +256,32 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('text_padding_left')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.copy_weedline_padding[0], model.units)
-                            value :: model.job.copy_weedline_padding[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.copy_weedline_padding[0], model.units)
+                            value :: job.copy_weedline_padding[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_top')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.copy_weedline_padding[1], model.units)
-                            value :: model.job.copy_weedline_padding[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.copy_weedline_padding[1], model.units)
+                            value :: job.copy_weedline_padding[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_right')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.copy_weedline_padding[2], model.units)
-                            value :: model.job.copy_weedline_padding[2] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.copy_weedline_padding[2], model.units)
+                            value :: job.copy_weedline_padding[2] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_bottom')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.copy_weedline_padding[3], model.units)
-                            value :: model.job.copy_weedline_padding[3] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.copy_weedline_padding[3], model.units)
+                            value :: job.copy_weedline_padding[3] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
@@ -280,19 +301,26 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('shape_square_width')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.media.size[0], model.units)
-                            value :: model.job.media.size[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.media.size[0], model.units)
+                            value :: job.media.size[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            #maximum << QtSvgDoc.convertToUnit(job.media.size[0], model.units)
                             #single_step = 0.1
                         ImageView:
                             image = load_image('shape_square_height')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.media.size[1], model.units)
-                            value :: model.job.media.size[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.media.size[1], model.units)
+                            value :: job.media.size[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
+                            #maximum << QtSvgDoc.convertToUnit(job.media.size[1], model.units)
                             #single_step = 0.1
+                        Label:
+                            text = ""
+                        PushButton:
+                            text = "Read from device"
+                            tool_tip = "Get the media size by querying the device."
                 Container:
                     padding = 0
                     
@@ -303,32 +331,32 @@ enamldef MainView(Container):
                         ImageView:
                             image = load_image('text_padding_left')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.media.padding[0], model.units)
-                            value :: model.job.media.padding[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.media.padding[0], model.units)
+                            value :: job.media.padding[0] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_top')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.media.padding[1], model.units)
-                            value :: model.job.media.padding[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.media.padding[1], model.units)
+                            value :: job.media.padding[1] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_right')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.media.padding[2], model.units)
-                            value :: model.job.media.padding[2] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.media.padding[2], model.units)
+                            value :: job.media.padding[2] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1
                         ImageView:
                             image = load_image('text_padding_bottom')
                         DoubleSpinBox:
-                            value << QtSvgDoc.convertToUnit(model.job.media.padding[3], model.units)
-                            value :: model.job.media.padding[3] = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                            value << QtSvgDoc.convertToUnit(job.media.padding[3], model.units)
+                            value :: job.media.padding[3] = QtSvgDoc.convertFromUnit(change['value'],model.units)
                             suffix << " "+model.units
                             maximum = 99999.9
                             single_step = 0.1    
@@ -340,11 +368,11 @@ enamldef MainView(Container):
                     CheckBox:
                         text = 'Align center horizontally'
                         icon = load_icon('shape_align_center')
-                        checked := model.job.align_center[0]
+                        checked := job.align_center[0]
                     CheckBox:
                         text = 'Align center vertically'
                         icon = load_icon('shape_align_middle')
-                        checked := model.job.align_center[1]
+                        checked := job.align_center[1]
                 
                 Container:
                     padding = 0
@@ -358,13 +386,13 @@ enamldef MainView(Container):
                         text = "Plot Feeding"
                     RadioButton: rb1:
                         text = 'Return to origin'
-                        #checked := model.job.feed_to_end
+                        #checked := job.feed_to_end
                     RadioButton: rb2:
                         text = 'Feed after'
-                        checked := model.job.feed_to_end
+                        checked := job.feed_to_end
                     DoubleSpinBox: dsb:
-                        value << QtSvgDoc.convertToUnit(model.job.feed_after, model.units)
-                        value :: model.job.feed_after = QtSvgDoc.convertFromUnit(change['value'],model.units)
+                        value << QtSvgDoc.convertToUnit(job.feed_after, model.units)
+                        value :: job.feed_after = QtSvgDoc.convertFromUnit(change['value'],model.units)
                         suffix << " "+model.units
                         maximum = 99999.9
                         single_step = 0.1
@@ -385,4 +413,4 @@ enamldef MainView(Container):
     #       text << model.status
     #StatusItem:
     #    Label:
-    #        text << "%0.3f %s x %0.3f %s"%(model.job.model.boundingBox().width(),model.job.model.boundingBox().width(),model.units,model.units)
+    #        text << "%0.3f %s x %0.3f %s"%(job.model.boundingBox().width(),job.model.boundingBox().width(),model.units,model.units)

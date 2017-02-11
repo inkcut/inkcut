@@ -41,4 +41,4 @@ enamldef SerialPortTransportManifest(PluginManifest):
             id = 'serial'
             name = 'Serial'
             factory = serial_factory
-            settings = settings_factory
+            view_factory = settings_factory

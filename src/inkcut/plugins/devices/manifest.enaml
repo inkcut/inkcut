@@ -3,6 +3,12 @@ from enaml.workbench.api import Extension
 from inkcut.workbench.core.device import DeviceDriver, generic_factory
 
 enamldef DeviceManifest(PluginManifest):
+    """ Device plugin manifest.  
+    
+    Any new device should be added here or registered to 
+    the 'inkcut.workbench.core.devices' extension point.
+    
+    """
     id = 'inkcut.plugins.devices.builtin'
     
     Extension:
