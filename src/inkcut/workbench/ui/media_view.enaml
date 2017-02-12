@@ -48,18 +48,18 @@ enamldef MediaDialog(Dialog): dialog:
                     horizontal_stretch = True
                     show_vertical_header = False
                     items << available_media
-                    Conditional:
-                        condition << not bool(table.items)
-                        Menu:
-                            context_menu = True
-                            Action:
-                                text = "Add"
-                                triggered ::
-                                    m = plugin.create_new_media() 
-                                    tmp = dialog.available_media[:]
-                                    tmp.append(m)
-                                    dialog.available_media = tmp
-                                    dialog.media = m
+                    #Conditional:
+                    #    condition << not bool(table.items)
+                    Menu:
+                        context_menu = True
+                        Action:
+                            text = "Add"
+                            triggered ::
+                                m = plugin.create_new_media() 
+                                tmp = dialog.available_media[:]
+                                tmp.append(m)
+                                dialog.available_media = tmp
+                                dialog.media = m
                     Looper:
                         #: Max number of visible rows
                         #: If this number is too small, stuff will get jacked

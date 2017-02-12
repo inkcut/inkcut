@@ -6,12 +6,10 @@ Created on Jan 17, 2015
 '''
 from __future__ import division
 import os
-import numpy as np
 from datetime import datetime
 from atom.api import Enum,Float,Int,Bool,Instance,ContainerList,Range,Unicode,observe
 from enaml.qt import QtGui, QtCore
 from inkcut.workbench.core.media import Media
-from inkcut.workbench.core.device import Device
 from inkcut.workbench.core.svg import QtSvgDoc
 from inkcut.workbench.preferences.plugin import Model
 
@@ -41,7 +39,6 @@ class Job(Model):
     """
     
     media = Instance(Media) 
-    device = Instance(Device)
     document = Unicode() # Path to document
     
     info = Instance(JobInfo,(),{})
@@ -76,7 +73,6 @@ class Job(Model):
      
     path = Instance(QtGui.QPainterPath) # Original path
     model = Instance(QtGui.QPainterPath) # Copy using job properties
-    device_model = Instance(QtGui.QPainterPath) # Device's copy of the job
      
     _blocked = Bool(False) # block change events
     _desired_copies = Int(1) # required for auto copies
@@ -305,30 +301,29 @@ class Job(Model):
         """ Returns path where it is cutting """
         return self.model
     
-    @property
-    def offset_path(self):
-        """ Returns path where it is cutting """
-        path = QtGui.QPainterPath()
-        _p = QtCore.QPointF(0,0) # previous point
-        step = 0.1
-        for subpath in QtSvgDoc.toSubpathList(self.model):#.toSubpathPolygons():
-            e = subpath.elementAt(0)
-            path.moveTo(QtCore.QPointF(e.x,e.y))
-            length = subpath.length()
-            distance = 0
-            while distance<=length:
-                t = subpath.percentAtLength(distance)
-                p = subpath.pointAtPercent(t)
-                a = subpath.angleAtPercent(t)+90
-                #path.moveTo(p)#QtCore.QPointF(x,y))
-                # TOOD: Do i need numpy here???
-                x = p.x()+np.multiply(self.device.blade_offset,np.sin(np.deg2rad(a)))
-                y = p.y()+np.multiply(self.device.blade_offset,np.cos(np.deg2rad(a)))
-                path.lineTo(QtCore.QPointF(x,y))
-                distance+=step
-            #_p = p # update last
-            
-        return path
+#     def get_offset_path(self,device):
+#         """ Returns path where it is cutting """
+#         path = QtGui.QPainterPath()
+#         _p = QtCore.QPointF(0,0) # previous point
+#         step = 0.1
+#         for subpath in QtSvgDoc.toSubpathList(self.model):#.toSubpathPolygons():
+#             e = subpath.elementAt(0)
+#             path.moveTo(QtCore.QPointF(e.x,e.y))
+#             length = subpath.length()
+#             distance = 0
+#             while distance<=length:
+#                 t = subpath.percentAtLength(distance)
+#                 p = subpath.pointAtPercent(t)
+#                 a = subpath.angleAtPercent(t)+90
+#                 #path.moveTo(p)#QtCore.QPointF(x,y))
+#                 # TOOD: Do i need numpy here???
+#                 x = p.x()+np.multiply(self.device.blade_offset,np.sin(np.deg2rad(a)))
+#                 y = p.y()+np.multiply(self.device.blade_offset,np.cos(np.deg2rad(a)))
+#                 path.lineTo(QtCore.QPointF(x,y))
+#                 distance+=step
+#             #_p = p # update last
+#             
+#         return path
     
     def add_stack(self):
         """ Add a complete stack or fill the row """
@@ -354,11 +349,4 @@ class Job(Model):
         """ Return a cloned instance of this object """
         clone = Job(**self.members())
         return clone
-    
-    def submit(self):
-        self.device.add_job(self)
-        
-    def cancel(self):
-        self.device.cancel_job(self)
-            
         

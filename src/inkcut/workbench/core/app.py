@@ -28,12 +28,14 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
     log_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default/logs'))
     working_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default'))
     config_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default'))
+    _log_format = Unicode('%(asctime)-15s | %(levelname)s | %(message)s')
     _save_lock = Int()
     
     def _default_log(self):
-        log = logging.getLogger()
+        log = logging.getLogger('inkcut')
         handler = logging.StreamHandler()
         handler.setLevel(logging.DEBUG)
+        handler.setFormatter(logging.Formatter(self._log_format))
         log.addHandler(handler)
         log.setLevel(logging.DEBUG)
         return log

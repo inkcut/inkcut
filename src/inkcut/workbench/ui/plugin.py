@@ -6,7 +6,10 @@ Created on Jul 14, 2015
 '''
 import os
 import traceback
-from atom.api import Instance,Bool,Int,Unicode,ContainerList,Enum, observe
+
+import pyqtgraph as pg
+
+from atom.api import Instance, ForwardInstance, Bool, Int, Unicode, ContainerList, Enum, observe
 from enaml.qt import QtGui,QtCore
 from enaml.application import timed_call
 from enaml.widgets.page import Page
@@ -18,7 +21,6 @@ from inkcut.workbench.core.svg import QtSvgDoc
 from inkcut.workbench.core.media import Media
 from inkcut.workbench.core.device import Device
 
-import pyqtgraph as pg
 
 
 class PlotBase(Model):
@@ -53,115 +55,32 @@ class PlotBase(Model):
 
 
 class LivePlot(PlotBase):
-    progress = Int(0)
-    running = Bool(False)
-    paused = Bool(False)
-    cancelled = Bool(False)
+    #: Device to watch
+    device = Instance(Device)
     
+    #: Job to send to the device
+    job = Instance(Job)
+    
+    #: Internal paths for drawing
     paths = ContainerList(Instance(QtGui.QPainterPath))
     
     def start_plot(self):
         """ Runs the do_plot command in a non-blocking way
         
         """
-        if self.running:
-            self.log.debug("Already plotting!...")
+        if self.device.busy:
+            self.log.error("Device is busy!...")
             return
-        
-        self.log.debug("Starting job...")
         
         # Clear plot
         self._view_changed(None)
-        # Draw the media 
         
-        tasks = self.do_plot()
-        self.paused = False
-        self.cancelled = False
+        self.log.debug("Starting job...")
         
-        def task():
-            self.running = True
-            try:
-                timeout = tasks.next()
-                if timeout is not None:
-                    timed_call(timeout, task)
-            except (StopIteration):
-                self.running = False
-        
-        timed_call(0, task)
-        
-        
-    def do_plot(self):
-        """ Actually do the plot and send commands to the device
-        1. Init the device
-        2. For each point in the interpolated path:
-            1. Send point to the device
-            2. Wait desired time (yield the timeout)
-        3. Close the device
-        
-        """
-        # TODO: Push into a plugin
-        yield 1
-        self.job.device.init()
-        #speed = self.device.speed # Units/second
-        # device.speed is in CM/s
-        # d is in PX so...
-        # speed = distance/seconds  
-        # So distance/speed = seconds to wait
-        try:
-            step_size = 1
-            step_time = max(1,round(1000*step_size/QtSvgDoc.parseUnit('%scm'%self.job.device.speed)))
-            p_len = self.job.model.length()
-            p_moved = 0
-            _p = QtCore.QPointF(0,0) # previous point
-            dl = step_size
-            self.progress = 0
-            x,y,z = (0,0,0) # head state
-            
-            for path in self.job.model.toSubpathPolygons():
-                for i,p in enumerate(path):
-                    subpath = QtGui.QPainterPath()
-                    subpath.moveTo(_p)
-                    subpath.lineTo(p)
-                    l = subpath.length()
-                    z = i!=0 and 1 or 0
-                    d = 0
-                    
-                    # Interpolate path in steps of dl and ensure we get _p and p (t=0 and t=1)
-                    while d<=l:# and self.isVisible():
-                        if self.cancelled:
-                            return
-                        if self.paused:
-                            yield 100 # ms
-                            continue # Keep waiting...
-                            
-                        sp = subpath.pointAtPercent(subpath.percentAtLength(d))
-                        if d==l:
-                            break
-                        
-                        p_moved+=min(l-d,dl)
-                        d = min(l,d+dl)
-                    
-                        x,y = sp.x(),-sp.y()
-                        self.job.device.move(x,y,z)
-                        self.progress = int(round(100*p_moved/p_len))
-                        yield step_time # ms
-                    
-                    _p = p
-        except GeneratorExit:
-            pass
-        except:
-            self.log.error(traceback.format_exc())
-                
-        finally:
-            self.job.device.close()
-            
-    def _observe_running(self,change):
-        if self.running:
-            self.job.device.observe('position',self._position_changed)
-        else:
-            self.job.device.unobserve('position',self._position_changed)
-            
-    @observe('job','job.media','job.device')
+        #: Send the job to the device
+        self.device.submit(self.job)
+    
+    @observe('job','job.media','device')
     def _view_changed(self,change):
         view_items = []
         t=QtGui.QTransform.fromScale(1,-1)
@@ -172,14 +91,17 @@ class LivePlot(PlotBase):
         view_items.append(PainterPathPlotItem(self.paths[1],pen=self.pen_up))
         
         
-        if self.job.media:
+        if self.job and self.job.media:
             # Also observe any change to job.media and job.device
-            view_items.append(PainterPathPlotItem(self.job.media.path*t,pen=self.pen_media,skip_autorange=True))
-            view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
+            view_items.append(PainterPathPlotItem(self.job.media.path*t,
+                                                  pen=self.pen_media,skip_autorange=True))
+            view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,
+                                                  pen=self.pen_media_padding,skip_autorange=True))
         self.plot = view_items
-        return view_items
     
+    @observe('device.position')
     def _position_changed(self,change):
+        """ Watch the position of the device as it changes. """
         x,y,z = change['value']
         if z:
             self.paths[0].lineTo(x,-y)
@@ -197,9 +119,16 @@ class LivePlot(PlotBase):
 class MainViewPlugin(SingletonPlugin,PlotBase):
     status = Unicode('None')
     
+    #: Wiki page
+    wiki_page = Unicode('http://www.google.com')
+    
+    #: Current opened document
     current_document = Unicode().tag(config=True)
     
+    #: Previously opened documents
     recent_documents = ContainerList(Unicode()).tag(config=True)
+    
+    #: Show the path after running through the device
     show_offset_path = Bool().tag(config=True)
     
     #: Media library list
@@ -208,9 +137,13 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
     #: Configured devices
     available_devices = ContainerList(Instance(Device)).tag(config=True)
     
+    #: Currently selected device
     device = Instance(Device).tag(config=True)
+    
+    #: Currently selected media
     media = Instance(Media).tag(config=True)
     
+    #: UI tabs
     pages = ContainerList(Instance(Page))
     
     def start(self):
@@ -239,24 +172,25 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         #core = self.workbench.get_plugin('inkcut.workbench.core')
         try:
             return Job(document=self.current_document,
-                       device=self.device,
                        media=self.media)
         except Exception as e:
             context = dict(doc=self.current_document,msg=e)
             self.log.error(traceback.format_exc())
             self.workbench.show_critical("Error opening {doc}".format(**context),"Sorry, could not open {doc}.\n\nError: {msg}".format(**context))
-            return Job(device=self.device,
-                       media=self.media)
+            return Job(media=self.media)
     
-    @observe('job','job.model','job.media','job.device')
+    @observe('job', 'job.model',
+             'media', 'media.padding', 'media.size')
     def _view_changed(self,change):
+        """ Redraw the path on the screen """
         view_items = []
         t=QtGui.QTransform.fromScale(1,-1)
         if self.job.model:
             view_items.append(PainterPathPlotItem(self.job.move_path,pen=self.pen_up))
             view_items.append(PainterPathPlotItem(self.job.cut_path,pen=self.pen_down))
-            if self.show_offset_path:
-                view_items.append(PainterPathPlotItem(self.job.offset_path,pen=self.pen_offset))
+            #: TODO: This
+            #if self.show_offset_path:
+            #    view_items.append(PainterPathPlotItem(self.job.offset_path,pen=self.pen_offset))
         if self.job.media:
             # Also observe any change to job.media and job.device
             view_items.append(PainterPathPlotItem(self.job.media.path*t,pen=self.pen_media,skip_autorange=(False,[0,self.job.size[1]])))
@@ -264,17 +198,10 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         self.plot = view_items
         #self.workbench.save_config()
         
-    @observe('job','job.media')
+    @observe('media','job.media')
     def _media_changed(self,change):
-        self.job.media.observe('padding',self._view_changed)
-        self.job.media.observe('size',self._view_changed)
-        #self.workbench.save_config()
-    
-    @observe('media','device')
-    def _area_changed(self,change):
+        """ Bind UI media to job media """ 
         self.job.media = self.media
-        self.job.device = self.device
-        
     
     @property
     def window(self):
@@ -282,15 +209,17 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         return ui.window.proxy.widget
     
     def close_document(self):
+        """ Set the current document to nothing
+            and start a new empty job
+        """ 
         self.current_document = ''
         if self.job:
-            #self.job._uninit_config()
-            self.job.media.unobserve('padding',self._view_changed)
-            self.job.media.unobserve('size',self._view_changed)
-            self.job = Job(media=self.media,device=self.device)
+            self.job = Job(media=self.media)
     
     def open_document(self, path=""):
-        """ Sets the current file path, which fires _current_document_changed """
+        """ Sets the current file path, 
+            which fires _current_document_changed 
+        """
         if path=="" or not os.path.exists(path):
             open_dir = self.current_document
             if not os.path.exists(self.current_document) and self.recent_documents:
@@ -322,33 +251,29 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         self.current_document = path
         # Plot actually opened in _current_document_changed
         
-    def start_job(self,job=None):
-        # TODO: Copy other params as well
-        job = job or self.job
-        if not job.document:
-            return
-        model = LivePlot(job=job,units=self.units)
-        import enaml
-        with enaml.imports():
-            from inkcut.workbench.ui.task_dialog import JobTaskDialog
-        
-        ui = self.workbench.get_plugin('enaml.workbench.ui')
-        task = JobTaskDialog(ui.window,model=model).exec_()
-        
     def _observe_current_document(self,change):
+        """ When the current document is updated,
+            create a new job with the document.
+        """
         if self.current_document:
             self.job = self._default_job()
             
     def _observe_recent_documents(self,change):
+        """ Make sure the recent documents all exist
+            or remove them from the list.
+        """
         self.recent_documents = [doc for doc in self.recent_documents 
                                         if os.path.isfile(doc)]
-    
     
     def create_new_media(self):
         return Media()
     
     def create_new_device(self):
-        return  Device()
+        core = self.workbench.get_plugin('inkcut.workbench.core')
+        return  Device(
+            name="New device",
+            supported_protocols=core.get_available_protocols(),
+        )
     
     #def _observe_recent_documents(self,change):
     #    if change['type']!='create':

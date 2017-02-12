@@ -1,3 +1,4 @@
+import enaml
 import traceback
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
@@ -7,6 +8,7 @@ from enaml.core.looper import Looper
 from enaml.core.include import Include
 from inkcut.workbench.preferences.plugin import Preference
 from inkcut.workbench.core.utils import menu_icon
+
 
 def plugin_factory():
     from inkcut.workbench.ui.plugin import MainViewPlugin
@@ -22,8 +24,22 @@ def close_document(event):
     
     
 def start_job(event):
+    """ Pass the job to the current
+    device for it to cut. Watch
+    the process in the task dialog.
+    """
+    from inkcut.workbench.ui.plugin import LivePlot
+    
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
-    plugin.start_job()
+    if not plugin.job.document:
+        return
+    
+    with enaml.imports():
+        from inkcut.workbench.ui.task_dialog import JobTaskDialog
+
+    model = LivePlot(device=plugin.device, job=plugin.job)
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    JobTaskDialog(ui.window,model=model).exec_()
     
 def undo(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
@@ -32,9 +48,8 @@ def undo(event):
 def redo(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     plugin.redo()
-
+    
 def open_preferences(event):
-    import enaml
     with enaml.imports():
         from inkcut.workbench.ui.preferences_view import PreferencesDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
@@ -43,36 +58,35 @@ def open_preferences(event):
                       plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
     
 def device_setup(event):
-    import enaml
     with enaml.imports():
         from inkcut.workbench.ui.device_view import DeviceDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
     DeviceDialog(ui.window,
                  plugin=event.workbench.get_plugin('inkcut.workbench.core'),
-                 device=plugin.job.device).exec_()
+                 device=plugin.device).exec_()
 
 def media_setup(event):
-    import enaml
     with enaml.imports():
         from inkcut.workbench.ui.media_view import MediaDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
-    dlg = MediaDialog(ui.window,
-                plugin=plugin,
-                media=plugin.job.media)
+    dlg = MediaDialog(ui.window, plugin=plugin)
     if dlg.exec_():
         plugin.available_media = dlg.available_media
     
 def about_inkcut(event):
-    import enaml
     with enaml.imports():
         from inkcut.workbench.ui.about_dialog import AboutDialog
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
     AboutDialog(ui.window,
                 plugin=event.workbench.get_plugin('inkcut.workbench.core')).exec_()
-    
+
+def open_wiki(event):  
+    import os
+    plugin = event.workbench.get_plugin('inkcut.workbench.ui')
+    os.start(plugin.wiki_page)  
 
 enamldef MainViewManifest(PluginManifest):
     """ The manifest which is registered when the view is loaded.
@@ -113,6 +127,9 @@ enamldef MainViewManifest(PluginManifest):
         Command:
             id = 'inkcut.workbench.ui.about_inkcut'
             handler = about_inkcut
+        Command:
+            id = 'inkcut.workbench.ui.open_wiki'
+            handler = open_wiki
             
     Extension:
         id = 'autostart'
@@ -201,8 +218,8 @@ enamldef MainViewManifest(PluginManifest):
             icon = menu_icon('printer')
             
         ActionItem:
-            path = '/device/cut'
-            label = 'Cut'
+            path = '/device/send'
+            label = 'Send to device'
             shortcut = 'Ctrl+P'
             after = 'setup'
             command = 'inkcut.workbench.ui.start_job'
@@ -214,6 +231,11 @@ enamldef MainViewManifest(PluginManifest):
             shortcut = 'Ctrl+M'
             command = 'inkcut.workbench.ui.media_setup'
             icon = menu_icon('chart_curve_go')
+            
+        ActionItem:
+            path = '/help/wiki'
+            label = 'Wiki'
+            command = 'inkcut.workbench.ui.open_wiki'
             
         ActionItem:
             path = '/help/about'

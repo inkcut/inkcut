@@ -17,6 +17,7 @@ from enaml.workbench.plugin import Plugin as EnamlPlugin
 from enaml.workbench.ui.ui_workbench import UIWorkbench
 from twisted.internet.defer import Deferred
 from twisted.internet import reactor
+from enaml.application import timed_call
 
 def icon_path(name):
     if hasattr(sys, 'frozen'):
@@ -51,7 +52,7 @@ def config_to_json(config,fp):
 
 def async_sleep(sec):
     d = Deferred()
-    reactor.callLater(sec,d.callback,None)
+    timed_call(sec/1000.0,d.callback,None)
     return d
 
 

@@ -35,13 +35,13 @@ enamldef MainView(Container):
         Label: devlbl:
             text = "Device"
         ObjectCombo: devcmb:
-            items << model.available_devices if model.available_devices else []
+            items << [d for d in model.available_devices]
             selected := model.device
             to_string = lambda it:"{}".format(it.name)
         Label: medlbl:
             text = "Media"
         ObjectCombo: medcmb:
-            items << model.available_media if model.available_media else []
+            items << [m for m in model.available_media]
             selected := model.media
             to_string = lambda it,model=model:"{} {} {}".format(it.name,QtSvgDoc.convertToUnit(it.size[0], model.units),model.units)
 

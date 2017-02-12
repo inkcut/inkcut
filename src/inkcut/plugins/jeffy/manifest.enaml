@@ -3,7 +3,7 @@ from enaml.workbench.api import Extension
 from inkcut.workbench.core.device import DeviceDriver
 
 def device_factory(protocol):
-    from inkcut.plugins.devices.jeffy import JeffyDevice
+    from inkcut.plugins.jeffy.jeffy import JeffyDevice
     return JeffyDevice(protocol=protocol)
 
 

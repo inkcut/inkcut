@@ -12,12 +12,11 @@ from inkcut.workbench.core.svg import QtSvgDoc
 from inkcut.workbench.core.utils import load_icon
 
 
-
-
-
 enamldef JobTaskDialog(Dialog):
     title = 'Live Plot'
     attr model
+    attr device << model.device
+    attr job << model.job
     TaskDialogBody:
         TaskDialogContentArea:
             padding = 0
@@ -34,17 +33,17 @@ enamldef JobTaskDialog(Dialog):
                 align('v_center', lbl, pb1,pb2),
             ]
             Label: lbl:
-                text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(model.job.device.position[0],model.job.device.position[1],model.job.device.position[2] and 'down' or 'up')
+                text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(device.position[0],device.position[1],device.position[2] and 'down' or 'up')
                 #checked := details.visible
             PushButton: pb1:
-                visible << model.running
+                visible << device.busy
                 icon = load_icon('control_stop')
-                clicked :: model.cancelled = True
+                clicked :: job.info.cancelled = True
             PushButton: pb2:
-                icon << load_icon((not model.running or model.paused) and 'control_play' or 'control_pause')
+                icon << load_icon((not device.busy or job.info.paused) and 'control_play' or 'control_pause')
                 clicked :: 
-                            if model.running:
-                                model.paused = not model.paused
+                            if device.busy:
+                                job.info.paused = not job.info.paused
                             else:
                                 model.start_plot()
             

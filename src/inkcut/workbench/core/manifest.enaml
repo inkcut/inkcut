@@ -10,7 +10,7 @@ from enaml.core.include import Include
 from enaml.workbench.api import ExtensionPoint, Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, Branding, MenuItem, ItemGroup
 from enaml.workbench.ui.workbench_window import WorkbenchWindow, Workbench, WindowModel, make_title
-from inkcut.workbench.core.device import DeviceDriver, DeviceMedia
+#from inkcut.workbench.core.device import DeviceDriver, DeviceMedia
 
 def main_view_factory(workbench):
     from inkcut.workbench.ui.workspace import InkcutWorkspace
@@ -109,14 +109,14 @@ enamldef InkcutManifest(PluginManifest):
         point = 'enaml.workbench.ui.workspaces'
         factory = main_view_factory
         
-    Extension:
-        id = 'default_device'
-        point = 'inkcut.workbench.core.devices'
-        DeviceDriver:
-            pass
-        
-    Extension:
-        id = 'default_media'
-        point = 'inkcut.workbench.core.media'
-        DeviceMedia:
-            pass
+#     Extension:
+#         id = 'default_device'
+#         point = 'inkcut.workbench.core.devices'
+#         DeviceDriver:
+#             pass
+#         
+#     Extension:
+#         id = 'default_media'
+#         point = 'inkcut.workbench.core.media'
+#         DeviceMedia:
+#             pass

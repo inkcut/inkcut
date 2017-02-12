@@ -7,9 +7,9 @@ import time
 import RPi.GPIO as GPIO
 from atom.api import Instance,List,Int,Float,Tuple,Dict
 from inkcut.workbench.core.device import Device
-from inkcut.workbench.core.utils import ConfigurableAtom
+from inkcut.workbench.preferences.plugin import Model
 
-class StepperMotor(ConfigurableAtom):
+class StepperMotor(Model):
     DIR_POS = 1
     DIR_NEG = -1
     
@@ -54,7 +54,8 @@ class StepperMotor(ConfigurableAtom):
             #    time.sleep(self.delay) 
             
     def _set_output(self,output):
-        """ You should not use this directly! Sets the output pins to the given value.
+        """ You should not use this directly! 
+        Sets the output pins to the given value.
         
         Example:
             pins = [1,2,3,4]
@@ -92,10 +93,11 @@ class JeffyDevice(Device):
     scale = Tuple(default_value=(1,1)) # TODO: This is not used
     delay = Float(0.0035)
     
-    def init(self):        
+    
+    def init(self, job):        
         self.init_rpi()
         self.init_motors()
-    
+        
     def init_rpi(self):
         GPIO.setmode(GPIO.BOARD)
     
@@ -124,6 +126,10 @@ class JeffyDevice(Device):
 #         RPIO.add_interrupt_callback(self.boundary_gpio_pins[0][1], callback=self.on_hit_bound_max_x, debounce_timeout_ms=self.boundary_bounce_timeout)
 #         RPIO.add_interrupt_callback(self.boundary_gpio_pins[1][0], callback=self.on_hit_bound_min_y, debounce_timeout_ms=self.boundary_bounce_timeout)
 #         RPIO.add_interrupt_callback(self.boundary_gpio_pins[1][1], callback=self.on_hit_bound_max_y, debounce_timeout_ms=self.boundary_bounce_timeout)
+
+    def connect(self):
+        self.set_motors_enabled(True)
+        return True
 
     def close(self):
         self.set_motors_enabled(False) # Disable
