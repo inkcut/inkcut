@@ -53,7 +53,6 @@ class PlotBase(Model):
         return pg.mkPen((128,128,128))#,hsv=(0.53,1,0.5,0.5))
     
 
-
 class LivePlot(PlotBase):
     #: Device to watch
     device = Instance(Device)
@@ -75,12 +74,12 @@ class LivePlot(PlotBase):
         # Clear plot
         self._view_changed(None)
         
-        self.log.debug("Starting job...")
-        
+        self.log.debug("Starting job on device {} ...".format(self.device.name))
+
         #: Send the job to the device
         self.device.submit(self.job)
     
-    @observe('job','job.media','device')
+    @observe('job', 'job.media', 'device')
     def _view_changed(self,change):
         view_items = []
         t=QtGui.QTransform.fromScale(1,-1)
@@ -89,8 +88,7 @@ class LivePlot(PlotBase):
         
         view_items.append(PainterPathPlotItem(self.paths[0],pen=self.pen_down))
         view_items.append(PainterPathPlotItem(self.paths[1],pen=self.pen_up))
-        
-        
+
         if self.job and self.job.media:
             # Also observe any change to job.media and job.device
             view_items.append(PainterPathPlotItem(self.job.media.path*t,
@@ -113,10 +111,7 @@ class LivePlot(PlotBase):
             self.plot[1].updateData(self.paths[1])
             
         
-    
-            
-
-class MainViewPlugin(SingletonPlugin,PlotBase):
+class MainViewPlugin(SingletonPlugin, PlotBase):
     status = Unicode('None')
     
     #: Wiki page
@@ -159,9 +154,14 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         #core.observe('media',lambda change:setattr(self.job,'media',change['value']))
     
     def _default_device(self):
-        if not self.available_devices:
-            self.available_devices = [self.create_new_device()]
-        return self.available_devices[0]
+        d = Device(name="Test")
+        from inkcut.plugins.protocols.hpgl import HPGLProtocol
+        d.protocol = HPGLProtocol()
+        d.transport = "serial"
+        return d
+        #if not self.available_devices:
+        #    self.available_devices = [self.create_new_device()]
+        #return self.available_devices[0]
     
     def _default_media(self):
         if not self.available_media:
@@ -230,8 +230,9 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
             result = QtGui.QFileDialog.getOpenFileName(self.window, self.window.tr("Open SVG File"),open_dir, "*.svg") 
             if not result:
                 return # Cancelled
-            path = result
-        
+            path = result[0]
+        if isinstance(path,(list,tuple)):
+            path = path[0]
         if not os.path.exists(path):
             self.log.debug("Cannot open %s, it does not exist!"%path)
             return
@@ -258,21 +259,21 @@ class MainViewPlugin(SingletonPlugin,PlotBase):
         if self.current_document:
             self.job = self._default_job()
             
-    def _observe_recent_documents(self,change):
-        """ Make sure the recent documents all exist
-            or remove them from the list.
-        """
-        self.recent_documents = [doc for doc in self.recent_documents 
-                                        if os.path.isfile(doc)]
+#     def _observe_recent_documents(self,change):
+#         """ Make sure the recent documents all exist
+#             or remove them from the list.
+#         """
+#         self.recent_documents = [doc for doc in self.recent_documents 
+#                                         if os.path.isfile(doc)]
     
     def create_new_media(self):
         return Media()
     
     def create_new_device(self):
         core = self.workbench.get_plugin('inkcut.workbench.core')
-        return  Device(
+        return Device(
             name="New device",
-            supported_protocols=core.get_available_protocols(),
+            supported_protocols=core.available_protocols,
         )
     
     #def _observe_recent_documents(self,change):

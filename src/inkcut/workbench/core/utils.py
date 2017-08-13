@@ -50,9 +50,17 @@ class SafeJsonEncoder(JSONEncoder):
 def config_to_json(config,fp):
     return json.dump(config,fp,cls=SafeJsonEncoder,indent=3,sort_keys=True)
 
-def async_sleep(sec):
+
+def async_sleep(ms):
+    """ Sleep without blocking the UI
+
+    Parameters
+    ----------
+        sec: Time in ms to sleep
+
+    """
     d = Deferred()
-    timed_call(sec/1000.0,d.callback,None)
+    timed_call(ms, d.callback, None)
     return d
 
 

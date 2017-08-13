@@ -28,19 +28,23 @@ def start_job(event):
     device for it to cut. Watch
     the process in the task dialog.
     """
-    from inkcut.workbench.ui.plugin import LivePlot
-    
-    plugin = event.workbench.get_plugin('inkcut.workbench.ui')
-    if not plugin.job.document:
-        return
-    
-    with enaml.imports():
-        from inkcut.workbench.ui.task_dialog import JobTaskDialog
+    try:
+        from inkcut.workbench.ui.plugin import LivePlot
 
-    model = LivePlot(device=plugin.device, job=plugin.job)
-    ui = event.workbench.get_plugin('enaml.workbench.ui')
-    JobTaskDialog(ui.window,model=model).exec_()
-    
+        plugin = event.workbench.get_plugin('inkcut.workbench.ui')
+        if not plugin.job.document:
+            raise RuntimeError("No document is open!")
+            return
+
+        with enaml.imports():
+            from inkcut.workbench.ui.task_dialog import JobTaskDialog
+
+        model = LivePlot(device=plugin.device, job=plugin.job)
+        ui = event.workbench.get_plugin('enaml.workbench.ui')
+        JobTaskDialog(ui.window,model=model).exec_()
+    except:
+        event.workbench.show_warning("Error sending to device",traceback.format_exc())
+
 def undo(event):
     plugin = event.workbench.get_plugin('inkcut.workbench.ui')
     plugin.undo()

@@ -25,7 +25,8 @@ enamldef JobTaskDialog(Dialog):
                 data := model.plot
                 axis_scales << {'left':QtSvgDoc.convertToUnit(1, model.units),'bottom':QtSvgDoc.convertToUnit(1, model.units)}
             ProgressBar:
-                value << model.progress
+                value << int(job.info.progress)
+                text_visible = True
         
         TaskDialogCommandArea:
             constraints = [

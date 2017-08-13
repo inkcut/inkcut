@@ -321,6 +321,12 @@ enamldef MainView(Container):
                         PushButton:
                             text = "Read from device"
                             tool_tip = "Get the media size by querying the device."
+                            clicked :: 
+                                try:
+                                    job.media.size = model.device.querySize()
+                                except NotImplementedError:
+                                    pass
+                                
                 Container:
                     padding = 0
                     

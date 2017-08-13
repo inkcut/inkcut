@@ -5,6 +5,7 @@ Created on Jul 12, 2015
 @author: jrm
 '''
 import os
+import json
 import logging
 import traceback
 from atom.api import Unicode,Int
@@ -14,9 +15,6 @@ from enaml.qt import QtGui
 from enaml.application import timed_call
 from inkcut.workbench.core.utils import SingletonAtom, config_to_json
 from inkcut.workbench.core.registry import collect_plugins
-from traitlets.config.loader import JSONFileConfigLoader,Config
-
-
 
 
 class InkcutWorkbench(UIWorkbench,SingletonAtom):
@@ -42,13 +40,14 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
     
     def _default_config(self):
         try:
-            loader = JSONFileConfigLoader(filename=self.config_file,path=self.config_dir)
-            config =  loader.load_config()
+            #loader = JSONFileConfigLoader(filename=self.config_file,path=self.config_dir)
+            with open(os.path.join(self.config_dir,self.config_file)) as f:
+                config = json.load(f) # loader.load_config()
             self.log.debug("Loaded config %s"%config)
             return config
         except:
             self.log.error(traceback.format_exc())
-            return Config()
+            return {}
         
     def _observe_config(self, change):
         """ This gets called a lot, so to minimize actual writes to the config file

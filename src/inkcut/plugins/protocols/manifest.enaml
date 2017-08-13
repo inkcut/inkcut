@@ -33,6 +33,7 @@ def mock_factory():
     from inkcut.plugins.protocols.debug import DebugProtocol
     return DebugProtocol()
 
+
 enamldef ProtocolPluginManifest(PluginManifest):
     """ Add new protocols here or within any other plugin.
     
@@ -70,8 +71,7 @@ enamldef ProtocolPluginManifest(PluginManifest):
             id = 'gcode'
             name = 'G-Code'
             factory = gcode_factory
-            
-            
+
         DeviceProtocol:
             id = 'debug'
             name = 'Virtual'

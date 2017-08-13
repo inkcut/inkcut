@@ -31,15 +31,15 @@ class InkcutCorePlugin(SingletonPlugin):
     _devices = List()
     _media = List()
     
-    # Active
-    device = Instance(Device)
-    device_id = Unicode().tag(config=True)
-    protocol_id = Unicode().tag(config=True)
-    connection_id = Unicode().tag(config=True)
-    
-    media = Instance(Media)
-    media_id = Unicode().tag(config=True)
-    
+#     # Active
+#     device = Instance(Device)
+#     device_id = Unicode().tag(config=True)
+#     protocol_id = Unicode().tag(config=True)
+#     connection_id = Unicode().tag(config=True)
+#     
+#     media = Instance(Media)
+#     media_id = Unicode().tag(config=True)
+#     
     
     def start(self):
         self.workbench.register_plugins('inkcut/plugins')
@@ -71,6 +71,11 @@ class InkcutCorePlugin(SingletonPlugin):
         
         self._protocols = protocols
         return protocols
+    
+    
+    @property
+    def available_protocols(self):
+        return self._protocols
     
     def _refresh_devices(self):
         workbench = self.workbench
@@ -119,19 +124,19 @@ class InkcutCorePlugin(SingletonPlugin):
                 return dev
         raise KeyError("{} is not a registered device.".format(id))
     
-    #@observe('device_id','protocol_id')
-    def _default_device(self):
-        """ Return the default device as configured """
-        try:
-            dvr = self.get_driver_by_id(self.device_id)
-        except KeyError:
-            dvr = self.get_driver_by_id('Inkcut Virtual device') 
-        
-        self.log.debug("Loading {}".format(dvr.id))
-        proto = self.get_protocol_by_id(dvr.protocols[0])
-        driver = dvr.factory(dvr,proto.factory())
-        return Device(driver=driver)
-    
-    def _default_media(self):
-        return Media()
+#     #@observe('device_id','protocol_id')
+#     def _default_device(self):
+#         """ Return the default device as configured """
+#         try:
+#             dvr = self.get_driver_by_id(self.device_id)
+#         except KeyError:
+#             dvr = self.get_driver_by_id('Inkcut Virtual device') 
+#         
+#         self.log.debug("Loading {}".format(dvr.id))
+#         proto = self.get_protocol_by_id(dvr.protocols[0])
+#         driver = dvr.factory(dvr,proto.factory())
+#         return Device(driver=driver)
+#     
+#     def _default_media(self):
+#         return Media()
     

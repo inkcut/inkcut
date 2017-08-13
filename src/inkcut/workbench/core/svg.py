@@ -450,13 +450,72 @@ class QtSvgUse(QtSvgItem):
             t.translate(x,y)
         return t
             
-
+class QtSvgText(QtSvgItem):
+    tag = "{http://www.w3.org/2000/svg}text"
+    
+    stylemap = {
+        'normal':QtGui.QFont.StyleNormal,
+        'italic':QtGui.QFont.StyleItalic,
+        'oblique':QtGui.QFont.StyleOblique
+    }
+    
+    def parse(self, e):
+        x,y = map(self.parseUnit,(e.attrib.get('x',0),e.attrib.get('y',0)))
+        font = self.parseFont(e)
+        self.addText(x,y,font,e.text)
+    
+    def parseFont(self,e):
+        """
+        font-style:italic;
+        font-variant:normal;
+        font-weight:500;
+        font-stretch:normal;
+        font-size:40px;
+        line-height:125%;
+        font-family:Ubuntu;
+        -inkscape-font-specification:'Ubuntu, Medium Italic';
+        text-align:start;
+        letter-spacing:0px;
+        word-spacing:0px;
+        writing-mode:lr-tb;
+        text-anchor:start;
+        fill:#000000;
+        fill-opacity:1;
+        stroke:none;
+        stroke-width:1px;
+        stroke-linecap:butt;
+        stroke-linejoin:miter;
+        stroke-opacity:1
+        
+        """
+        font =  QtGui.QFont()
+        styles = {}
+        for item in e.attrib.get('style','').split(";"):
+            k,v = item.split(":")
+            styles[k.lower()] = v.lower()
+        
+        if 'font-style' in styles:
+            font.setStyle(self.stylemap.get(styles['font-style'].lower(),'normal'))
+        #if 'font-variant' in styles:
+        if 'font-weight' in styles:
+            font.setWeight(self.parseUnit(styles['font-weight']))
+        if 'font-stretch' in styles:
+            font.setStretch(self.parseUnit(styles['font-stretch']))
+        if 'font-size' in styles:
+            font.setPixelSize(self.parseUnit(styles['font-size']))
+        if 'font-family' in styles:
+            font.setFamily(styles['font-family'])
+        #if 'line-height' in styles:
+        #    font.setLineHeight(self.parseUnit(styles['font-size']))
+        return font
 
 class QtSvgG(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}g"
     
     def parse(self, e):
         for node in e:
+            if node.tag==QtSvgText.tag:
+                raise ValueError("Text nodes are not supported. Please convert all text to paths and re-open the document.")
             for cls in [
                     QtSvgG,
                     QtSvgDoc,
@@ -467,11 +526,13 @@ class QtSvgG(QtSvgItem):
                     QtSvgPolygon,
                     QtSvgPolyline,
                     QtSvgLine,
-                    QtSvgUse,    
+                    QtSvgUse,
+                    #QtSvgText    
                 ]:
                 if node.tag==cls.tag:
                     self.addPath(cls(node))
                     break
+    
 
 class QtSvgSymbol(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}symbol"

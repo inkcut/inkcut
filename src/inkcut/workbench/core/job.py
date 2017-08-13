@@ -113,6 +113,8 @@ class Job(Model):
         # If it's too big we have to scale it
         w,h = path.boundingRect().width(), path.boundingRect().height()
         available_area = self.media.available_area
+
+        #: This screws stuff up!
         if w > available_area.width() or h > available_area.height():
             
             # If it's too big an auto scale is enabled, resize it to fit
@@ -130,8 +132,7 @@ class Job(Model):
         p = path.boundingRect().bottomLeft()
         
         path = path * QtGui.QTransform.fromTranslate(-p.x(),-p.y())
-        
-        
+
         return path
     
     @observe('path','scale','auto_scale','lock_scale','mirror',
@@ -141,7 +142,6 @@ class Job(Model):
              'media','media.size','media.padding','auto_copies')
     def _job_changed(self,change):
         """ Recreate an instance of of the plot using the current settings """
-        #self.log.debug("{},{}".format(self,change))
         if self._blocked:
             return
         
