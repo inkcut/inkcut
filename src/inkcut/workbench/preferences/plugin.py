@@ -71,7 +71,10 @@ class Model(LoggingAtom):
                 
         for key,member in self.members().iteritems():
             if member.metadata and member.metadata.get('config',False):
-                state[key] = getattr(self, key)
+                v = getattr(self, key)
+                if isinstance(v,Declarative):
+                    raise TypeError("Cannot save a Declarative object")
+                state[key] = v
         return state
     
     def __setstate__(self, state):
@@ -170,13 +173,14 @@ class PreferencePlugin(SingletonPlugin):
                 self.log.debug("Saving state due to change: {}".format(change))
                 if not os.path.exists(os.path.dirname(self.resource)):
                     os.makedirs(os.path.dirname(self.resource))
+
+                #: Make sure it's good before erasing the file!
+                # Load with json so it can be saved in a more readable format
+                data = json.loads(pickle.dumps(self.current_state))
+
                 with open(self.resource,'wb') as f:
-                    state = json.dumps(
-                                    # Load with json so it can be saved in a more readable format
-                                    json.loads(pickle.dumps(self.current_state)),
-                                    indent=4)
-                    self.log.debug("State saved is: {}".format(state))
-                    f.write(state)
+                    self.log.debug("Save started...")
+                    f.write(json.dumps(data, indent=4))
                 self.log.debug("State saved to {}!".format(self.resource))
             except Exception as e:
                 self.log.error("Error saving state: {}".format(traceback.format_exc()))
