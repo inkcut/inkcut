@@ -40,6 +40,9 @@ ln -s /usr/lib/python2.7/dist-packages/PyQt4/ ~/.virtualenvs/cv/lib/python2.7/si
 ln -s /usr/lib/python2.7/dist-packages/sip.so ~/.virtualenvs/cv/lib/python2.7/site-packages/
 
 
+# Install RPI.GPIO
+pip install RPi.GPIO
+
 ```
 
 ## Running
