@@ -42,3 +42,18 @@ ln -s /usr/lib/python2.7/dist-packages/sip.so ~/.virtualenvs/cv/lib/python2.7/si
 
 ```
 
+## Running
+
+Run `python main.py`
+
+## How it all works
+
+For now... open `inkcut/workbench/ui/plugin.py`
+and import and create an instance of your device in the `_default_device` method.
+
+Your device should be a subclass of `inkcut.workbench.core.device.Device`.
+
+
+
+
+
