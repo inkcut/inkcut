@@ -20,11 +20,8 @@ from twisted.internet import reactor
 from enaml.application import timed_call
 
 def icon_path(name):
-    if hasattr(sys, 'frozen'):
-        path =os.getcwd() # TODO: Do this
-    else:
-        path = os.getcwd()
-    return os.path.join(path,'res','icons','%s.png'%name)
+    path = os.path.dirname(__file__)
+    return os.path.join(path,'..','..','res','icons','%s.png'%name)
 
 def load_image(name):
     with open(icon_path(name),'rb') as f:
