@@ -4,8 +4,10 @@ Created on Jul 12, 2015
 
 @author: jrm
 '''
+import os
 import sys
-sys.path.append('../../enamlx')
+#sys.path.append('../')
+print (os.getcwd(), sys.path)
 
 from inkcut.workbench.core.app import InkcutWorkbench
 

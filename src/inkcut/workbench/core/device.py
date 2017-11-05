@@ -147,6 +147,12 @@ class Device(AreaBase, IDeviceProtocol):
     #: Device is `busy` and cannot process any more jobs at the moment
     busy = Bool()
 
+    #: Time between each path command
+    step_time = Float()
+
+    #: Distance between each step
+    step_size = Float()
+
     #: Device is currently connected
     connected = Coerced(bool)
 
@@ -167,6 +173,14 @@ class Device(AreaBase, IDeviceProtocol):
     PEN_DOWN = 1
     PEN_UP = 0
 
+    def _default_step_time(self):
+        return max(
+                    1,
+                    round(1000*step_size/QtSvgDoc.parseUnit('%scm'%self.config.speed))
+                )
+
+    def _default_step_size(self):
+        return QtSvgDoc.parseUnit('1mm')
 
     def _default_protocol(self):
         from inkcut.plugins.protocols.hpgl import HPGLProtocol
@@ -212,16 +226,17 @@ class Device(AreaBase, IDeviceProtocol):
             # Should connect immediately
             self.protocol.job = job
 
-            #self.connect()
-            yield defer.maybeDeferred(self.connect)
+            self.connect()
+            #yield defer.maybeDeferred(self.connect)
             
             self.status = "Initializing job"
             # Device model is updated in real time
-            model = yield defer.maybeDeferred(self.init, job)
+            model = self.init(job)#yield defer.maybeDeferred(self.init, job)
             
             self.status = "Processing job"
             try:
                 x, y, z = self.position # initial state
+                _x, _y = x, y
                 
                 #speed = self.device.speed # Units/second
                 # device.speed is in CM/s
@@ -231,15 +246,14 @@ class Device(AreaBase, IDeviceProtocol):
 
                 #: Distance between each command in user units
                 #: this is effectively the resolution the software supplies
-                step_size = QtSvgDoc.parseUnit('1mm')
+                step_size = self.step_size
 
                 #: Time to wait between each step so we don't get
                 #: way ahead of the cutter and fill up it's buffer
-                step_time = max(
-                    1,
-                    round(1000*step_size/QtSvgDoc.parseUnit('%scm'%self.config.speed))
-                )
+                step_time = self.step_time
 
+                
+                
                 #: Total length
                 total_length = float(job.model.length())
                 #: How far we went already
@@ -249,6 +263,8 @@ class Device(AreaBase, IDeviceProtocol):
                 _p = QtCore.QPointF(0, 0)
 
                 self.status = "Job length: {}".format(total_length)
+
+                update =  0
 
                 #: For each path
                 for path in model.toSubpathPolygons():
@@ -276,6 +292,7 @@ class Device(AreaBase, IDeviceProtocol):
 
                         #: Interpolate path in steps of dl and ensure we get _p and p (t=0 and t=1)
                         #: This allows us to cancel mid point
+                        
                         while d <= l:  # and self.isVisible():
                             if job.info.cancelled:
                                 self.status = "Submit job cancelled"
@@ -292,18 +309,24 @@ class Device(AreaBase, IDeviceProtocol):
 
                             #: -y because Qt's axis is from top to bottom not bottom to top
                             x, y = sp.x(), -sp.y()
-                            yield defer.maybeDeferred(self.move, x, y, z)
-                            self.position = [x, y, z]
+                            self.move(x,y,z, absolute=True)#yield defer.maybeDeferred(self.move, x, y, z)
 
-                            #: Set the job progress based on how far we've gone
-                            job.info.progress = int(max(0,min(100, 100*total_moved/total_length)))
+                            #: RPI is SLOOWWW
+                            update += 1
+                            if update>1000:
+                                update = 0
+                                self.position = [x, y, z]
+
+                                #: Set the job progress based on how far we've gone
+                                job.info.progress = int(max(0,min(100, 100*total_moved/total_length)))
 
                             #: Since sending is way faster than cutting
                             #: we must delay (without blocking the UI) before
                             #: sending the next command or the device's buffer
                             #: quickly gets filled and crappy china piece cutters
                             #: get all jacked up
-                            yield async_sleep(step_time)
+                            #if step_time:
+                            yield async_sleep(0.0000001)
 
                             #: When we reached the end
                             if d == l:

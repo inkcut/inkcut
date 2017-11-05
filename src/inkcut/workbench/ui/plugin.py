@@ -142,6 +142,8 @@ class MainViewPlugin(SingletonPlugin, PlotBase):
     pages = ContainerList(Instance(Page))
     
     def start(self):
+        self.device = self._default_device()
+        self.log.info("Device {}".format(self.device))
         pass
 #         if not self.available_devices:
 #             self.available_devices = [self.create_new_device()]
@@ -154,10 +156,12 @@ class MainViewPlugin(SingletonPlugin, PlotBase):
         #core.observe('media',lambda change:setattr(self.job,'media',change['value']))
     
     def _default_device(self):
-        d = Device(name="Test")
-        from inkcut.plugins.protocols.hpgl import HPGLProtocol
-        d.protocol = HPGLProtocol()
-        d.transport = "serial"
+        from inkcut.plugins.jeffy.jeffy import JeffyDevice
+        d = JeffyDevice()
+        #d = Device(name="Test")
+        #from inkcut.plugins.protocols.hpgl import HPGLProtocol
+        #d.protocol = HPGLProtocol()
+        #d.transport = "serial"
         return d
         #if not self.available_devices:
         #    self.available_devices = [self.create_new_device()]
@@ -227,10 +231,11 @@ class MainViewPlugin(SingletonPlugin, PlotBase):
                     open_dir = document
                     break
             
-            result = QtGui.QFileDialog.getOpenFileName(self.window, self.window.tr("Open SVG File"),open_dir, "*.svg") 
-            if not result:
+            path = QtGui.QFileDialog.getOpenFileName(self.window, self.window.tr("Open SVG File"),open_dir, "*.svg") 
+            if not path:
                 return # Cancelled
-            path = result[0]
+            self.log.debug(path)
+            
         if isinstance(path,(list,tuple)):
             path = path[0]
         if not os.path.exists(path):
