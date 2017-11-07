@@ -14,7 +14,7 @@ from contextlib import contextmanager
 class StepperMotor(Model):
     DIR_POS = 1
     DIR_NEG = -1
-    
+                                                            # Test Git Commit
     delay = Float(0.000001)                                 # Default Software Square Wave Time Delay
     driver_pins = Tuple()                                   # StepperMotor Class driver GPIO board pins
     enable_pin = Int()                                      # StepperMotor Class enable GPIO board pins
