@@ -26,7 +26,7 @@ python                      #" open python
 
 pip install enaml
 pip install twisted
-pip install git+https://github.com/frmdstry/enamlx.git
+pip install git+https://github.com/frmdstryr/enamlx.git
 pip install pyqtgraph
 pip install jsonpickle
 
