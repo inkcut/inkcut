@@ -35,7 +35,7 @@ sudo apt install libxml2-dev libxslt-dev
 pip install lxml
 
 # Install pyqt4
-sudo apt install python-pyqt4
+sudo apt install python-qt4
 ln -s /usr/lib/python2.7/dist-packages/PyQt4/ ~/.virtualenvs/cv/lib/python2.7/site-packages/
 ln -s /usr/lib/python2.7/dist-packages/sip.so ~/.virtualenvs/cv/lib/python2.7/site-packages/
 
