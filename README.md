@@ -44,8 +44,7 @@ ln -s /usr/lib/python2.7/dist-packages/sip.so ~/.virtualenvs/cv/lib/python2.7/si
 pip install RPi.GPIO
 
 # Install zbar
-sudo apt-get install libzbar-dev
-pip install zbar
+pip install git+https://github.com/npinchot/zbar.git
 
 
 ```
