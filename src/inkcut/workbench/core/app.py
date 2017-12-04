@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-'''
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
 Created on Jul 12, 2015
 
 @author: jrm
-'''
+"""
 import os
 import json
 import logging
@@ -17,15 +23,18 @@ from inkcut.workbench.core.utils import SingletonAtom, config_to_json
 from inkcut.workbench.core.registry import collect_plugins
 
 
-class InkcutWorkbench(UIWorkbench,SingletonAtom):
+class InkcutWorkbench(UIWorkbench, SingletonAtom):
     
     status = Unicode()
     app_name = Unicode('Inkcut')
     app_icon = Unicode('')
     config_file = Unicode('inkcut_config.json')
-    log_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default/logs'))
-    working_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default'))
-    config_dir = Unicode(os.path.expanduser('~/.config/inkcut/workspace/profile_default'))
+    log_dir = Unicode(os.path.expanduser(
+        '~/.config/inkcut/workspace/profile_default/logs'))
+    working_dir = Unicode(os.path.expanduser(
+        '~/.config/inkcut/workspace/profile_default'))
+    config_dir = Unicode(os.path.expanduser(
+        '~/.config/inkcut/workspace/profile_default'))
     _log_format = Unicode('%(asctime)-15s | %(levelname)s | %(message)s')
     _save_lock = Int()
     
@@ -40,74 +49,89 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
     
     def _default_config(self):
         try:
-            #loader = JSONFileConfigLoader(filename=self.config_file,path=self.config_dir)
-            with open(os.path.join(self.config_dir,self.config_file)) as f:
-                config = json.load(f) # loader.load_config()
-            self.log.debug("Loaded config %s"%config)
+            with open(os.path.join(self.config_dir, self.config_file)) as f:
+                config = json.load(f)
+            self.log.debug("Loaded config %s" % config)
             return config
         except:
             self.log.error(traceback.format_exc())
             return {}
         
     def _observe_config(self, change):
-        """ This gets called a lot, so to minimize actual writes to the config file
-        only write after a timer expires. """
+        """ This gets called a lot, so to minimize actual writes to the config 
+        file only write after a timer expires. 
+        
+        """
         if not self.config:
             return
         super(InkcutWorkbench, self)._observe_config(change)
-        if 'oldvalue' in change and change['oldvalue']!=change['value']:
+
+        if 'oldvalue' in change and change['oldvalue'] != change['value']:
             # Schedule a save to occur, if one is waiting, cancel it
             def save_job():
                 """ If this is the last one scheduled, actually save 
-                otherwise wait for the latest config (as more changes have occurred).
+                otherwise wait for the latest config (as more changes have 
+                occurred).
+                
                 """
-                if self._save_lock==1:
+                if self._save_lock == 1:
                     self._save_config()
-                self._save_lock-=1
-            self._save_lock+=1
-            timed_call(500,save_job)
+                self._save_lock -= 1
+            self._save_lock += 1
+            timed_call(500, save_job)
             
     def _save_config(self):
         """ Save the instances config variables that are tagged as config """
-        config_path = os.path.join(self.config_dir,self.config_file)
-        self.log.debug("Saving config to %s..."%config_path)
+        config_path = os.path.join(self.config_dir, self.config_file)
+        self.log.debug("Saving config to %s..." % config_path)
         if not os.path.exists(self.config_dir):
             os.makedirs(self.config_dir)
-        with open(config_path,'w') as f:
-            config_to_json(self.config,f)
+        with open(config_path, 'w') as f:
+            config_to_json(self.config, f)
         
     @property
     def window(self):
-        """ Return the main UI window or a dialog if it wasn't made yet (during loading) """
+        """ Return the main UI window or a dialog if it wasn't made yet 
+        (during loading) 
+        
+        """
         try:
             ui = self.get_plugin('enaml.workbench.ui')
             return ui.window.proxy.widget
         except:
             return QtGui.QDialog()
     
-    def show_critical(self,title,message,*args,**kwargs):
+    def show_critical(self, title, message, *args, **kwargs):
         """ Popup a error dialog box """
-        return QtGui.QMessageBox.critical(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
+        return QtGui.QMessageBox.critical(self.window, "{0} - {1}".format(
+            self.app_name, title), message, *args, **kwargs)
         
-    def show_warning(self,title,message,*args,**kwargs):
-        return QtGui.QMessageBox.warning(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
+    def show_warning(self, title, message, *args, **kwargs):
+        return QtGui.QMessageBox.warning(self.window, "{0} - {1}".format(
+            self.app_name, title), message, *args, **kwargs)
         
-    def show_information(self,title,message,*args,**kwargs):
-        return QtGui.QMessageBox.information(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
+    def show_information(self, title, message, *args, **kwargs):
+        return QtGui.QMessageBox.information(self.window, "{0} - {1}".format(
+            self.app_name, title), message, *args, **kwargs)
+
+    def show_about(self, title, message, *args, **kwargs):
+        return QtGui.QMessageBox.about(self.window, "{0} - {1}".format(
+            self.app_name, title), message, *args, **kwargs)
     
-    def show_about(self,title,message,*args,**kwargs):
-        return QtGui.QMessageBox.about(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
+    def show_question(self, title, message, *args, **kwargs):
+        return QtGui.QMessageBox.question(self.window, "{0} - {1}".format(
+            self.app_name, title), message, *args, **kwargs)
     
-    def show_question(self,title,message,*args,**kwargs):
-        return QtGui.QMessageBox.question(self.window,"{0} - {1}".format(self.app_name,title),message,*args,**kwargs)
-    
-    def register_plugins(self,path):
+    def register_plugins(self, path):
         """ Register all plugins found in the given path 
-        @param package: Prefix of package where plugins exist in
-                        dotted notation. Ex 'inkcut.plugins'
+        Parameters
+        ----------
+            path: str
+                Prefix of package where plugins exist in dotted notation. 
+                Ex 'inkcut.plugins'
         """
-        self.log.debug("Loading plugins from %s"%(path,))
-        for plugin_def in collect_plugins(path,prefix='',log=self.log):
+        self.log.debug("Loading plugins from %s" % (path,))
+        for plugin_def in collect_plugins(path, prefix='', log=self.log):
             try:
                 self.register(plugin_def())
             except ValueError:
@@ -134,7 +158,6 @@ class InkcutWorkbench(UIWorkbench,SingletonAtom):
         self.register(UIManifest())
         self.register(PreferencesManifest())
         self.register(InkcutManifest())
-        
 
         ui = self.get_plugin('enaml.workbench.ui')
         ui.select_workspace('inkcut.workbench.core.main_view')

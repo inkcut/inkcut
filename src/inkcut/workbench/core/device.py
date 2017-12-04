@@ -1,15 +1,21 @@
-# -*- coding: utf-8 -*- 
-'''
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
 Created on Jan 16, 2015
 
 @author: jrm
-'''
+"""
 import os
 import logging
 import traceback
 from atom.api import (
     Atom, Float, Instance, Unicode, Bool, ForwardInstance,
-    ContainerList, Int, Callable, Coerced, Value, observe
+    ContainerList, Int, Callable, Coerced, observe
 )
 from enaml.qt import QtCore, QtGui
 from enaml.core.declarative import Declarative, d_
@@ -43,47 +49,50 @@ class IDeviceProtocol(Atom, Protocol):
     job = ForwardInstance(device_job)
 
     def connectionMade(self):
-        """ Called when a connection to the
-            physical device has been made.
+        """ Called when a connection to the physical device has been made.
+        
         """
         pass
     
     def init(self, job):
-        """ Called after creating a connection
-            and before starting to process the job.
-            
-            Use this to send any initialization commands.
+        """ Called after creating a connection and before starting to process 
+        the job. Use this to send any initialization commands.
+        
         """
         self.job = job
         
     def finish(self):
-        """ Called before dropping the
-            connection after a job is finished.
-            
-            Use this to send any finalization commands.
+        """ Called before dropping the connection after a job is finished.
+        Use this to send any finalization commands.
+        
         """
         pass
     
-    def move(self,x,y,z):
+    def move(self, x, y, z):
         """ Called to move the device to a given position. """
-        raise NotImplementedError("IDeviceProtocol.move(x,y,z) is not implemented by {}".format(self))
+        raise NotImplementedError("IDeviceProtocol.move(x,y,z) is not "
+                                  "implemented by {}".format(self))
     
     def connectionLost(self, reason=connectionDone):
         """ Called when the connection to the device is lost.
-            The reason may be a clean disconnect (it was told to)
-            or a failure (such as a usb cable pulled out).
+        The reason may be a clean disconnect (it was told to)
+        or a failure (such as a usb cable pulled out).
+        
         """
         Protocol.connectionLost(self, reason=reason)
         
     def querySize(self):
         """ Read the size from the device. Leave the 
-            default implmentation if this is not supported.
+        default implementation if this is not supported.
+        
         """
-        raise NotImplementedError("IDeviceProtocol.querySize() is not implemented by {}".format(self))
+        raise NotImplementedError("IDeviceProtocol.querySize() is not "
+                                  "implemented by {}".format(self))
         
     def write(self,data):
         """ Utility function that writes to the transport
-            and appends it to the job's data. 
+        and appends it to the job's data. 
+        
         """
         self.job.info.data += data
         self.log.debug("Sending: {}".format(data))
@@ -94,8 +103,7 @@ class IDeviceProtocol(Atom, Protocol):
 
 
 class DeviceConfig(Model):
-    """ Device configuration for 
-        Vinyl cutter / 2d plotter
+    """ Device configuration for  Vinyl cutter / 2d plotter
     """
     #: True Device uses a roll and has an infinite y axis (limited by roll size)
     uses_roll = Bool(False).tag(config=True)
@@ -125,14 +133,15 @@ class DeviceConfig(Model):
 
 class Device(AreaBase, IDeviceProtocol):
     """ The role of the device is to serve as a model for the configuration
-        of the Plotter/Cutter being used as well as handle the process of actually
-        writing do the physical device using whatever protocols and connection it supports.
-        
-        The default device class delegates the connection
-        and move handlers to one of the supported
-        protocols.
-        
-        Subclasses do not need to use this.
+    of the Plotter/Cutter being used as well as handle the process of actually
+    writing do the physical device using whatever protocols and connection it 
+    supports.
+    
+    The default device class delegates the connection
+    and move handlers to one of the supported
+    protocols.
+    
+    Subclasses do not need to use this.
     
     """
     
@@ -167,17 +176,18 @@ class Device(AreaBase, IDeviceProtocol):
     protocol = Instance(IDeviceProtocol)
 
     #: Protocols supported by device
-    supported_protocols = ContainerList(ForwardInstance(lambda:DeviceProtocol))#.tag(config=True) # Locks up saving...
+    supported_protocols = ContainerList(
+        ForwardInstance(lambda: DeviceProtocol))#.tag(config=True) # Locks up saving...
 
     #: Head states
     PEN_DOWN = 1
     PEN_UP = 0
 
     def _default_step_time(self):
-        return max(
-                    1,
-                    round(1000*step_size/QtSvgDoc.parseUnit('%scm'%self.config.speed))
-                )
+        return max(1,  round(
+            1000* self.step_size/QtSvgDoc.parseUnit(
+                                    '%scm' % self.config.speed))
+        )
 
     def _default_step_size(self):
         return QtSvgDoc.parseUnit('1mm')
@@ -186,7 +196,8 @@ class Device(AreaBase, IDeviceProtocol):
         from inkcut.plugins.protocols.hpgl import HPGLProtocol
         return HPGLProtocol()
         if not self.supported_protocols:
-            raise DeviceError("Attempted to use a protocol but none are configured or supported by this device!")
+            raise DeviceError("Attempted to use a protocol but none are "
+                              "configured or supported by this device!")
         proto_def = self.supported_protocols[0]
         
         #: Create the protocol
@@ -195,12 +206,13 @@ class Device(AreaBase, IDeviceProtocol):
     
     def set_protocol_id(self,pid):
         for proto_def in self.supported_protocols:
-            if proto_def.id==pid:
+            if proto_def.id == pid:
                 self.protocol_id = pid
                 self.protocol = proto_def.factory()
                 break
         supported = [d.id for d in self.supported_protocols]
-        raise DeviceError("Device does not support a protocol with id {}. Supports: {}".format(pid,supported))
+        raise DeviceError("Device does not support a protocol with id {}. "
+                          "Supports: {}".format(pid, supported))
     
     @defer.inlineCallbacks
     def submit(self, job):
@@ -644,13 +656,15 @@ class Device(AreaBase, IDeviceProtocol):
 #     
 #     def lose_connection(self,protocol):
 #         protocol.transport.loseConnection()
-# 
+#
+
 def generic_factory(driver_def,protocol):
     """ Generate the correct device from the Driver """
     from inkcut.workbench.core import device
     DriverFactory = getattr(device,"{}Driver".format(driver_def.connections[0].title()))
     return DriverFactory(protocol=protocol)
-         
+
+
 class DeviceDriver(Declarative):
     """ Provide meta info about this device """
     # ID of the device
@@ -699,7 +713,8 @@ class DeviceProtocol(Declarative):
     
     # Settings to configure the protocol, must return enaml widgets!
     options = d_(Callable())
-    
+
+
 class DeviceTransport(Declarative):
     # Id of the protocol
     id = d_(Unicode())
@@ -713,7 +728,8 @@ class DeviceTransport(Declarative):
     
     # Settings to configure the protocol, must return enaml widgets!
     view_factory = d_(Callable())
-    
+
+
 class DeviceMedia(Declarative):
     # Id of the media
     id = d_(Unicode())

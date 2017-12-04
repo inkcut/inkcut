@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-'''
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
 Created on Aug 2, 2015
 
 @author: jrm
-'''
+"""
 from atom.api import Instance, List, Unicode, observe
 from inkcut.workbench.core.utils import SingletonPlugin
 from inkcut.workbench.core.media import Media
@@ -18,6 +24,7 @@ PROTOCOLS_POINT = 'inkcut.workbench.core.protocols'
 TRANSPORTS_POINT = 'inkcut.workbench.core.transports'
 
 MEDIA_POINT = 'inkcut.workbench.core.media'
+
 
 class InkcutCorePlugin(SingletonPlugin):
     """ Plugin loads all other plugins except the UI 
@@ -87,7 +94,8 @@ class InkcutCorePlugin(SingletonPlugin):
             for driver in extension.get_children(DeviceDriver):
                 try:
                     if not driver.id:
-                        driver.id = "{} {}".format(driver.manufacturer,driver.model)
+                        driver.id = "{} {}".format(driver.manufacturer,
+                                                   driver.model)
                     devices.append(driver)
                 except:
                     self.log.error(traceback.format_exc())
@@ -112,13 +120,13 @@ class InkcutCorePlugin(SingletonPlugin):
         self._media = media
         return media
     
-    def get_protocol_by_id(self,id):
+    def get_protocol_by_id(self, id):
         for proto in self._protocols:
             if proto.id == id:
                 return proto
         raise KeyError("{} is not a registered protocol.".format(id))
     
-    def get_driver_by_id(self,id):
+    def get_driver_by_id(self, id):
         for dev in self._devices:
             if dev.id == id:
                 return dev
@@ -139,4 +147,3 @@ class InkcutCorePlugin(SingletonPlugin):
 #     
 #     def _default_media(self):
 #         return Media()
-    

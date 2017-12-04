@@ -1,4 +1,14 @@
-import traceback
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 14, 2015
+
+@author: jrm
+"""
 from enaml.widgets.api import (
     Container, Notebook, Page, Label, ImageView, StatusItem, 
     SpinBox, CheckBox, PushButton, RadioButton, Form, ComboBox,
@@ -43,7 +53,10 @@ enamldef MainView(Container):
         ObjectCombo: medcmb:
             items << [m for m in model.available_media]
             selected := model.media
-            to_string = lambda it,model=model:"{} {} {}".format(it.name,QtSvgDoc.convertToUnit(it.size[0], model.units),model.units)
+            to_string = lambda it,model=model:"{} {} {}".format(
+                it.name,
+                QtSvgDoc.convertToUnit(it.size[0], model.units),
+                model.units)
 
     
     Notebook: notebook:

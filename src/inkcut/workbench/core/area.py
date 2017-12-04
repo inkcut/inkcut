@@ -1,24 +1,37 @@
 # -*- coding: utf-8 -*-
-'''
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
 Created on Jul 20, 2015
 
 @author: jrm
-'''
+"""
 from atom.api import observe,ContainerList,Float,Instance
 from enaml.qt import QtCore,QtGui
 
 from inkcut.workbench.preferences.plugin import Model
 
+
 class AreaBase(Model):
-    model = Instance(QtCore.QRectF) # Qt model representing this area
-    size = ContainerList(Float(),default=[1800,2700]).tag(config=True)
-    padding = ContainerList(Float(),default=[10,10,10,10]).tag(config=True) # Left, Top, Right, Bottom
+    # Qt model representing this area
+    model = Instance(QtCore.QRectF)
+
+    size = ContainerList(Float(), default=[1800, 2700]).tag(config=True)
+
+    # Left, Top, Right, Bottom
+    padding = ContainerList(Float(),
+                            default=[10, 10, 10, 10]).tag(config=True)
+
     area = Instance(QtCore.QRectF)
     path = Instance(QtGui.QPainterPath)
     padding_path = Instance(QtGui.QPainterPath)
     
     def _default_area(self):
-        return QtCore.QRectF(0,0,self.size[0],self.size[1])
+        return QtCore.QRectF(0, 0, self.size[0], self.size[1])
     
     def _default_path(self):
         p = QtGui.QPainterPath()
@@ -31,7 +44,7 @@ class AreaBase(Model):
         return p
         
     @observe('size','padding')
-    def _sync_size(self,change):
+    def _sync_size(self, change):
         self.area.setWidth(self.size[0])
         self.area.setHeight(self.size[1])
         self.path = self._default_path()
@@ -61,8 +74,7 @@ class AreaBase(Model):
     
     @property
     def available_area(self):
-        x,y = self.padding_left,self.padding_bottom
-        w,h = self.size[0]-(self.padding_right+self.padding_left),self.size[1]-(self.padding_bottom+self.padding_top)
-        return QtCore.QRectF(x,y,w,h)
-        
-    
+        x, y = self.padding_left, self.padding_bottom
+        w, h = (self.size[0]-(self.padding_right+self.padding_left),
+                self.size[1]-(self.padding_bottom+self.padding_top))
+        return QtCore.QRectF(x, y, w, h)

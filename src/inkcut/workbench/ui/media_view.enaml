@@ -1,5 +1,14 @@
+"""
+Copyright (c) 2017, Jairus Martin.
 
-from atom.api import atomref,Unicode,Instance,List,Bool
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 14, 2015
+
+@author: jrm
+"""
 from enaml.core.api import Conditional, Looper
 from enaml.image import Image
 from enaml.layout.api import align, vbox,hbox, spacer
@@ -24,8 +33,10 @@ from inkcut.workbench.core.device import (
 )
 from inkcut.workbench.ui.widgets.double_spin_box import DoubleSpinBox
 
+
 enamldef HeaderLabel(Label):
     pass
+
 
 enamldef MediaDialog(Dialog): dialog:
     attr plugin
@@ -68,9 +79,10 @@ enamldef MediaDialog(Dialog): dialog:
                              row << table.visible_row+loop_index
                              attr item << table.items[self.row]
                              TableViewItem:
-                                text << "{} ({} {} x {} {})".format(item.name,
-                                                              QtSvgDoc.convertToUnit(item.size[0],plugin.units),plugin.units,
-                                                              QtSvgDoc.convertToUnit(item.size[1],plugin.units),plugin.units,)
+                                text << "{} ({} {} x {} {})".format(
+                                    item.name,
+                                    QtSvgDoc.convertToUnit(item.size[0], plugin.units), plugin.units,
+                                    QtSvgDoc.convertToUnit(item.size[1], plugin.units), plugin.units,)
                                 clicked :: dialog.media = item
                                 Menu:
                                     Action:

@@ -1,15 +1,22 @@
 # -*- coding: utf-8 -*-
-'''
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
 Created on Jul 14, 2015
 
 @author: jrm
-'''
+"""
 import os
 import traceback
 
 import pyqtgraph as pg
 
-from atom.api import Instance, ForwardInstance, Bool, Int, Unicode, ContainerList, Enum, observe
+from atom.api import (Instance, ForwardInstance, Bool, Int, Unicode,
+                      ContainerList, Enum, observe)
 from enaml.qt import QtGui,QtCore
 from enaml.application import timed_call
 from enaml.widgets.page import Page
@@ -20,7 +27,6 @@ from inkcut.workbench.core.job import Job
 from inkcut.workbench.core.svg import QtSvgDoc
 from inkcut.workbench.core.media import Media
 from inkcut.workbench.core.device import Device
-
 
 
 class PlotBase(Model):
@@ -38,19 +44,19 @@ class PlotBase(Model):
         return 'in'
     
     def _default_pen_media(self):
-        return pg.mkPen((128,128,128))
+        return pg.mkPen((128, 128, 128))
     
     def _default_pen_media_padding(self):
-        return pg.mkPen((128,128,128),style=QtCore.Qt.DashLine)
+        return pg.mkPen((128, 128, 128), style=QtCore.Qt.DashLine)
     
     def _default_pen_up(self):
-        return pg.mkPen(hsv=(0.53,1,0.5,0.5))
+        return pg.mkPen(hsv=(0.53, 1, 0.5, 0.5))
     
     def _default_pen_offset(self):
-        return pg.mkPen(hsv=(0.43,1,0.5,0.5))
+        return pg.mkPen(hsv=(0.43, 1, 0.5, 0.5))
     
     def _default_pen_down(self):
-        return pg.mkPen((128,128,128))#,hsv=(0.53,1,0.5,0.5))
+        return pg.mkPen((128, 128, 128)) #,hsv=(0.53,1,0.5,0.5))
     
 
 class LivePlot(PlotBase):
@@ -74,40 +80,45 @@ class LivePlot(PlotBase):
         # Clear plot
         self._view_changed(None)
         
-        self.log.debug("Starting job on device {} ...".format(self.device.name))
+        self.log.debug("Starting job on device {} ...".format(
+            self.device.name))
 
         #: Send the job to the device
         self.device.submit(self.job)
     
     @observe('job', 'job.media', 'device')
-    def _view_changed(self,change):
+    def _view_changed(self, change):
         view_items = []
-        t=QtGui.QTransform.fromScale(1,-1)
+        t=QtGui.QTransform.fromScale(1, -1)
         
-        self.paths = [QtGui.QPainterPath(),QtGui.QPainterPath()]
+        self.paths = [QtGui.QPainterPath(), QtGui.QPainterPath()]
         
-        view_items.append(PainterPathPlotItem(self.paths[0],pen=self.pen_down))
-        view_items.append(PainterPathPlotItem(self.paths[1],pen=self.pen_up))
+        view_items.append(PainterPathPlotItem(self.paths[0],
+                                              pen=self.pen_down))
+        view_items.append(PainterPathPlotItem(self.paths[1],
+                                              pen=self.pen_up))
 
         if self.job and self.job.media:
             # Also observe any change to job.media and job.device
-            view_items.append(PainterPathPlotItem(self.job.media.path*t,
-                                                  pen=self.pen_media,skip_autorange=True))
-            view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,
-                                                  pen=self.pen_media_padding,skip_autorange=True))
+            view_items.append(PainterPathPlotItem(
+                self.job.media.path*t, pen=self.pen_media,
+                skip_autorange=True))
+            view_items.append(PainterPathPlotItem(
+                self.job.media.padding_path*t, pen=self.pen_media_padding,
+                skip_autorange=True))
         self.plot = view_items
     
     @observe('device.position')
     def _position_changed(self,change):
         """ Watch the position of the device as it changes. """
-        x,y,z = change['value']
+        x, y, z = change['value']
         if z:
-            self.paths[0].lineTo(x,-y)
-            self.paths[1].moveTo(x,-y)
+            self.paths[0].lineTo(x, -y)
+            self.paths[1].moveTo(x, -y)
             self.plot[0].updateData(self.paths[0])
         else:
-            self.paths[0].moveTo(x,-y)
-            self.paths[1].lineTo(x,-y)
+            self.paths[0].moveTo(x, -y)
+            self.paths[1].lineTo(x, -y)
             self.plot[1].updateData(self.paths[1])
             
         
@@ -142,7 +153,6 @@ class MainViewPlugin(SingletonPlugin, PlotBase):
     pages = ContainerList(Instance(Page))
     
     def start(self):
-        self.device = self._default_device()
         self.log.info("Device {}".format(self.device))
         pass
 #         if not self.available_devices:
@@ -180,30 +190,40 @@ class MainViewPlugin(SingletonPlugin, PlotBase):
         except Exception as e:
             context = dict(doc=self.current_document,msg=e)
             self.log.error(traceback.format_exc())
-            self.workbench.show_critical("Error opening {doc}".format(**context),"Sorry, could not open {doc}.\n\nError: {msg}".format(**context))
+            self.workbench.show_critical(
+                "Error opening {doc}".format(**context),
+                "Sorry, could not open {doc}.\n\n"
+                "Error: {msg}".format(**context))
             return Job(media=self.media)
     
     @observe('job', 'job.model',
              'media', 'media.padding', 'media.size')
-    def _view_changed(self,change):
+    def _view_changed(self, change):
         """ Redraw the path on the screen """
         view_items = []
-        t=QtGui.QTransform.fromScale(1,-1)
+        t=QtGui.QTransform.fromScale(1, -1)
         if self.job.model:
-            view_items.append(PainterPathPlotItem(self.job.move_path,pen=self.pen_up))
-            view_items.append(PainterPathPlotItem(self.job.cut_path,pen=self.pen_down))
+            view_items.append(PainterPathPlotItem(self.job.move_path,
+                                                  pen=self.pen_up))
+            view_items.append(PainterPathPlotItem(self.job.cut_path,
+                                                  pen=self.pen_down))
             #: TODO: This
             #if self.show_offset_path:
-            #    view_items.append(PainterPathPlotItem(self.job.offset_path,pen=self.pen_offset))
+            #    view_items.append(PainterPathPlotItem(
+            # self.job.offset_path,pen=self.pen_offset))
         if self.job.media:
             # Also observe any change to job.media and job.device
-            view_items.append(PainterPathPlotItem(self.job.media.path*t,pen=self.pen_media,skip_autorange=(False,[0,self.job.size[1]])))
-            view_items.append(PainterPathPlotItem(self.job.media.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
+            view_items.append(PainterPathPlotItem(
+                self.job.media.path*t, pen=self.pen_media,
+                skip_autorange=(False, [0, self.job.size[1]])))
+            view_items.append(PainterPathPlotItem(
+                self.job.media.padding_path*t, pen=self.pen_media_padding,
+                skip_autorange=True))
         self.plot = view_items
         #self.workbench.save_config()
         
-    @observe('media','job.media')
-    def _media_changed(self,change):
+    @observe('media', 'job.media')
+    def _media_changed(self, change):
         """ Bind UI media to job media """ 
         self.job.media = self.media
     
@@ -224,26 +244,29 @@ class MainViewPlugin(SingletonPlugin, PlotBase):
         """ Sets the current file path, 
             which fires _current_document_changed 
         """
-        if path=="" or not os.path.exists(path):
+        if path == "" or not os.path.exists(path):
             open_dir = self.current_document
-            if not os.path.exists(self.current_document) and self.recent_documents:
+            if not os.path.exists(self.current_document) \
+                    and self.recent_documents:
                 for document in self.recent_documents:
                     open_dir = document
                     break
             
-            path = QtGui.QFileDialog.getOpenFileName(self.window, self.window.tr("Open SVG File"),open_dir, "*.svg") 
+            path = QtGui.QFileDialog.getOpenFileName(
+                self.window, self.window.tr("Open SVG File"), open_dir,
+                "*.svg")
             if not path:
                 return # Cancelled
             self.log.debug(path)
             
-        if isinstance(path,(list,tuple)):
+        if isinstance(path, (list, tuple)):
             path = path[0]
         if not os.path.exists(path):
-            self.log.debug("Cannot open %s, it does not exist!"%path)
+            self.log.debug("Cannot open %s, it does not exist!" % path)
             return
         
         if not os.path.isfile(path):
-            self.log.debug("Cannot open %s, it is not a file!"%path)
+            self.log.debug("Cannot open %s, it is not a file!" % path)
             return
         
         # Close any old docs
@@ -257,9 +280,10 @@ class MainViewPlugin(SingletonPlugin, PlotBase):
         self.current_document = path
         # Plot actually opened in _current_document_changed
         
-    def _observe_current_document(self,change):
-        """ When the current document is updated,
-            create a new job with the document.
+    def _observe_current_document(self, change):
+        """ When the current document is updated, Create a new job with 
+        the document.
+        
         """
         if self.current_document:
             self.job = self._default_job()

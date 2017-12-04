@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-'''
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
 Created on Jun 9, 2015
 
 @author: jrm
-'''
+"""
 from atom.atom import set_default
 from atom.api import (Atom,ContainerList,Bool,Instance,Float,ForwardInstance,Callable, Enum, Typed, ForwardTyped, observe)
 from enaml.core.declarative import d_
@@ -71,7 +77,9 @@ class TableView(Control):
     auto_scroll = d_(Bool(True))
     stretch_last_section = d_(Bool(False))
     selected = d_(Callable(lambda selected,deselected:None))
-    selection_mode = d_(Enum(QtGui.QAbstractItemView.SingleSelection,QtGui.QAbstractItemView.MultiSelection,QtGui.QAbstractItemView.NoSelection))
+    selection_mode = d_(Enum(QtGui.QAbstractItemView.SingleSelection,
+                             QtGui.QAbstractItemView.MultiSelection,
+                             QtGui.QAbstractItemView.NoSelection))
     
     setup = d_(Callable(lambda table_view:None))
     

@@ -1,4 +1,14 @@
+"""
+Copyright (c) 2017, Jairus Martin.
 
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 14, 2015
+
+@author: jrm
+"""
 from atom.api import atomref,Unicode,Instance,List,Bool
 from enaml.core.api import Conditional, Include
 from enaml.image import Image

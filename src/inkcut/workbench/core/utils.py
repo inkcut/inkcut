@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-'''
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
 Created on Jul 14, 2015
 
 @author: jrm
-'''
+"""
 import os
 import sys
 import json
@@ -19,33 +25,38 @@ from twisted.internet.defer import Deferred
 from twisted.internet import reactor
 from enaml.application import timed_call
 
+
 def icon_path(name):
     path = os.path.dirname(__file__)
-    return os.path.join(path,'..','..','res','icons','%s.png'%name)
+    return os.path.join(path, '..', '..', 'res', 'icons', '%s.png'%name)
+
 
 def load_image(name):
     with open(icon_path(name),'rb') as f:
         data = f.read()
     return Image(data=data)
 
+
 def load_icon(name):
     img = load_image(name)
     icg = IconImage(image=img) 
     return Icon(images=[icg])
 
+
 def menu_icon(name):
     """ Icons don't look good on Linux/osx menu's """
-    if sys.platform=='win32':
+    if sys.platform == 'win32':
         return load_icon(name)
     return None
+
 
 class SafeJsonEncoder(JSONEncoder):
     def default(self, o):
         return o
         
 
-def config_to_json(config,fp):
-    return json.dump(config,fp,cls=SafeJsonEncoder,indent=3,sort_keys=True)
+def config_to_json(config, fp):
+    return json.dump(config, fp, cls=SafeJsonEncoder, indent=3, sort_keys=True)
 
 
 def async_sleep(ms):
@@ -53,7 +64,7 @@ def async_sleep(ms):
 
     Parameters
     ----------
-        sec: Time in ms to sleep
+        ms: Time in ms to sleep
 
     """
     d = Deferred()
@@ -67,6 +78,7 @@ class WorkbenchAtom(Atom):
     def _default_workbench(self):
         from inkcut.workbench.core.app import InkcutWorkbench
         return InkcutWorkbench.instance()
+
 
 class LoggingAtom(WorkbenchAtom):
     log = Instance(Logger)
@@ -151,6 +163,7 @@ class LoggingAtom(WorkbenchAtom):
 #         self.workbench.config = None
 #         self.workbench.config = new_config 
 
+
 class SingletonAtom(LoggingAtom):
     _instance = None
 
@@ -176,13 +189,14 @@ class SingletonAtom(LoggingAtom):
 
         """
         if cls._instance is not None:
-            raise RuntimeError('An instance of %s already exists'%(cls.__name__))
+            raise RuntimeError('An instance of %s already exists'%(
+                                cls.__name__))
         self = super(SingletonAtom, cls).__new__(cls, *args, **kwargs)
         cls._instance = self
         return self
     
 
-class Plugin(EnamlPlugin,LoggingAtom):
+class Plugin(EnamlPlugin, LoggingAtom):
     """ Always include a logger in the plugin """
     
     @property
@@ -194,5 +208,6 @@ class Plugin(EnamlPlugin,LoggingAtom):
             return self.manifest.workbench
         return self._default_workbench()
 
-class SingletonPlugin(Plugin,SingletonAtom):
+
+class SingletonPlugin(Plugin, SingletonAtom):
     """ A plugin that only allows one instance."""
