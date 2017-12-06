@@ -1,3 +1,3 @@
-# Inkcut
+### Inkcut
 
 Docs coming soon.
