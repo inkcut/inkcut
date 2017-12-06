@@ -2,7 +2,9 @@
 {
    "docs": [
       {"title":"", 
-        "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/index.md"}
+        "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/index.md"},
+      {"title":"Installing", 
+        "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/installing.md"}
    ]
 
 }
