@@ -1,15 +1,29 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on Jul 25, 2015
 
 @author: jrm
-'''
+"""
+import enaml
 from enaml.workbench.api import Extension
 from enaml.workbench.plugin_manifest import PluginManifest
+from inkcut.device.extensions import DeviceTransport, DEVICE_TRANSPORT_POINT
+
+def serial_factory():
+    from .plugin import SerialTransport
+    return SerialTransport()
+
+
+def config_view_factory():
+    with enaml.imports():
+        from .settings import SerialPortSettingsView
+    return SerialPortSettingsView
+
 
 def plugin_factory():
     from .plugin import SerialPlugin
     return SerialPlugin()
+
 
 enamldef SerialManifest(PluginManifest):
     """ Add new protocols here or within any other plugin.
@@ -20,14 +34,15 @@ enamldef SerialManifest(PluginManifest):
     """
     id = 'inkcut.device.serialport'
     factory = plugin_factory
-    # Extension:
-    #     id = 'protocols'
-    #     point = 'inkcut.device.transport'
-    #
-    #     DeviceTransport:
-    #         id = 'gpgl'
-    #         name = 'GPGL'
-    #         factory = gpgl_factory
+    Extension:
+        id = 'protocols'
+        point = DEVICE_TRANSPORT_POINT
+
+        DeviceTransport:
+            id = 'serial'
+            name = 'Serial port'
+            factory = serial_factory
+            config_view = config_view_factory
             
 
         

@@ -21,7 +21,7 @@ class JoystickPlugin(Plugin):
     path = Instance(QtGui.QPainterPath)
 
     #: Plot to display
-    plot = Instance(PlotBase, ())
+    #plot = Instance(PlotBase, ())
 
     def start(self):
         """ When started observe the device plugin's device and 
@@ -40,36 +40,40 @@ class JoystickPlugin(Plugin):
         return plugin.device
 
     def _observe_device(self, change):
-        self.device.init()
-            
-    @observe('device')
-    def _view_changed(self, change):
-        view_items = []
-        t = QtGui.QTransform.fromScale(1,-1)
-        
-        self.path = QtGui.QPainterPath()#[#],QtGui.QPainterPath()]
-        x,y,z = self.device.position
-        r= max(10,self.device.blade_offset)#,self.device.blade_offset
-        self.path.addEllipse(QtCore.QPointF(x,-y),r,r)
-        #view_items.append(PainterPathPlotItem(self.paths[0],pen=self.pen_down))
-        view_items.append(PainterPathPlotItem(self.path,pen=self.pen_down))
-        
-        
-        if self.device:
-            # Also observe any change to job.media and job.device
-            view_items.append(PainterPathPlotItem(self.device.path*t,pen=self.pen_media,skip_autorange=True))
-            view_items.append(PainterPathPlotItem(self.device.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
-        
-        self.plot = view_items
-        return view_items
-    
-    @observe('device.position')        
-    def _position_changed(self,change):
-        x0, y0, z0 = change['oldvalue']
-        x1, y1, z1 = change['value']
-
-        self.path.translate(x1-x0, y0-y1) # Reverse y
-        self.plot[0].updateData(self.path)
+        if self.device != change['value']:
+            self.device = change['value']
+            return
+        #
+        #self.device.init()
+    #
+    # @observe('device')
+    # def _view_changed(self, change):
+    #     view_items = []
+    #     t = QtGui.QTransform.fromScale(1,-1)
+    #
+    #     self.path = QtGui.QPainterPath()#[#],QtGui.QPainterPath()]
+    #     x,y,z = self.device.position
+    #     r= max(10,self.device.blade_offset)#,self.device.blade_offset
+    #     self.path.addEllipse(QtCore.QPointF(x,-y),r,r)
+    #     #view_items.append(PainterPathPlotItem(self.paths[0],pen=self.pen_down))
+    #     view_items.append(PainterPathPlotItem(self.path,pen=self.pen_down))
+    #
+    #
+    #     if self.device:
+    #         # Also observe any change to job.media and job.device
+    #         view_items.append(PainterPathPlotItem(self.device.path*t,pen=self.pen_media,skip_autorange=True))
+    #         view_items.append(PainterPathPlotItem(self.device.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
+    #
+    #     self.plot = view_items
+    #     return view_items
+    #
+    # @observe('device.position')
+    # def _position_changed(self,change):
+    #     x0, y0, z0 = change['oldvalue']
+    #     x1, y1, z1 = change['value']
+    #
+    #     self.path.translate(x1-x0, y0-y1) # Reverse y
+    #     self.plot[0].updateData(self.path)
         
     def stop(self):
         if self.device:

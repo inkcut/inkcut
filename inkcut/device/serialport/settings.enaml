@@ -10,27 +10,42 @@ Created on Jul 12, 2015
 
 @author: jrm
 """
+from inkcut.core.utils import load_icon
 from enaml.widgets.api import (
-    Container, Form, Label, ObjectCombo, SpinBox, CheckBox
+    Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
 )
 
 enamldef SerialPortSettingsView(Container):
     attr model
+    padding = 0
+
+    func selected_port(port, ports):
+        matches = [p for p in ports if p.device == port]
+        return matches[0] if matches else None
+
     Form:
         Label:
             text = "Port"
         ObjectCombo:
-            items << model.available
-            selected :: model.port = change['value'].device
+            items << model.ports
+            selected << selected_port(model.port, model.ports)
+            selected ::
+                port = change['value']
+                if port:
+                    model.port = port.device
         Label:
             text = ""
         PushButton:
             text = "Refresh"
-            clicked :: model.refresh_ports()
+            icon = load_icon("arrow_refresh")
+            clicked :: model.refresh()
         Label:
             text = "Baudrate"
         SpinBox:
             value := model.baudrate
+            maximum = 999999999
+            #step_size = 4800
+            minimum = 1
         Label:
             text = "Bytesize"
         ObjectCombo:
@@ -51,4 +66,4 @@ enamldef SerialPortSettingsView(Container):
             checked := model.rtscts
         CheckBox:
             text = "XON/XOFF"
-            checked := model.rtscts
+            checked := model.xonxoff

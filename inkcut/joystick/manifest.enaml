@@ -2,10 +2,10 @@ import traceback
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
 from enaml.workbench.core.command import Command
-from inkcut.workbench.core.utils import menu_icon, load_icon
+from inkcut.core.utils import menu_icon, load_icon
 
 def plugin_factory():
-    from inkcut.plugins.joystick.plugin import JoystickPlugin
+    from .plugin import JoystickPlugin
     return JoystickPlugin()
 
 def start_joystick(event):
@@ -30,22 +30,22 @@ enamldef JoystickManifest(PluginManifest):
     This manifest contributes extra menu items to the menu bar.
 
     """
-    id = 'inkcut.plugins.joystick'
+    id = 'inkcut.joystick'
     factory = plugin_factory
     
-    Extension:
-        id = 'commands'
-        point = 'enaml.workbench.core.commands'
-        Command:
-            id = 'inkcut.plugins.joystick.show'
-            handler = start_joystick
-    
-    Extension:
-        id = 'actions'
-        point = 'enaml.workbench.ui.actions'
-        ActionItem:
-            path = '/device/control'
-            label = 'Control...'
-            shortcut = 'Ctrl+D'
-            command = 'inkcut.plugins.joystick.show'
-            icon = load_icon('joystick')
+    # Extension:
+    #     id = 'commands'
+    #     point = 'enaml.workbench.core.commands'
+    #     Command:
+    #         id = 'inkcut.plugins.joystick.show'
+    #         handler = start_joystick
+    #
+    # Extension:
+    #     id = 'actions'
+    #     point = 'enaml.workbench.ui.actions'
+    #     ActionItem:
+    #         path = '/device/control'
+    #         label = 'Control...'
+    #         shortcut = 'Ctrl+D'
+    #         command = 'inkcut.plugins.joystick.show'
+    #         icon = load_icon('joystick')

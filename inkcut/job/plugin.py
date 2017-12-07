@@ -70,7 +70,11 @@ class JobPlugin(Plugin):
         self.close_document()
 
         log.info("Opening {doc}".format(doc=path))
-        self.job.document = path
+        try:
+            self.job.document = path
+        except ValueError as e:
+            #: Wrap in a JobError
+            raise JobError(e)
 
     def close_document(self):
         """ If the job currently has a "document" add this to the jobs list

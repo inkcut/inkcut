@@ -10,12 +10,9 @@ Created on Jul 12, 2015
 @author: jrm
 """
 
+#: Must be installed before enaml is imported
 import enamlx
 enamlx.install()
-
-#: Install twisted support
-#import qt4reactor
-#qt4reactor.install()
 
 import enaml
 from enaml.qt import QtGui

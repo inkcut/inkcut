@@ -31,3 +31,21 @@ enamldef PreviewDockItem(DockItem):
                 Action:
                     text = 'View all'
                     triggered :: plot.proxy.widget.autoRange()
+
+# enamldef LiveDockItem(DockItem):
+#     #: A dock item for
+#     title = "Preview"
+#     closable = False
+#     attr model #: PlotBase
+#     Container:
+#         padding = 0
+#         PlotView: plot:
+#             minimum_size = (360,None)
+#             data := model.plot
+#             axis_scales << {'left':to_unit(1, model.units),
+#                             'bottom':to_unit(1, model.units)}
+#             Menu:
+#                 context_menu = True
+#                 Action:
+#                     text = 'View all'
+#                     triggered :: plot.proxy.widget.autoRange()

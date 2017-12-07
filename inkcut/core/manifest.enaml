@@ -13,6 +13,20 @@ from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
 
 
+def application_factory():
+    """ A factory function which creates the default Application
+    and installs twisted support.
+    """
+    from enaml.qt.qt_application import QtApplication
+    app = QtApplication()
+
+    #: Install twisted support into the Qt event loop
+    import qt4reactor
+    qt4reactor.install()
+
+    return app
+
+
 def window_factory(workbench):
     """ A factory function which creates the default WorkbenchWindow
     with a reasonable initial size.
@@ -48,10 +62,10 @@ enamldef InkcutManifest(PluginManifest):
 
     factory = plugin_factory
 
-    # Extension:
-    #     id = 'autostart'
-    #     point = 'enaml.workbench.ui.autostart'
-    #     plugin_id = 'micropyde'
+    Extension:
+        id = 'default_application_factory'
+        point = 'enaml.workbench.ui.application_factory'
+        factory = application_factory
     Extension:
         id = 'actions'
         point = 'enaml.workbench.ui.actions'

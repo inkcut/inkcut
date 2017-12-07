@@ -1,0 +1,258 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 14, 2015
+
+@author: jrm
+"""
+from atom.api import atomref,Unicode,Instance,List,Bool
+from enaml.core.api import Conditional, Include
+from enaml.image import Image
+from enaml.layout.api import align, hbox, spacer
+from enaml.stdlib.mapped_view import MappedView
+from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
+from enaml.stdlib.task_dialog import (
+    TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet
+)
+from enaml.widgets.api import (
+    CheckBox, Container, Dialog, Field, Label,
+    ImageView, PushButton, RadioButton, Window,ProgressBar, Form,
+    Notebook, Page, CheckBox, ObjectCombo
+)
+from .plugin import Device
+from .view import ConfigView
+from inkcut.core.api import Model
+
+enamldef DeviceDialog(Dialog): dialog:
+    title = 'Device Setup'
+    initial_size = (640, 320)
+    attr plugin
+    attr device: Device = plugin.device
+    attr driver << device.declaration if device else None
+    attr connection << device.connection if device else None
+    attr protocol << connection.protocol if connection else None
+    TaskDialogStyleSheet:
+            pass
+    TaskDialogBody:
+        TaskDialogInstructionArea:
+            Label:
+                style_class = 'task-dialog-instructions'
+                text = 'Configure device'
+        TaskDialogContentArea:
+            Notebook: notebook:
+                tab_style = 'preferences'
+                Page:
+                    title = 'General'
+                    closable = False
+                    Container:
+                        padding = 0
+                        Form:
+                            Label:
+                                text = "Driver"
+                            ObjectCombo:
+                                items << plugin.drivers
+                                to_string = lambda d: d.id
+                                selected << driver
+                                selected ::
+                                    dialog.device = plugin.get_device_from_driver(change['value'])
+                            Label:
+                                text = "Manufacturer"
+                            Label:
+                                text << driver.manufacturer
+                            Label:
+                                text = "Model"
+                            Label:
+                                text << driver.model
+                            Label:
+                                text = "Width"
+                            Label:
+                                text << driver.width
+                            Label:
+                                text = "Length"
+                            Label:
+                                text << driver.length
+
+                    #Include:
+                    #    objects << device.config
+                Page:
+                    title = 'Device'
+                    closable = False
+                    MappedView:
+                        model << device.config if device else Model()
+                        typemap << {
+                            type(device.config): device.declaration.config_view()
+                        } if device else {Model:ConfigView}
+                Page:
+                    title = 'Connection'
+                    closable = False
+                    Container:
+                        padding = 0
+                        Form:
+                            Label:
+                                text = "Type"
+                            ObjectCombo:
+                                items << device.transports if device else []
+                                to_string = lambda t: t.name
+                                selected << (connection.declaration
+                                             if connection  else None)
+                                selected ::
+                                    declaration = change['value']
+                                    transport = declaration.factory()
+                                    transport.declaration = declaration
+                                    device.connection = transport
+                        #MappedView:
+                        #    model << device.connection.config
+                        MappedView:
+                            model << connection.config if connection else Model()
+                            typemap << {
+                                type(connection.config): connection.declaration.config_view()
+                            } if connection else {Model:ConfigView}
+
+                Page:
+                    title = 'Protocol'
+                    closable = False
+                    Container:
+                        padding = 0
+                        Form:
+                            Label:
+                                text = "Language"
+                            ObjectCombo:
+                                items << device.protocols if device else []
+                                to_string = lambda t: t.name
+                                selected << (protocol.declaration
+                                             if protocol else None)
+                                selected ::
+                                    declaration = change['value']
+                                    protocol = declaration.factory()
+                                    protocol.declaration = declaration
+                                    device.connection.protocol = protocol
+                        #MappedView:
+                        #    model << device.connection.config
+                        MappedView:
+                            model << protocol.config if protocol else Model()
+                            typemap << {
+                                type(protocol.config): protocol.declaration.config_view()
+                            } if protocol else {Model:ConfigView}
+                    #MappedView:
+                    #    model << device.connection.protocol.config
+            # Label:
+            #     style_class = 'task-dialog-content'
+            #     text = 'Enter the new file name'
+
+        TaskDialogCommandArea:
+            constraints = [
+                hbox(spacer, btn_yes, btn_no),
+                align('v_center', btn_yes, btn_no),
+            ]
+            PushButton: btn_no:
+                text = "Cancel"
+                clicked :: dialog.close()
+            PushButton: btn_yes:
+                text = "OK"
+                enabled << dialog.device is not None
+                clicked ::
+                    plugin.device = dialog.device
+                    dialog.close()
+
+
+
+# enamldef DeviceDialog(Dialog):
+#     attr plugin
+#     attr device <<
+#     title << '{}{} - Setup'.format(model.manufacturer if model.manufacturer else "Device"," "+model.model if model.model else "")
+#     minimum_size = (540,360)
+#     TaskDialogBody:
+#         TaskDialogContentArea:
+#             padding = 8
+#             Notebook: notebook:
+#                 tab_style = 'preferences'
+#                 Page:
+#                     title = 'General'
+#                     closable = False
+#                     Form:
+#                         Label:
+#                             text = 'Manufacturer'
+#                         ObjectCombo:
+#                             items << sorted(set([dev.manufacturer for dev in plugin._devices]))
+#                             selected := model.manufacturer
+#                         Label:
+#                             text = 'Model'
+#                         ObjectCombo:
+#                             items << sorted(set([dev.model for dev in plugin._devices if dev.manufacturer==model.manufacturer]))
+#                             selected ::
+#                                         model.devices = plugin._devices
+#                                         model.model = change['value']
+#                             selected << model.model
+#
+#                         Conditional:
+#                             condition << model.driver is not None
+#                             Label:
+#                                 text = 'Width'
+#                             Label:
+#                                 text << model.driver.width if model.driver else ""
+#
+#                             Conditional:
+#                                 condition << bool(model.driver and model.driver.length)
+#                                 Label:
+#                                     text = 'Length'
+#                                 Label:
+#                                     text << str(model.driver.length) if model.driver else ''
+#                             CheckBox:
+#                                 text << "Show advanced settings"
+#                                 checked := model.show_advanced
+#                 Conditional:
+#                     condition<< model.driver is not None
+#                     Page:
+#                         title = 'Connection'
+#                         closable = False
+#                         Form:
+#                             Label:
+#                                 text = 'Type'
+#                             ObjectCombo:
+#                                 items << model.driver.connections if model.driver else []
+#                                 selected := model.connection_type
+#
+#                         Conditional:
+#                             condition << bool(model.connection_type)
+#                             Label:
+#                                 text << "Selected {}".format(model.connection_type)
+#                             MappedView:
+#                                 model << model.connection
+#                                 typemap << {type(model.connection):model.connection.view_factory()}
+#                     Page:
+#                         title = 'Calibration'
+#                         closable = False
+#                     Conditional:
+#                         condition << model.show_advanced
+#                         Page:
+#                             title = 'Advanced'
+#                             closable = False
+#
+#                             Form:
+#                                 Label:
+#                                     text = 'Protocol'
+#
+#                                 ObjectCombo:
+#                                     items << model.driver.protocols
+#                                     selected := model.protocol_id
+#
+#
+#         TaskDialogCommandArea:
+#             constraints = [
+#                 hbox(spacer, bbox),
+#             ]
+#
+#             DialogButtonBox: bbox:
+#                 buttons = [
+#                     DialogButton('OK', 'accept'),
+#                     DialogButton('Cancel', 'reject'),
+#                 ]
+            
+
+    

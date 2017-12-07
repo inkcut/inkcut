@@ -14,13 +14,13 @@ from enaml.widgets.spin_box import SpinBox
 from enamlx.widgets.api import KeyEvent
 from inkcut.preview.plot_view import PlotView
 from inkcut.core.api import DockItem, to_unit
-from inkuct.core.utils import load_icon
+from inkcut.core.utils import load_icon
 
 enamldef JoystickDockItem(DockItem):
     title = 'Control'
     attr model
     attr device << model.device
-    
+
             # PlotView:
             #     minimum_size = (540,320)
             #     data := model.plot
@@ -29,18 +29,26 @@ enamldef JoystickDockItem(DockItem):
     Container:
         constraints = [
             hbox(
-                vbox(hbox(lbl2, spb1),
+                vbox(lbl0,
+                     hbox(lbl2, spb1),
                      lbl1),
+                spacer,
+                directions,
                 spacer,
                 vbox(hbox(lbl3, spb2),
                      hbox(lbl4, spb3)),
-                vbox(hbox(pb5, pb1, pb6),
-                     hbox(pb2, pb3, pb4))
+
             ),
             align('v_center', lbl2, spb1),
             align('v_center', lbl3, spb2),
             align('v_center', lbl4, spb3),
         ]
+        Label: lbl0:
+            text << "{} @ {} ({})".format(
+                device.declaration.id,
+                device.connection if device.connection else "",
+                device.connection.protocol.declaration.name if device.connection and device.connection.protocol else ""
+            )
         Label: lbl1:
             text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(
                         device.position[0],
@@ -58,37 +66,42 @@ enamldef JoystickDockItem(DockItem):
         SpinBox: spb2:
             maximum = 10000
             single_step = 4
-            value := device.speed
+            #value := device.speed
 
         Label: lbl4:
             text = 'Force'
         SpinBox: spb3:
             maximum = 10000
             single_step = 10
-            value := device.force
-        PushButton: pb5:
-            clicked :: model.set_origin()
-            icon = load_icon('arrow_in')
-            tool_tip = 'set origin'
-        PushButton: pb1:
-            clicked :: model.move_up()
-            icon = load_icon('arrow_up')
-            tool_tip = 'move up'
-        PushButton: pb6:
-            clicked :: model.move_to_origin()
-            icon = load_icon('arrow_undo')
-            tool_tip = 'return to origin'
-        PushButton: pb2:
-            clicked :: model.move_left()
-            icon = load_icon('arrow_left')
-            tool_tip = 'move left'
-        PushButton: pb3:
-            clicked :: model.move_down()
-            icon = load_icon('arrow_down')
-            tool_tip = 'move down'
-        PushButton: pb4:
-            clicked :: model.move_right()
-            icon = load_icon('arrow_right')
-            tool_tip = 'move right'
+            #value := device.force
+        Container: directions:
+            constraints = [
+                vbox(hbox(pb5, pb1, pb6),
+                     hbox(pb2, pb3, pb4))
+            ]
+            PushButton: pb5:
+                clicked :: model.set_origin()
+                icon = load_icon('arrow_in')
+                tool_tip = 'set origin'
+            PushButton: pb1:
+                clicked :: model.move_up()
+                icon = load_icon('arrow_up')
+                tool_tip = 'move up'
+            PushButton: pb6:
+                clicked :: model.move_to_origin()
+                icon = load_icon('arrow_undo')
+                tool_tip = 'return to origin'
+            PushButton: pb2:
+                clicked :: model.move_left()
+                icon = load_icon('arrow_left')
+                tool_tip = 'move left'
+            PushButton: pb3:
+                clicked :: model.move_down()
+                icon = load_icon('arrow_down')
+                tool_tip = 'move down'
+            PushButton: pb4:
+                clicked :: model.move_right()
+                icon = load_icon('arrow_right')
+                tool_tip = 'move right'
             
 

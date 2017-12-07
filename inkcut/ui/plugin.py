@@ -28,8 +28,10 @@ class InkcutPlugin(Plugin):
             #: TODO autodiscover these
             from inkcut.job.manifest import JobManifest
             from inkcut.preview.manifest import PreviewManifest
+            from inkcut.joystick.manifest import JoystickManifest
             w.register(JobManifest())
             w.register(PreviewManifest())
+            w.register(JoystickManifest())
 
     def create_new_area(self):
         with enaml.imports():

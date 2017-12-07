@@ -16,25 +16,29 @@ from inkcut.preview.view import PreviewDockItem
 from inkcut.job.view import (
     GraphicDockItem, WeedlinesDockItem, MaterialDockItem
 )
-
+from inkcut.joystick.view import JoystickDockItem
 
 enamldef DockView(DockArea):
     attr workbench
     attr plugin
     layout = AreaLayout(
-        'preview-item',
+        HSplitLayout('graphic-item','preview-item'),
         dock_bars=[
             DockBarLayout(
-                'graphic-item',
                 'material-item',
                 'weedline-item',
                 position='left'
+            ),
+            DockBarLayout(
+                'control-item',
+                position='bottom'
             )
         ]
     )
 
     PreviewDockItem:
         name = 'preview-item'
+        stretch = 3
         model << workbench.get_plugin('inkcut.preview').plot
     GraphicDockItem:
         name = 'graphic-item'
@@ -48,5 +52,9 @@ enamldef DockView(DockArea):
         name = 'weedline-item'
         title = "Weedlines"
         model << workbench.get_plugin('inkcut.job')
+    JoystickDockItem:
+        name = 'control-item'
+        title = "Control"
+        model << workbench.get_plugin('inkcut.joystick')
     Include:
         objects << plugin.dock_items

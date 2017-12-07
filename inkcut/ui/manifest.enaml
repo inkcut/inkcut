@@ -9,6 +9,8 @@ Created on Dec 6, 2015
 
 @author: jrm
 """
+import os
+import sys
 import enaml
 from inkcut.core.utils import menu_icon
 from enaml.workbench.api import Extension, PluginManifest
@@ -53,10 +55,17 @@ def about_inkcut(event):
                     'inkcut.workbench.core')).exec_()
 
 
+def open_webpage(page):
+    if sys.platform == 'win32':
+        os.startfile(page)
+    else:
+        import subprocess
+        cmd = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.call([cmd, page])
+
 def open_wiki(event):
-    import os
     plugin = event.workbench.get_plugin('inkcut.ui')
-    os.start(plugin.wiki_page)
+    open_webpage(plugin.wiki_page)
 
 
 enamldef UIManifest(PluginManifest):

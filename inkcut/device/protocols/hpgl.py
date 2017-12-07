@@ -5,10 +5,10 @@ Created on Jul 25, 2015
 @author: jrm
 """
 from atom.api import Float
-from inkcut.workbench.core.device import IDeviceProtocol
+from inkcut.device.plugin import DeviceProtocol
 
 
-class HPGLProtocol(IDeviceProtocol):
+class HPGLProtocol(DeviceProtocol):
     scale = Float(1021/90.0)
 
     def connection_made(self):
