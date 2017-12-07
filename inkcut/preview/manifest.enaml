@@ -1,0 +1,38 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2015
+
+@author: jrm
+"""
+import enaml
+from inkcut.core.utils import menu_icon
+from enaml.workbench.api import Extension, PluginManifest
+from enaml.workbench.core.api import Command
+from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
+
+def plugin_factory():
+    from .plugin import PreviewPlugin
+    return PreviewPlugin()
+
+
+enamldef PreviewManifest(PluginManifest):
+    """ The plugin manifest for the primary example plugin.
+
+    This plugin acts as the entry point for all other plugins in this
+    example. It contributes the window branding, default actions, and
+    the workspace definitions.
+
+    """
+    id = 'inkcut.preview'
+    factory = plugin_factory
+
+    Extension:
+        id = 'autostart'
+        point = 'enaml.workbench.ui.autostart'
+        Autostart:
+            plugin_id = 'inkcut.preview'

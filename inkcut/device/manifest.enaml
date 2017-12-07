@@ -1,0 +1,26 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Jul 25, 2015
+
+@author: jrm
+"""
+from enaml.workbench.api import Extension
+from enaml.workbench.plugin_manifest import PluginManifest
+
+
+def plugin_factory():
+    from .plugin import DevicePlugin
+    return DevicePlugin()
+
+
+enamldef DeviceManifest(PluginManifest):
+    """ Add new protocols here or within any other plugin.
+    
+    All protocols should implement the IDeviceProtocol and then
+    register as an extension to the point 'inkcut.device.protocols'
+    
+    """
+    id = 'inkcut.device'
+
+    factory = plugin_factory
+

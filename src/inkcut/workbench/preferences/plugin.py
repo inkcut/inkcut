@@ -9,13 +9,14 @@ import traceback
 import copy_reg
 import jsonpickle as pickle
 
-from atom.api import Bool,Int, Dict, Unicode, Instance, List, Subclass
+from atom.api import Bool, Int, Dict, Unicode, Instance, List, Subclass
 from enaml.application import timed_call
-from enaml.core.api import Declarative,d_
+from enaml.core.api import Declarative, d_
 from enaml.widgets.api import Container
-from inkcut.workbench.core.utils import LoggingAtom,SingletonPlugin
+from inkcut.workbench.core.utils import LoggingAtom, SingletonPlugin
 
 PREFERENCES_POINT = 'inkcut.preferences.items'
+
 
 class Preference(Declarative):
     #: Plugin store the preference as
@@ -23,7 +24,7 @@ class Preference(Declarative):
     
     #: Attributes of this plugin to save and restore
     #: Restoring occurs during loading of the plugin
-    attributes = d_(Instance((list,tuple)))
+    attributes = d_(Instance((list, tuple)))
     
     #: View to display within the preferences page
     #: If none is given no page will be created
@@ -45,8 +46,8 @@ class Model(LoggingAtom):
     """
     __restoring__ = Bool(False).tag(persist=False)
     
-    def __init__(self,*args,**kwargs):
-        super(Model, self).__init__(*args,**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(Model, self).__init__(*args, **kwargs)
         self._bind_save_observers()
         
     def _bind_save_observers(self):
@@ -56,8 +57,8 @@ class Model(LoggingAtom):
         """
         for name,member in self.members().iteritems():
             if (member.metadata and 
-                ((member.metadata.get('autosave',True) 
-                  or member.metadata.get('config',False))
+                ((member.metadata.get('autosave', True)
+                  or member.metadata.get('config', False))
                  )):
                 self.observe(name,self.save)
     
@@ -70,15 +71,15 @@ class Model(LoggingAtom):
                 state[name] = getattr(self, name)
                 
         for key,member in self.members().iteritems():
-            if member.metadata and member.metadata.get('config',False):
+            if member.metadata and member.metadata.get('config', False):
                 v = getattr(self, key)
-                if isinstance(v,Declarative):
+                if isinstance(v, Declarative):
                     raise TypeError("Cannot save a Declarative object")
                 state[key] = v
         return state
     
     def __setstate__(self, state):
-        self.log.debug("Setting state of {} to {}".format(self,state))
+        self.log.debug("Setting state of {} to {}".format(self, state))
         try:
             self.__restoring__ = True
         
@@ -87,28 +88,32 @@ class Model(LoggingAtom):
                     try:
                         setattr(self, key, value)
                     except Exception as e:
-                        self.log.error("Could not restore {} on {} to {}: {}".format(key,self,value,e))
+                        self.log.error("Could not restore {} on {} to {}: "
+                                       "{}".format(key, self, value, e))
                 else:
-                    self.log.warning("Could not restore {} on {}, property missing or renamed.".format(key,self))
+                    self.log.warning("Could not restore {} on {}, "
+                                     "property missing or renamed.".format(
+                                     key, self))
         finally:
             self.__restoring__ = False
         self._bind_save_observers()
-        self.log.debug("Restored state of {} is {}".format(self,self.__getstate__()))
+        self.log.debug("Restored state of {} is {}".format(
+                       self, self.__getstate__()))
     
     def _is_restoring(self):
         """ Use this to check if the saved state is currently being restored.
             So you can avoid making changes while restoring state """
         return self.__restoring__
     
-    
     def clone(self):
         obj = self.__class__()
         obj.__setstate__(self.__getstate__())
         return obj
     
-    def save(self,change={}):
+    def save(self, change=None):
         PreferencePlugin.instance().save(change)
-                
+
+
 class PreferencePlugin(SingletonPlugin):
     """ Class for saving and restoring 
         application state. 
@@ -127,8 +132,8 @@ class PreferencePlugin(SingletonPlugin):
     
     #: List of models to be saved. Only 'Root' models
     #: should be included.
-    load_state = Dict(basestring,dict)
-    default_state = Dict(basestring,dict)
+    load_state = Dict(basestring, dict)
+    default_state = Dict(basestring, dict)
     
     #: Filename of state file
     resource = Unicode('.config/inkcut/state.json')
@@ -155,20 +160,20 @@ class PreferencePlugin(SingletonPlugin):
     def stop(self):
         self._unbind_observers()
         
-    def save(self,change={}):
+    def save(self, change=None):
         """ Method to use to save this to save the state.
             this queues up a save task that will be
             run after `delay` ms.
         """
-        self._pending +=1
-        timed_call(self.delay,self._schedule_save,change)
+        self._pending += 1
+        timed_call(self.delay, self._schedule_save, change)
         
-    def _schedule_save(self,change={}):
+    def _schedule_save(self, change=None):
         """ Actually perform the save operation when all
             pending calls have completed.
         """
-        self._pending -=1
-        if self._pending==0:
+        self._pending -= 1
+        if self._pending == 0:
             try:
                 self.log.debug("Saving state due to change: {}".format(change))
                 if not os.path.exists(os.path.dirname(self.resource)):
@@ -178,12 +183,14 @@ class PreferencePlugin(SingletonPlugin):
                 # Load with json so it can be saved in a more readable format
                 data = json.loads(pickle.dumps(self.current_state))
 
-                with open(self.resource,'wb') as f:
+                with open(self.resource, 'wb') as f:
                     self.log.debug("Save started...")
                     f.write(json.dumps(data, indent=4))
                 self.log.debug("State saved to {}!".format(self.resource))
+
             except Exception as e:
-                self.log.error("Error saving state: {}".format(traceback.format_exc()))
+                self.log.error("Error saving state: {}".format(
+                    traceback.format_exc()))
         
     def load(self):
         """ Attempt to read a previously saved state from the file path
@@ -195,7 +202,8 @@ class PreferencePlugin(SingletonPlugin):
                 self.load_state = pickle.loads(f.read())
             self.restore(self.load_state)
         except:
-            self.log.error("Error loading state: {}".format(traceback.format_exc()))
+            self.log.error("Error loading state: {}".format(
+                traceback.format_exc()))
             
     def restore(self,state):
         for plugin_id in state:
@@ -207,10 +215,12 @@ class PreferencePlugin(SingletonPlugin):
             plugin = self.workbench.get_plugin(plugin_id)
             if plugin_id in self.load_state:
                 # This only does single levels...?
-                self.log.debug("Loading plugin '{}' state: {}".format(plugin_id,self.load_state[plugin_id]))
+                self.log.debug("Loading plugin '{}' state: {}".format(
+                    plugin_id, self.load_state[plugin_id]))
                 plugin.__setstate__(self.load_state[plugin_id])
         except Exception as e:
-            self.log.error("Error restoring state for '{}': {}".format(plugin_id,traceback.format_exc()))
+            self.log.error("Error restoring state for '{}': {}".format(
+                            plugin_id, traceback.format_exc()))
                 
     def _bind_observers(self):
         """ Setup the observers for the plugin.
@@ -244,7 +254,7 @@ class PreferencePlugin(SingletonPlugin):
 
         return preferences
     
-    def _on_preferences_updated(self,change={}):
+    def _on_preferences_updated(self, change=None):
         """ When a plugin is loaded, attempt to restore the state """
         old = self._preferences
         preferences = self._get_preferences()
@@ -259,11 +269,14 @@ class PreferencePlugin(SingletonPlugin):
         for p in self._get_preferences():
             try:
                 plugin = self.workbench.get_plugin(p.plugin_id)
-                state[p.plugin_id] = {m:v for m,v in plugin.__getstate__().iteritems() if m in p.attributes}
+                state[p.plugin_id] = {
+                    m: v for m, v in plugin.__getstate__().items()
+                    if m in p.attributes
+                }
             except:
-                self.log.error("Failed to retrieve state from plugin {}".format(p.plugin_id))
+                self.log.error("Failed to retrieve state from plugin "
+                               "{}".format(p.plugin_id))
         return state
         
-    def _observe_state(self,change):
+    def _observe_state(self, change):
         self.log.debug("State changed {}".format(change))
-        

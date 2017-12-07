@@ -1,0 +1,378 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 14, 2015
+
+@author: jrm
+"""
+from inkcut.core.api import DockItem
+from enaml.widgets.api import (
+    Container, Notebook, Page, Label, ImageView,
+    SpinBox, CheckBox, PushButton, RadioButton, Form, ComboBox,
+    Menu, Action, ObjectCombo
+)
+from enaml.core.include import Include
+from enaml.layout.api import hbox,vbox,spacer,align
+from enamlx.widgets.api import DoubleSpinBox
+from inkcut.core.svg import QtSvgDoc
+from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
+
+from inkcut.job.models import Job
+
+
+enamldef GraphicDockItem(DockItem):
+    attr model
+    attr job: Job << model.job
+    Container:
+        Container:
+            padding = 0
+            Label:
+                text = "Graphic Size"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('text_letterspacing')
+                DoubleSpinBox:
+                    value << to_unit(job.size[0], model.units)
+                    value ::
+                        #print("callback",change)
+                        v = to_unit(job.size[0], model.units)
+                        changed = v != change['value']
+                        if changed and change['oldvalue']>0 and change['value']>0:
+                            s = job.scale[0] * change['value']/change['oldvalue']
+                            if job.lock_scale:
+                                job.scale = [s,s]
+                            else:
+                                job.scale[0] = s
+
+                    suffix << " "+model.units
+                    minimum = 0.00001
+                    maximum = 99999.9
+                ImageView:
+                    image = load_image('text_linespacing')
+                DoubleSpinBox:
+                    value << to_unit(job.size[1], model.units)
+                    value ::
+                        #print("callback",change)
+                        v = to_unit(job.size[1], model.units)
+                        changed = v != change['value']
+                        if changed and change['oldvalue']>0 and change['value']>0:
+                            s = job.scale[1] * change['value']/change['oldvalue']
+                            if job.lock_scale:
+                                job.scale = [s,s]
+                            else:
+                                job.scale[1] = s
+                    suffix << " "+model.units
+                    minimum = 0.00001
+                    maximum = 99999.9
+                ImageView:
+                    image << load_image(job.lock_scale and 'text_kerning' or 'text_letterspacing')
+                DoubleSpinBox:
+                    value << 100*job.scale[0]
+                    value ::
+                        s = change['value']/100.0
+                        if job.lock_scale:
+                            job.scale = [s,s]
+                        else:
+                            job.scale[0] = s
+
+                    suffix = ' %'
+                    minimum = 0.00001
+                    maximum = 99999.9
+                ImageView:
+                    visible << not job.lock_scale
+                    image = load_image('text_linespacing')
+                DoubleSpinBox:
+                    visible << not job.lock_scale
+                    value << 100*job.scale[1]
+                    value ::
+                        s = change['value']/100.0
+                        if job.lock_scale:
+                            job.scale = [s,s]
+                        else:
+                            job.scale[1] = s
+                    suffix = ' %'
+                    minimum = 0.00001
+                    maximum = 99999.9
+            CheckBox:
+                text = 'Lock aspect ratio'
+                checked := job.lock_scale
+            #CheckBox:
+            #    text = 'Scale to fit'
+            #    checked := job.auto_scale
+        Container:
+            constraints = [
+                vbox(hdr,
+                     form,
+                     hbox(pb1,pb2,cb1,spacer)),
+                align('v_center',pb1,pb2,cb1)
+            ]
+            padding = 0
+            Label: hdr:
+                text = "Graphic Copies"
+            Form: form:
+                padding = 0
+                ImageView:
+                    image = load_image('shape_copy')
+                SpinBox:
+                    value := job.copies
+                    minimum = 1
+                    maximum = 99999
+                    suffix << job.auto_copies and "   (minimum set to %s)"%job._desired_copies or ""
+            PushButton: pb1:
+                icon = load_icon('shape_square_add')
+                clicked :: job.add_stack()
+            PushButton: pb2:
+                icon = load_icon('shape_square_delete')
+                clicked :: job.remove_stack()
+            CheckBox: cb1:
+                text = 'Fill to save space'
+                checked := job.auto_copies
+
+        Container:
+            padding = 0
+            Label:
+                text = "Graphic Rotation"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('shape_rotate_clockwise')
+                DoubleSpinBox:
+                    value := job.rotation
+                    suffix = " °"
+                    maximum = 180
+                    minimum = -180
+                    wrapping = True
+                    single_step = 15
+            CheckBox:
+                text = 'Rotate to save space'
+                checked := job.auto_rotate
+        Container:
+            padding = 0
+
+            Label:
+                text = "Graphic Mirroring"
+            CheckBox:
+                text = 'Mirror about x-axis'
+                icon = load_icon('shape_flip_vertical')
+                checked := job.mirror[0]
+            CheckBox:
+                text = 'Mirror about y-axis'
+                icon = load_icon('shape_flip_horizontal')
+                checked := job.mirror[1]
+
+
+enamldef WeedlinesDockItem(DockItem):
+    attr model
+    attr job: Job << model.job
+    Container:
+        Container:
+            padding = 0
+            Label:
+                text = "Graphic Spacing"
+            Form:
+                padding = 0
+                Label:
+                    text = "Row"
+                DoubleSpinBox:
+                    value << to_unit(job.copy_spacing[0], model.units)
+                    value :: job.copy_spacing[0] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                Label:
+                    text = "Col"
+                DoubleSpinBox:
+                    value << to_unit(job.copy_spacing[1], model.units)
+                    value :: job.copy_spacing[1] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plotting Order"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('chart_line')
+                ComboBox:
+                    items = list(job.__class__.order.items)
+                    index << job.__class__.order.items.index(job.order)
+                    index :: job.order = job.__class__.order.items[change['value']]
+                    hug_width = 'ignore' # Expanding
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plot Weedlines"
+            CheckBox:
+                text = 'Add weedline to plot'
+                icon = load_icon('shape_group')
+                checked := job.plot_weedline
+            CheckBox:
+                text = 'Add weedline to copies'
+                icon = load_icon('shape_ungroup')
+                checked := job.copy_weedline
+        Container:
+            padding = 0
+
+            Label:
+                text = "Weedline Padding"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('text_padding_left')
+                DoubleSpinBox:
+                    value << to_unit(job.copy_weedline_padding[0], model.units)
+                    value :: job.copy_weedline_padding[0] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_top')
+                DoubleSpinBox:
+                    value << to_unit(job.copy_weedline_padding[1], model.units)
+                    value :: job.copy_weedline_padding[1] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_right')
+                DoubleSpinBox:
+                    value << to_unit(job.copy_weedline_padding[2], model.units)
+                    value :: job.copy_weedline_padding[2] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_bottom')
+                DoubleSpinBox:
+                    value << to_unit(job.copy_weedline_padding[3], model.units)
+                    value :: job.copy_weedline_padding[3] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+
+
+enamldef MediaDockItem(DockItem):
+    attr model
+    attr job: Job << model.job
+    Container:
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plot Area"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('shape_square_width')
+                DoubleSpinBox:
+                    value << to_unit(job.media.size[0], model.units)
+                    value :: job.media.size[0] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    #maximum << to_unit(job.media.size[0], model.units)
+                    #single_step = 0.1
+                ImageView:
+                    image = load_image('shape_square_height')
+                DoubleSpinBox:
+                    value << to_unit(job.media.size[1], model.units)
+                    value :: job.media.size[1] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    #maximum << to_unit(job.media.size[1], model.units)
+                    #single_step = 0.1
+                Label:
+                    text = ""
+                PushButton:
+                    text = "Read from device"
+                    tool_tip = "Get the media size by querying the device."
+                    clicked ::
+                        try:
+                            job.media.size = model.device.querySize()
+                        except NotImplementedError:
+                            pass
+
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plot Margins"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('text_padding_left')
+                DoubleSpinBox:
+                    value << to_unit(job.media.padding[0], model.units)
+                    value :: job.media.padding[0] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_top')
+                DoubleSpinBox:
+                    value << to_unit(job.media.padding[1], model.units)
+                    value :: job.media.padding[1] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_right')
+                DoubleSpinBox:
+                    value << to_unit(job.media.padding[2], model.units)
+                    value :: job.media.padding[2] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_bottom')
+                DoubleSpinBox:
+                    value << to_unit(job.media.padding[3], model.units)
+                    value :: job.media.padding[3] = from_unit(change['value'],model.units)
+                    suffix << " "+model.units
+                    maximum = 99999.9
+                    single_step = 0.1
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plot Alignment"
+            CheckBox:
+                text = 'Align center horizontally'
+                icon = load_icon('shape_align_center')
+                checked := job.align_center[0]
+            CheckBox:
+                text = 'Align center vertically'
+                icon = load_icon('shape_align_middle')
+                checked := job.align_center[1]
+
+        Container:
+            padding = 0
+            constraints = [
+                vbox(lbl,
+                     rb1,
+                     hbox(rb2,dsb)),
+                align('v_center',rb2,dsb)
+            ]
+            Label: lbl:
+                text = "Plot Feeding"
+            RadioButton: rb1:
+                text = 'Return to origin'
+                #checked := job.feed_to_end
+            RadioButton: rb2:
+                text = 'Feed after'
+                checked := job.feed_to_end
+            DoubleSpinBox: dsb:
+                value << to_unit(job.feed_after, model.units)
+                value :: job.feed_after = from_unit(change['value'],model.units)
+                suffix << " "+model.units
+                maximum = 99999.9
+                single_step = 0.1

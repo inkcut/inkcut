@@ -1,0 +1,33 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2015
+
+@author: jrm
+"""
+from inkcut.core.api import DockItem, to_unit, from_unit
+from enaml.widgets.api import Container, Menu, Action
+from .plot_view import PlotView
+
+
+enamldef PreviewDockItem(DockItem):
+    #: A dock item for
+    title = "Preview"
+    closable = False
+    attr model #: PlotBase
+    Container:
+        padding = 0
+        PlotView: plot:
+            minimum_size = (360,None)
+            data := model.plot
+            axis_scales << {'left':to_unit(1, model.units),
+                            'bottom':to_unit(1, model.units)}
+            Menu:
+                context_menu = True
+                Action:
+                    text = 'View all'
+                    triggered :: plot.proxy.widget.autoRange()

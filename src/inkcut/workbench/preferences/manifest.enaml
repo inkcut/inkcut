@@ -3,10 +3,6 @@ from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import Autostart
 
 
-def prefs_plugin_factory():
-    from inkcut.workbench.preferences.plugin import PreferencePlugin
-    return PreferencePlugin()
-
 PREFERENCE_DESCRIPTION = """
 Plugin to manage preferences. Automatically saves and
 restores preference state. To use, add to manifest:
@@ -27,6 +23,12 @@ Save all models to the file system.
 PREFS_RESTORE_DESCRIPTION = """
 Restore a model from the loaded preferences.
 """
+
+
+def prefs_plugin_factory():
+    from inkcut.workbench.preferences.plugin import PreferencePlugin
+    return PreferencePlugin()
+
 
 def save_preferences(event):
     plugin = event.workbench.get_plugin('inkcut.preferences')

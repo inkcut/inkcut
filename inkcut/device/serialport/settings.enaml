@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 12, 2015
+
+@author: jrm
+"""
+from enaml.widgets.api import (
+    Container, Form, Label, ObjectCombo, SpinBox, CheckBox
+)
+
+enamldef SerialPortSettingsView(Container):
+    attr model
+    Form:
+        Label:
+            text = "Port"
+        ObjectCombo:
+            items << model.available
+            selected :: model.port = change['value'].device
+        Label:
+            text = ""
+        PushButton:
+            text = "Refresh"
+            clicked :: model.refresh_ports()
+        Label:
+            text = "Baudrate"
+        SpinBox:
+            value := model.baudrate
+        Label:
+            text = "Bytesize"
+        ObjectCombo:
+            items = list(model.get_member('bytesize').items)
+            selected := model.bytesize
+        Label:
+            text = "Parity"
+        ObjectCombo:
+            items = list(model.get_member('parity').items)
+            selected := model.parity
+        Label:
+            text = "Stopbits"
+        ObjectCombo:
+            items = list(model.get_member('stopbits').items)
+            selected := model.stopbits
+        CheckBox:
+            text = "RTS/CTS"
+            checked := model.rtscts
+        CheckBox:
+            text = "XON/XOFF"
+            checked := model.rtscts

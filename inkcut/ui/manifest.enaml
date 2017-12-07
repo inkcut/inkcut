@@ -1,0 +1,285 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2015
+
+@author: jrm
+"""
+import enaml
+from inkcut.core.utils import menu_icon
+from enaml.workbench.api import Extension, PluginManifest
+from enaml.workbench.core.api import Command
+from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
+
+
+def plugin_factory():
+    from inkcut.ui.plugin import InkcutPlugin
+    return InkcutPlugin()
+
+def open_document(event):
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    plugin.open_document(**event.parameters)
+
+
+def close_document(event):
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    plugin.close_document()
+
+
+def start_job(event):
+    """ Pass the job to the current
+    device for it to cut. Watch
+    the process in the task dialog.
+    """
+    try:
+        from inkcut.ui.plugin import LivePlot
+
+        plugin = event.workbench.get_plugin('inkcut.ui')
+        if not plugin.job.document:
+            raise RuntimeError("No document is open!")
+            return
+
+        with enaml.imports():
+            from inkcut.ui.task_dialog import JobTaskDialog
+
+        model = LivePlot(device=plugin.device, job=plugin.job)
+        ui = event.workbench.get_plugin('enaml.workbench.ui')
+        JobTaskDialog(ui.window,model=model).exec_()
+    except:
+        event.workbench.show_warning("Error sending to device",
+                                     traceback.format_exc())
+
+
+def undo(event):
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    plugin.undo()
+
+
+def redo(event):
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    plugin.redo()
+
+
+def open_preferences(event):
+    with enaml.imports():
+        from inkcut.ui.preferences_view import PreferencesDialog
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    PreferencesDialog(ui.window,
+                      plugin=event.workbench.get_plugin(
+                          'inkcut.workbench.core')).exec_()
+
+
+def device_setup(event):
+    with enaml.imports():
+        from inkcut.ui.device_view import DeviceDialog
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    DeviceDialog(ui.window,
+                 plugin=event.workbench.get_plugin('inkcut.workbench.core'),
+                 device=plugin.device).exec_()
+
+
+def media_setup(event):
+    with enaml.imports():
+        from inkcut.ui.media_view import MediaDialog
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    dlg = MediaDialog(ui.window, plugin=plugin)
+    if dlg.exec_():
+        plugin.available_media = dlg.available_media
+
+
+def about_inkcut(event):
+    with enaml.imports():
+        from inkcut.ui.about_dialog import AboutDialog
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    AboutDialog(ui.window,
+                plugin=event.workbench.get_plugin(
+                    'inkcut.workbench.core')).exec_()
+
+
+def open_wiki(event):
+    import os
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    os.start(plugin.wiki_page)
+
+
+enamldef UIManifest(PluginManifest):
+    """ The plugin manifest for the primary example plugin.
+
+    This plugin acts as the entry point for all other plugins in this
+    example. It contributes the window branding, default actions, and
+    the workspace definitions.
+
+    """
+    id = 'inkcut.ui'
+    factory = plugin_factory
+
+    Extension:
+        id = 'commands'
+        point = 'enaml.workbench.core.commands'
+        Command:
+            id = 'inkcut.workbench.ui.open_document'
+            handler = open_document
+        Command:
+            id = 'inkcut.workbench.ui.close_document'
+            handler = close_document
+        Command:
+            id = 'inkcut.workbench.ui.open_preferences'
+            handler = open_preferences
+        Command:
+            id = 'inkcut.workbench.ui.start_job'
+            handler = start_job
+#         Command:
+#             id = 'inkcut.workbench.ui.undo'
+#             handler = undo
+#         Command:
+#             id = 'inkcut.workbench.ui.redo'
+#             handler = redo
+        Command:
+            id = 'inkcut.workbench.ui.device_setup'
+            handler = device_setup
+        Command:
+            id = 'inkcut.workbench.ui.media_setup'
+            handler = media_setup
+        Command:
+            id = 'inkcut.workbench.ui.about_inkcut'
+            handler = about_inkcut
+        Command:
+            id = 'inkcut.workbench.ui.open_wiki'
+            handler = open_wiki
+
+    Extension:
+        id = 'autostart'
+        point = 'enaml.workbench.ui.autostart'
+        Autostart:
+            plugin_id = 'inkcut.ui'
+
+
+    #ExtensionPoint:
+    #    id = 'inkcut.ui.dock.items'
+    #    description = DOCK_ITEM_DESCRIPTION
+
+    # Extension:
+    #     id = 'preferences'
+    #     point = 'inkcut.preferences.items'
+    #     Preference:
+    #         plugin_id = "inkcut.workbench.ui"
+    #         attributes = ['current_document',
+    #                       'recent_documents',
+    #                       'show_offset_path',
+    #                       'available_media',
+    #                       'available_devices',
+    #                       'job',
+    #                       'media',
+    #                       'device'
+    #                       ]
+
+    Extension:
+        id = 'actions'
+        point = 'enaml.workbench.ui.actions'
+#         MenuItem:
+#             path = '/edit'
+#             label = 'Edit'
+#             after = 'file'
+#             before = 'help'
+#             ItemGroup:
+#                 id = 'edit'
+#         MenuItem:
+#             path = '/file/recent'
+#             label = 'Recent'
+#             after = 'open'
+#             before = 'prefs'
+#             #visible << bool(plugin.recent_documents)
+        MenuItem:
+            path = '/device'
+            label = 'Device'
+            after = 'file'
+            before = 'help'
+            ItemGroup:
+                id = 'device'
+        MenuItem:
+            path = '/media'
+            label = 'Media'
+            after = 'device'
+            before = 'help'
+            ItemGroup:
+                id = 'media'
+
+        ActionItem:
+            path = '/file/open'
+            label = 'Open'
+            shortcut = 'Ctrl+O'
+            command = 'inkcut.workbench.ui.open_document'
+            icon = menu_icon('folder_page')
+
+        # Looper:
+        #     iterable << plugin.recent_documents
+        #     ActionItem:
+        #         path = '/file/recent/%i'%loop_index
+        #         label = loop_item
+        #         command = 'inkcut.workbench.ui.open'
+        #         parameters = {'path':loop_item}
+        ActionItem:
+            path = '/file/close'
+            label = 'Close'
+            before = 'quit'
+            shortcut = 'Ctrl+W'
+            command = 'inkcut.workbench.ui.close_document'
+        ActionItem:
+            path = '/file/prefs'
+            label = 'Preferences'
+            after = 'close'
+            before = 'quit'
+            command = 'inkcut.workbench.ui.open_preferences'
+
+        ActionItem:
+            path = '/device/setup'
+            label = 'Setup...'
+            shortcut = 'Ctrl+Alt+P'
+            command = 'inkcut.workbench.ui.device_setup'
+            icon = menu_icon('printer')
+
+        ActionItem:
+            path = '/device/send'
+            label = 'Send to device'
+            shortcut = 'Ctrl+P'
+            after = 'setup'
+            command = 'inkcut.workbench.ui.start_job'
+            icon = menu_icon('chart_curve_go')
+
+        ActionItem:
+            path = '/media/manage'
+            label = 'Manage'
+            shortcut = 'Ctrl+M'
+            command = 'inkcut.workbench.ui.media_setup'
+            icon = menu_icon('chart_curve_go')
+
+        ActionItem:
+            path = '/help/wiki'
+            label = 'Wiki'
+            command = 'inkcut.workbench.ui.open_wiki'
+
+        ActionItem:
+            path = '/help/about'
+            label = 'About'
+            command = 'inkcut.workbench.ui.about_inkcut'
+
+#         ActionItem:
+#             path = '/edit/undo'
+#             label = 'Undo'
+#             shortcut = 'Ctrl+Z'
+#             icon = menu_icon('arrow_undo')
+#             command = 'inkcut.workbench.ui.undo'
+#         ActionItem:
+#             path = '/edit/redo'
+#             label = 'Redo'
+#             shortcut = 'Ctrl+Y'
+#             icon = menu_icon('arrow_redo')
+#             command = 'inkcut.workbench.ui.redo'

@@ -1,0 +1,1 @@
+-e git+https://github.com/MatthieuDartiailh/enaml.git@qt5_support

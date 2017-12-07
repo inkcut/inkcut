@@ -166,12 +166,14 @@ class MainViewPlugin(SingletonPlugin, PlotBase):
         #core.observe('media',lambda change:setattr(self.job,'media',change['value']))
     
     def _default_device(self):
-        from inkcut.plugins.jeffy.jeffy import JeffyDevice
-        d = JeffyDevice()
-        #d = Device(name="Test")
-        #from inkcut.plugins.protocols.hpgl import HPGLProtocol
-        #d.protocol = HPGLProtocol()
-        #d.transport = "serial"
+        try:
+            from inkcut.plugins.jeffy.jeffy import JeffyDevice
+            d = JeffyDevice()
+        except ImportError:
+            d = Device(name="Test")
+            from inkcut.plugins.protocols.hpgl import HPGLProtocol
+            d.protocol = HPGLProtocol()
+            d.transport = "serial"
         return d
         #if not self.available_devices:
         #    self.available_devices = [self.create_new_device()]

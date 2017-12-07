@@ -1,0 +1,51 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2015
+
+@author: jrm
+"""
+from enaml.core.include import Include
+from enaml.layout.api import AreaLayout, TabLayout, DockBarLayout, HSplitLayout
+from inkcut.core.api import DockArea, DockItem
+from inkcut.preview.view import PreviewDockItem
+from inkcut.job.view import GraphicDockItem, WeedlinesDockItem, MediaDockItem
+
+enamldef DockView(DockArea):
+    attr workbench
+    attr plugin
+    layout = AreaLayout(
+        'preview-item',
+        dock_bars=[
+            DockBarLayout(
+                'graphic-item',
+                'media-item',
+                'weedline-item',
+                position='left'
+            )
+        ]
+    )
+
+    PreviewDockItem:
+        name = 'preview-item'
+        model << workbench.get_plugin('inkcut.preview').plot
+    GraphicDockItem:
+        name = 'graphic-item'
+        title = "Graphic"
+        model << workbench.get_plugin('inkcut.job')
+    MediaDockItem:
+        name = 'media-item'
+        title = "Media"
+        model << workbench.get_plugin('inkcut.job')
+    WeedlinesDockItem:
+        name = 'weedline-item'
+        title = "Weedlines"
+        model << workbench.get_plugin('inkcut.job')
+
+
+    # Include:
+    #     objects << plugin.dock_items
