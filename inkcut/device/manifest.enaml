@@ -4,8 +4,20 @@ Created on Jul 25, 2015
 
 @author: jrm
 """
-from enaml.workbench.api import Extension
-from enaml.workbench.plugin_manifest import PluginManifest
+from enaml.workbench.api import Extension, PluginManifest
+from enaml.workbench.core.api import Command
+from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
+from inkcut.core.utils import menu_icon
+
+
+def device_setup(event):
+    with enaml.imports():
+        from inkcut.ui.device_view import DeviceDialog
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    DeviceDialog(ui.window,
+                 plugin=event.workbench.get_plugin('inkcut.workbench.core'),
+                 device=plugin.device).exec_()
 
 
 def plugin_factory():
@@ -24,3 +36,34 @@ enamldef DeviceManifest(PluginManifest):
 
     factory = plugin_factory
 
+    Extension:
+        id = 'commands'
+        point = 'enaml.workbench.core.commands'
+        Command:
+            id = 'inkcut.device.setup'
+            handler = device_setup
+
+    Extension:
+        id = 'actions'
+        point = 'enaml.workbench.ui.actions'
+        MenuItem:
+            path = '/device'
+            label = 'Device'
+            after = 'file'
+            before = 'material'
+            ItemGroup:
+                id = 'device'
+        ActionItem:
+            path = '/device/setup'
+            label = 'Setup...'
+            shortcut = 'Ctrl+Alt+P'
+            command = 'inkcut.device.setup'
+            icon = menu_icon('printer')
+
+        ActionItem:
+            path = '/device/send'
+            label = 'Send to device'
+            shortcut = 'Ctrl+P'
+            after = 'setup'
+            command = 'inkcut.device.start'
+            icon = menu_icon('chart_curve_go')

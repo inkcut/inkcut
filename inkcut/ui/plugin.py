@@ -26,12 +26,10 @@ class InkcutPlugin(Plugin):
         w = self.workbench
         with enaml.imports():
             #: TODO autodiscover these
-            from inkcut.preview.manifest import PreviewManifest
             from inkcut.job.manifest import JobManifest
-            from inkcut.device.manifest import DeviceManifest
-            w.register(PreviewManifest())
+            from inkcut.preview.manifest import PreviewManifest
             w.register(JobManifest())
-            w.register(DeviceManifest())
+            w.register(PreviewManifest())
 
     def create_new_area(self):
         with enaml.imports():

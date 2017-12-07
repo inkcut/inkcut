@@ -87,7 +87,7 @@ class AreaBase(Model):
         return QtCore.QRectF(x, y, w, h)
 
 
-class Media(AreaBase):
+class Material(AreaBase):
     """ Model representing the plot media 
     """
     name = Unicode().tag(config=True)
@@ -138,8 +138,8 @@ class Job(Model):
     traitlet will cause an update when the value is changed.
      
     """
-    #: Media this job will be run on
-    media = Instance(Media)
+    #: Material this job will be run on
+    material = Instance(Material)
 
     #: Path to svg document this job parses
     document = Unicode()
@@ -227,7 +227,7 @@ class Job(Model):
 
         # If it's too big we have to scale it
         w, h = path.boundingRect().width(), path.boundingRect().height()
-        available_area = self.media.available_area
+        available_area = self.material.available_area
 
         #: This screws stuff up!
         if w > available_area.width() or h > available_area.height():
@@ -265,7 +265,7 @@ class Job(Model):
              'align_center', 'rotation', 'auto_rotate', 'copies', 'order',
              'copy_spacing', 'copy_weedline', 'copy_weedline_padding',
              'plot_weedline', 'plot_weedline_padding', 'feed_to_end',
-             'feed_after', 'media', 'media.size', 'media.padding',
+             'feed_after', 'material', 'material.size', 'material.padding',
              'auto_copies')
     def _job_changed(self, change):
         """ Recreate an instance of of the plot using the current settings 
@@ -317,10 +317,10 @@ class Job(Model):
         tx, ty = -p.x(), -p.y()
 
         # Center or set to padding
-        tx += ((self.media.width() -bbox.width())/2.0
-               if self.align_center[0] else self.media.padding_left)
-        ty += (-(self.media.height()-bbox.height())/2.0
-               if self.align_center[1] else -self.media.padding_bottom)
+        tx += ((self.material.width() -bbox.width())/2.0
+               if self.align_center[0] else self.material.padding_left)
+        ty += (-(self.material.height()-bbox.height())/2.0
+               if self.align_center[1] else -self.material.padding_bottom)
 
         t = QtGui.QTransform.fromTranslate(tx, ty)
 
@@ -377,10 +377,10 @@ class Job(Model):
 
     def _compute_stack_sizes(self, path):
         # Usable area
-        media = self.media
-        a = [media.width(), media.height()]
-        a[0] -= media.padding[Padding.LEFT] + media.padding[Padding.RIGHT]
-        a[1] -= media.padding[Padding.TOP] + media.padding[Padding.BOTTOM]
+        material = self.material
+        a = [material.width(), material.height()]
+        a[0] -= material.padding[Padding.LEFT] + material.padding[Padding.RIGHT]
+        a[1] -= material.padding[Padding.TOP] + material.padding[Padding.BOTTOM]
 
         # Clone includes weedline but not spacing
         bbox = path.boundingRect()

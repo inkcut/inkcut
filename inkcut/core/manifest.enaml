@@ -10,7 +10,7 @@ Created on Dec 6, 2015
 @author: jrm
 """
 from enaml.workbench.api import Extension, PluginManifest
-from enaml.workbench.ui.api import ActionItem, Branding, MenuItem, ItemGroup
+from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
 
 
 def window_factory(workbench):
@@ -21,7 +21,7 @@ def window_factory(workbench):
     import enaml
     with enaml.imports():
         from enaml.workbench.ui.workbench_window import WorkbenchWindow
-    return WorkbenchWindow(initial_size=(960, 540))
+    return WorkbenchWindow(initial_size=(960, 720))
 
 
 def workspace_factory(workbench):
@@ -48,11 +48,6 @@ enamldef InkcutManifest(PluginManifest):
 
     factory = plugin_factory
 
-    Extension:
-        id = 'branding'
-        point = 'enaml.workbench.ui.branding'
-        Branding:
-            title = 'Inkcut'
     # Extension:
     #     id = 'autostart'
     #     point = 'enaml.workbench.ui.autostart'
@@ -78,6 +73,7 @@ enamldef InkcutManifest(PluginManifest):
             path = '/settings'
             label = 'Settings'
             after = 'file'
+            before = 'help'
             ItemGroup:
                 id = 'settings'
         MenuItem:

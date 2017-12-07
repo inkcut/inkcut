@@ -1,33 +1,51 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on Jul 19, 2015
 
 @author: jrm
-'''
-from atom.api import Instance,Int,observe
+"""
+from atom.api import Instance, Int, observe
 from enaml.qt import QtGui, QtCore
-from inkcut.workbench.core.utils import Plugin
-from inkcut.workbench.core.device import Device
-from inkcut.workbench.ui.plugin import PlotBase
-from inkcut.workbench.ui.widgets.plot_view import PainterPathPlotItem
+from inkcut.core.api import Plugin
+from inkcut.device.plugin import Device
+from inkcut.preview.plugin import PlotBase
+from inkcut.preview.plot_view import PainterPathPlotItem
 
 
-class JoystickPlugin(Plugin,PlotBase):
-    
+class JoystickPlugin(Plugin):
+    #: Reference to the inkcut.device plugin's device
     device = Instance(Device)
+
+    #: Rate to moave
     rate = Int(10)
     path = Instance(QtGui.QPainterPath)
-    
+
+    #: Plot to display
+    plot = Instance(PlotBase, ())
+
     def start(self):
-        pass
-    
-    def _observe_device(self,change):
+        """ When started observe the device plugin's device and 
+        whenever it changes update the reference here
+        """
+        #: Observe
+        plugin = self.workbench.get_plugin('inkcut.device')
+        plugin.observe('device', self._observe_device)
+
+    def stop(self):
+        plugin = self.workbench.get_plugin('inkcut.device')
+        plugin.observe('device', self._observe_device)
+
+    def _default_device(self):
+        plugin = self.workbench.get_plugin('inkcut.device')
+        return plugin.device
+
+    def _observe_device(self, change):
         self.device.init()
             
     @observe('device')
-    def _view_changed(self,change):
+    def _view_changed(self, change):
         view_items = []
-        t=QtGui.QTransform.fromScale(1,-1)
+        t = QtGui.QTransform.fromScale(1,-1)
         
         self.path = QtGui.QPainterPath()#[#],QtGui.QPainterPath()]
         x,y,z = self.device.position
@@ -47,9 +65,10 @@ class JoystickPlugin(Plugin,PlotBase):
     
     @observe('device.position')        
     def _position_changed(self,change):
-        x0,y0,z0 = change['oldvalue']
-        x1,y1,z1 = change['value']
-        self.path.translate(x1-x0,y0-y1) # Reverse y
+        x0, y0, z0 = change['oldvalue']
+        x1, y1, z1 = change['value']
+
+        self.path.translate(x1-x0, y0-y1) # Reverse y
         self.plot[0].updateData(self.path)
         
     def stop(self):
@@ -57,32 +76,29 @@ class JoystickPlugin(Plugin,PlotBase):
             self.device.close()
             
     def set_origin(self):
-        pass
+        raise NotImplementedError
     
     def move_to_origin(self):
-        x,y,z = self.device.position
-        self.device.move(-x,-y,z)
+        x, y, z = self.device.position
+        self.device.move(-x, -y, z)
     
     def move_up(self):
-        x,y,z = self.device.position
-        self.device.move(x,y+self.rate,z)
+        x, y, z = self.device.position
+        self.device.move(x, y+self.rate, z)
     
     def move_down(self):
-        x,y,z = self.device.position
-        self.device.move(x,y-self.rate,z)
+        x, y, z = self.device.position
+        self.device.move(x, y-self.rate, z)
     
     def move_left(self):
-        x,y,z = self.device.position
-        self.device.move(x-self.rate,y,z)
+        x, y, z = self.device.position
+        self.device.move(x-self.rate, y, z)
     
     def move_right(self):
-        x,y,z = self.device.position
-        self.device.move(x+self.rate,y,z)
+        x, y, z = self.device.position
+        self.device.move(x+self.rate, y, z)
     
     def toggle_trigger(self):
-        x,y,z = self.device.position
-        if z:
-            z = 0
-        else:
-            z = 1
-        self.device.move(x,y,z)
+        x, y, z = self.device.position
+        z = 0 if z else 1
+        self.device.move(x, y, z)

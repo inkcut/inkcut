@@ -1,35 +1,41 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on Jul 25, 2015
 
 @author: jrm
-'''
+"""
 from enaml.workbench.api import Extension
 from enaml.workbench.plugin_manifest import PluginManifest
+from inkcut.device.extensions import DeviceProtocol
+
 
 def gpgl_factory():
-    from inkcut.protocols.gpgl import GPGLProtocol
+    from .gpgl import GPGLProtocol
     return GPGLProtocol()
 
+
 def hpgl_factory():
-    from inkcut.protocols.hpgl import HPGLProtocol
+    from .hpgl import HPGLProtocol
     return HPGLProtocol()
 
+
 def dmpl_factory():
-    from inkcut.protocols.dmpl import DMPLProtocol
+    from .dmpl import DMPLProtocol
     return DMPLProtocol()
 
+
 def cammgl1_factory():
-    from inkcut.protocols.camm import CAMMGL1Protocol
+    from .camm import CAMMGL1Protocol
     return CAMMGL1Protocol()
 
+
 def gcode_factory():
-    from inkcut.protocols.gcode import GCodeProtocol
+    from .gcode import GCodeProtocol
     return GCodeProtocol()
 
 
 def mock_factory():
-    from inkcut.protocols.debug import DebugProtocol
+    from .debug import DebugProtocol
     return DebugProtocol()
 
 
@@ -42,38 +48,38 @@ enamldef ProtocolManifest(PluginManifest):
     """
     id = 'inkcut.device.protocols'
     
-    # Extension:
-    #     id = 'protocols'
-    #     point = 'inkcut.device.protocols'
-    #
-    #     DeviceProtocol:
-    #         id = 'gpgl'
-    #         name = 'GPGL'
-    #         factory = gpgl_factory
-    #
-    #     DeviceProtocol:
-    #         id = 'hpgl'
-    #         name = 'HPGL'
-    #         factory = hpgl_factory
-    #
-    #     DeviceProtocol:
-    #         id = 'dmpl'
-    #         name = 'DMPL'
-    #         factory = dmpl_factory
-    #
-    #     DeviceProtocol:
-    #         id = 'camm-gl1'
-    #         name = 'CAMM-GL I'
-    #         factory = cammgl1_factory
-    #
-    #     DeviceProtocol:
-    #         id = 'gcode'
-    #         name = 'G-Code'
-    #         factory = gcode_factory
-    #
-    #     DeviceProtocol:
-    #         id = 'debug'
-    #         name = 'Virtual'
-    #         factory = mock_factory
-    #
+    Extension:
+        id = 'protocols'
+        point = 'inkcut.device.protocols'
+
+        DeviceProtocol:
+            id = 'gpgl'
+            name = 'GPGL'
+            factory = gpgl_factory
+
+        DeviceProtocol:
+            id = 'hpgl'
+            name = 'HPGL'
+            factory = hpgl_factory
+
+        DeviceProtocol:
+            id = 'dmpl'
+            name = 'DMPL'
+            factory = dmpl_factory
+
+        DeviceProtocol:
+            id = 'camm-gl1'
+            name = 'CAMM-GL I'
+            factory = cammgl1_factory
+
+        DeviceProtocol:
+            id = 'gcode'
+            name = 'G-Code'
+            factory = gcode_factory
+
+        DeviceProtocol:
+            id = 'debug'
+            name = 'Virtual'
+            factory = mock_factory
+
         

@@ -13,7 +13,10 @@ from enaml.core.include import Include
 from enaml.layout.api import AreaLayout, TabLayout, DockBarLayout, HSplitLayout
 from inkcut.core.api import DockArea, DockItem
 from inkcut.preview.view import PreviewDockItem
-from inkcut.job.view import GraphicDockItem, WeedlinesDockItem, MediaDockItem
+from inkcut.job.view import (
+    GraphicDockItem, WeedlinesDockItem, MaterialDockItem
+)
+
 
 enamldef DockView(DockArea):
     attr workbench
@@ -23,7 +26,7 @@ enamldef DockView(DockArea):
         dock_bars=[
             DockBarLayout(
                 'graphic-item',
-                'media-item',
+                'material-item',
                 'weedline-item',
                 position='left'
             )
@@ -37,15 +40,13 @@ enamldef DockView(DockArea):
         name = 'graphic-item'
         title = "Graphic"
         model << workbench.get_plugin('inkcut.job')
-    MediaDockItem:
-        name = 'media-item'
-        title = "Media"
+    MaterialDockItem:
+        name = 'material-item'
+        title = "Material"
         model << workbench.get_plugin('inkcut.job')
     WeedlinesDockItem:
         name = 'weedline-item'
         title = "Weedlines"
         model << workbench.get_plugin('inkcut.job')
-
-
-    # Include:
-    #     objects << plugin.dock_items
+    Include:
+        objects << plugin.dock_items
