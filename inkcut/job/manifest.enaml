@@ -38,8 +38,8 @@ def open_document(event):
             plugin.open_document(path)
         except JobError as e:
             workbench.message_critical(
-                title="Error Opening",
-                message="Could not open {}\n{}".format(path, e))
+                title="Error opening document",
+                message="Could not open {}\n\n{}".format(path, e))
 
 def close_document(event):
     plugin = event.workbench.get_plugin('inkcut.job')
@@ -119,7 +119,7 @@ enamldef JobManifest(PluginManifest):
         point = 'enaml.workbench.ui.actions'
         ActionItem:
             path = '/file/open'
-            label = 'Open'
+            label = 'Open...'
             shortcut = 'Ctrl+O'
             group = 'document'
             command = 'inkcut.job.open'

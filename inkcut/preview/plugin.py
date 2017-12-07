@@ -12,7 +12,7 @@ Created on Jul 12, 2015
 import pyqtgraph as pg
 from atom.api import List, Instance, Enum
 from enaml.qt import QtCore, QtGui
-from inkcut.core.api import Plugin, Model, unit_conversions
+from inkcut.core.api import Plugin, Model, unit_conversions, log
 from inkcut.job.models import Job
 from .plot_view import PainterPathPlotItem
 QPen = QtGui.QPen
@@ -28,6 +28,7 @@ class PlotBase(Model):
     pen_up = Instance(QPen)
     pen_offset = Instance(QPen)
     pen_down = Instance(QPen)
+    pen_device = Instance(QPen)
 
     units = Enum(*unit_conversions.keys())
 
@@ -39,6 +40,9 @@ class PlotBase(Model):
 
     def _default_pen_media_padding(self):
         return pg.mkPen((128, 128, 128), style=QtCore.Qt.DashLine)
+
+    def _default_pen_device(self):
+        return pg.mkPen((235, 194, 194), style=QtCore.Qt.DashLine)
 
     def _default_pen_up(self):
         return pg.mkPen(hsv=(0.53, 1, 0.5, 0.5))
@@ -55,84 +59,25 @@ class PreviewPlugin(Plugin):
     #: Set's the plot that is drawn in the preview
     plot = Instance(PlotBase, ())
 
-    #: The job currently being previewed
-    job = Instance(Job)
+    #: Transform applied to all view items
+    transform = Instance(QtGui.QTransform)
 
-    #: Fields that are observed
-    observed = List(default=['model', 'material', 'material.padding',
-                                  'material.size'])
+    def _default_transform(self):
+        """ Qt displays top to bottom so flip it. """
+        return QtGui.QTransform.fromScale(1, -1)
 
-    def start(self):
-        """ Observe the job plugin to see when the job changs and update
-        the preview accordingly.
+    def set_preview(self, *items):
+        """ Sets the items that will be displayed in the plot
         
+        Parameters
+        ----------
+        items: list of kwargs
+            A list of kwargs to to pass to each plot item 
+
         """
-        plugin = self.workbench.get_plugin("inkcut.job")
-        plugin.observe('job', self._observe_job)
-
-    def stop(self):
-        """ 
-        
-        """
-        plugin = self.workbench.get_plugin("inkcut.job")
-        plugin.unobserve('job', self._observe_job)
-
-    def _default_job(self):
-        plugin = self.workbench.get_plugin("inkcut.job")
-        return plugin.job
-
-    def _observe_job(self, change):
-        """ Whenever the referenced job changes, update our observers
-        so the preview update handlers are properly called
-        """
-        #: If this was an update from the other plugin, set the local
-        #: reference which will fire this observer again
-        job = change['value']
-        if job != self.job:
-            self.job = job
-            return
-
-        #: Unobserve any old handlers
-        if change['type'] == 'update':
-            old = change['oldvalue']
-            for name in self.observed:
-                old.unobserve(name, self._refresh_preview)
-
-        #: Update new handlers
-        for name in self.observed:
-            job.observe(name, self._refresh_preview)
-
-    def _refresh_preview(self, change):
-        """ Redraw the preview on the screen 
-        
-        """
-        view_items = []
-
-        #: Transform used by the view
-        t = QtGui.QTransform.fromScale(1, -1)
-
-        job = self.job
-        plot = self.plot
-
-        if job.model:
-            view_items.extend([
-                PainterPathPlotItem(job.move_path, pen=plot.pen_up),
-                PainterPathPlotItem(job.cut_path, pen=plot.pen_down)
-            ])
-            #: TODO: This
-            #if self.show_offset_path:
-            #    view_items.append(PainterPathPlotItem(
-            # self.job.offset_path,pen=self.pen_offset))
-        if job.material:
-            # Also observe any change to job.media and job.device
-            view_items.extend([
-                PainterPathPlotItem(
-                    job.material.path*t, pen=plot.pen_media,
-                    skip_autorange=(False, [0, job.size[1]])),
-                PainterPathPlotItem(
-                    job.material.padding_path*t, pen=plot.pen_media_padding,
-                    skip_autorange=True)
-            ])
-
-        #: Update the plot
+        t = self.transform
+        view_items = [
+            PainterPathPlotItem(kwargs.pop('path'), **kwargs)
+            for kwargs in items
+        ]
         self.plot.plot = view_items

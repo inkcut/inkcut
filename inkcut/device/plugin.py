@@ -14,7 +14,7 @@ import enaml
 from atom.api import (
     Typed, List, Instance, ForwardInstance, ContainerList, Bool
 )
-from inkcut.core.api import Model, Plugin
+from inkcut.core.api import Model, Plugin, AreaBase, parse_unit
 from . import extensions
 
 
@@ -136,6 +136,13 @@ class DeviceProtocol(Model):
         raise NotImplementedError
 
 
+class DeviceConfig(Model):
+    """ The default device configuration. Custom devices may want to subclass 
+    this. 
+    
+    """
+
+
 class Device(Model):
     """ The standard device. This is a standard model used throughout the
     application. An instance of this is configured by specifying a 
@@ -145,6 +152,10 @@ class Device(Model):
     and protocol respectively.
     
     """
+
+    #: Internal model for drawing the preview on screen
+    area = Instance(AreaBase)
+
     #: The declaration that defined this device
     declaration = Typed(extensions.DeviceDriver)
 
@@ -158,7 +169,7 @@ class Device(Model):
     connection = Instance(DeviceTransport)
 
     #: The device specific config
-    config = Instance(Model)
+    config = Instance(Model, factory=DeviceConfig)
 
     #: Position. Defaults to x,y,z. The protocol can
     #: handle this however necessary.
@@ -183,6 +194,21 @@ class Device(Model):
         protocol = declaration.factory()
         protocol.declaration = declaration
         return protocol
+
+    def _default_area(self):
+        """ Create the area based on the size specified by the Device Driver
+        
+        """
+        d = self.declaration
+        w = parse_unit(d.width)
+        if d.length:
+            h = parse_unit(d.length)
+        else:
+            h = 900000
+
+        area = AreaBase()
+        area.size = [w, h]
+        return area
 
     # def init(self):
     #     self.transport.connect()
