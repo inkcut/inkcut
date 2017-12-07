@@ -13,7 +13,6 @@ import pyqtgraph as pg
 from atom.api import List, Instance, Enum
 from enaml.qt import QtCore, QtGui
 from inkcut.core.api import Plugin, Model, unit_conversions, log
-from inkcut.job.models import Job
 from .plot_view import PainterPathPlotItem
 QPen = QtGui.QPen
 
@@ -63,7 +62,9 @@ class PreviewPlugin(Plugin):
     transform = Instance(QtGui.QTransform)
 
     def _default_transform(self):
-        """ Qt displays top to bottom so flip it. """
+        """ Qt displays top to bottom so this can be used to flip it. 
+        
+        """
         return QtGui.QTransform.fromScale(1, -1)
 
     def set_preview(self, *items):

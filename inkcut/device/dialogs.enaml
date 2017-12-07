@@ -63,20 +63,26 @@ enamldef DeviceDialog(Dialog): dialog:
                                     dialog.device = plugin.get_device_from_driver(change['value'])
                             Label:
                                 text = "Manufacturer"
-                            Label:
-                                text << driver.manufacturer
+                            Field:
+                                enabled << cb.checked
+                                text := driver.manufacturer
                             Label:
                                 text = "Model"
-                            Label:
-                                text << driver.model
+                            Field:
+                                enabled << cb.checked
+                                text := driver.model
                             Label:
                                 text = "Width"
-                            Label:
-                                text << driver.width
+                            Field:
+                                enabled << cb.checked
+                                text := driver.width
                             Label:
                                 text = "Length"
-                            Label:
-                                text << driver.length
+                            Field:
+                                enabled << cb.checked
+                                text := driver.length
+                            CheckBox: cb:
+                                text = "Customize"
 
                     #Include:
                     #    objects << device.config

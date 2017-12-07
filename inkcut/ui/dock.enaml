@@ -14,7 +14,7 @@ from enaml.layout.api import AreaLayout, TabLayout, DockBarLayout, HSplitLayout
 from inkcut.core.api import DockArea, DockItem
 from inkcut.preview.view import PreviewDockItem
 from inkcut.job.view import (
-    GraphicDockItem, WeedlinesDockItem, MaterialDockItem
+    GraphicDockItem, WeedlinesDockItem, MaterialDockItem, JobHistoryDockItem
 )
 from inkcut.joystick.view import JoystickDockItem
 
@@ -31,6 +31,7 @@ enamldef DockView(DockArea):
             ),
             DockBarLayout(
                 'control-item',
+                'job-history-item',
                 position='bottom'
             )
         ]
@@ -52,9 +53,14 @@ enamldef DockView(DockArea):
         name = 'weedline-item'
         title = "Weedlines"
         model << workbench.get_plugin('inkcut.job')
+    JobHistoryDockItem:
+        name = 'job-history-item'
+        title = "Jobs"
+        model << workbench.get_plugin('inkcut.job')
     JoystickDockItem:
         name = 'control-item'
         title = "Control"
         model << workbench.get_plugin('inkcut.joystick')
+
     Include:
         objects << plugin.dock_items

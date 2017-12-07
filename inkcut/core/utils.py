@@ -66,6 +66,7 @@ def menu_icon(name):
         return load_icon(name)
     return None
 
+
 # -----------------------------------------------------------------------------
 # Unit conversion
 # -----------------------------------------------------------------------------
@@ -75,6 +76,12 @@ def from_unit(val, unit='px'):
 
 def to_unit(val, unit='px'):
     return QtSvgDoc.convertToUnit(val, unit)
+
+
+def parse_unit(val):
+    """ Parse a string into pixels """
+    return  QtSvgDoc.parseUnit(val)
+
 
 unit_conversions = QtSvgDoc._uuconv
 

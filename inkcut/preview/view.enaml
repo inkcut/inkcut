@@ -9,6 +9,7 @@ Created on Dec 6, 2015
 
 @author: jrm
 """
+import textwrap
 from inkcut.core.api import DockItem, to_unit, from_unit
 from enaml.widgets.api import Container, Menu, Action
 from .plot_view import PlotView
@@ -22,6 +23,11 @@ enamldef PreviewDockItem(DockItem):
     Container:
         padding = 0
         PlotView: plot:
+            tool_tip = textwrap.dedent(""" 
+            The red dashed border is the device's x-y plane.
+            The solid black border is the material. The dashed black border is
+            the available area for use. The blue lines is the movement path.
+            """).strip()
             minimum_size = (360,None)
             data := model.plot
             axis_scales << {'left':to_unit(1, model.units),

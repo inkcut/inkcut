@@ -15,10 +15,11 @@ from enaml.widgets.api import (
     SpinBox, CheckBox, PushButton, RadioButton, Form, ComboBox,
     Menu, Action, ObjectCombo
 )
-from enaml.core.include import Include
+from enaml.core.api import Looper
 from enaml.layout.api import hbox,vbox,spacer,align
-from enamlx.widgets.api import DoubleSpinBox
-from inkcut.core.svg import QtSvgDoc
+from enamlx.widgets.api import (
+    DoubleSpinBox, TableView, TableViewRow, TableViewItem
+)
 from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
 
 from inkcut.job.models import Job
@@ -376,3 +377,27 @@ enamldef MaterialDockItem(DockItem):
                 suffix << " "+model.units
                 maximum = 99999.9
                 single_step = 0.1
+
+
+enamldef JobHistoryDockItem(DockItem):
+    attr model
+    Container:
+        padding = 0
+        TableView: table:
+            horizontal_headers = ['Started', 'Completed', 'Document']
+            horizontal_stretch = True
+            items << model.jobs
+            Looper:
+                iterable << model.jobs
+                TableViewRow:
+                    attr job << table.items[loop_index] if loop_index < len(table.items) else None
+                    TableViewItem:
+                        text << str(job.info.started) if job else ""
+                    TableViewItem:
+                        text << str(job.info.done) if job else ""
+                    TableViewItem:
+                        text << str(job.document) if job else ""
+                    Menu:
+                        Action:
+                            text = "Reopen"
+                            triggered :: model.job = job

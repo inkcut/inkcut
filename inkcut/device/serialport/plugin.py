@@ -47,6 +47,7 @@ class SerialConfig(Model):
     def _default_port(self):
         if self.ports:
             return self.ports[0].device
+        return ""
 
     def refresh(self):
         self.ports = self._default_ports()

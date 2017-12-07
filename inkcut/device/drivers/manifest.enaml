@@ -4,10 +4,14 @@ from inkcut.device.extensions import DeviceDriver
 
 
 enamldef DriversManifest(PluginManifest):
-    """ Device plugin manifest.  
+    """ Device drivers manifest.  
     
-    Any new device should be added here or registered to 
-    the 'inkcut.workbench.core.devices' extension point.
+    A "DeviceDriver" is simply a declaration of the device name, dimensions,
+    and supported protocols and connection types.
+    
+    To fully customize how the "Driver" works, define a factory that creates
+    a Device subclass implementing the desired behavior.A config_view can 
+    also be set to provide a customized settings UI for the device.
     
     """
     id = 'inkcut.device.drivers'
@@ -18,35 +22,40 @@ enamldef DriversManifest(PluginManifest):
         
         DeviceDriver:
             manufacturer = 'Inkcut'
-            model = 'Generic device'
+            model = 'Generic Driver'
+
+        DeviceDriver:
+            manufacturer = 'Vinylmark'
+            model = 'Raspberry PI CNC'
             width = '60cm'
+            length = '60cm'
 
         DeviceDriver:
             manufacturer = 'US Cutter'
             model = 'Refine MH-1351'
             width = '120cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'US Cutter'
             model = 'Refine MH-721'
             width = '60cm'
-            protocols = ['hpgl','dmpl']
-            connections = ['serial','printer']
+            protocols = ['hpgl', 'dmpl']
+            connections = ['serial', 'printer']
             
         DeviceDriver:
             manufacturer = 'US Cutter'
             model = 'Laser Point'
             width = '61cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Graphtec'
             model = 'CE5000-60'
             width = '60cm'
-            protocols = ['hpgl','dmpl','gpgl']
+            protocols = ['hpgl', 'gpgl']
             connections = ['serial']
             
         DeviceDriver:
@@ -54,56 +63,56 @@ enamldef DriversManifest(PluginManifest):
             model = '8000-130'
             width = '130cm'
             length = '700cm'
-            protocols = ['hpgl','dmpl','gpgl']
+            protocols = ['hpgl', 'gpgl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Ioline'
             model = 'Classic'
             width = '60cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Creation'
             model = 'PCut CT-630'
             width = '61cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Mimaki'
             model = 'CG-60ST'
             width = '60cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Gcc'
             model = 'Bob cat 60'
             width = '60cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Summa'
             model = 'D120R'
             width = '120cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Summa'
             model = 'T600'
             width = '575cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Roland'
             model = 'CM 24'
             width = '610cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
@@ -111,26 +120,26 @@ enamldef DriversManifest(PluginManifest):
             model = 'CX-24'
             width = '60cm'
             length = '50cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'SeikiTech'
             model = 'SK-870T'
             width = '86cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Redsail'
             model = 'RS1360C'
             width = '120cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']
             
         DeviceDriver:
             manufacturer = 'Rheinstern'
             model = ' LB-720A'
             width = '720cm'
-            protocols = ['hpgl','dmpl']
+            protocols = ['hpgl', 'dmpl']
             connections = ['serial']

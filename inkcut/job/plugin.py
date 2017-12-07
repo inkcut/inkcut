@@ -76,6 +76,11 @@ class JobPlugin(Plugin):
             #: Wrap in a JobError
             raise JobError(e)
 
+        #: Copy so the ui's update
+        jobs = self.jobs[:]
+        jobs.append(self.job)
+        self.jobs = jobs
+
     def close_document(self):
         """ If the job currently has a "document" add this to the jobs list
         and create a new Job instance. Otherwise no job is open so do nothing.
@@ -85,10 +90,6 @@ class JobPlugin(Plugin):
             return
 
         log.info("Closing {doc}".format(doc=self.job.document))
-        #: Copy so the ui's update
-        jobs = self.jobs[:]
-        jobs.append(self.job)
-        self.jobs = jobs
         #: Create a new default job
         self.job = self._default_job()
 

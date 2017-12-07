@@ -10,6 +10,7 @@ Created on Jul 12, 2015
 
 @author: jrm
 """
+import textwrap
 from inkcut.core.utils import load_icon
 from enaml.widgets.api import (
     Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
@@ -33,6 +34,10 @@ enamldef SerialPortSettingsView(Container):
                 port = change['value']
                 if port:
                     model.port = port.device
+            tool_tip = textwrap.dedent("""
+            List of serial ports detected by the system. If nothing is here you 
+            must install the device driver for your machine.
+            """).strip()
         Label:
             text = ""
         PushButton:

@@ -9,9 +9,9 @@ Created on Dec 6, 2015
 
 @author: jrm
 """
-from .models import Model, Plugin
+from .models import Model, Plugin, AreaBase
 from .widgets import PickableDockArea as DockArea
 from .widgets import PickableDockItem as DockItem
-from .utils import from_unit, to_unit, unit_conversions
+from .utils import from_unit, to_unit, unit_conversions, parse_unit
 from .utils import log
 from . import svg

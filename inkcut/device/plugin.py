@@ -12,7 +12,7 @@ Created on Jan 16, 2015
 """
 import enaml
 from atom.api import (
-    Typed, List, Instance, ForwardInstance, ContainerList, Bool
+    Typed, List, Instance, ForwardInstance, ContainerList, Bool,  observe
 )
 from inkcut.core.api import Model, Plugin, AreaBase, parse_unit
 from . import extensions
@@ -209,6 +209,10 @@ class Device(Model):
         area = AreaBase()
         area.size = [w, h]
         return area
+
+    @observe('declaration.width', 'declaration.length')
+    def _refresh_area(self, change):
+        self.area = self._default_area()
 
     # def init(self):
     #     self.transport.connect()

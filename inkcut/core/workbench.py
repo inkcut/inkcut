@@ -15,6 +15,7 @@ import enamlx
 enamlx.install()
 
 import enaml
+from atom.api import Unicode
 from enaml.qt import QtGui
 from enaml.workbench.ui.api import UIWorkbench
 
@@ -22,6 +23,9 @@ from enaml.workbench.ui.api import UIWorkbench
 class InkcutWorkbench(UIWorkbench):
     #: Singleton instance
     _instance = None
+
+    #: For error messages
+    app_name = Unicode('Inkcut')
 
     @classmethod
     def instance(cls):
