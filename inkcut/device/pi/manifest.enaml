@@ -1,24 +1,44 @@
+"""
+Copyright (c) 2017, Vinylmark LLC.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jan 24, 2015
+
+@author: jrm
+@author: jjm
+"""
+import enaml
 from enaml.workbench.plugin_manifest import PluginManifest
 from enaml.workbench.api import Extension
 from inkcut.device.extensions import DeviceDriver
 
 
-def device_factory(protocol):
-    from inkcut.device.pi.driver import PiDevice
-    return PiDevice(protocol=protocol)
+def device_factory():
+    """ Import our custom device driver """
+    from .driver import PiDevice
+    return PiDevice()
 
+def config_view_factory():
+    """ Import our custom config view """
+    with enaml.imports():
+        from .view import ConfigView
+    return ConfigView
 
 enamldef PiManifest(PluginManifest):
     id = 'inkcut.device.pi'
+
     Extension:
         id = 'protocols'
         point = 'inkcut.device.driver'
         
         DeviceDriver:
-            id = 'inkcut.plugins.jeffy'
             model = 'R2Rv1'
             manufacturer = 'Vinylmark'
             width = '32in'
             length = '32in'
             factory = device_factory
+            config_view = config_view_factory
     

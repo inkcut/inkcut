@@ -5,11 +5,9 @@ Created on Jul 19, 2015
 @author: jrm
 """
 from atom.api import Instance, Int, observe
-from enaml.qt import QtGui, QtCore
+from enaml.qt import QtGui
 from inkcut.core.api import Plugin
 from inkcut.device.plugin import Device
-from inkcut.preview.plugin import PlotBase
-from inkcut.preview.plot_view import PainterPathPlotItem
 
 
 class JoystickPlugin(Plugin):
@@ -20,31 +18,28 @@ class JoystickPlugin(Plugin):
     rate = Int(10)
     path = Instance(QtGui.QPainterPath)
 
-    #: Plot to display
-    #plot = Instance(PlotBase, ())
-
-    def start(self):
-        """ When started observe the device plugin's device and 
-        whenever it changes update the reference here
-        """
-        #: Observe
-        plugin = self.workbench.get_plugin('inkcut.device')
-        plugin.observe('device', self._observe_device)
+    #: Reference to the device plugin
+    plugin = Instance(Plugin)
 
     def stop(self):
-        plugin = self.workbench.get_plugin('inkcut.device')
-        plugin.observe('device', self._observe_device)
+        """ Delete this plugins references """
+        del self.device
+        del self.plugin
+
+    def _default_plugin(self):
+        return self.workbench.get_plugin('inkcut.device')
 
     def _default_device(self):
-        plugin = self.workbench.get_plugin('inkcut.device')
-        return plugin.device
+        return self.plugin.device
 
-    def _observe_device(self, change):
+    @observe('plugin.device')
+    def _refresh_device(self, change):
+        """ Whenever the device updates on the device plugin, update
+        the local reference.
+        """
         if self.device != change['value']:
             self.device = change['value']
             return
-        #
-        #self.device.init()
     #
     # @observe('device')
     # def _view_changed(self, change):
@@ -74,7 +69,7 @@ class JoystickPlugin(Plugin):
     #
     #     self.path.translate(x1-x0, y0-y1) # Reverse y
     #     self.plot[0].updateData(self.path)
-        
+
     def stop(self):
         if self.device:
             self.device.close()

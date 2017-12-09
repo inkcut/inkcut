@@ -116,4 +116,4 @@ class InkcutWorkbench(UIWorkbench):
         #: Start the core plugin
         plugin = self.get_plugin('inkcut.core')
         ui.start_application()
-        self.unregister('enaml.workbench.ui')
+        #self.unregister('enaml.workbench.ui')

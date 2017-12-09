@@ -40,26 +40,32 @@ enamldef DockView(DockArea):
     PreviewDockItem:
         name = 'preview-item'
         stretch = 3
+        closable = False
         model << workbench.get_plugin('inkcut.preview').plot
     GraphicDockItem:
         name = 'graphic-item'
         title = "Graphic"
+        closable = False
         model << workbench.get_plugin('inkcut.job')
     MaterialDockItem:
         name = 'material-item'
         title = "Material"
+        closable = False
         model << workbench.get_plugin('inkcut.job')
     WeedlinesDockItem:
         name = 'weedline-item'
         title = "Weedlines"
+        closable = False
         model << workbench.get_plugin('inkcut.job')
     JobHistoryDockItem:
         name = 'job-history-item'
         title = "Jobs"
+        closable = False
         model << workbench.get_plugin('inkcut.job')
     JoystickDockItem:
         name = 'control-item'
         title = "Control"
+        closable = False
         model << workbench.get_plugin('inkcut.joystick')
 
     Include:

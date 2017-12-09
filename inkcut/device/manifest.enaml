@@ -22,6 +22,29 @@ def device_setup(event):
     DeviceDialog(ui.window, plugin=plugin).exec_()
 
 
+def job_start(event):
+    """ Pass the job to the current device for it to cut. Watch
+    the process in the task dialog.
+    """
+    try:
+        from inkcut.ui.plugin import LivePlot
+
+        plugin = event.workbench.get_plugin('inkcut.ui')
+        if not plugin.job.document:
+            raise RuntimeError("No document is open!")
+            return
+
+        with enaml.imports():
+            from inkcut.ui.task_dialog import JobTaskDialog
+
+        model = LivePlot(device=plugin.device, job=plugin.job)
+        ui = event.workbench.get_plugin('enaml.workbench.ui')
+        JobTaskDialog(ui.window,model=model).exec_()
+    except:
+        event.workbench.show_warning("Error sending to device",
+                                     traceback.format_exc())
+
+
 def plugin_factory():
     from .plugin import DevicePlugin
     return DevicePlugin()
@@ -37,13 +60,6 @@ enamldef DeviceManifest(PluginManifest):
     id = 'inkcut.device'
 
     factory = plugin_factory
-
-    Extension:
-        id = 'commands'
-        point = 'enaml.workbench.core.commands'
-        Command:
-            id = 'inkcut.device.setup'
-            handler = device_setup
 
     ExtensionPoint:
         id = DEVICE_DRIVER_POINT
@@ -65,6 +81,16 @@ enamldef DeviceManifest(PluginManifest):
         register a communication interface for transporting data.  
         
         """
+
+    Extension:
+        id = 'commands'
+        point = 'enaml.workbench.core.commands'
+        Command:
+            id = 'inkcut.device.setup'
+            handler = device_setup
+        Command:
+            id = 'inkcut.device.start'
+            handler = job_start
 
     Extension:
         id = 'actions'

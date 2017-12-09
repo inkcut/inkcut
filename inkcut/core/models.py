@@ -10,6 +10,7 @@ Created on Dec 6, 2017
 @author: jrm
 """
 import os
+import json
 import traceback
 import jsonpickle as pickle
 from future.builtins import str
@@ -135,26 +136,27 @@ class AreaBase(Model):
 
 class Plugin(EnamlPlugin):
     """ A plugin that behaves like a model and saves it's state
-    when any atom member not tagged with persist=False triggers a save.
+    when any atom member tagged with config=True triggers a save.
      
     Also optionally registers itself in the settings
     
     """
 
     #: Settings pages this plugin adds
-    settings_pages = Dict(Atom, Container).tag(persist=False)
+    settings_pages = Dict(Atom, Container)
     settings_items = List(Atom)
 
     #: File used to save and restore the state for this plugin
-    _state_file = Unicode().tag(persist=False)
-    _state_excluded = List(str).tag(persist=False)
-    _state_members = List(Member).tag(persist=False)
+    _state_file = Unicode()
+    _state_excluded = List(str)
+    _state_members = List(Member)
 
     # -------------------------------------------------------------------------
     # Plugin API
     # -------------------------------------------------------------------------
     def start(self):
         """ Load the state when the plugin starts """
+        log.debug("Starting plugin '{}'".format(self.manifest.id))
         self._bind_observers()
 
     def stop(self):
@@ -190,9 +192,15 @@ class Plugin(EnamlPlugin):
         try:
             with open(self._state_file, 'r') as f:
                 state = pickle.loads(f.read())
+            #with self.suppress_notifications():
             self.__setstate__(state)
+            log.warning("Plugin {} state restored from: {}".format(
+                self.manifest.id, self._state_file))
+        except IOError as e:
+            pass  #: No state
         except Exception as e:
-            log.warning("Failed to load state: {}".format(e))
+            log.warning("Plugin {} failed to load state: {}".format(
+                self.manifest.id, traceback.format_exc(e)))
 
         #: Hook up observers
         for member in self._state_members:
@@ -202,7 +210,7 @@ class Plugin(EnamlPlugin):
         """ Try to save the plugin state """
         if change['type'] in ['update', 'container']:
             try:
-                log.debug("Saving state due to change: {}".format(change))
+                log.info("Saving state due to change: {}".format(change))
 
                 #: Dump first so any failure to encode doesn't wipe out the
                 #: previous state
@@ -215,6 +223,9 @@ class Plugin(EnamlPlugin):
                     if k in state:
                         del state[k]
                 state = pickle.dumps(state)
+
+                #: Pretty format it
+                state = json.dumps(json.loads(state), indent=2)
 
                 dst = os.path.dirname(self._state_file)
                 if not os.path.exists(dst):

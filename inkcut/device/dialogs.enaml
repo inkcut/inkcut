@@ -9,25 +9,22 @@ Created on Jul 14, 2015
 
 @author: jrm
 """
-from atom.api import atomref,Unicode,Instance,List,Bool
 from enaml.core.api import Conditional, Include
-from enaml.image import Image
 from enaml.layout.api import align, hbox, spacer
 from enaml.stdlib.mapped_view import MappedView
-from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
 from enaml.stdlib.task_dialog import (
     TaskDialogBody, TaskDialogCommandArea,
     TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
     TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet
 )
 from enaml.widgets.api import (
-    CheckBox, Container, Dialog, Field, Label,
-    ImageView, PushButton, RadioButton, Window,ProgressBar, Form,
-    Notebook, Page, CheckBox, ObjectCombo
+    CheckBox, Container, Dialog, Field, Label, PushButton, Form, Notebook,
+    Page, ObjectCombo
 )
 from .plugin import Device
 from .view import ConfigView
 from inkcut.core.api import Model
+
 
 enamldef DeviceDialog(Dialog): dialog:
     title = 'Device Setup'
@@ -46,7 +43,7 @@ enamldef DeviceDialog(Dialog): dialog:
                 text = 'Configure device'
         TaskDialogContentArea:
             Notebook: notebook:
-                tab_style = 'preferences'
+                tab_style = 'document'
                 Page:
                     title = 'General'
                     closable = False
@@ -92,7 +89,8 @@ enamldef DeviceDialog(Dialog): dialog:
                     MappedView:
                         model << device.config if device else Model()
                         typemap << {
-                            type(device.config): device.declaration.config_view()
+                            type(device.config): device.declaration.config_view(),
+                            Model: ConfigView
                         } if device else {Model:ConfigView}
                 Page:
                     title = 'Connection'
@@ -117,8 +115,9 @@ enamldef DeviceDialog(Dialog): dialog:
                         MappedView:
                             model << connection.config if connection else Model()
                             typemap << {
-                                type(connection.config): connection.declaration.config_view()
-                            } if connection else {Model:ConfigView}
+                                type(connection.config): connection.declaration.config_view(),
+                                Model: ConfigView
+                            } if connection else {Model: ConfigView}
 
                 Page:
                     title = 'Protocol'
@@ -143,8 +142,9 @@ enamldef DeviceDialog(Dialog): dialog:
                         MappedView:
                             model << protocol.config if protocol else Model()
                             typemap << {
-                                type(protocol.config): protocol.declaration.config_view()
-                            } if protocol else {Model:ConfigView}
+                                type(protocol.config): protocol.declaration.config_view(),
+                                Model: ConfigView
+                            } if protocol else {Model: ConfigView}
                     #MappedView:
                     #    model << device.connection.protocol.config
             # Label:
@@ -165,100 +165,3 @@ enamldef DeviceDialog(Dialog): dialog:
                 clicked ::
                     plugin.device = dialog.device
                     dialog.close()
-
-
-
-# enamldef DeviceDialog(Dialog):
-#     attr plugin
-#     attr device <<
-#     title << '{}{} - Setup'.format(model.manufacturer if model.manufacturer else "Device"," "+model.model if model.model else "")
-#     minimum_size = (540,360)
-#     TaskDialogBody:
-#         TaskDialogContentArea:
-#             padding = 8
-#             Notebook: notebook:
-#                 tab_style = 'preferences'
-#                 Page:
-#                     title = 'General'
-#                     closable = False
-#                     Form:
-#                         Label:
-#                             text = 'Manufacturer'
-#                         ObjectCombo:
-#                             items << sorted(set([dev.manufacturer for dev in plugin._devices]))
-#                             selected := model.manufacturer
-#                         Label:
-#                             text = 'Model'
-#                         ObjectCombo:
-#                             items << sorted(set([dev.model for dev in plugin._devices if dev.manufacturer==model.manufacturer]))
-#                             selected ::
-#                                         model.devices = plugin._devices
-#                                         model.model = change['value']
-#                             selected << model.model
-#
-#                         Conditional:
-#                             condition << model.driver is not None
-#                             Label:
-#                                 text = 'Width'
-#                             Label:
-#                                 text << model.driver.width if model.driver else ""
-#
-#                             Conditional:
-#                                 condition << bool(model.driver and model.driver.length)
-#                                 Label:
-#                                     text = 'Length'
-#                                 Label:
-#                                     text << str(model.driver.length) if model.driver else ''
-#                             CheckBox:
-#                                 text << "Show advanced settings"
-#                                 checked := model.show_advanced
-#                 Conditional:
-#                     condition<< model.driver is not None
-#                     Page:
-#                         title = 'Connection'
-#                         closable = False
-#                         Form:
-#                             Label:
-#                                 text = 'Type'
-#                             ObjectCombo:
-#                                 items << model.driver.connections if model.driver else []
-#                                 selected := model.connection_type
-#
-#                         Conditional:
-#                             condition << bool(model.connection_type)
-#                             Label:
-#                                 text << "Selected {}".format(model.connection_type)
-#                             MappedView:
-#                                 model << model.connection
-#                                 typemap << {type(model.connection):model.connection.view_factory()}
-#                     Page:
-#                         title = 'Calibration'
-#                         closable = False
-#                     Conditional:
-#                         condition << model.show_advanced
-#                         Page:
-#                             title = 'Advanced'
-#                             closable = False
-#
-#                             Form:
-#                                 Label:
-#                                     text = 'Protocol'
-#
-#                                 ObjectCombo:
-#                                     items << model.driver.protocols
-#                                     selected := model.protocol_id
-#
-#
-#         TaskDialogCommandArea:
-#             constraints = [
-#                 hbox(spacer, bbox),
-#             ]
-#
-#             DialogButtonBox: bbox:
-#                 buttons = [
-#                     DialogButton('OK', 'accept'),
-#                     DialogButton('Cancel', 'reject'),
-#                 ]
-            
-
-    

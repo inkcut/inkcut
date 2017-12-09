@@ -15,6 +15,7 @@ from serial.tools.list_ports import comports
 from atom.api import List, Instance, Enum, Bool, Int, Unicode
 from inkcut.core.api import Plugin, Model
 from twisted.internet import reactor
+from twisted.internet.protocol import Protocol, connectionDone
 from twisted.internet.serialport import SerialPort
 from inkcut.device.plugin import DeviceTransport
 
@@ -37,7 +38,6 @@ class SerialConfig(Model):
     # -------------------------------------------------------------------------
     # Defaults
     # -------------------------------------------------------------------------
-
     def _default_ports(self):
         return comports()
 
@@ -53,6 +53,27 @@ class SerialConfig(Model):
         self.ports = self._default_ports()
 
 
+class InkcutProtocol(Protocol):
+    """Make a twisted protocol that delegates to the inkcut protocol
+    implementation to have a consistent api (and use proper pep 8 formatting!).
+    
+    """
+    def __init__(self, parent, protocol):
+        self.parent = parent
+        self.delegate = protocol
+
+    def connectionMade(self):
+        self.parent.connected = True
+        self.delegate.connection_made()
+
+    def dataReceived(self, data):
+        self.delegate.data_received(data)
+
+    def connectionLost(self, reason=connectionDone):
+        self.delegate.connection_lost()
+        self.parent.connected = False
+
+
 class SerialTransport(DeviceTransport):
 
     #: Default config
@@ -61,10 +82,11 @@ class SerialTransport(DeviceTransport):
     #: Connection port
     connection = Instance(SerialPort)
 
-    def connect(self, protocol):
+    def connect(self):
         config = self.config
+
         self.connection = SerialPort(
-            protocol,
+            InkcutProtocol(self, self.protocol),
             config.port,
             reactor,
             baudrate=config.baudrate,

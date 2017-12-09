@@ -60,13 +60,13 @@ class JobError(Exception):
 
 class JobInfo(Model):
     """ Job metadata """
-    done = Bool(False)
-    cancelled = Bool(False)
-    paused = Bool(False)
-    started = Instance(datetime)
-    ended = Instance(datetime)
-    progress = Range(0, 100, 0)
-    data = Unicode()
+    done = Bool(False).tag(config=True)
+    cancelled = Bool(False).tag(config=True)
+    paused = Bool(False).tag(config=True)
+    started = Instance(datetime).tag(config=True)
+    ended = Instance(datetime).tag(config=True)
+    progress = Range(0, 100, 0).tag(config=True)
+    data = Unicode().tag(config=True)
 
 
 class Job(Model):
@@ -75,13 +75,13 @@ class Job(Model):
      
     """
     #: Material this job will be run on
-    material = Instance(Material)
+    material = Instance(Material, ()).tag(config=True)
 
     #: Path to svg document this job parses
-    document = Unicode()
+    document = Unicode().tag(config=True)
 
     #: Meta info a the job
-    info = Instance(JobInfo, ())
+    info = Instance(JobInfo, ()).tag(config=True)
 
     # Job properties used for generating the plot
     size = ContainerList(Float(), default=[1, 1]) # TODO: hooookk

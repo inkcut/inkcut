@@ -23,13 +23,14 @@ def open_document(event):
     plugin = workbench.get_plugin('inkcut.job')
 
     #: Get the previous path
-    job = plugin.job
-    current_path = dirname(job.document) if job.document else expanduser('~')
+    if plugin.jobs:
+        current_path = dirname(plugin.jobs[-1].document)
+    else:
+        current_path = expanduser('~')
 
     #: Get the file to open
     path = FileDialogEx.get_open_file_name(
-        ui.window, current_path=current_path,
-        name_filters=['*.svg']
+        ui.window, current_path=current_path, name_filters=['*.svg']
     )
 
     #: Open it
@@ -44,30 +45,6 @@ def open_document(event):
 def close_document(event):
     plugin = event.workbench.get_plugin('inkcut.job')
     plugin.close_document()
-
-
-def start_job(event):
-    """ Pass the job to the current
-    device for it to cut. Watch
-    the process in the task dialog.
-    """
-    try:
-        from inkcut.ui.plugin import LivePlot
-
-        plugin = event.workbench.get_plugin('inkcut.ui')
-        if not plugin.job.document:
-            raise RuntimeError("No document is open!")
-            return
-
-        with enaml.imports():
-            from inkcut.ui.task_dialog import JobTaskDialog
-
-        model = LivePlot(device=plugin.device, job=plugin.job)
-        ui = event.workbench.get_plugin('enaml.workbench.ui')
-        JobTaskDialog(ui.window,model=model).exec_()
-    except:
-        event.workbench.show_warning("Error sending to device",
-                                     traceback.format_exc())
 
 
 def media_setup(event):

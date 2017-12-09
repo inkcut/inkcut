@@ -23,6 +23,7 @@ class InkcutPlugin(Plugin):
 
     def start(self):
         """ Load all the plugins Inkcut is dependent on """
+        super(InkcutPlugin, self).start()
         w = self.workbench
         with enaml.imports():
             #: TODO autodiscover these

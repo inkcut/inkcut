@@ -20,19 +20,19 @@ from .models import Job, JobError, Material
 class JobPlugin(Plugin):
 
     #: Units
-    units = Enum(*unit_conversions.keys())
+    units = Enum(*unit_conversions.keys()).tag(config=True)
 
     #: Available materials
-    materials = List(Material)
+    materials = List(Material).tag(config=True)
 
     #: Current material
-    material = Instance(Material, ())
+    material = Instance(Material, ()).tag(config=True)
 
     #: Previous jobs
-    jobs = List(Job)
+    jobs = List(Job).tag(config=True)
 
     #: Current job
-    job = Instance(Job)
+    job = Instance(Job).tag(config=True)
 
     def _default_job(self):
         return Job(material=self.material)
@@ -51,6 +51,13 @@ class JobPlugin(Plugin):
         with enaml.imports():
             from inkcut.device.manifest import DeviceManifest
             w.register(DeviceManifest())
+
+        #: Now load state
+        super(JobPlugin, self).start()
+
+        #: If we loaded from state, refresh
+        if self.job.document:
+            self._refresh_preview({})
 
     # -------------------------------------------------------------------------
     # Job API

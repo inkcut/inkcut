@@ -7,8 +7,9 @@ The full license is in the file LICENSE, distributed with this software.
 
 Created on Jul 14, 2015
 
-@author: jrm
+@author: jrm 
 """
+import os
 from inkcut.core.api import DockItem
 from enaml.widgets.api import (
     Container, Notebook, Page, Label, ImageView,
@@ -384,7 +385,7 @@ enamldef JobHistoryDockItem(DockItem):
     Container:
         padding = 0
         TableView: table:
-            horizontal_headers = ['Started', 'Completed', 'Document']
+            horizontal_headers = ['Document', 'Started', 'Completed']
             horizontal_stretch = True
             items << model.jobs
             Looper:
@@ -392,12 +393,14 @@ enamldef JobHistoryDockItem(DockItem):
                 TableViewRow:
                     attr job << table.items[loop_index] if loop_index < len(table.items) else None
                     TableViewItem:
+                        text << str(os.path.split(job.document)[-1]) if job else ""
+                        tool_tip = str(job.document) if job else ""
+                    TableViewItem:
                         text << str(job.info.started) if job else ""
                     TableViewItem:
                         text << str(job.info.done) if job else ""
-                    TableViewItem:
-                        text << str(job.document) if job else ""
                     Menu:
                         Action:
                             text = "Reopen"
+                            icon = load_icon("folder_go")
                             triggered :: model.job = job
