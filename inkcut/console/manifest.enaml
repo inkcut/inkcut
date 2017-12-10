@@ -1,0 +1,16 @@
+from enaml.workbench.api import Extension, PluginManifest
+
+def plugin_factory():
+    from .plugin import ConsolePlugin
+    return ConsolePlugin()
+
+
+enamldef ConsoleManifest(PluginManifest):
+    """ The manifest which is registered when the view is loaded.
+
+    This manifest contributes extra menu items to the menu bar.
+
+    """
+    id = 'inkcut.console'
+    factory = plugin_factory
+    

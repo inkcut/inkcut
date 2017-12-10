@@ -23,16 +23,19 @@ class InkcutPlugin(Plugin):
 
     def start(self):
         """ Load all the plugins Inkcut is dependent on """
-        super(InkcutPlugin, self).start()
         w = self.workbench
         with enaml.imports():
             #: TODO autodiscover these
             from inkcut.job.manifest import JobManifest
             from inkcut.preview.manifest import PreviewManifest
             from inkcut.joystick.manifest import JoystickManifest
+            from inkcut.console.manifest import ConsoleManifest
             w.register(JobManifest())
             w.register(PreviewManifest())
             w.register(JoystickManifest())
+            w.register(ConsoleManifest())
+
+        super(InkcutPlugin, self).start()
 
     def create_new_area(self):
         with enaml.imports():

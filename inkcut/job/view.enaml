@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Copyright (c) 2017, Jairus Martin.
 
@@ -29,6 +30,7 @@ from inkcut.job.models import Job
 enamldef GraphicDockItem(DockItem):
     attr model
     attr job: Job << model.job
+    icon = load_icon('vector')
     Container:
         Container:
             padding = 0
@@ -171,6 +173,7 @@ enamldef GraphicDockItem(DockItem):
 enamldef WeedlinesDockItem(DockItem):
     attr model
     attr job: Job << model.job
+    icon = load_icon('shape_group')
     Container:
         Container:
             padding = 0
@@ -266,6 +269,7 @@ enamldef WeedlinesDockItem(DockItem):
 enamldef MaterialDockItem(DockItem):
     attr model
     attr job: Job << model.job
+    icon = load_icon('layers')
     Container:
         Container:
             padding = 0
@@ -382,6 +386,7 @@ enamldef MaterialDockItem(DockItem):
 
 enamldef JobHistoryDockItem(DockItem):
     attr model
+    icon = load_icon('application_view_list')
     Container:
         padding = 0
         TableView: table:

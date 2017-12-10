@@ -24,11 +24,12 @@ python                      #" open python
 
 ```bash
 
-pip install enaml
+pip install git+https://github.com/nucleic/enaml.git
 pip install twisted
 pip install git+https://github.com/frmdstryr/enamlx.git
 pip install pyqtgraph
 pip install jsonpickle
+pip install qt4reactor
 
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
@@ -39,6 +40,14 @@ sudo apt install python-qt4
 ln -s /usr/lib/python2.7/dist-packages/PyQt4/ ~/.virtualenvs/cv/lib/python2.7/site-packages/
 ln -s /usr/lib/python2.7/dist-packages/sip.so ~/.virtualenvs/cv/lib/python2.7/site-packages/
 
+# Install qtconsole
+pip install qtconsole
+
+# Install faulthandler
+pip install faulthandler
+
+# Install pyserial 
+pip install pyserial
 
 # Install RPI.GPIO
 pip install RPi.GPIO

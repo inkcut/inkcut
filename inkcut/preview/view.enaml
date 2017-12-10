@@ -11,32 +11,34 @@ Created on Dec 6, 2015
 """
 import textwrap
 from inkcut.core.api import DockItem, to_unit, from_unit
+from inkcut.core.utils import load_icon
 from enaml.widgets.api import Container, Menu, Action
 from .plot_view import PlotView
-
 
 enamldef PreviewDockItem(DockItem):
     #: A dock item for
     title = "Preview"
     closable = False
-    attr model #: PlotBase
+    attr model #: PreviewPlugin
+    attr plot << model.plot
+    icon = load_icon('picture')
     Container:
         padding = 0
-        PlotView: plot:
+        PlotView: plot_view:
             tool_tip = textwrap.dedent(""" 
             The red dashed border is the device's x-y plane.
             The solid black border is the material. The dashed black border is
             the available area for use. The blue lines is the movement path.
             """).strip()
             minimum_size = (360,None)
-            data := model.plot
-            axis_scales << {'left':to_unit(1, model.units),
-                            'bottom':to_unit(1, model.units)}
+            data := plot.plot
+            axis_scales << {'left':to_unit(1, plot.units),
+                            'bottom':to_unit(1, plot.units)}
             Menu:
                 context_menu = True
                 Action:
                     text = 'View all'
-                    triggered :: plot.proxy.widget.autoRange()
+                    triggered :: plot_view.proxy.widget.autoRange()
 
 # enamldef LiveDockItem(DockItem):
 #     #: A dock item for

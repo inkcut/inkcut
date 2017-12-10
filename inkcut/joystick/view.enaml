@@ -20,12 +20,7 @@ enamldef JoystickDockItem(DockItem):
     title = 'Control'
     attr model
     attr device << model.device
-
-            # PlotView:
-            #     minimum_size = (540,320)
-            #     data := model.plot
-            #     axis_scales << {'left':to_unit(1, model.units),'bottom':to_unit(1, model.units)}
-        
+    icon = load_icon('controller')
     Container:
         constraints = [
             hbox(

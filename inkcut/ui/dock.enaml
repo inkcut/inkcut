@@ -17,6 +17,7 @@ from inkcut.job.view import (
     GraphicDockItem, WeedlinesDockItem, MaterialDockItem, JobHistoryDockItem
 )
 from inkcut.joystick.view import JoystickDockItem
+from inkcut.console.view import ConsoleDockItem
 
 enamldef DockView(DockArea):
     attr workbench
@@ -32,6 +33,7 @@ enamldef DockView(DockArea):
             DockBarLayout(
                 'control-item',
                 'job-history-item',
+                'console-item',
                 position='bottom'
             )
         ]
@@ -41,7 +43,7 @@ enamldef DockView(DockArea):
         name = 'preview-item'
         stretch = 3
         closable = False
-        model << workbench.get_plugin('inkcut.preview').plot
+        model << workbench.get_plugin('inkcut.preview')
     GraphicDockItem:
         name = 'graphic-item'
         title = "Graphic"
@@ -67,6 +69,10 @@ enamldef DockView(DockArea):
         title = "Control"
         closable = False
         model << workbench.get_plugin('inkcut.joystick')
-
+    ConsoleDockItem:
+        name = 'console-item'
+        title = "Console"
+        closable =False
+        model << workbench.get_plugin('inkcut.console')
     Include:
         objects << plugin.dock_items

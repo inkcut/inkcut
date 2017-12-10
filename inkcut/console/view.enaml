@@ -1,0 +1,21 @@
+"""
+Created on Dec 10, 2017
+
+@author: jrm
+"""
+from enaml.widgets.api import  Container
+from enaml.widgets.api import IPythonConsole
+from inkcut.core.api import DockItem
+from inkcut.core.utils import load_icon
+
+
+enamldef ConsoleDockItem(DockItem):
+    title = 'Control'
+    attr model
+    icon = load_icon('application_xp_terminal')
+    Container:
+        padding = 0
+        IPythonConsole:
+            pass
+
+
