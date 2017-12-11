@@ -11,12 +11,8 @@ Created on Jan 16, 2015
 @author: jrm
 """
 import enaml
-from atom.api import (
-    Atom, Float, Instance, Unicode, Bool, ForwardInstance,
-    List, Int, Callable, Coerced, observe
-)
-from enaml.core.declarative import Declarative, d_
-from enaml.widgets.api import Container
+from atom.api import Unicode, List, Callable
+from inkcut.core.declarative import Declarative, d_
 
 DEVICE_DRIVER_POINT = 'inkcut.device.driver'
 DEVICE_PROTOCOL_POINT = 'inkcut.device.protocols'

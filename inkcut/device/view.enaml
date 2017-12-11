@@ -11,9 +11,13 @@ Created on Dec 7, 2017
 @author: jrm
 """
 from enaml.widgets.api import Container, Label
-from inkcut.core.api import Model
+from inkcut.core.api import Model, DockItem
 
 enamldef ConfigView(Container):
     attr model: Model
     Label:
         text = "No configuration available."
+
+
+enamldef DeviceProgressItem(DockItem):
+    pass

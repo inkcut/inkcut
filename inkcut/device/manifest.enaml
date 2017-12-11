@@ -83,6 +83,12 @@ enamldef DeviceManifest(PluginManifest):
         """
 
     Extension:
+        id = 'autostart'
+        point = 'enaml.workbench.ui.autostart'
+        Autostart:
+            plugin_id = 'inkcut.device'
+
+    Extension:
         id = 'commands'
         point = 'enaml.workbench.core.commands'
         Command:

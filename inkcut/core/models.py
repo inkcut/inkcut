@@ -11,6 +11,7 @@ Created on Dec 6, 2017
 """
 import os
 import json
+import enaml
 import traceback
 import jsonpickle as pickle
 from future.builtins import str
@@ -21,15 +22,7 @@ from enaml.workbench.plugin import Plugin as EnamlPlugin
 from enaml.widgets.api import Container
 from enaml.qt import QtCore, QtGui
 from twisted.internet import reactor
-from .utils import log
-
-
-def clip(s, n=1000):
-    """ Shorten the name of a large value when logging"""
-    v = str(s)
-    if len(v) > n:
-        v[:n]+"..."
-    return v
+from .utils import log, clip
 
 
 # -----------------------------------------------------------------------------
@@ -190,8 +183,9 @@ class Plugin(EnamlPlugin):
         """ Try to load the plugin state """
         #: Restore
         try:
-            with open(self._state_file, 'r') as f:
-                state = pickle.loads(f.read())
+            with enaml.imports():
+                with open(self._state_file, 'r') as f:
+                    state = pickle.loads(f.read())
             #with self.suppress_notifications():
             self.__setstate__(state)
             log.warning("Plugin {} state restored from: {}".format(

@@ -110,6 +110,12 @@ enamldef DeviceDialog(Dialog): dialog:
                                     transport = declaration.factory()
                                     transport.declaration = declaration
                                     device.connection = transport
+                            # Label:
+                            #     text = ""
+                            # PushButton:
+                            #     text = "Test"
+                            #     clicked :: device.test()
+
                         #MappedView:
                         #    model << device.connection.config
                         MappedView:

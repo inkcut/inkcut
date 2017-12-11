@@ -13,7 +13,7 @@ Created on Jan 16, 2015
 import enaml
 from atom.api import (
     Typed, List, Instance, ForwardInstance, ContainerList, Bool, Unicode,
-    Float, observe
+    Int, Float, observe
 )
 from contextlib import contextmanager
 from enaml.qt import QtCore, QtGui
@@ -160,10 +160,26 @@ class DeviceConfig(Model):
     
     """
     #: Time between each path command
-    step_time = Float()
+    #: Time to wait between each step so we don't get
+    #: way ahead of the cutter and fill up it's buffer
+    step_time = Float().tag(config=True)
 
-    #: Distance between each step
-    step_size = Float()
+    #: Distance between each command in user units
+    #: this is effectively the resolution the software supplies
+    step_size = Float().tag(config=True)
+
+    #: Interpolate paths breaking them into small sections that
+    #: can be sent. This allows pausing mid plot as many devices do not have
+    #: a cancel command.
+    interpolate = Bool(True).tag(config=True)
+
+    #: How often the position will be updated in ms. Low power devices should
+    #: set this to a high number like 2000 or 3000
+    sample_rate = Int(100).tag(config=True)
+
+    #: Use absolute coordinates
+    absolute = Bool().tag(config=True)
+
 
 class Device(Model):
     """ The standard device. This is a standard model used throughout the
@@ -179,7 +195,7 @@ class Device(Model):
     area = Instance(AreaBase)
 
     #: The declaration that defined this device
-    declaration = Typed(extensions.DeviceDriver)
+    declaration = Typed(extensions.DeviceDriver).tag(config=True)
 
     #: Protocols supported by this device (ex the HPGLProtocol)
     protocols = List(extensions.DeviceProtocol)
@@ -231,13 +247,12 @@ class Device(Model):
         
         """
         d = self.declaration
+        area = AreaBase()
         w = parse_unit(d.width)
         if d.length:
             h = parse_unit(d.length)
         else:
             h = 900000
-
-        area = AreaBase()
         area.size = [w, h]
         return area
 
@@ -252,6 +267,14 @@ class Device(Model):
             yield
         finally:
             self.busy = False
+
+    @defer.inlineCallbacks
+    def test(self):
+        """ Execute a test job on the device. This creates
+        and submits new job that is simply a small square. 
+        
+        """
+        raise NotImplementedError
 
     def init(self, job):
         """ Initialize the job 
@@ -287,6 +310,11 @@ class Device(Model):
         """
         return self.connection.connect()
 
+    def move(self, position, absolute=False):
+
+        #: Update the UI
+        self.position = position
+
     def disconnect(self):
         """ Disconnect from the device. By default this delegates handling
         to the active transport or connection handler. 
@@ -303,8 +331,8 @@ class Device(Model):
                 device.connect()
                 
                 model = device.init(job)
-                for p in model:
-                    device.move(*p)
+                for cmd in device.process(model):
+                    device.handle(cmd)
                 device.finish()
                 
                 device.disconnect()
@@ -339,121 +367,164 @@ class Device(Model):
             model = yield defer.maybeDeferred(self.init, job)
 
             self.status = "Processing job"
-            x, y, z = self.position  # get the initial state
-            _x, _y = x, y
 
-            #speed = self.device.speed # Units/second
-            # device.speed is in CM/s
-            # d is in PX so...
-            # speed = distance/seconds
-            # So distance/speed = seconds to wait
+            #: Local references are faster
+            info = job.info
+            connection = self.connection
 
-            #: Distance between each command in user units
-            #: this is effectively the resolution the software supplies
-            step_size = self.step_size
-
-            #: Time to wait between each step so we don't get
-            #: way ahead of the cutter and fill up it's buffer
-            step_time = self.step_time
-
-
-            #: Total length
-            total_length = float(job.model.length())
-            #: How far we went already
+            #: For tracking progress
+            total_length = float(model.length())
             total_moved = 0
 
-            #: Previous point
-            _p = QtCore.QPointF(0, 0)
+            #: For point in the path
+            for (d, cmd, args, kwargs) in self.process(model):
 
-            self.status = "Job length: {}".format(total_length)
+                #: Check if we paused
+                if info.paused:
+                    self.status = "Job paused"
+                    #: Sleep until resumed, cancelled, or the
+                    #: connection drops
+                    while (info.paused and not info.cancelled
+                           and connection.connected):
+                        yield async_sleep(300)  # ms
 
-            update = 0
+                #: Check for cancel for non interpolated jobs
+                if info.cancelled:
+                    self.status = "Job cancelled"
+                    return
+                elif not connection.connected:
+                    self.status = "Connection lost"
+                    return
 
-            #: For each path
-            for path in model.toSubpathPolygons():
+                #: If you want to let the device handle more complex
+                #: commands such as curves do it in process and handle
+                yield defer.maybeDeferred(cmd, *args, **kwargs)
+                total_moved += d
 
-                #: And then each point within the path
-                #: this is a polygon
-                for i, p in enumerate(path):
-
-                    #: TODO: If the device does not support streaming
-                    #: the path interpolation should be skipped entirely
-
-                    #: Make a subpath
-                    subpath = QtGui.QPainterPath()
-                    subpath.moveTo(_p)
-                    subpath.lineTo(p)
-
-                    #: Head state
-                    z = self.PEN_UP if i == 0 else self.PEN_DOWN # 0 move, 1 cut
-
-                    #: Where we are within the subpath
-                    d = 0
-
-                    #: Total length
-                    l = subpath.length()
-
-                    #: Interpolate path in steps of dl and ensure we get _p and p (t=0 and t=1)
-                    #: This allows us to cancel mid point
-
-                    while d <= l:  # and self.isVisible():
-                        if job.info.cancelled:
-                            self.status = "Job cancelled"
-                            return
-                        if job.info.paused:
-                            self.status = "Job paused"
-                            yield async_sleep(1000)  # ms
-                            continue  # Keep waiting...
-                        if not self.connection.connected:
-                            self.status = "Connection lost"
-                            return
-
-                        #: Now find the point at the given step size
-                        #: the first point d=0 so t=0, the last point d=l so t=1
-                        sp = subpath.pointAtPercent(subpath.percentAtLength(d))
-                        #if d == l:
-                        #    break  #: Um don't we want to send the last point??
-
-                        #: -y because Qt's axis is from top to bottom not bottom to top
-                        x, y = sp.x(), -sp.y()
-                        yield defer.maybeDeferred(self.move, x, y, z)
-
-                        #: RPI is SLOOWWW
-                        update += 1
-                        if update > 1000:
-                            update = 0
-                            self.position = [x, y, z]
-
-                            #: Set the job progress based on how far we've gone
-                            job.info.progress = int(max(0,min(100, 100*total_moved/total_length)))
-
-                        #: Since sending is way faster than cutting
-                        #: we must delay (without blocking the UI) before
-                        #: sending the next command or the device's buffer
-                        #: quickly gets filled and crappy china piece cutters
-                        #: get all jacked up
-                        #if step_time:
-                        yield async_sleep(0.0000001)
-
-                        #: When we reached the end
-                        if d == l:
-                            #: We reached the end
-                            break
-
-                        #: Now set d to the next point by step_size
-                        #: if the end of the path is less than the step size
-                        #: use the minimum of the two
-                        dl = min(l-d, step_size)
-                        total_moved += dl
-                        d += dl
-
-                    #: Update the last point
-                    _p = p
+                #: TODO: Check if we need to update the ui
+                #: Set the job progress based on how far we've gone
+                info.progress = int(
+                    max(0, min(100, 100*total_moved/total_length)))
 
         #: We're done, send any finalization commands
         yield defer.maybeDeferred(self.finish)
         #: Disconnect from the device
         yield defer.maybeDeferred(self.disconnect)
+
+    def process(self, model):
+        """  Process the path model of a job and return each command
+        within the job.
+        
+        Parameters
+        ----------
+            model: QPainterPath
+                The path to process
+        
+        Returns
+        -------
+            generator: A list or generator object that yields each command
+             to invoke on the device and the distance moved. In the format
+             (distance, cmd, args, kwargs)
+        
+        """
+        config = self.config
+        # speed = distance/seconds
+        # So distance/speed = seconds to wait
+        step_size = config.step_size
+        step_time = config.step_time
+        absolute = config.absolute
+
+        #: Previous point
+        _p = QtCore.QPointF(0, 0)
+
+        update = 0
+
+        for path in model.toSubpathPolygons():
+
+            #: And then each point within the path
+            #: this is a polygon
+            for i, p in enumerate(path):
+
+                #: Head state
+                # 0 move, 1 cut
+                z = 0 if i == 0 else 1
+
+                #: Make a subpath
+                subpath = QtGui.QPainterPath()
+                subpath.moveTo(_p)
+                subpath.lineTo(p)
+
+                #: Update the last point
+                _p = p
+
+                #: Total length
+                l = subpath.length()
+
+                #: TODO: If the device does not support streaming
+                #: the path interpolation should be skipped entirely
+                if not config.interpolate:
+                    x, y = p.x(), -p.y()
+                    yield (l, self.move, (x, y, z), dict(absolute=absolute))
+                    continue
+
+                #: Where we are within the subpath
+                d = 0
+
+                #: Interpolate path in steps of dl and ensure we get
+                #: _p and p (t=0 and t=1)
+                #: This allows us to cancel mid point
+                while d <= l:
+
+                    #: Now find the point at the given step size
+                    #: the first point d=0 so t=0, the last point d=l so t=1
+                    sp = subpath.pointAtPercent(subpath.percentAtLength(d))
+                    #if d == l:
+                    #    break  #: Um don't we want to send the last point??
+
+                    #: -y because Qt's axis is from top to bottom not bottom
+                    #: to top
+                    x, y = sp.x(), -sp.y()
+                    yield (self.move, x, y, z)
+
+                    #: RPI is SLOOWWW
+                    update += 1
+                    if update > 1000:
+                        update = 0
+                        self.position = [x, y, z]
+
+
+                    #: Since sending is way faster than cutting
+                    #: we must delay (without blocking the UI) before
+                    #: sending the next command or the device's buffer
+                    #: quickly gets filled and crappy china piece cutters
+                    #: get all jacked up
+                    #if step_time:
+                    #yield async_sleep(0.0000001)
+
+                    #: When we reached the end
+                    if d == l:
+                        #: We reached the end
+                        break
+
+                    #: Now set d to the next point by step_size
+                    #: if the end of the path is less than the step size
+                    #: use the minimum of the two
+                    dl = min(l-d, step_size)
+                    d += dl
+
+
+
+    # @defer.inlineCallbacks
+    # def handle(self, cmd, *args, **kwargs):
+    #     """ Handle a command from the model. By default this just
+    #
+    #     Parameters
+    #     ----------
+    #     commmand: Tuple of Command to handle such as a
+    #
+    #     """
+    #     yield defer.maybeDeferred(cmd, *args, **kwargs)
+
 
     def _observe_status(self, change):
         """ Whenever the status changes, log it """
