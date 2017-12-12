@@ -7,7 +7,7 @@ Thanks to Lex Wernars
 @author: jrm
 @author: lwernars
 """
-from atom.api import Enum
+from atom.api import Enum, Instance
 from inkcut.device.plugin import DeviceProtocol, Model
 
 
@@ -17,6 +17,9 @@ class DMPLConfig(Model):
 
 
 class DMPLProtocol(DeviceProtocol):
+
+    #: Different modes
+    config = Instance(DMPLConfig, ()).tag(config=True)
 
     def connection_made(self):
         v = self.config.mode

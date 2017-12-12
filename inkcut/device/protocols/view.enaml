@@ -19,7 +19,7 @@ enamldef DMPLConfigView(Container):
         text = "Mode"
     ObjectCombo:
         items  = list(model.get_member('mode').items)
-        selected := model.version
+        selected := model.mode
 
 
 enamldef CAMMConfigView(Container):
@@ -27,5 +27,5 @@ enamldef CAMMConfigView(Container):
     Label:
         text = "Mode"
     ObjectCombo:
-        items  = list(model.get_member('version').items)
-        selected := model.version
+        items  = list(model.get_member('mode').items)
+        selected := model.mode

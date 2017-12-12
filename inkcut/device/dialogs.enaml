@@ -30,10 +30,10 @@ enamldef DeviceDialog(Dialog): dialog:
     title = 'Device Setup'
     initial_size = (640, 320)
     attr plugin
-    attr device: Device = plugin.device
-    attr driver << device.declaration if device else None
-    attr connection << device.connection if device else None
-    attr protocol << connection.protocol if connection else None
+    attr device: Device << plugin.device
+    attr driver << device.declaration
+    attr connection << device.connection
+    attr protocol << connection.protocol
     TaskDialogStyleSheet:
             pass
     TaskDialogBody:
@@ -55,7 +55,7 @@ enamldef DeviceDialog(Dialog): dialog:
                             ObjectCombo:
                                 items << plugin.drivers
                                 to_string = lambda d: d.id
-                                selected << driver
+                                selected << [d for d in plugin.drivers if d.id==driver.id][0]
                                 selected ::
                                     dialog.device = plugin.get_device_from_driver(change['value'])
                             Label:
@@ -101,10 +101,14 @@ enamldef DeviceDialog(Dialog): dialog:
                             Label:
                                 text = "Type"
                             ObjectCombo:
-                                items << device.transports if device else []
+
+                                items << [t for t in plugin.transports
+                                            if t.id in device.declaration.connections]
                                 to_string = lambda t: t.name
-                                selected << (connection.declaration
-                                             if connection  else None)
+                                #selected << (connection.declaration
+                                #             if connection  else None)
+                                selected << [t for t in plugin.transports
+                                             if t.id==connection.declaration.id][0]
                                 selected ::
                                     declaration = change['value']
                                     transport = declaration.factory()
@@ -134,10 +138,13 @@ enamldef DeviceDialog(Dialog): dialog:
                             Label:
                                 text = "Language"
                             ObjectCombo:
-                                items << device.protocols if device else []
+                                items << [p for p in plugin.protocols
+                                            if p.id in device.declaration.protocols]# if device else []
                                 to_string = lambda t: t.name
-                                selected << (protocol.declaration
-                                             if protocol else None)
+                                #selected << (protocol.declaration
+                                #             if protocol else None)
+                                selected << [p for p in plugin.protocols
+                                             if p.id==protocol.declaration.id][0]
                                 selected ::
                                     declaration = change['value']
                                     protocol = declaration.factory()
@@ -149,9 +156,8 @@ enamldef DeviceDialog(Dialog): dialog:
                             model << protocol.config if protocol else Model()
                             typemap << {
                                 type(protocol.config): protocol.declaration.config_view(),
-                                Model: ConfigView, DeviceConfig: DeviceConfigView
-                            } if protocol else {Model: ConfigView,
-                                                DeviceConfig: DeviceConfigView}
+                                Model: ConfigView
+                            } if protocol else {Model: ConfigView}
                     #MappedView:
                     #    model << device.connection.protocol.config
             # Label:
