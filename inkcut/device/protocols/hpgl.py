@@ -13,7 +13,6 @@ class HPGLProtocol(DeviceProtocol):
     scale = Float(1021/90.0)
 
     def connection_made(self):
-        log.debug("hpgl.connection_made")
         self.write("IN;")
 
     # def init(self, job):
@@ -29,9 +28,6 @@ class HPGLProtocol(DeviceProtocol):
         else:
             self.write("PR%i,%i;" % (x, y))
 
-    def data_received(self, data):
-        pass
-
     def set_force(self, f):
         self.write("FS%i; " % f)
         
@@ -41,8 +37,3 @@ class HPGLProtocol(DeviceProtocol):
     def set_pen(self, p):
         self.write("SP%i;" % p)
 
-    def finish(self):
-        self.write("PU0,0;")
-
-    def connection_lost(self):
-        pass

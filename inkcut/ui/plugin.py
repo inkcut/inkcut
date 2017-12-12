@@ -96,7 +96,9 @@ class InkcutPlugin(Plugin):
                 #: Create the item
                 DockItem = declaration.factory()
                 item = DockItem(
-                    plugin=workbench.get_plugin(declaration.plugin_id))
+                    plugin=workbench.get_plugin(declaration.plugin_id),
+                    closable=False
+                )
 
                 #: Add to our layout
                 layout[declaration.layout].append(item.name)

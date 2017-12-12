@@ -4,6 +4,7 @@ Created on Jul 25, 2015
 
 @author: jrm
 """
+import enaml
 from enaml.workbench.api import Extension
 from enaml.workbench.plugin_manifest import PluginManifest
 from inkcut.device.extensions import DEVICE_PROTOCOL_POINT, DeviceProtocol
@@ -22,6 +23,12 @@ def hpgl_factory():
 def dmpl_factory():
     from .dmpl import DMPLProtocol
     return DMPLProtocol()
+
+
+def dmpl_config_view():
+    with enaml.imports():
+        from .view import DMPLConfigView
+    return DMPLConfigView
 
 
 def cammgl1_factory():
@@ -66,6 +73,7 @@ enamldef ProtocolManifest(PluginManifest):
             id = 'dmpl'
             name = 'DMPL'
             factory = dmpl_factory
+            config_view = dmpl_config_view
 
         DeviceProtocol:
             id = 'camm-gl1'

@@ -16,7 +16,7 @@ enamlx.install()
 
 import enaml
 from atom.api import Unicode
-from enaml.qt import QtGui
+from enaml.qt import QtWidgets
 from enaml.workbench.ui.api import UIWorkbench
 
 
@@ -55,35 +55,35 @@ class InkcutWorkbench(UIWorkbench):
         """ Shortcut to display a critical popup dialog.
         
         """
-        return QtGui.QMessageBox.critical(self.window, "{0} - {1}".format(
+        return QtWidgets.QMessageBox.critical(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
     def message_warning(self, title, message, *args, **kwargs):
         """ Shortcut to display a warning popup dialog.
         
         """
-        return QtGui.QMessageBox.warning(self.window, "{0} - {1}".format(
+        return QtWidgets.QMessageBox.warning(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
     def message_information(self, title, message, *args, **kwargs):
         """ Shortcut to display an info popup dialog.
         
         """
-        return QtGui.QMessageBox.information(self.window, "{0} - {1}".format(
+        return QtWidgets.QMessageBox.information(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
     def message_about(self, title, message, *args, **kwargs):
         """ Shortcut to display an about popup dialog.
         
         """
-        return QtGui.QMessageBox.about(self.window, "{0} - {1}".format(
+        return QtWidgets.QMessageBox.about(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
     def message_question(self, title, message, *args, **kwargs):
         """ Shortcut to display a question popup dialog.
         
         """
-        return QtGui.QMessageBox.question(self.window, "{0} - {1}".format(
+        return QtWidgets.QMessageBox.question(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
     # -------------------------------------------------------------------------

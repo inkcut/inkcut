@@ -14,7 +14,7 @@ import os
 from inkcut.core.api import DockItem
 from enaml.widgets.api import (
     Container, Label, ImageView, SpinBox, CheckBox, PushButton, RadioButton,
-    Form, ComboBox, Menu, Action, ProgressBar
+    Form, ComboBox, Menu, Action
 )
 from enaml.core.api import Looper
 from enaml.layout.api import hbox,vbox,spacer,align

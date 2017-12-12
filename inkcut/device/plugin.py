@@ -136,7 +136,7 @@ class DeviceProtocol(Model):
 
 
         """
-        raise NotImplementedError
+        log.debug("data received: {}".format(data))
 
     def finish(self):
         """ Called when processing all of the paths of the job are complete.
@@ -144,14 +144,14 @@ class DeviceProtocol(Model):
         Use this to send any finalization commands.
         
         """
-        raise NotImplementedError
+        pass
 
     def connection_lost(self):
         """ Called the connection to the device is dropped or
         failed to connect.  No more data can be written when this is called.
         
         """
-        raise NotImplementedError
+        pass
 
 
 class DeviceConfig(Model):
@@ -775,16 +775,6 @@ class DevicePlugin(Plugin):
                      skip_autorange=(False, [area.size[0], 0]))
             )
 
-        #: The model is only set when a document is open and has no errors
-        if job and job.model:
-            view_items.extend([
-                dict(path=job.move_path, pen=plot.pen_up),
-                dict(path=job.cut_path, pen=plot.pen_down)
-            ])
-            #: TODO: This
-            #if self.show_offset_path:
-            #    view_items.append(PainterPathPlotItem(
-            # self.job.offset_path,pen=self.pen_offset))
         if job and job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([

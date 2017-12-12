@@ -33,6 +33,7 @@ enamldef DeviceConfigView(Container):
         DoubleSpinBox:
             minimum = 0
             value:= model.step_time
+            suffix = " ms"
 
         Label:
             text = "Step size"
@@ -47,30 +48,6 @@ enamldef DeviceConfigView(Container):
             text = "Interpolate paths"
         CheckBox:
             checked := model.interpolate
-
-# #: Time between each path command
-# #: Time to wait between each step so we don't get
-# #: way ahead of the cutter and fill up it's buffer
-# step_time = Float(strict=False).tag(config=True)
-#
-# #: Distance between each command in user units
-# #: this is effectively the resolution the software supplies
-# step_size = Float(parse_unit('1mm'), strict=False).tag(config=True)
-#
-# #: Interpolate paths breaking them into small sections that
-# #: can be sent. This allows pausing mid plot as many devices do not have
-# #: a cancel command.
-# interpolate = Bool(True).tag(config=True)
-#
-# #: How often the position will be updated in ms. Low power devices should
-# #: set this to a high number like 2000 or 3000
-# sample_rate = Int(100).tag(config=True)
-#
-# #: In cm/s
-# speed = Float(4, strict=False)
-#
-# #: Use absolute coordinates
-# absolute = Bool().tag(config=True)
 
 
 enamldef DeviceProgressDockItem(DockItem):
@@ -91,16 +68,16 @@ enamldef DeviceProgressDockItem(DockItem):
                 'left': to_unit(1, preview.units),
                 'bottom': to_unit(1, preview.units)
             }
-            Label: lbl:
-                text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(
-                    device.position[0],
-                    device.position[1],
-                    device.position[2] and 'down' or 'up')
         Container:
             constraints = [
                 hbox(prog, pb1,pb2),
                 align('v_center', prog, pb1,pb2),
             ]
+            # Label: lbl:
+            # text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(
+            #     device.position[0],
+            #     device.position[1],
+            #     device.position[2] and 'down' or 'up')
             ProgressBar: prog:
                 value << int(job.info.progress) if job else 0
                 text_visible = True

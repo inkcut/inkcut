@@ -68,6 +68,11 @@ class JobInfo(Model):
     progress = Range(0, 100, 0).tag(config=True)
     data = Unicode().tag(config=True)
 
+    def reset(self):
+        self.paused = False
+        self.cancelled = False
+        self.done = False
+
 
 class Job(Model):
     """ Create a plot depending on the properties set. Any property that is a 

@@ -2,18 +2,39 @@
 """
 Created on Jul 25, 2015
 
+Thanks to Lex Wernars
+
 @author: jrm
+@author: lwernars
 """
-from inkcut.device.plugin import DeviceProtocol
+from atom.api import Enum
+from inkcut.device.plugin import DeviceProtocol, Model
+
+
+class DMPLConfig(Model):
+    #: Version number
+    mode = Enum(1, 2, 3, 4, 6).tag(config=True)
 
 
 class DMPLProtocol(DeviceProtocol):
 
     def connection_made(self):
-        self.write(" ;:H A L0 ")
-    
+        v = self.config.mode
+        if v == 1:
+            self.write(";:HAEC1")
+        elif v == 2:
+            self.write(" ;:ECN A L0 ")
+        elif v in [3, 4]:
+            self.write(" ;:H A L0 ")
+        elif v == 6:
+            self.write("IN;PA;")
+
     def move(self, x, y, z):
-        self.write("{z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))
+        v = self.config.mode
+        if v in [1, 2, 3, 4]:
+            self.write(" {z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))
+        else:
+            self.write("{z}{x},{y};".format(x=x, y=y, z=z and "PD" or "PU"))
         
     def set_pen(self, p):
         self.write("EC{p} ".format(p=p))
