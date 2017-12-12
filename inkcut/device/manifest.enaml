@@ -12,6 +12,7 @@ from inkcut.core.utils import menu_icon
 from .extensions import (
     DEVICE_DRIVER_POINT, DEVICE_PROTOCOL_POINT, DEVICE_TRANSPORT_POINT
 )
+from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
 
 def device_setup(event):
     with enaml.imports():
@@ -26,23 +27,34 @@ def job_start(event):
     """ Pass the job to the current device for it to cut. Watch
     the process in the task dialog.
     """
-    try:
-        from inkcut.ui.plugin import LivePlot
+    workbench = event.workbench
+    job = workbench.get_plugin('inkcut.job').job
+    if not job.document:
+        return
 
-        plugin = event.workbench.get_plugin('inkcut.ui')
-        if not plugin.job.document:
-            raise RuntimeError("No document is open!")
-            return
+    device = workbench.get_plugin('inkcut.device').device
+    if not device:
+        return
 
-        with enaml.imports():
-            from inkcut.ui.task_dialog import JobTaskDialog
+    #: TODO:
+    device.submit(job)
+    #try:
+        #from inkcut.ui.plugin import LivePlot
+        #with enaml.imports():
+        #    from inkcut.ui.task_dialog import JobTaskDialog
 
-        model = LivePlot(device=plugin.device, job=plugin.job)
-        ui = event.workbench.get_plugin('enaml.workbench.ui')
-        JobTaskDialog(ui.window,model=model).exec_()
-    except:
-        event.workbench.show_warning("Error sending to device",
-                                     traceback.format_exc())
+        #model = LivePlot(device=plugin.device, job=plugin.job)
+        #ui = event.workbench.get_plugin('enaml.workbench.ui')
+        #JobTaskDialog(ui.window,model=model).exec_()
+    #except:
+    #    event.workbench.show_warning("Error sending to device",
+    #                                 traceback.format_exc())
+
+def device_progress_dock_item_factory():
+    with enaml.imports():
+        from .view import DeviceProgressDockItem
+    return DeviceProgressDockItem
+
 
 
 def plugin_factory():
@@ -83,12 +95,6 @@ enamldef DeviceManifest(PluginManifest):
         """
 
     Extension:
-        id = 'autostart'
-        point = 'enaml.workbench.ui.autostart'
-        Autostart:
-            plugin_id = 'inkcut.device'
-
-    Extension:
         id = 'commands'
         point = 'enaml.workbench.core.commands'
         Command:
@@ -97,6 +103,14 @@ enamldef DeviceManifest(PluginManifest):
         Command:
             id = 'inkcut.device.start'
             handler = job_start
+
+    Extension:
+        id = 'items'
+        point = DOCK_ITEM_POINT
+        DockItem:
+            plugin_id = 'inkcut.device'
+            factory = device_progress_dock_item_factory
+            layout = 'bottom'
 
     Extension:
         id = 'actions'

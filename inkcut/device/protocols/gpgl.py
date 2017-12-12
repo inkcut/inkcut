@@ -19,3 +19,6 @@ class GPGLProtocol(DeviceProtocol):
         
     def set_force(self, f):
         self.write("*%i" % f)
+
+    def connection_lost(self):
+        pass

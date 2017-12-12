@@ -13,11 +13,14 @@ Created on Jul 12, 2015
 import serial
 from serial.tools.list_ports import comports
 from atom.api import List, Instance, Enum, Bool, Int, Unicode
-from inkcut.core.api import Plugin, Model
+from inkcut.core.api import Plugin, Model, log
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, connectionDone
 from twisted.internet.serialport import SerialPort
 from inkcut.device.plugin import DeviceTransport
+
+#: Reverse key values
+SERIAL_PARITIES = {v: k for k, v in serial.PARITY_NAMES.items()}
 
 
 class SerialConfig(Model):
@@ -64,14 +67,16 @@ class InkcutProtocol(Protocol):
 
     def connectionMade(self):
         self.parent.connected = True
+        self.parent.connection = self.transport
         self.delegate.connection_made()
 
     def dataReceived(self, data):
+        log.debug("<- {} | {}".format(self.parent.config.port, data))
         self.delegate.data_received(data)
 
     def connectionLost(self, reason=connectionDone):
-        self.delegate.connection_lost()
         self.parent.connected = False
+        self.delegate.connection_lost()
 
 
 class SerialTransport(DeviceTransport):
@@ -82,25 +87,36 @@ class SerialTransport(DeviceTransport):
     #: Connection port
     connection = Instance(SerialPort)
 
+    #: Wrapper
+    _protocol = Instance(InkcutProtocol)
+
     def connect(self):
         config = self.config
 
+        #: Save a reference
+        self.protocol.transport = self
+
+        #: Make the wrapper
+        self._protocol = InkcutProtocol(self, self.protocol)
+
         self.connection = SerialPort(
-            InkcutProtocol(self, self.protocol),
+            self._protocol,
             config.port,
             reactor,
             baudrate=config.baudrate,
             bytesize=config.bytesize,
-            parity=serial.PARITY_NAMES[config.parity],
+            parity=SERIAL_PARITIES[config.parity],
             stopbits=config.stopbits,
             xonxoff=config.xonxoff,
             rtscts=config.rtscts
         )
+        print(self.connection)
 
     def write(self, data):
         if not self.connection:
             raise IOError("Port is not opened")
-        self.connection.write(data)
+        log.debug("-> {} | {}".format(self.config.port, data))
+        self._protocol.transport.write(data)
 
     def disconnect(self):
         if self.connection:
@@ -109,6 +125,7 @@ class SerialTransport(DeviceTransport):
 
     def __repr__(self):
         return self.config.port
+
 
 class SerialPlugin(Plugin):
     """ Plugin for handling serial port communication

@@ -15,13 +15,16 @@ from inkcut.core.utils import load_icon
 from enaml.widgets.api import Container, Menu, Action
 from .plot_view import PlotView
 
+
 enamldef PreviewDockItem(DockItem):
     #: A dock item for
     title = "Preview"
+    name = 'preview-item'
     closable = False
-    attr model #: PreviewPlugin
-    attr plot << model.plot
-    icon = load_icon('picture')
+    stretch = 3
+    attr plugin #: PreviewPlugin
+    attr preview << plugin.preview
+    icon = load_icon('page_white_swoosh')
     Container:
         padding = 0
         PlotView: plot_view:
@@ -31,9 +34,9 @@ enamldef PreviewDockItem(DockItem):
             the available area for use. The blue lines is the movement path.
             """).strip()
             minimum_size = (360,None)
-            data := plot.plot
-            axis_scales << {'left':to_unit(1, plot.units),
-                            'bottom':to_unit(1, plot.units)}
+            data := preview.plot
+            axis_scales << {'left':to_unit(1, preview.units),
+                            'bottom':to_unit(1, preview.units)}
             Menu:
                 context_menu = True
                 Action:

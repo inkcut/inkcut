@@ -31,6 +31,12 @@ def default_device_factory():
     return Device()
 
 
+def default_device_config_view_factory():
+    with enaml.imports():
+        from .view import DeviceConfigView
+    return DeviceConfigView
+
+
 def default_config_view_factory():
     with enaml.imports():
         from .view import ConfigView
@@ -70,7 +76,7 @@ class DeviceDriver(Declarative):
     connections = d_(List(Unicode()))
 
     #: Config view for editing the config of this device
-    config_view = d_(Callable(default=default_config_view_factory))
+    config_view = d_(Callable(default=default_device_config_view_factory))
 
 
 class DeviceProtocol(Declarative):

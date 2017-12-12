@@ -23,3 +23,6 @@ class DMPLProtocol(DeviceProtocol):
         
     def set_force(self, f):
         self.write("BP{f} ".format(f=f))
+
+    def connection_lost(self):
+        pass

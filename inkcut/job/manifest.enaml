@@ -9,13 +9,16 @@ Created on Dec 6, 2015
 
 @author: jrm
 """
+import enaml
 from os.path import dirname, expanduser
-from inkcut.core.utils import menu_icon
 from enaml.widgets.api import FileDialogEx
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
 from inkcut.job.models import JobError
+from inkcut.core.utils import menu_icon
+from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
+
 
 def open_document(event):
     workbench = event.workbench
@@ -56,9 +59,34 @@ def media_setup(event):
     if dlg.exec_():
         plugin.available_media = dlg.available_media
 
+
 def plugin_factory():
     from .plugin import JobPlugin
     return JobPlugin()
+
+
+def graphic_dock_item_factory():
+    with enaml.imports():
+        from .view import GraphicDockItem
+    return GraphicDockItem
+
+
+def material_dock_item_factory():
+    with enaml.imports():
+        from .view import MaterialDockItem
+    return MaterialDockItem
+
+
+def weedlines_dock_item_factory():
+    with enaml.imports():
+        from .view import WeedlinesDockItem
+    return WeedlinesDockItem
+
+
+def job_history_dock_item_factory():
+    with enaml.imports():
+        from .view import JobHistoryDockItem
+    return JobHistoryDockItem
 
 
 enamldef JobManifest(PluginManifest):
@@ -77,6 +105,8 @@ enamldef JobManifest(PluginManifest):
         point = 'enaml.workbench.ui.autostart'
         Autostart:
             plugin_id = 'inkcut.job'
+        Autostart:
+            plugin_id = 'inkcut.device'
 
     Extension:
         id = 'commands'
@@ -90,6 +120,26 @@ enamldef JobManifest(PluginManifest):
         Command:
             id = 'inkcut.job.material_setup'
             handler = media_setup
+
+    Extension:
+        id = 'items'
+        point = DOCK_ITEM_POINT
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = graphic_dock_item_factory
+            layout = 'main'
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = material_dock_item_factory
+            layout = 'left'
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = weedlines_dock_item_factory
+            layout = 'left'
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = job_history_dock_item_factory
+            layout = 'bottom'
 
     Extension:
         id = 'actions'

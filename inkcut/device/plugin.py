@@ -111,7 +111,7 @@ class DeviceProtocol(Model):
         
         """
 
-    def move(self, x, y, z):
+    def move(self, x, y, z, absolute=True):
         """ Called when the device position is updated.
         
         """
@@ -162,11 +162,11 @@ class DeviceConfig(Model):
     #: Time between each path command
     #: Time to wait between each step so we don't get
     #: way ahead of the cutter and fill up it's buffer
-    step_time = Float().tag(config=True)
+    step_time = Float(strict=False).tag(config=True)
 
     #: Distance between each command in user units
     #: this is effectively the resolution the software supplies
-    step_size = Float().tag(config=True)
+    step_size = Float(parse_unit('1mm'), strict=False).tag(config=True)
 
     #: Interpolate paths breaking them into small sections that
     #: can be sent. This allows pausing mid plot as many devices do not have
@@ -177,8 +177,15 @@ class DeviceConfig(Model):
     #: set this to a high number like 2000 or 3000
     sample_rate = Int(100).tag(config=True)
 
+    #: In cm/s
+    speed = Float(4, strict=False)
+
     #: Use absolute coordinates
     absolute = Bool().tag(config=True)
+
+    def _default_step_time(self):
+        return max(1, round(
+            1000* self.step_size/parse_unit('%scm' % self.speed)))
 
 
 class Device(Model):
@@ -310,10 +317,40 @@ class Device(Model):
         """
         return self.connection.connect()
 
-    def move(self, position, absolute=False):
+    def move(self, position, absolute=True):
+        """ Move to the given position. By default this delegates handling
+        to the active protocol.
+        
+        Parameters
+        ----------
+            position: List of coordinates to move to. 
+                Desired position to move or move to (if using absolute 
+                coordinates).
+            absolute: bool
+                Position is in absolute coordinates
+        
+        Returns
+        -------
+            result: Deferred or None
+                May return a deferred object that the process will wait for
+                completion before continuing.
+        
+        """
+        if absolute:
+            print(position)
+            self.position = position
+        else:
+            self.position = position
+            p = self.position
+            for i, d in enumerate(position):
+                p[i] += d
+            self.position = p
+        result = self.connection.protocol.move(*position, absolute=absolute)
+        if result:
+            return result
 
-        #: Update the UI
-        self.position = position
+        #: Wait for the device to catch up
+        return async_sleep(self.config.step_time)
 
     def disconnect(self):
         """ Disconnect from the device. By default this delegates handling
@@ -431,13 +468,12 @@ class Device(Model):
         # speed = distance/seconds
         # So distance/speed = seconds to wait
         step_size = config.step_size
+        if step_size <= 0:
+            raise ValueError("Cannot have a step size <= 0!")
         step_time = config.step_time
-        absolute = config.absolute
 
         #: Previous point
         _p = QtCore.QPointF(0, 0)
-
-        update = 0
 
         for path in model.toSubpathPolygons():
 
@@ -464,7 +500,7 @@ class Device(Model):
                 #: the path interpolation should be skipped entirely
                 if not config.interpolate:
                     x, y = p.x(), -p.y()
-                    yield (l, self.move, (x, y, z), dict(absolute=absolute))
+                    yield (l, self.move, ([x, y, z],), {})
                     continue
 
                 #: Where we are within the subpath
@@ -477,20 +513,21 @@ class Device(Model):
 
                     #: Now find the point at the given step size
                     #: the first point d=0 so t=0, the last point d=l so t=1
-                    sp = subpath.pointAtPercent(subpath.percentAtLength(d))
+                    t = subpath.percentAtLength(d)
+                    sp = subpath.pointAtPercent(t)
                     #if d == l:
                     #    break  #: Um don't we want to send the last point??
 
                     #: -y because Qt's axis is from top to bottom not bottom
                     #: to top
                     x, y = sp.x(), -sp.y()
-                    yield (self.move, x, y, z)
+                    yield (l*t, self.move, ([x, y, z],), {})
 
                     #: RPI is SLOOWWW
-                    update += 1
-                    if update > 1000:
-                        update = 0
-                        self.position = [x, y, z]
+                    #update += 1
+                    #if update > 1000:
+                    #    update = 0
+                    #    self.position = [x, y, z]
 
 
                     #: Since sending is way faster than cutting
@@ -511,7 +548,6 @@ class Device(Model):
                     #: use the minimum of the two
                     dl = min(l-d, step_size)
                     d += dl
-
 
 
     # @defer.inlineCallbacks
@@ -569,11 +605,11 @@ class DevicePlugin(Plugin):
             w.register(DriversManifest())
             w.register(PiManifest())
 
-        #: Restore state after plugins are loaded
-        super(DevicePlugin, self).start()
-
         #: This refreshes everything else
         self._refresh_extensions()
+
+        #: Restore state after plugins are loaded
+        super(DevicePlugin, self).start()
 
     # def _default_devices(self):
     #     """ Load the devices supported """
@@ -712,3 +748,59 @@ class DevicePlugin(Plugin):
 
         #: Update
         self.drivers = drivers
+
+    # -------------------------------------------------------------------------
+    # Live progress API
+    # -------------------------------------------------------------------------
+    @observe('device.job')
+    def _reset_preview(self, change):
+        """ Redraw the preview on the screen 
+        
+        """
+        log.info(change)
+        view_items = []
+
+        #: Transform used by the view
+        preview_plugin = self.workbench.get_plugin('inkcut.preview')
+        plot = preview_plugin.live_preview
+        t = preview_plugin.transform
+
+        #: Draw the device
+        device = self.device
+        job = device.job
+        if device and device.area:
+            area = device.area
+            view_items.append(
+                dict(path=device.area.path*t, pen=plot.pen_device,
+                     skip_autorange=(False, [area.size[0], 0]))
+            )
+
+        #: The model is only set when a document is open and has no errors
+        if job and job.model:
+            view_items.extend([
+                dict(path=job.move_path, pen=plot.pen_up),
+                dict(path=job.cut_path, pen=plot.pen_down)
+            ])
+            #: TODO: This
+            #if self.show_offset_path:
+            #    view_items.append(PainterPathPlotItem(
+            # self.job.offset_path,pen=self.pen_offset))
+        if job and job.material:
+            # Also observe any change to job.media and job.device
+            view_items.extend([
+                dict(path=job.material.path*t, pen=plot.pen_media,
+                     skip_autorange=(False, [0, job.size[1]])),
+                dict(path=job.material.padding_path*t,
+                     pen=plot.pen_media_padding, skip_autorange=True)
+            ])
+
+        #: Update the plot
+        preview_plugin.set_live_preview(*view_items)
+
+    @observe('device.position')
+    def _update_preview(self, change):
+        """ Watch the position of the device as it changes. """
+        if change['type'] == 'update' and self.device.job:
+            x, y, z = change['value']
+            preview_plugin = self.workbench.get_plugin('inkcut.preview')
+            preview_plugin.live_preview.update(change['value'])

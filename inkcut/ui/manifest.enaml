@@ -13,12 +13,12 @@ import os
 import sys
 import enaml
 from inkcut.core.utils import menu_icon
-from enaml.workbench.api import Extension, PluginManifest
+from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import (
     ActionItem, Branding, MenuItem, ItemGroup, Autostart
 )
-
+from .extensions import DOCK_ITEM_POINT
 
 def plugin_factory():
     from inkcut.ui.plugin import InkcutPlugin
@@ -111,9 +111,9 @@ enamldef UIManifest(PluginManifest):
             plugin_id = 'inkcut.ui'
 
 
-    #ExtensionPoint:
-    #    id = 'inkcut.ui.dock.items'
-    #    description = DOCK_ITEM_DESCRIPTION
+    ExtensionPoint:
+       id = DOCK_ITEM_POINT
+       description = "Add items to the dock!"#DOCK_ITEM_DESCRIPTION
 
     Extension:
         id = 'actions'

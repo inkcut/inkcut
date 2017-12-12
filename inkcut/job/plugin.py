@@ -48,9 +48,9 @@ class JobPlugin(Plugin):
 
         """
         w = self.workbench
-        with enaml.imports():
-            from inkcut.device.manifest import DeviceManifest
-            w.register(DeviceManifest())
+        # with enaml.imports():
+        #     from inkcut.device.manifest import DeviceManifest
+        #     w.register(DeviceManifest())
 
         #: Now load state
         super(JobPlugin, self).start()
@@ -122,7 +122,7 @@ class JobPlugin(Plugin):
         #: Transform used by the view
         preview_plugin = self.workbench.get_plugin('inkcut.preview')
         job = self.job
-        plot = preview_plugin.plot
+        plot = preview_plugin.preview
         t = preview_plugin.transform
 
         #: Draw the device

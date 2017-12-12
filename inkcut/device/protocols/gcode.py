@@ -23,3 +23,6 @@ class GCodeProtocol(DeviceProtocol):
         
     def set_pen(self, p):
         self.write("SP%i;"%p)
+
+    def connection_lost(self):
+        pass

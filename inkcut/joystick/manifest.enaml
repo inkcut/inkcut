@@ -1,12 +1,22 @@
-import traceback
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2017
+
+@author: jrm
+"""
+import enaml
 from enaml.workbench.api import Extension, PluginManifest
-from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
-from enaml.workbench.core.command import Command
-from inkcut.core.utils import menu_icon, load_icon
+from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
 
 def plugin_factory():
     from .plugin import JoystickPlugin
     return JoystickPlugin()
+
 
 def start_joystick(event):
     import enaml
@@ -24,6 +34,12 @@ def start_joystick(event):
             plugin.stop()
         
 
+def dock_item_factory():
+    with enaml.imports():
+        from .view import JoystickDockItem
+    return JoystickDockItem
+
+
 enamldef JoystickManifest(PluginManifest):
     """ The manifest which is registered when the view is loaded.
 
@@ -32,6 +48,15 @@ enamldef JoystickManifest(PluginManifest):
     """
     id = 'inkcut.joystick'
     factory = plugin_factory
+
+    Extension:
+        id = 'items'
+        point = DOCK_ITEM_POINT
+        DockItem:
+            plugin_id = 'inkcut.joystick'
+            factory = dock_item_factory
+            layout = 'bottom'
+
     
     # Extension:
     #     id = 'commands'

@@ -10,8 +10,10 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import enaml
-from atom.api import List, Unicode
-from inkcut.core.api import Plugin, Model, DockItem, svg
+from atom.api import List, Unicode, Instance
+from inkcut.core.api import Plugin, DockItem, log
+from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
+from . import extensions
 
 
 class InkcutPlugin(Plugin):
@@ -20,24 +22,47 @@ class InkcutPlugin(Plugin):
 
     #: Dock items to add
     dock_items = List(DockItem)
+    dock_layout = Instance(AreaLayout)
 
     def start(self):
         """ Load all the plugins Inkcut is dependent on """
         w = self.workbench
         with enaml.imports():
             #: TODO autodiscover these
-            from inkcut.job.manifest import JobManifest
             from inkcut.preview.manifest import PreviewManifest
+            from inkcut.job.manifest import JobManifest
+            from inkcut.device.manifest import DeviceManifest
             from inkcut.joystick.manifest import JoystickManifest
             from inkcut.console.manifest import ConsoleManifest
-            w.register(JobManifest())
             w.register(PreviewManifest())
+            w.register(JobManifest())
+            w.register(DeviceManifest())
             w.register(JoystickManifest())
             w.register(ConsoleManifest())
 
+        self._refresh_dock_items()
+
         super(InkcutPlugin, self).start()
 
+    def _bind_observers(self):
+        """ Setup the observers for the plugin.
+        """
+        super(InkcutPlugin, self)._bind_observers()
+        workbench = self.workbench
+        point = workbench.get_extension_point(extensions.DOCK_ITEM_POINT)
+        point.observe('extensions', self._refresh_dock_items)
+
+    def _unbind_observers(self):
+        """ Remove the observers for the plugin.
+        """
+        super(InkcutPlugin, self)._unbind_observers()
+        workbench = self.workbench
+        point = workbench.get_extension_point(extensions.DOCK_ITEM_POINT)
+        point.unobserve('extensions', self._refresh_dock_items)
+
     def create_new_area(self):
+        """ Create the dock area 
+        """
         with enaml.imports():
             from .dock import DockView
         area = DockView(
@@ -45,3 +70,58 @@ class InkcutPlugin(Plugin):
             plugin=self
         )
         return area
+
+    def _refresh_dock_items(self, change=None):
+        """ Reload all DockItems registered by any Plugins 
+        
+        Any plugin can add to this list by providing a DockItem 
+        extension in their PluginManifest.
+        
+        """
+        workbench = self.workbench
+        point = workbench.get_extension_point(extensions.DOCK_ITEM_POINT)
+
+        #: Layout spec
+        layout = {
+            'main': [],
+            'left': [],
+            'right': [],
+            'bottom': [],
+            'top': []
+        }
+
+        dock_items = []
+        for extension in sorted(point.extensions, key=lambda ext: ext.rank):
+            for declaration in extension.get_children(extensions.DockItem):
+                #: Create the item
+                DockItem = declaration.factory()
+                item = DockItem(
+                    plugin=workbench.get_plugin(declaration.plugin_id))
+
+                #: Add to our layout
+                layout[declaration.layout].append(item.name)
+
+                #: Save it
+                dock_items.append(item)
+
+        #: Update items
+        log.debug("Updating dock items: {}".format(dock_items))
+        self.dock_items = dock_items
+        self._refresh_layout(layout)
+
+    def _refresh_layout(self, layout):
+        """ Create the layout for all the plugins
+        
+
+        """
+        items = layout.pop('main')
+        main = HSplitLayout(*items) if len(items) > 1 else items[0]
+
+        dockbars = [DockBarLayout(*items, position=side)
+                    for side, items in layout.items() if items]
+
+        #: Update layout
+        self.dock_layout = AreaLayout(
+            main,
+            dock_bars=dockbars
+        )

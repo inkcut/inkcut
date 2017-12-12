@@ -17,9 +17,12 @@ from .plot_view import PainterPathPlotItem
 QPen = QtGui.QPen
 
 
-class PlotBase(Model):
+class PreviewModel(Model):
     #: List of plot items to display
     plot = List()
+
+    #: Internal paths for drawing
+    paths = List(QtGui.QPainterPath)
 
     #: Colors
     pen_media = Instance(QPen)
@@ -52,11 +55,38 @@ class PlotBase(Model):
     def _default_pen_down(self):
         return pg.mkPen((128, 128, 128))
 
+    def init(self, view_items):
+        default_items = []
+        self.paths = [QtGui.QPainterPath(), QtGui.QPainterPath()]
+
+        default_items.append(PainterPathPlotItem(self.paths[0],
+                                              pen=self.pen_down))
+        default_items.append(PainterPathPlotItem(self.paths[1],
+                                              pen=self.pen_up))
+        self.plot = default_items+view_items
+
+    def update(self, position):
+        """ Watch the position of the device as it changes. """
+        if not self.paths:
+            return
+        x, y, z = position
+        if z:
+            self.paths[0].lineTo(x, -y)
+            self.paths[1].moveTo(x, -y)
+            self.plot[0].updateData(self.paths[0])
+        else:
+            self.paths[0].moveTo(x, -y)
+            self.paths[1].lineTo(x, -y)
+            self.plot[1].updateData(self.paths[1])
+
 
 class PreviewPlugin(Plugin):
 
     #: Set's the plot that is drawn in the preview
-    plot = Instance(PlotBase, ())
+    preview = Instance(PreviewModel, ())
+
+    #: Plot for showing live status
+    live_preview = Instance(PreviewModel, ())
 
     #: Transform applied to all view items
     transform = Instance(QtGui.QTransform)
@@ -81,4 +111,22 @@ class PreviewPlugin(Plugin):
             PainterPathPlotItem(kwargs.pop('path'), **kwargs)
             for kwargs in items
         ]
-        self.plot.plot = view_items
+        self.preview.plot = view_items
+
+    def set_live_preview(self, *items):
+        """ Set the items that will be displayed in the live plot preview.
+        After set, use live_preview.update(position) to update it.
+        
+        Parameters
+        ----------
+        items: list of kwargs
+            A list of kwargs to to pass to each plot item 
+
+        
+        """
+        view_items = [
+            PainterPathPlotItem(kwargs.pop('path'), **kwargs)
+            for kwargs in items
+        ]
+        self.live_preview.init(view_items)
+

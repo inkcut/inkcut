@@ -14,10 +14,16 @@ from inkcut.core.utils import menu_icon
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
+from inkcut.ui.extensions import DockItem, DOCK_ITEM_POINT
 
 def plugin_factory():
     from .plugin import PreviewPlugin
     return PreviewPlugin()
+
+def preview_factory():
+    with enaml.imports():
+        from .view import PreviewDockItem
+    return PreviewDockItem
 
 
 enamldef PreviewManifest(PluginManifest):
@@ -36,3 +42,11 @@ enamldef PreviewManifest(PluginManifest):
         point = 'enaml.workbench.ui.autostart'
         Autostart:
             plugin_id = 'inkcut.preview'
+
+    Extension:
+        id = 'items'
+        point = DOCK_ITEM_POINT
+        DockItem:
+            plugin_id = 'inkcut.preview'
+            factory = preview_factory
+            layout = 'main'

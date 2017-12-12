@@ -21,8 +21,8 @@ from enaml.widgets.api import (
     CheckBox, Container, Dialog, Field, Label, PushButton, Form, Notebook,
     Page, ObjectCombo
 )
-from .plugin import Device
-from .view import ConfigView
+from .plugin import Device, DeviceConfig
+from .view import ConfigView, DeviceConfigView
 from inkcut.core.api import Model
 
 
@@ -149,8 +149,9 @@ enamldef DeviceDialog(Dialog): dialog:
                             model << protocol.config if protocol else Model()
                             typemap << {
                                 type(protocol.config): protocol.declaration.config_view(),
-                                Model: ConfigView
-                            } if protocol else {Model: ConfigView}
+                                Model: ConfigView, DeviceConfig: DeviceConfigView
+                            } if protocol else {Model: ConfigView,
+                                                DeviceConfig: DeviceConfigView}
                     #MappedView:
                     #    model << device.connection.protocol.config
             # Label:
@@ -169,5 +170,10 @@ enamldef DeviceDialog(Dialog): dialog:
                 text = "OK"
                 enabled << dialog.device is not None
                 clicked ::
-                    plugin.device = dialog.device
+                    dev = dialog.device
+                    if not dev.connection:
+                        dev.connection = dev._default_connection()
+                    if not dev.connection.protocol:
+                        dev.connection.protocol = dev._default_protocol()
+                    plugin.device = dev
                     dialog.close()

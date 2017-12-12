@@ -53,6 +53,9 @@ class Model(Atom):
         
         """
         for key, value in state.items():
+            log.debug("Restoring state '{}.{} = {}'".format(
+                self, key, clip(value)
+            ))
             try:
                 setattr(self, key, value)
             except Exception as e:

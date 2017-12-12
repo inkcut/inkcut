@@ -1,4 +1,10 @@
 """
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
 Created on Jul 19, 2015
 
 @author: jrm
@@ -12,15 +18,19 @@ from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
 
 from enaml.widgets.spin_box import SpinBox
 from enamlx.widgets.api import KeyEvent
-from inkcut.preview.plot_view import PlotView
 from inkcut.core.api import DockItem, to_unit
 from inkcut.core.utils import load_icon
 
 enamldef JoystickDockItem(DockItem):
     title = 'Control'
-    attr model
-    attr device << model.device
+    name = 'joystick-item'
+    attr plugin
+    attr device << plugin.device
     icon = load_icon('controller')
+            # PlotView:
+            #     minimum_size = (540,320)
+            #     data := plugin.plot
+            #     axis_scales << {'left':to_unit(1, plugin.units),'bottom':to_unit(1, plugin.units)}
     Container:
         constraints = [
             hbox(
@@ -28,6 +38,8 @@ enamldef JoystickDockItem(DockItem):
                      hbox(lbl2, spb1),
                      lbl1),
                 spacer,
+                controls,
+                head,
                 directions,
                 spacer,
                 vbox(hbox(lbl3, spb2),
@@ -38,6 +50,9 @@ enamldef JoystickDockItem(DockItem):
             align('v_center', lbl3, spb2),
             align('v_center', lbl4, spb3),
         ]
+        KeyEvent:
+            pressed ::
+                print(change['value'])
         Label: lbl0:
             text << "{} @ {} ({})".format(
                 device.declaration.id,
@@ -54,7 +69,7 @@ enamldef JoystickDockItem(DockItem):
         SpinBox: spb1:
             maximum = 10000
             single_step = 10
-            value := model.rate
+            value := plugin.rate
 
         Label: lbl3:
             text = 'Speed'
@@ -69,33 +84,52 @@ enamldef JoystickDockItem(DockItem):
             maximum = 10000
             single_step = 10
             #value := device.force
+        Container: controls:
+            PushButton:
+                icon = load_icon('arrow_refresh')
+                clicked :: plugin.reconnect()
+                tool_tip = "Reconnect to device"
+            PushButton:
+                icon << load_icon('disconnect' if device.connection.connected else 'connect')
+                clicked ::
+                        if device.connection.connected:
+                            device.disconnect()
+                        else:
+                            device.connect()
+        Container: head:
+            PushButton:
+                icon = load_icon("bullet_toggle_plus")
+                clicked :: device.position[-1] = 1
+            PushButton:
+                icon = load_icon("bullet_toggle_minus")
+                clicked :: device.position[-1] = 0
         Container: directions:
             constraints = [
                 vbox(hbox(pb5, pb1, pb6),
                      hbox(pb2, pb3, pb4))
             ]
             PushButton: pb5:
-                clicked :: model.set_origin()
+                clicked :: plugin.set_origin()
                 icon = load_icon('arrow_in')
                 tool_tip = 'set origin'
             PushButton: pb1:
-                clicked :: model.move_up()
+                clicked :: plugin.move_up()
                 icon = load_icon('arrow_up')
                 tool_tip = 'move up'
             PushButton: pb6:
-                clicked :: model.move_to_origin()
+                clicked :: plugin.move_to_origin()
                 icon = load_icon('arrow_undo')
                 tool_tip = 'return to origin'
             PushButton: pb2:
-                clicked :: model.move_left()
+                clicked :: plugin.move_left()
                 icon = load_icon('arrow_left')
                 tool_tip = 'move left'
             PushButton: pb3:
-                clicked :: model.move_down()
+                clicked :: plugin.move_down()
                 icon = load_icon('arrow_down')
                 tool_tip = 'move down'
             PushButton: pb4:
-                clicked :: model.move_right()
+                clicked :: plugin.move_right()
                 icon = load_icon('arrow_right')
                 tool_tip = 'move right'
             

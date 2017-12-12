@@ -1,8 +1,27 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2017
+
+@author: jrm
+"""
+import enaml
 from enaml.workbench.api import Extension, PluginManifest
+from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
+
 
 def plugin_factory():
     from .plugin import ConsolePlugin
     return ConsolePlugin()
+
+def console_factory():
+    with enaml.imports():
+        from .view import ConsoleDockItem
+    return ConsoleDockItem
 
 
 enamldef ConsoleManifest(PluginManifest):
@@ -13,4 +32,12 @@ enamldef ConsoleManifest(PluginManifest):
     """
     id = 'inkcut.console'
     factory = plugin_factory
+
+    Extension:
+        id = 'items'
+        point = DOCK_ITEM_POINT
+        DockItem:
+            plugin_id = 'inkcut.console'
+            factory = console_factory
+            layout = 'bottom'
     

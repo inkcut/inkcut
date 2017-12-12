@@ -22,3 +22,6 @@ class CAMMGL1Protocol(DeviceProtocol):
         
     def set_pen(self, p):
         self.write("SP{p};".format(p=p))
+
+    def connection_lost(self):
+        pass
