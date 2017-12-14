@@ -13,13 +13,15 @@ Created on Jan 16, 2015
 import enaml
 from atom.api import (
     Typed, List, Instance, ForwardInstance, ContainerList, Bool, Unicode,
-    Int, Float, observe
+    Int, Float, Enum, observe
 )
 from contextlib import contextmanager
+from datetime import datetime
 from enaml.qt import QtCore, QtGui
 from inkcut.core.api import Model, Plugin, AreaBase
-from inkcut.core.utils import parse_unit, async_sleep, log
+from inkcut.core.utils import parse_unit, to_unit, async_sleep, log
 from twisted.internet import defer
+from io import BytesIO
 from . import extensions
 
 
@@ -60,6 +62,27 @@ class DeviceTransport(Model):
         
         """
         raise NotImplementedError
+
+
+class TestTransport(DeviceTransport):
+    """ A transport that captures protocol output """
+
+    #: The output buffer
+    buffer = Instance(BytesIO, ())
+
+    def connect(self):
+        self.connected = True
+        self.protocol.connection_made()
+
+    def write(self, data):
+        self.buffer.write(data)
+
+    def read(self, size=None):
+        return ""
+
+    def disconnect(self):
+        self.connected = False
+        self.protocol.connection_lost()
 
 
 class DeviceProtocol(Model):
@@ -177,15 +200,43 @@ class DeviceConfig(Model):
     #: set this to a high number like 2000 or 3000
     sample_rate = Int(100).tag(config=True)
 
+    #: Final output rotation
+    rotation = Enum(0, 90, 180, 270, -90, -180, -270).tag(config=True)
+
+    #: Final out scaling
+    scale = ContainerList(Float(strict=False), default=[1, 1]).tag(config=True)
+
     #: In cm/s
-    speed = Float(4, strict=False)
+    speed = Float(4, strict=False).tag(config=True)
+    speed_units = Enum('in/s', 'cm/s').tag(config=True)
+    speed_enabled = Bool().tag(config=True)
+
+    #: Force in g
+    force = Float(40, strict=False).tag(config=True)
+    force_units = Enum('g').tag(config=True)
+    force_enabled = Bool().tag(config=True)
 
     #: Use absolute coordinates
     absolute = Bool().tag(config=True)
 
     def _default_step_time(self):
-        return max(1, round(
-            1000* self.step_size/parse_unit('%scm' % self.speed)))
+        """ Determine the step time based on the device speed setting 
+        
+        
+        """
+        #: Convert speed to px/s then to mm/s
+        units = self.speed_units.split("/")[0]
+        speed = parse_unit('%s%s' % (self.speed, units))
+        speed = to_unit(speed, 'mm')
+        if speed == 0:
+            return 0
+
+        #: No determine the time and convert to ms
+        return max(0, round(1000*self.step_size/speed))
+
+    @observe('speed', 'speed_units', 'step_size')
+    def _update_step_time(self, change):
+        self.step_time = self._default_step_time()
 
 
 class Device(Model):
@@ -232,6 +283,9 @@ class Device(Model):
     #: Status
     status = Unicode()
 
+    #: Put the device in test mode and don't actually send commands to it
+    test_mode = Bool()
+
     def _default_connection(self):
         if not self.transports:
             return None
@@ -269,11 +323,27 @@ class Device(Model):
 
     @contextmanager
     def device_busy(self):
+        """ Mark the device as busy """
         self.busy = True
         try:
             yield
         finally:
             self.busy = False
+
+    @contextmanager
+    def device_connection(self, test=False):
+        """ """
+        connection = self.connection
+        try:
+            #: Create a test connection if necessary
+            if test:
+                self.connection = TestTransport()
+            #: Connect
+            yield self.connection
+        finally:
+            #: Restore if necessary
+            if test:
+                self.connection = connection
 
     @defer.inlineCallbacks
     def test(self):
@@ -283,8 +353,46 @@ class Device(Model):
         """
         raise NotImplementedError
 
+    def transform(self, path):
+        """ Apply the device output transform to the given path. This
+        is used by other plugins that may need to display or work with
+        tranformed output.
+        
+        Parameters
+        ----------
+            path: QPainterPath
+                Path to transform
+        
+        Returns
+        -------
+            path: QPainterPath 
+                
+        """
+        config = self.config
+
+        t = QtGui.QTransform()
+
+        if hasattr(config, 'scale'):
+            #: Do final output scaling
+            t.scale(*config.scale)
+
+        if hasattr(config, 'rotation'):
+            #: Do final output rotation
+            t.rotate(config.rotation)
+
+        #: Translate back to 0,0 so all coordinates are positive
+        path = path * t
+        p = path.boundingRect().bottomLeft()
+        path *= QtGui.QTransform.fromTranslate(-p.x(), -p.y())
+
+        return path
+
     def init(self, job):
-        """ Initialize the job 
+        """ Initialize the job. This should do any final path manipulation
+        required by the device (or as specified by the config) and any filters
+        should be applied here (overcut, blade offset compensation, etc..).
+        
+        The connection is not active at this stage.
         
         Parameters
         -----------
@@ -298,11 +406,22 @@ class Device(Model):
                 is then interpolated and sent to the device. 
         
         """
-        self.job = job
+        config = self.config
 
-        #: TODO: Allow plugins to hook into this
+        #: Set the speed of this device for tracking purposes
+        if hasattr(config, 'speed'):
+            job.info.speed = config.speed
 
-        return job.model
+        #: Get the internal QPainterPath "model"
+        model = job.model
+
+        #: Transform the path to the device coordinates
+        model = self.transform(model)
+
+        #: TODO: Apply filters here
+
+        #: Return the transformed model
+        return model
 
     def connect(self):
         """ Connect to the device. By default this delegates handling
@@ -337,20 +456,30 @@ class Device(Model):
         
         """
         if absolute:
-            print(position)
+            #: Clip
+            position = map(lambda p: max(0, p), position)
+            #: Clip everything to never go below zero in absoulte mode
             self.position = position
         else:
-            self.position = position
+            #: Convert to relative to absolute for the UI
             p = self.position
-            for i, d in enumerate(position):
-                p[i] += d
+            p[0] += position[0]
+            p[1] += position[1]
             self.position = p
+
         result = self.connection.protocol.move(*position, absolute=absolute)
         if result:
             return result
 
         #: Wait for the device to catch up
         return async_sleep(self.config.step_time)
+
+    def finish(self):
+        """ Finish the job applying any cleanup necessary.  
+        
+        """
+        return self.connection.protocol.finish()
+
 
     def disconnect(self):
         """ Disconnect from the device. By default this delegates handling
@@ -360,7 +489,7 @@ class Device(Model):
         return self.connection.disconnect()
 
     @defer.inlineCallbacks
-    def submit(self, job):
+    def submit(self, job, test=False):
         """ Submit the job to the device. This handles iteration over the
         path model defined by the job and sending commands to the actual
         device using roughly the procedure is as follows:
@@ -386,6 +515,11 @@ class Device(Model):
         -----------
             job: Instance of `inkcut.job.models.Job`
                 The job to execute on the device
+            test: bool
+                Do a test run. This specifies whether the commands should be 
+                sent to the actual device or not. If True, the connection will 
+                be replaced with a virtual connection that captures all the 
+                command output.
                 
         """
         #: Only allow one job at a time
@@ -393,60 +527,77 @@ class Device(Model):
             raise RuntimeError("Device is busy processing another job!")
 
         with self.device_busy():
-            self.status = "Connecting to device"
-
-            #: Connect
-            yield defer.maybeDeferred(self.connect)
+            #: Set the current the job
+            self.job = job
+            self.test_mode = test
 
             self.status = "Initializing job"
 
             # Device model is updated in real time
             model = yield defer.maybeDeferred(self.init, job)
 
-            self.status = "Processing job"
+            self.status = "Connecting to device"
+            with self.device_connection(test) as connection:
+                self.status = "Processing job"
+                yield defer.maybeDeferred(self.connect)
 
-            #: Local references are faster
-            info = job.info
-            connection = self.connection
+                #: Local references are faster
+                info = job.info
 
-            #: For tracking progress
-            total_length = float(model.length())
-            total_moved = 0
+                #: Determine the length for tracking progress
+                whole_path = QtGui.QPainterPath()
+                for path in model.toSubpathPolygons():
+                    for i, p in enumerate(path):
+                        whole_path .lineTo(p)
+                total_length = whole_path.length()
+                total_moved = 0
+                log.debug("Path length: {}".format(total_length))
 
-            #: For point in the path
-            for (d, cmd, args, kwargs) in self.process(model):
+                #: Update stats
+                info.started = datetime.now()
 
-                #: Check if we paused
-                if info.paused:
-                    self.status = "Job paused"
-                    #: Sleep until resumed, cancelled, or the
-                    #: connection drops
-                    while (info.paused and not info.cancelled
-                           and connection.connected):
-                        yield async_sleep(300)  # ms
+                #: So an eta can be determined
+                info.length = total_length
 
-                #: Check for cancel for non interpolated jobs
-                if info.cancelled:
-                    self.status = "Job cancelled"
-                    return
-                elif not connection.connected:
-                    self.status = "Connection lost"
-                    return
+                #: For point in the path
+                for (d, cmd, args, kwargs) in self.process(model):
 
-                #: If you want to let the device handle more complex
-                #: commands such as curves do it in process and handle
-                yield defer.maybeDeferred(cmd, *args, **kwargs)
-                total_moved += d
+                    #: Check if we paused
+                    if info.paused:
+                        self.status = "Job paused"
+                        #: Sleep until resumed, cancelled, or the
+                        #: connection drops
+                        while (info.paused and not info.cancelled
+                               and connection.connected):
+                            yield async_sleep(300)  # ms
 
-                #: TODO: Check if we need to update the ui
-                #: Set the job progress based on how far we've gone
-                info.progress = int(
-                    max(0, min(100, 100*total_moved/total_length)))
+                    #: Check for cancel for non interpolated jobs
+                    if info.cancelled:
+                        self.status = "Job cancelled"
+                        return
+                    elif not connection.connected:
+                        self.status = "Connection lost"
+                        return
 
-        #: We're done, send any finalization commands
-        yield defer.maybeDeferred(self.finish)
-        #: Disconnect from the device
-        yield defer.maybeDeferred(self.disconnect)
+                    #: If you want to let the device handle more complex
+                    #: commands such as curves do it in process and handle
+                    yield defer.maybeDeferred(cmd, *args, **kwargs)
+                    total_moved += d
+
+                    #: TODO: Check if we need to update the ui
+                    #: Set the job progress based on how far we've gone
+                    #: THIS IS COMPLETELY WRONG
+                    info.progress = int(max(0, min(100,
+                                        100*total_moved/total_length)))
+
+                #: We're done, send any finalization commands
+                yield defer.maybeDeferred(self.finish)
+
+                #: Update stats
+                info.ended = datetime.now()
+                info.done = True
+
+                yield defer.maybeDeferred(self.disconnect)
 
     def process(self, model):
         """  Process the path model of a job and return each command
@@ -470,7 +621,6 @@ class Device(Model):
         step_size = config.step_size
         if step_size <= 0:
             raise ValueError("Cannot have a step size <= 0!")
-        step_time = config.step_time
 
         #: Previous point
         _p = QtCore.QPointF(0, 0)
@@ -510,6 +660,10 @@ class Device(Model):
                 #: _p and p (t=0 and t=1)
                 #: This allows us to cancel mid point
                 while d <= l:
+                    #: Now set d to the next point by step_size
+                    #: if the end of the path is less than the step size
+                    #: use the minimum of the two
+                    dl = min(l-d, step_size)
 
                     #: Now find the point at the given step size
                     #: the first point d=0 so t=0, the last point d=l so t=1
@@ -521,7 +675,7 @@ class Device(Model):
                     #: -y because Qt's axis is from top to bottom not bottom
                     #: to top
                     x, y = sp.x(), -sp.y()
-                    yield (l*t, self.move, ([x, y, z],), {})
+                    yield (dl, self.move, ([x, y, z],), {})
 
                     #: RPI is SLOOWWW
                     #update += 1
@@ -538,15 +692,14 @@ class Device(Model):
                     #if step_time:
                     #yield async_sleep(0.0000001)
 
-                    #: When we reached the end
+                    #: When we reached the end but instead of breaking above
+                    #: with a d < l we do it here to ensure we get the last
+                    #: point
                     if d == l:
                         #: We reached the end
                         break
 
-                    #: Now set d to the next point by step_size
-                    #: if the end of the path is less than the step size
-                    #: use the minimum of the two
-                    dl = min(l-d, step_size)
+                    #: Add step size
                     d += dl
 
 
@@ -611,17 +764,13 @@ class DevicePlugin(Plugin):
         #: Restore state after plugins are loaded
         super(DevicePlugin, self).start()
 
-    # def _default_devices(self):
-    #     """ Load the devices supported """
-    #     self._refresh_drivers()
-    #     return self.devices[0]
-
-    # def _observe_device(self, change):
-    #     """ When the device changes, save it. """
-    #     devices = self.devices[:]
-    #     if self.device not in devices:
-    #         devices.append(self.device)
-    #     self.devices = devices
+    def submit(self, job):
+        """ Send the given job to the device and restart all stats 
+        
+        """
+        job.info.reset()
+        job.info.started = datetime.now()
+        self.device.submit(job)
 
     def _default_device(self):
         """ If no device is loaded from the previous state, get the device
@@ -771,16 +920,18 @@ class DevicePlugin(Plugin):
         if device and device.area:
             area = device.area
             view_items.append(
-                dict(path=device.area.path*t, pen=plot.pen_device,
-                     skip_autorange=(False, [area.size[0], 0]))
+                dict(path=device.transform(device.area.path*t),
+                     pen=plot.pen_device,
+                     skip_autorange=True)#(False, [area.size[0], 0]))
             )
 
         if job and job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([
-                dict(path=job.material.path*t, pen=plot.pen_media,
-                     skip_autorange=(False, [0, job.size[1]])),
-                dict(path=job.material.padding_path*t,
+                dict(path=device.transform(job.material.path*t),
+                     pen=plot.pen_media,
+                     skip_autorange=True),#(False, [0, job.size[1]])),
+                dict(path=device.transform(job.material.padding_path*t),
                      pen=plot.pen_media_padding, skip_autorange=True)
             ])
 

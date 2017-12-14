@@ -10,9 +10,10 @@ Created on Dec 7, 2017
 
 @author: jrm
 """
-from enaml.layout.api import hbox, spacer, align
+import textwrap
+from enaml.layout.api import hbox, vbox, spacer, align
 from enaml.widgets.api import (
-    Form, CheckBox, Container, Label, ProgressBar, PushButton
+    Form, CheckBox, Container, Label, ProgressBar, PushButton, Notebook, Page, ObjectCombo
 )
 from enamlx.widgets.api import DoubleSpinBox
 from inkcut.core.api import Model, DockItem
@@ -27,27 +28,110 @@ enamldef ConfigView(Container):
 
 enamldef DeviceConfigView(Container):
     attr model: DeviceConfig
-    Form:
-        Label:
-            text = "Step time"
-        DoubleSpinBox:
-            minimum = 0
-            value:= model.step_time
-            suffix = " ms"
+    Notebook:
+        tab_style = 'document'
+        tab_position = 'left'
+        Page:
+            closable = False
+            title = "Settings"
+            Form:
+                Label:
+                    text = "Speed"
+                DoubleSpinBox:
+                    minimum = 0
+                    value:= model.speed
+                    single_step = 4
+                    suffix << " {}".format(model.speed_units)
+                Label:
+                    text = ""
+                CheckBox:
+                    text = "Enabled"
+                    checked := model.speed_enabled
+                Label:
+                    text = "Force"
+                DoubleSpinBox:
+                    minimum = 0
+                    value:= model.force
+                    single_step = 10
+                    suffix << " {}".format(model.force_units)
+                Label:
+                    text = ""
+                CheckBox:
+                    text = "Enabled"
+                    checked := model.force_enabled
+        Page:
+            closable = False
+            title = "Output"
+            Form:
+                Label:
+                    text = "Rotation"
+                    tool_tip = textwrap.dedent("""
+                    sFinal output rotation.
+                    """).strip()
+                ObjectCombo:
+                    items = list(model.get_member('rotation').items)
+                    selected := model.rotation
+                Label:
+                    text = "Scale"
+                Form:
+                    Label:
+                        text = "x"
+                        tool_tip = textwrap.dedent("""
+                        Final output scale for the x-axis.
+                        """).strip()
+                    DoubleSpinBox:
+                        value := model.scale[0]
+                        minimum = -9999.9
+                        maximum = 9999.9
+                    Label:
+                        text = "y"
+                        tool_tip = textwrap.dedent("""
+                        Final output scale for the y-axis.
+                        """).strip()
+                    DoubleSpinBox:
+                        value := model.scale[1]
+                        minimum = -9999.9
+                        maximum = 9999.9
 
-        Label:
-            text = "Step size"
-        DoubleSpinBox:
-            value << to_unit(model.step_size, 'mm')
-            value :: model.step_size = from_unit(change['value'],'mm')
-            suffix << " "+'mm'
-            minimum = 0.00001
-            maximum = 99999.9
+        Page:
+            closable = False
+            title = "Advanced"
+            Form:
+                Label:
+                    text = "Interpolate paths"
+                    tool_tip = textwrap.dedent("""
+                    If enabled this will break down the commands into
+                    smaller steps. This enables you to pause mid job for devices using streamed
+                    connections or motor control. It is not recommended for spooled (printer)
+                    devices.
+                    """).strip()
+                CheckBox:
+                    checked := model.interpolate
+                Label:
+                    text = "Step size"
+                    tool_tip = textwrap.dedent("""
+                    Sets the step size to use when interpolation is enabled.
+                    """).strip()
+                DoubleSpinBox:
+                    enabled << model.interpolate
+                    value << to_unit(model.step_size, 'mm')
+                    value :: model.step_size = from_unit(change['value'],'mm')
+                    suffix << " "+'mm'
+                    minimum = 0.00001
+                    maximum = 99999.9
+                Label:
+                    text = "Step time"
+                    tool_tip = textwrap.dedent("""
+                    Sets the time to wait before sending the next command when interpolation
+                    is used.
+                    """).strip()
+                DoubleSpinBox:
+                    enabled << model.interpolate
+                    value := model.step_time
+                    suffix << " ms"
+                    minimum = 0
+                    maximum = 1000
 
-        Label:
-            text = "Interpolate paths"
-        CheckBox:
-            checked := model.interpolate
 
 
 enamldef DeviceProgressDockItem(DockItem):
@@ -70,9 +154,20 @@ enamldef DeviceProgressDockItem(DockItem):
             }
         Container:
             constraints = [
-                hbox(prog, pb1,pb2),
+                vbox(
+                    hbox(lbl1, lbl2, lbl3, spacer),
+                    hbox(prog, pb1,pb2)),
                 align('v_center', prog, pb1,pb2),
+                align('v_center', lbl1, lbl2, lbl3)
             ]
+
+            Label: lbl1:
+                text << "Job: {}".format(job.document if job else "")
+            Label: lbl2:
+                text << "Started: {}".format(job.info.started if job else "")
+            Label: lbl3:
+                text << "Eta: {}".format(job.info.started + job.info.eta if (
+                        job and job.info.started and job.info.eta) else "" )
             # Label: lbl:
             # text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(
             #     device.position[0],
@@ -98,5 +193,5 @@ enamldef DeviceProgressDockItem(DockItem):
                     if device.busy:
                         job.info.paused = not job.info.paused
                     elif job_plugin and job_plugin.job.document:
-                        device.submit(job_plugin.job)
+                        plugin.submit(job_plugin.job)
 

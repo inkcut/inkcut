@@ -32,12 +32,15 @@ def job_start(event):
     if not job.document:
         return
 
-    device = workbench.get_plugin('inkcut.device').device
+    plugin = workbench.get_plugin('inkcut.device')
+    device = plugin.device
     if not device:
         return
 
-    #: TODO:
-    device.submit(job)
+    try:
+        plugin.submit(job)
+    except Exception as e:
+        workbench.show_critical("Error processing job", traceback.format_exc())
     #try:
         #from inkcut.ui.plugin import LivePlot
         #with enaml.imports():

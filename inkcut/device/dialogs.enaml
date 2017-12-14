@@ -182,4 +182,5 @@ enamldef DeviceDialog(Dialog): dialog:
                     if not dev.connection.protocol:
                         dev.connection.protocol = dev._default_protocol()
                     plugin.device = dev
+                    plugin.save()
                     dialog.close()

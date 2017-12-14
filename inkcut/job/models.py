@@ -12,12 +12,11 @@ Created on Jan 16, 2015
 """
 from __future__ import division
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from atom.api import (
     Enum, Float, Int, Bool, Instance, ContainerList, Range, Unicode, observe
 )
 from contextlib import contextmanager
-from atom.api import observe, ContainerList, Float, Instance
 from enaml.qt import QtCore, QtGui
 from inkcut.core.api import Model, AreaBase
 from inkcut.core.svg import QtSvgDoc
@@ -60,18 +59,38 @@ class JobError(Exception):
 
 class JobInfo(Model):
     """ Job metadata """
+    #: Controls
     done = Bool(False).tag(config=True)
     cancelled = Bool(False).tag(config=True)
     paused = Bool(False).tag(config=True)
+
+    #: Stats
     started = Instance(datetime).tag(config=True)
     ended = Instance(datetime).tag(config=True)
     progress = Range(0, 100, 0).tag(config=True)
     data = Unicode().tag(config=True)
 
+    #: Device speed in px/s
+    speed = Float(strict=False).tag(config=True)
+    #: Length in px
+    length = Float(strict=False).tag(config=True)
+
+    #: Estimates
+    eta = Instance(timedelta).tag(config=True)
+
     def reset(self):
+        self.progress = 0
         self.paused = False
         self.cancelled = False
         self.done = False
+
+    @observe('started', 'length', 'speed')
+    def _update_eta(self, change):
+        if not self.started or not self.length or not self.speed:
+            self.eta = None
+            return
+        dt = self.length/self.speed
+        self.eta = timedelta(seconds=dt)
 
 
 class Job(Model):
