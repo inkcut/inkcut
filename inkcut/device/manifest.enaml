@@ -39,19 +39,11 @@ def job_start(event):
 
     try:
         plugin.submit(job)
+    except RuntimeError as e:
+        workbench.show_warning("Error starting job", str(e))
     except Exception as e:
         workbench.show_critical("Error processing job", traceback.format_exc())
-    #try:
-        #from inkcut.ui.plugin import LivePlot
-        #with enaml.imports():
-        #    from inkcut.ui.task_dialog import JobTaskDialog
 
-        #model = LivePlot(device=plugin.device, job=plugin.job)
-        #ui = event.workbench.get_plugin('enaml.workbench.ui')
-        #JobTaskDialog(ui.window,model=model).exec_()
-    #except:
-    #    event.workbench.show_warning("Error sending to device",
-    #                                 traceback.format_exc())
 
 def device_progress_dock_item_factory():
     with enaml.imports():

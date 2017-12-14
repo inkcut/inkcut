@@ -480,7 +480,6 @@ class Device(Model):
         """
         return self.connection.protocol.finish()
 
-
     def disconnect(self):
         """ Disconnect from the device. By default this delegates handling
         to the active transport or connection handler. 
@@ -702,18 +701,9 @@ class Device(Model):
                     #: Add step size
                     d += dl
 
-
-    # @defer.inlineCallbacks
-    # def handle(self, cmd, *args, **kwargs):
-    #     """ Handle a command from the model. By default this just
-    #
-    #     Parameters
-    #     ----------
-    #     commmand: Tuple of Command to handle such as a
-    #
-    #     """
-    #     yield defer.maybeDeferred(cmd, *args, **kwargs)
-
+        #: Make sure we get the endpoint
+        ep = model.currentPosition()
+        yield (0, self.move, ([ep.x(), ep.y(), 0],), {})
 
     def _observe_status(self, change):
         """ Whenever the status changes, log it """
