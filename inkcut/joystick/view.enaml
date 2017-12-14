@@ -14,7 +14,7 @@ from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
     TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
     TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet)
 from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
-    ImageView, PushButton, RadioButton, Window,ProgressBar)
+    ImageView, PushButton, RadioButton, Window,ProgressBar, Form, ObjectCombo)
 
 from enaml.widgets.spin_box import SpinBox
 from enamlx.widgets.api import KeyEvent
@@ -26,88 +26,99 @@ enamldef JoystickDockItem(DockItem):
     name = 'joystick-item'
     attr plugin
     attr device << plugin.device
+    attr device_plugin << plugin.workbench.get_plugin('inkcut.device')
     icon = load_icon('controller')
-            # PlotView:
-            #     minimum_size = (540,320)
-            #     data := plugin.plot
-            #     axis_scales << {'left':to_unit(1, plugin.units),'bottom':to_unit(1, plugin.units)}
     Container:
+        padding = 0
         constraints = [
-            hbox(
-                vbox(lbl0,
-                     hbox(lbl2, spb1),
-                     lbl1),
-                spacer,
-                controls,
-                head,
-                directions,
-                spacer,
-                vbox(hbox(lbl3, spb2),
-                     hbox(lbl4, spb3)),
-
-            ),
-            align('v_center', lbl2, spb1),
-            align('v_center', lbl3, spb2),
-            align('v_center', lbl4, spb3),
+            hbox(controls, head, directions, status),
+            #align('v_center', lbl2, spb1),
+            #align('v_center', lbl3, spb2),
+            #align('v_center', lbl4, spb3),
         ]
-        KeyEvent:
-            pressed ::
-                print(change['value'])
-        Label: lbl0:
-            text << "{} @ {} ({})".format(
-                device.declaration.id,
-                device.connection if device.connection else "",
-                device.connection.protocol.declaration.name if device.connection and device.connection.protocol else ""
-            )
-        Label: lbl1:
-            text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(
-                        device.position[0],
-                        device.position[1],
-                        device.position[2] and 'down' or 'up')
-        Label: lbl2:
-            text = 'Step'
-        SpinBox: spb1:
-            maximum = 10000
-            single_step = 10
-            value := plugin.rate
+        #KeyEvent:
+        #    pressed ::
+        #        print(change['value'])
+        Container: status:
+            padding = 0
+            Form:
+                Label:
+                    text = 'Device'
+                ObjectCombo:
+                    items << device_plugin.devices or [device] if device else []
+                    to_string = lambda d: "{} @ {} ({})".format(
+                        d.declaration.id,
+                        d.connection if d.connection else "",
+                        d.connection.protocol.declaration.name if d.connection and d.connection.protocol else ""
+                    )
+                    selected << device
+                    selected ::
+                        dev = change['value']
+                        if dev:
+                            device_plugin.device = dev
 
-        Label: lbl3:
-            text = 'Speed'
-        SpinBox: spb2:
-            maximum = 10000
-            single_step = 4
-            #value := device.speed
-
-        Label: lbl4:
-            text = 'Force'
-        SpinBox: spb3:
-            maximum = 10000
-            single_step = 10
-            #value := device.force
+                Label:
+                    text = 'Step'
+                SpinBox:
+                    maximum = 10000
+                    single_step = 10
+                    value := plugin.rate
+                Label:
+                    text = "Status"
+                Label:
+                    text << '(x=%0.3f x y=%0.3f z=%s) %s'%(
+                                device.position[0],
+                                device.position[1],
+                                device.position[2],
+                                'connected' if (device.connection and device.connection.connected)
+                                else 'disconnected')
+#
+#        Label: lbl3:
+#            text = 'Speed'
+#        SpinBox: spb2:
+#            maximum = 10000
+#            single_step = 4
+#            #value := device.speed
+#
+#        Label: lbl4:
+#            text = 'Force'
+#        SpinBox: spb3:
+#            maximum = 10000
+#            single_step = 10
+#            #value := device.force
         Container: controls:
+            Label:
+                text = "Connection"
             PushButton:
                 icon = load_icon('arrow_refresh')
                 clicked :: plugin.reconnect()
-                tool_tip = "Reconnect to device"
+                tool_tip = "Reconnect to the device"
             PushButton:
                 icon << load_icon('disconnect' if device.connection.connected else 'connect')
+                tool_tip << "{} the device".format('Disconnect from' if device.connection.connected
+                                                   else 'Connect to')
                 clicked ::
                         if device.connection.connected:
                             device.disconnect()
                         else:
                             device.connect()
         Container: head:
+            Label:
+                text = "Head"
             PushButton:
                 icon = load_icon("bullet_toggle_plus")
-                clicked :: device.position[-1] = 1
+                clicked :: plugin.move_head_up()
             PushButton:
                 icon = load_icon("bullet_toggle_minus")
-                clicked :: device.position[-1] = 0
+                clicked :: plugin.move_head_down()
         Container: directions:
             constraints = [
-                vbox(hbox(pb5, pb1, pb6),
+                vbox(lblpos,
+                     hbox(pb5, pb1, pb6),
                      hbox(pb2, pb3, pb4))
             ]
+            Label: lblpos:
+                text = "Position"
             PushButton: pb5:
                 clicked :: plugin.set_origin()
                 icon = load_icon('arrow_in')

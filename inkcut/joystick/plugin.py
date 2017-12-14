@@ -12,10 +12,10 @@ Created on Jul 19, 2015
 """
 import functools
 from atom.api import Instance, Int, observe
-from enaml.qt import QtGui
 from inkcut.core.api import Plugin
 from inkcut.device.plugin import Device
 from twisted.internet import defer
+from enaml.qt import QtCore, QtGui
 
 
 def with_connection(f):
@@ -41,8 +41,8 @@ class JoystickPlugin(Plugin):
     #: Reference to the inkcut.device plugin's device
     device = Instance(Device)
 
-    #: Rate to moave
-    rate = Int(10)
+    #: Rate to move
+    rate = Int(100).tag(config=True)
     path = Instance(QtGui.QPainterPath)
 
     #: Reference to the device plugin
@@ -50,6 +50,8 @@ class JoystickPlugin(Plugin):
 
     def stop(self):
         """ Delete this plugins references """
+        if self.device:
+            self.device.close()
         del self.device
         del self.plugin
 
@@ -67,40 +69,7 @@ class JoystickPlugin(Plugin):
         if self.device != change['value']:
             self.device = change['value']
             return
-    #
-    # @observe('device')
-    # def _view_changed(self, change):
-    #     view_items = []
-    #     t = QtGui.QTransform.fromScale(1,-1)
-    #
-    #     self.path = QtGui.QPainterPath()#[#],QtGui.QPainterPath()]
-    #     x,y,z = self.device.position
-    #     r= max(10,self.device.blade_offset)#,self.device.blade_offset
-    #     self.path.addEllipse(QtCore.QPointF(x,-y),r,r)
-    #     #view_items.append(PainterPathPlotItem(self.paths[0],pen=self.pen_down))
-    #     view_items.append(PainterPathPlotItem(self.path,pen=self.pen_down))
-    #
-    #
-    #     if self.device:
-    #         # Also observe any change to job.media and job.device
-    #         view_items.append(PainterPathPlotItem(self.device.path*t,pen=self.pen_media,skip_autorange=True))
-    #         view_items.append(PainterPathPlotItem(self.device.padding_path*t,pen=self.pen_media_padding,skip_autorange=True))
-    #
-    #     self.plot = view_items
-    #     return view_items
-    #
-    # @observe('device.position')
-    # def _position_changed(self,change):
-    #     x0, y0, z0 = change['oldvalue']
-    #     x1, y1, z1 = change['value']
-    #
-    #     self.path.translate(x1-x0, y0-y1) # Reverse y
-    #     self.plot[0].updateData(self.path)
 
-    def stop(self):
-        if self.device:
-            self.device.close()
-            
     def set_origin(self):
         self.device.position = [0, 0, 0]
 
@@ -117,25 +86,29 @@ class JoystickPlugin(Plugin):
     @with_connection
     def move_up(self):
         x, y, z = self.device.position
-        self.device.move([0, self.rate, z], absolute=False)
+        self.device.move([x, y+self.rate, z], absolute=True)
 
     @with_connection
     def move_down(self):
         x, y, z = self.device.position
-        self.device.move([0, -self.rate, z], absolute=False)
+        self.device.move([x, y-self.rate, z], absolute=True)
 
     @with_connection
     def move_left(self):
         x, y, z = self.device.position
-        self.device.move([-self.rate, 0, z], absolute=False)
+        self.device.move([x-self.rate, y, z], absolute=True)
 
     @with_connection
     def move_right(self):
         x, y, z = self.device.position
-        self.device.move([self.rate, 0, z], absolute=False)
+        self.device.move([x+self.rate, y, z], absolute=True)
 
     @with_connection
-    def toggle_trigger(self):
+    def move_head_up(self):
         x, y, z = self.device.position
-        z = 0 if z else 1
-        self.device.move([0, 0, z], absolute=False)
+        self.device.move([x, y, 0], absolute=True)
+
+    @with_connection
+    def move_head_down(self):
+        x, y, z = self.device.position
+        self.device.move([x, y, 1], absolute=True)
