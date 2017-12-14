@@ -80,8 +80,7 @@ class JoystickPlugin(Plugin):
     
     @with_connection
     def move_to_origin(self):
-        x, y, z = self.device.position
-        self.device.move([0, 0, z], absolute=True)
+        self.device.move([0, 0, 0], absolute=True)
 
     @with_connection
     def move_up(self):
