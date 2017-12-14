@@ -11,7 +11,7 @@ class CAMMGL1Protocol(DeviceProtocol):
     def connection_made(self):
         self.write("IN;")
     
-    def move(self, x, y, z):
+    def move(self, x, y, z, absolute=True):
         self.write("{z}{x},{y};".format(x=x, y=y, z=z and "D" or "M", ))
         
     def set_force(self, f):

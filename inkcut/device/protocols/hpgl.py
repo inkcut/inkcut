@@ -24,6 +24,8 @@ class HPGLProtocol(DeviceProtocol):
         #: Swap x and y to rotate 90 deg
         y, x = int(x*self.scale), int(y*self.scale)
         if absolute:
+            #: Force coords to be positive
+            x, y = max(0, x), max(0, y)
             self.write("%s%i,%i;" % (z and "PD" or "PU", x, y))
         else:
             self.write("PR%i,%i;" % (x, y))

@@ -32,7 +32,7 @@ class DMPLProtocol(DeviceProtocol):
         elif v == 6:
             self.write("IN;PA;")
 
-    def move(self, x, y, z):
+    def move(self, x, y, z, absolute=True):
         v = self.config.mode
         if v in [1, 2, 3, 4]:
             self.write(" {z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))

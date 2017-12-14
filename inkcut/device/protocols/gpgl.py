@@ -14,7 +14,7 @@ class GPGLProtocol(DeviceProtocol):
     def connection_made(self):
         self.write("H")
         
-    def move(self, x, y, z):
+    def move(self, x, y, z, absolute=True):
         self.write("%s%i,%i"%(z and "M" or "D", x, y))
         
     def set_velocity(self, v):

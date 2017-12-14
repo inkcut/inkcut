@@ -12,7 +12,7 @@ class GCodeProtocol(DeviceProtocol):
     def connection_made(self):
         self.write("IN;")
     
-    def move(self, x, y, z):
+    def move(self, x, y, z, absolute=True):
         self.write("%s%i,%i;"%(z and "PD" or "PU", x, y))
         
     def set_force(self, f):

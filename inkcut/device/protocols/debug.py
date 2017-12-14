@@ -13,7 +13,7 @@ class DebugProtocol(DeviceProtocol):
     def connection_made(self):
         log.debug("protocol.connectionMade()")
     
-    def move(self, x, y, z):
+    def move(self, x, y, z, absolute=True):
         log.debug("protocol.move({x},{y},{z})".format(x=x, y=y, z=z))
         #: Wait some time before we get there
         return async_sleep(0.1)
