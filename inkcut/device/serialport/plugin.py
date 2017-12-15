@@ -110,7 +110,7 @@ class SerialTransport(DeviceTransport):
             xonxoff=config.xonxoff,
             rtscts=config.rtscts
         )
-        print(self.connection)
+        log.debug("{} | opened".format(self.config.port))
 
     def write(self, data):
         if not self.connection:
@@ -120,6 +120,7 @@ class SerialTransport(DeviceTransport):
 
     def disconnect(self):
         if self.connection:
+            log.debug("{} | closed".format(self.config.port))
             self.connection.loseConnection()
             self.connection = None
 
