@@ -5,6 +5,7 @@ Created on Jul 25, 2015
 @author: jrm
 """
 import enaml
+import traceback
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
@@ -13,6 +14,7 @@ from .extensions import (
     DEVICE_DRIVER_POINT, DEVICE_PROTOCOL_POINT, DEVICE_TRANSPORT_POINT
 )
 from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
+from twisted.internet import defer
 
 def device_setup(event):
     with enaml.imports():
@@ -22,13 +24,15 @@ def device_setup(event):
     plugin = workbench.get_plugin('inkcut.device')
     DeviceDialog(ui.window, plugin=plugin).exec_()
 
-
+@defer.inlineCallbacks
 def job_start(event):
     """ Pass the job to the current device for it to cut. Watch
     the process in the task dialog.
     """
     workbench = event.workbench
-    job = workbench.get_plugin('inkcut.job').job
+    job = event.parameters.get('job')
+    if not job:
+        job = workbench.get_plugin('inkcut.job').job
     if not job.document:
         return
 
@@ -38,11 +42,11 @@ def job_start(event):
         return
 
     try:
-        plugin.submit(job)
-    except RuntimeError as e:
-        workbench.show_warning("Error starting job", str(e))
+        yield defer.maybeDeferred(plugin.submit, job)
+    except (RuntimeError, IOError) as e:
+        workbench.message_warning("Error starting job", str(e))
     except Exception as e:
-        workbench.show_critical("Error processing job", traceback.format_exc())
+        workbench.message_critical("Error processing job", traceback.format_exc())
 
 
 def device_progress_dock_item_factory():
@@ -96,7 +100,7 @@ enamldef DeviceManifest(PluginManifest):
             id = 'inkcut.device.setup'
             handler = device_setup
         Command:
-            id = 'inkcut.device.start'
+            id = 'inkcut.device.submit'
             handler = job_start
 
     Extension:
@@ -129,5 +133,5 @@ enamldef DeviceManifest(PluginManifest):
             label = 'Send to device'
             shortcut = 'Ctrl+P'
             after = 'setup'
-            command = 'inkcut.device.start'
+            command = 'inkcut.device.submit'
             icon = menu_icon('chart_curve_go')
