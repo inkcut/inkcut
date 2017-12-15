@@ -10,6 +10,7 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import enaml
+import pkg_resources
 from atom.api import List, Unicode, Instance
 from inkcut.core.api import Plugin, DockItem, log
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
@@ -25,8 +26,19 @@ class InkcutPlugin(Plugin):
     dock_layout = Instance(AreaLayout)
 
     def start(self):
+        """ Load all plugins, refresh the dock area and then 
+        restore state from the disk (if any).
+        
+        """
+        self.load_plugins()
+        self._refresh_dock_items()
+
+        super(InkcutPlugin, self).start()
+
+    def load_plugins(self):
         """ Load all the plugins Inkcut is dependent on """
         w = self.workbench
+        plugins = []
         with enaml.imports():
             #: TODO autodiscover these
             from inkcut.preview.manifest import PreviewManifest
@@ -34,15 +46,20 @@ class InkcutPlugin(Plugin):
             from inkcut.device.manifest import DeviceManifest
             from inkcut.joystick.manifest import JoystickManifest
             from inkcut.console.manifest import ConsoleManifest
-            w.register(PreviewManifest())
-            w.register(JobManifest())
-            w.register(DeviceManifest())
-            w.register(JoystickManifest())
-            w.register(ConsoleManifest())
+            plugins.append(PreviewManifest)
+            plugins.append(JobManifest)
+            plugins.append(DeviceManifest)
+            plugins.append(JoystickManifest)
+            plugins.append(ConsoleManifest)
 
-        self._refresh_dock_items()
+            #: Load any plugins defined as extension points
+            for entry_point in pkg_resources.iter_entry_points(
+                    group='inkcut.plugin', name=None):
+                plugins.append(entry_point.load())
 
-        super(InkcutPlugin, self).start()
+        #: Install all of them
+        for Manifest in plugins:
+            w.register(Manifest())
 
     def _bind_observers(self):
         """ Setup the observers for the plugin.

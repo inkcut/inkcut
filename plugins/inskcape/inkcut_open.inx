@@ -1,0 +1,16 @@
+<inkscape-extension>
+  <_name>Open current document...</_name>
+  <id>org.ekips.filter.inkcut.open</id>
+  <dependency type="executable" location="extensions">inkcut_open.py</dependency>
+  <dependency type="executable" location="extensions">inkex.py</dependency>  
+  <effect>
+    <object-type>all</object-type>
+    <effects-menu>
+       <submenu _name="Inkcut"/>
+    </effects-menu>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">inkcut_open.py</command>
+  </script>
+</inkscape-extension>
+

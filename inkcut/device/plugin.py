@@ -18,7 +18,7 @@ from atom.api import (
 from contextlib import contextmanager
 from datetime import datetime
 from enaml.qt import QtCore, QtGui
-from enaml.application import deferred_call
+from enaml.application import timed_call
 from inkcut.core.api import Model, Plugin, AreaBase
 from inkcut.core.utils import parse_unit, from_unit, to_unit, async_sleep, log
 from twisted.internet import defer
@@ -220,6 +220,10 @@ class DeviceConfig(Model):
     #: Use absolute coordinates
     absolute = Bool().tag(config=True)
 
+    #: Device output is spooled by an external service
+    #: this will cause the job to run with no delays between commands
+    spooled = Bool().tag(config=False)
+
     def _default_step_time(self):
         """ Determine the step time based on the device speed setting 
         
@@ -275,7 +279,7 @@ class Device(Model):
     job = Instance(Model).tag(config=True)
 
     #: The device specific config
-    config = Instance(Model, factory=DeviceConfig).tag(config=True)
+    config = Instance(DeviceConfig, ()).tag(config=True)
 
     #: Position. Defaults to x,y,z. The protocol can
     #: handle this however necessary.
@@ -482,9 +486,6 @@ class Device(Model):
         if result:
             return result
 
-        #: Wait for the device to catch up
-        return async_sleep(self.config.step_time)
-
     def finish(self):
         """ Finish the job applying any cleanup necessary.  
         
@@ -550,6 +551,19 @@ class Device(Model):
 
             self.status = "Initializing job"
 
+            #: Get the time to sleep based for each unit of movement
+            config = self.config
+
+            #: In px/ms
+            if config.spooled:
+                delay = 0
+            elif config.interpolate:
+                delay = config.step_size/float(config.step_time)
+            else:
+                delay = from_unit(
+                    config.speed,  # in/s or cm/s
+                    config.speed_units.split("/")[0])/1000.0
+
             # Device model is updated in real time
             model = yield defer.maybeDeferred(self.init, job)
 
@@ -575,6 +589,7 @@ class Device(Model):
 
                 #: So an eta can be determined
                 info.length = total_length
+                info.speed = delay
 
                 #: For point in the path
                 for (d, cmd, args, kwargs) in self.process(model):
@@ -596,14 +611,31 @@ class Device(Model):
                         self.status = "Connection lost"
                         return
 
+                    #: Invoke the command
                     #: If you want to let the device handle more complex
                     #: commands such as curves do it in process and handle
                     yield defer.maybeDeferred(cmd, *args, **kwargs)
                     total_moved += d
 
+                    #: d should be the device must move in px
+                    #: so wait a proportional amount of time for the device
+                    #: to catch up. This avoids buffer errors from dumping
+                    #: everything at once.
+
+                    #: Since sending is way faster than cutting
+                    #: we must delay (without blocking the UI) before
+                    #: sending the next command or the device's buffer
+                    #: quickly gets filled and crappy china piece cutters
+                    #: get all jacked up. If the transport sends to a spooled
+                    #: output (such as a printer) this can be set to 0
+                    if delay > 0:
+                        # log.debug("d={}, delay={} t={}".format(
+                        #     d, delay, d/delay
+                        # ))
+                        yield async_sleep(d/delay)
+
                     #: TODO: Check if we need to update the ui
                     #: Set the job progress based on how far we've gone
-                    #: THIS IS COMPLETELY WRONG
                     info.progress = int(max(0, min(100,
                                         100*total_moved/total_length)))
 
@@ -627,7 +659,9 @@ class Device(Model):
             job = queue.pop(0)  #: Pull the first job off the queue
             log.info("Rescheduling {} from queue".format(job))
             self.queue = queue  #: Copy and reassign so the UI updates
-            deferred_call(self.submit, job)
+
+            #: Call a minute later
+            timed_call(60000, self.submit, job)
 
     def process(self, model):
         """  Process the path model of a job and return each command
@@ -655,6 +689,9 @@ class Device(Model):
         #: Previous point
         _p = QtCore.QPointF(self.origin[0], self.origin[1])
 
+        #: Determine if interpolation should be used
+        skip_interpolation = config.spooled or not config.interpolate
+
         for path in model.toSubpathPolygons():
 
             #: And then each point within the path
@@ -676,9 +713,9 @@ class Device(Model):
                 #: Total length
                 l = subpath.length()
 
-                #: TODO: If the device does not support streaming
-                #: the path interpolation should be skipped entirely
-                if not config.interpolate:
+                #: If the device does not support streaming
+                #: the path interpolation is skipped entirely
+                if skip_interpolation:
                     x, y = p.x(), -p.y()
                     yield (l, self.move, ([x, y, z],), {})
                     continue
@@ -706,21 +743,6 @@ class Device(Model):
                     #: to top
                     x, y = sp.x(), -sp.y()
                     yield (dl, self.move, ([x, y, z],), {})
-
-                    #: RPI is SLOOWWW
-                    #update += 1
-                    #if update > 1000:
-                    #    update = 0
-                    #    self.position = [x, y, z]
-
-
-                    #: Since sending is way faster than cutting
-                    #: we must delay (without blocking the UI) before
-                    #: sending the next command or the device's buffer
-                    #: quickly gets filled and crappy china piece cutters
-                    #: get all jacked up
-                    #if step_time:
-                    #yield async_sleep(0.0000001)
 
                     #: When we reached the end but instead of breaking above
                     #: with a d < l we do it here to ensure we get the last
@@ -778,8 +800,9 @@ class DevicePlugin(Plugin):
         """ Load all the plugins the device is dependent on """
         w = self.workbench
         with enaml.imports():
-            #: TODO autodiscover these
-            from inkcut.device.serialport.manifest import SerialManifest
+            from inkcut.device.transports.serialport.manifest import (
+                SerialManifest
+            )
             from inkcut.device.protocols.manifest import ProtocolManifest
             from inkcut.device.drivers.manifest import DriversManifest
             from inkcut.device.pi.manifest import PiManifest
@@ -800,7 +823,7 @@ class DevicePlugin(Plugin):
         """
         job.info.reset()
         job.info.started = datetime.now()
-        self.device.submit(job)
+        return self.device.submit(job)
 
     def _default_device(self):
         """ If no device is loaded from the previous state, get the device
@@ -937,12 +960,11 @@ class DevicePlugin(Plugin):
     # -------------------------------------------------------------------------
     # Live progress API
     # -------------------------------------------------------------------------
-    @observe('device.job')
+    @observe('device', 'device.job')
     def _reset_preview(self, change):
         """ Redraw the preview on the screen 
         
         """
-        log.info(change)
         view_items = []
 
         #: Transform used by the view

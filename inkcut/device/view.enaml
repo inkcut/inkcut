@@ -99,6 +99,15 @@ enamldef DeviceConfigView(Container):
             title = "Advanced"
             Form:
                 Label:
+                    text = "Uses spooling service"
+                    tool_tip = textwrap.dedent("""
+                    If checked this will ignore interpolation settings and speed/delay settings.
+                    Spooled data simply goes into the spooling service's buffer these features do
+                    not apply. This should be enabled if using a device connected as a printer.
+                    """).strip()
+                CheckBox:
+                    checked := model.spooled
+                Label:
                     text = "Interpolate paths"
                     tool_tip = textwrap.dedent("""
                     If enabled this will break down the commands into
@@ -107,6 +116,7 @@ enamldef DeviceConfigView(Container):
                     devices.
                     """).strip()
                 CheckBox:
+                    enabled << not model.spooled
                     checked := model.interpolate
                 Label:
                     text = "Step size"

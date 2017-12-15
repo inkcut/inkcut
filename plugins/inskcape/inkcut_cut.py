@@ -21,12 +21,10 @@
 #	   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #	   MA 02110-1301, USA.
 """
-import sys
-import subprocess
 import os
-
-sys.path.append('/usr/share/inkscape/extensions')
+import sys
 import inkex
+import subprocess
 
 
 class InkscapeInkcutPlugin(inkex.Effect):
@@ -38,18 +36,15 @@ class InkscapeInkcutPlugin(inkex.Effect):
             if tag == 'text':
                 inkex.errormsg("A text node was found in the selection, "
                                "please convert all text objects to paths and "
-                               "try again.\n\n"
-                               "Make sure the statusbar displays")
+                               "try again.")
                 return False
         return True  # passed :)
 
     def effect(self):
         nodes = self.selected
         if len(nodes) and self.validate():
-            from app.main import InkscapePlugin
 
-
-            InkscapePlugin(self.document,nodes.keys(),inkex)
+            InkscapePlugin(self.document, nodes.keys(), inkex)
             """
             f = open('/home/rhino/projects/inkcut/app/tmp/inkscape.svg','w+')
             f.write(inkex.etree.tostring(self.document))
