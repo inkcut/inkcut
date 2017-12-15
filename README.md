@@ -4,12 +4,25 @@ A an application for controlling 2D cnc machines
 
 ## Install
 
-See setup.py
-
-### Raspberry pi
+There are no install packages (yet). For now you can install 
+all the dependencies and build it from source.
 
 
 ### Activate the virtual env
+
+On linux
+
+```
+
+#: From this folder
+virtualenv venv
+source venv activate
+
+
+```
+
+
+On the raspberry pi
 
 ```bash
 source ~/.profile           #" loads virtual environment profile settings
@@ -19,6 +32,8 @@ python                      #" open python
 >>> cv2.funstuff            #" execute cv2 stuff
 
 ```
+
+Now install the dependencies
 
 ### Install everything in the setup file
 
@@ -37,6 +52,8 @@ pip install lxml
 
 # Install pyqt4
 sudo apt install python-qt4
+
+#: Replace ~/.virtualenvs/cv with venv/ on linux
 ln -s /usr/lib/python2.7/dist-packages/PyQt4/ ~/.virtualenvs/cv/lib/python2.7/site-packages/
 ln -s /usr/lib/python2.7/dist-packages/sip.so ~/.virtualenvs/cv/lib/python2.7/site-packages/
 
@@ -49,10 +66,10 @@ pip install faulthandler
 # Install pyserial 
 pip install pyserial
 
-# Install RPI.GPIO
+# Install RPI.GPIO (pi only)
 pip install RPi.GPIO
 
-# Install zbar
+# Install zbar (pi only)
 pip install git+https://github.com/npinchot/zbar.git
 
 
@@ -62,19 +79,9 @@ pip install git+https://github.com/npinchot/zbar.git
 
 Run `python main.py`
 
-## How it all works
+## Docs
 
-For now... open `inkcut/workbench/ui/plugin.py`
-and import and create an instance of your device in the `_default_device` method.
-
-Your device should be a subclass of 
-[inkcut.workbench.core.device.Device](https://gitlab.com/frmdstryr/inkcut/tree/master/src/inkcut/workbench/core/device.py)). 
-All the crap is in there and 
-[inkcut.workbench.core.job.Job](https://gitlab.com/frmdstryr/inkcut/tree/master/src/inkcut/workbench/core/job.py).
-
-It calls your code in 
-[inkcut.plugins.jeffy.jeffy.JeffyDevice](https://gitlab.com/frmdstryr/inkcut/tree/master/src/inkcut/plugins/jeffy/jeffy.py).
-where you can do whatever you want.
+Docs coming soon...
 
 
 ### How to use markdown
@@ -82,7 +89,7 @@ where you can do whatever you want.
 [Markdown](https://guides.github.com/features/mastering-markdown/)
 
 
-### Pushing crap with git
+### Pushing changes with git
 
 Cd to the folder and
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Copyright (c) 2017, Jairus Martin.
@@ -10,12 +11,9 @@ Created on Jul 12, 2015
 
 @author: jrm
 """
-import faulthandler
-faulthandler.enable()
 
-from inkcut.core.workbench import InkcutWorkbench
+from inkcut.app import main
 
 if __name__ == '__main__':
-    workbench = InkcutWorkbench()
-    workbench.run()
+    main()
 

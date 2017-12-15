@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Copyright (c) 2017, Jairus Martin.
@@ -10,10 +11,15 @@ Created on Jul 12, 2015
 
 @author: jrm
 """
-import enamlx
-enamlx.install()
-from inkcut.workbench.core.app import InkcutWorkbench
+import faulthandler
+from inkcut.core.workbench import InkcutWorkbench
+
+
+def main():
+    faulthandler.enable()
+    workbench = InkcutWorkbench()
+    workbench.run()
 
 if __name__ == '__main__':
-    workbench = InkcutWorkbench()
-    workbench.run() 
+    main()
+
