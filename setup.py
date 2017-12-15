@@ -1,3 +1,15 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 15, 2017
+
+@author: jrm
+"""
+
 from setuptools import setup, find_packages
 
 setup(
@@ -15,15 +27,15 @@ setup(
         'console_scripts': ['inkcut = inkcut.main'],
     },
     install_requires=[
-        'enaml', # must install pyqt or pyside
+        'enaml',  # must install pyqt or pyside
         'twisted',
-        'enamlx', # use pip install  git+https://github.com/frmdstry/enamlx.git
+        'enamlx',  # use pip install git+https://github.com/frmdstry/enamlx.git
         'pyqtgraph',
         'qt4reactor',
         'qtconsole',
         'pyserial',
         'faulthandler',
         'jsonpickle',
-        'lxml', # use sudo apt install libxml2-dev libxslt-dev
+        'lxml',  # use sudo apt install libxml2-dev libxslt-dev
     ],
 )
