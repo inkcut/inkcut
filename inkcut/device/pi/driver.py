@@ -13,7 +13,7 @@ Created on Jan 24, 2015
 import time
 from atom.api import Instance, List, Int, Float, Tuple, Dict, Bool, observe
 from inkcut.core.api import Model
-from inkcut.device.plugin import Device
+from inkcut.device.plugin import Device, DeviceConfig
 
 try:
     import RPi.GPIO as GPIO
@@ -70,7 +70,7 @@ class StepperMotor(Model):
                 time.sleep(self.delay)                      # Software Square Wave Low Time
                   
 
-class PiConfig(Model):
+class PiConfig(DeviceConfig):
 
     #: Enable qr code registration
     crop_mark_registration = Bool()
@@ -116,7 +116,7 @@ class PiConfig(Model):
 
 class PiDevice(Device):
     #: Mapping of stepper motor axis to StepperMotor instance
-    motor = Dict()# ??? JAIRUS ???
+    motor = Dict()
 
     #: Config that is editable by Inkcut
     config = Instance(PiConfig, ())
@@ -194,7 +194,9 @@ class PiDevice(Device):
         self.move(0, 0, absolute=True)
     
     def move(self, dx, dy, z, absolute=False):
-        """ Move to position. Based on http://goldberg.berkeley.edu/pubs/XY-Interpolation-Algorithms.pdf
+        """ Move to position. 
+        Based on http://goldberg.berkeley.edu/pubs/
+                                            XY-Interpolation-Algorithms.pdf
          
         @param: dx, steps in x direction or x position
         @param: dy, steps in y direction or y position
@@ -386,14 +388,6 @@ class PiDevice(Device):
         return (x, y, rotation)
     
     
-# class JeffyProtocol(IDeviceProtocol):
-#     """ Hooks into UI """ 
-#     plotter = Instance(Plotter2D)
-#     def init(self):
-#         self.plotter = Plotter2D()
-#         
-#     def move(self, x, y, z):
-#         self.plotter.move(x, y,absolute=True)
-#     
+
         
 
