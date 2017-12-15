@@ -427,7 +427,7 @@ enamldef JobHistoryDockItem(DockItem):
                             text = "Send job to device"
                             icon = load_icon("control_repeat_blue")
                             triggered ::
-                                device_plugin = plugin.workbench.get_plugin("inkcut.device")
-                                device_plugin.submit(job)
+                                core = plugin.workbench.get_plugin("enaml.workbench.core")
+                                core.invoke_command('inkcut.device.submit', parameters={'job': job})
 
 

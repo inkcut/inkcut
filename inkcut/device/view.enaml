@@ -66,33 +66,33 @@ enamldef DeviceConfigView(Container):
             Form:
                 Label:
                     text = "Rotation"
-                    tool_tip = textwrap.dedent("""
-                    sFinal output rotation.
-                    """).strip()
                 ObjectCombo:
                     items = list(model.get_member('rotation').items)
                     selected := model.rotation
+                    tool_tip = textwrap.dedent("""
+                    Final output rotation.
+                    """).strip()
                 Label:
                     text = "Scale"
                 Form:
                     Label:
                         text = "x"
-                        tool_tip = textwrap.dedent("""
-                        Final output scale for the x-axis.
-                        """).strip()
                     DoubleSpinBox:
                         value := model.scale[0]
                         minimum = -9999.9
                         maximum = 9999.9
+                        tool_tip = textwrap.dedent("""
+                        Final output scale for the x-axis.
+                        """).strip()
                     Label:
                         text = "y"
-                        tool_tip = textwrap.dedent("""
-                        Final output scale for the y-axis.
-                        """).strip()
                     DoubleSpinBox:
                         value := model.scale[1]
                         minimum = -9999.9
                         maximum = 9999.9
+                        tool_tip = textwrap.dedent("""
+                            Final output scale for the y-axis.
+                            """).strip()
 
         Page:
             closable = False
@@ -198,5 +198,6 @@ enamldef DeviceProgressDockItem(DockItem):
                     if device.busy:
                         job.info.paused = not job.info.paused
                     elif job_plugin and job_plugin.job.document:
-                        plugin.submit(job_plugin.job)
-
+                        core = plugin.workbench.get_plugin("enaml.workbench.core")
+                        core.invoke_command('inkcut.device.submit',
+                                            parameters={'job': job_plugin.job})
