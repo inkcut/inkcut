@@ -1,0 +1,12 @@
+{
+  "docs": [
+    {"title":"",
+      "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/index.md"},
+    {"title":"Installing",
+      "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/installing.md"},
+    {"title":"Tutorial",
+      "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/tutorial.md"},
+    {"title":"Developer",
+      "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/developer.md"}
+  ]
+}
