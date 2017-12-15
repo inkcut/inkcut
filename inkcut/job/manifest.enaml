@@ -165,16 +165,16 @@ enamldef JobManifest(PluginManifest):
             group = 'document'
             shortcut = 'Ctrl+W'
             command = 'inkcut.job.close'
-        MenuItem:
-            path = '/material'
-            label = 'Material'
-            after = 'file'
-            before = 'settings'
-            ItemGroup:
-                id = 'material'
-        ActionItem:
-            path = '/material/manage'
-            label = 'Manage'
-            shortcut = 'Ctrl+M'
-            command = 'inkcut.job.material_setup'
-            icon = menu_icon('chart_curve_go')
+#        MenuItem:
+#            path = '/material'
+#            label = 'Material'
+#            after = 'file'
+#            before = 'settings'
+#            ItemGroup:
+#                id = 'material'
+#        ActionItem:
+#            path = '/material/manage'
+#            label = 'Manage'
+#            shortcut = 'Ctrl+M'
+#            command = 'inkcut.job.material_setup'
+#            icon = menu_icon('chart_curve_go')

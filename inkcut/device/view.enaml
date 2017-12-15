@@ -10,6 +10,7 @@ Created on Dec 7, 2017
 
 @author: jrm
 """
+import os
 import textwrap
 from enaml.layout.api import hbox, vbox, spacer, align
 from enaml.widgets.api import (
@@ -162,12 +163,16 @@ enamldef DeviceProgressDockItem(DockItem):
             ]
 
             Label: lbl1:
-                text << "Job: {}".format(job.document if job else "")
+                text << "Job: {}".format(os.path.split(job.document)[-1] if job else "")
             Label: lbl2:
-                text << "Started: {}".format(job.info.started if job else "")
+                text << "Started: {}".format(job.info.started.strftime('%c') if job else "")
             Label: lbl3:
-                text << "Eta: {}".format(job.info.started + job.info.eta if (
-                        job and job.info.started and job.info.eta) else "" )
+                text << "Eta: {} {}".format(
+                            (job.info.started + job.info.eta).strftime('%c') if (
+                                job and job.info.started and job.info.eta) else "",
+                            "({} min)".format(int(job.info.eta.total_seconds()/60)) if (job and
+                                    job.info.eta) else "",
+                        )
             # Label: lbl:
             # text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(
             #     device.position[0],

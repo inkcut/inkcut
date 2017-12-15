@@ -396,8 +396,9 @@ enamldef JobHistoryDockItem(DockItem):
     Container:
         padding = 0
         TableView: table:
-            horizontal_headers = ['Document', 'Started', 'Completed']
+            horizontal_headers = ['Document', 'Count', 'Started', 'Finished']
             horizontal_stretch = True
+            show_vertical_header = False
             items << plugin.jobs
             Looper:
                 iterable << plugin.jobs
@@ -407,13 +408,26 @@ enamldef JobHistoryDockItem(DockItem):
                         text << str(os.path.split(job.document)[-1]) if job else ""
                         tool_tip = str(job.document) if job else ""
                     TableViewItem:
-                        text << str(job.info.started) if job else ""
+                        text << str(job.info.count) if job else "0"
                     TableViewItem:
-                        text << str(job.info.done) if job else ""
+                        text << str(job.info.started.strftime('%c')) if job and job.info.started else ""
+                    TableViewItem:
+                        icon << load_icon('accept'  if (job and job.info.done) else 'cancel')
+                        text << "{} ({})".format(
+                            job.info.ended.strftime('%c'), job.info.ended-job.info.started
+                            ) if (job and job.info.ended and job.info.ended > job.info.started) else ""
                     Menu:
                         Action:
-                            text = "Reopen"
-                            icon = load_icon("folder_go")
+                            text = "Open job in preview"
+                            icon = load_icon("control_equalizer_blue")
                             triggered :: plugin.job = job
+                        Action:
+                            separator = True
+                        Action:
+                            text = "Send job to device"
+                            icon = load_icon("control_repeat_blue")
+                            triggered ::
+                                device_plugin = plugin.workbench.get_plugin("inkcut.device")
+                                device_plugin.submit(job)
 
 

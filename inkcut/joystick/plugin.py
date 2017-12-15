@@ -71,7 +71,9 @@ class JoystickPlugin(Plugin):
             return
 
     def set_origin(self):
-        self.device.position = [0, 0, 0]
+        """ Update the origin and clear the position """
+        self.device.origin = self.device.position
+        #self.device.position = [0, 0, 0]
 
     @defer.inlineCallbacks
     def reconnect(self):
@@ -79,8 +81,9 @@ class JoystickPlugin(Plugin):
         yield self.device.connection.connect()
     
     @with_connection
-    def move_to_origin(self):
-        self.device.move([0, 0, 0], absolute=True)
+    def move_to_origin(self, system=False):
+        x, y, z = [0, 0, 0] if system else self.device.origin
+        self.device.move([x, y, 0], absolute=True)
 
     @with_connection
     def move_up(self):

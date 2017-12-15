@@ -18,8 +18,9 @@ from atom.api import (
 from contextlib import contextmanager
 from datetime import datetime
 from enaml.qt import QtCore, QtGui
+from enaml.application import deferred_call
 from inkcut.core.api import Model, Plugin, AreaBase
-from inkcut.core.utils import parse_unit, to_unit, async_sleep, log
+from inkcut.core.utils import parse_unit, from_unit, to_unit, async_sleep, log
 from twisted.internet import defer
 from io import BytesIO
 from . import extensions
@@ -264,8 +265,11 @@ class Device(Model):
     #: The active transport
     connection = Instance(DeviceTransport).tag(config=True)
 
-    #: List of jobs run on this device
+    #: List of jobs that were run on this device
     jobs = List(Model).tag(config=True)
+
+    #: List of jobs queued to run on this device
+    queue = List(Model).tag(config=True)
 
     #: Current job being processed
     job = Instance(Model).tag(config=True)
@@ -276,6 +280,10 @@ class Device(Model):
     #: Position. Defaults to x,y,z. The protocol can
     #: handle this however necessary.
     position = ContainerList(default=[0, 0, 0])
+
+    #: Origin position. Defaults to [0, 0, 0]. The system will translate
+    #: jobs to the origin so multiple can be run.
+    origin = ContainerList(default=[0, 0, 0])
 
     #: Device is currently busy processing a job
     busy = Bool()
@@ -382,8 +390,8 @@ class Device(Model):
 
         #: Translate back to 0,0 so all coordinates are positive
         path = path * t
-        p = path.boundingRect().bottomLeft()
-        path *= QtGui.QTransform.fromTranslate(-p.x(), -p.y())
+        #p = path.boundingRect().bottomLeft()
+        #path *= QtGui.QTransform.fromTranslate(-p.x(), -p.y())
 
         return path
 
@@ -410,7 +418,8 @@ class Device(Model):
 
         #: Set the speed of this device for tracking purposes
         if hasattr(config, 'speed'):
-            job.info.speed = config.speed
+            units = config.speed_units.split("/")[0]
+            job.info.speed = from_unit(config.speed, units)
 
         #: Get the internal QPainterPath "model"
         model = job.model
@@ -418,6 +427,9 @@ class Device(Model):
         #: Transform the path to the device coordinates
         model = self.transform(model)
 
+        #: Move the job to the new origin
+        x, y, z = self.origin
+        model.translate(x, y)
         #: TODO: Apply filters here
 
         #: Return the transformed model
@@ -447,7 +459,6 @@ class Device(Model):
                 coordinates).
             absolute: bool
                 Position is in absolute coordinates
-        
         Returns
         -------
             result: Deferred or None
@@ -489,9 +500,12 @@ class Device(Model):
 
     @defer.inlineCallbacks
     def submit(self, job, test=False):
-        """ Submit the job to the device. This handles iteration over the
-        path model defined by the job and sending commands to the actual
-        device using roughly the procedure is as follows:
+        """ Submit the job to the device. If the device is currently running
+        a job it will be queued and run when this is finished.
+        
+        This handles iteration over the path model defined by the job and 
+        sending commands to the actual device using roughly the procedure is 
+        as follows:
                 
                 device.connect()
                 
@@ -523,7 +537,11 @@ class Device(Model):
         """
         #: Only allow one job at a time
         if self.busy:
-            raise RuntimeError("Device is busy processing another job!")
+            queue = self.queue[:]
+            queue.append(job)
+            self.queue = queue  #: Copy and reassign so the UI updates
+            log.info("Job {} put in device queue".format(job))
+            return
 
         with self.device_busy():
             #: Set the current the job
@@ -598,6 +616,19 @@ class Device(Model):
 
                 yield defer.maybeDeferred(self.disconnect)
 
+        #: Set the origin
+        if job.feed_to_end and not job.info.cancelled:
+            self.origin = self.position
+
+        #: If the user didn't cancel, set the origin and
+        #: Process any jobs that entered the queue while this was running
+        if self.queue and not job.info.cancelled:
+            queue = self.queue[:]
+            job = queue.pop(0)  #: Pull the first job off the queue
+            log.info("Rescheduling {} from queue".format(job))
+            self.queue = queue  #: Copy and reassign so the UI updates
+            deferred_call(self.submit, job)
+
     def process(self, model):
         """  Process the path model of a job and return each command
         within the job.
@@ -622,7 +653,7 @@ class Device(Model):
             raise ValueError("Cannot have a step size <= 0!")
 
         #: Previous point
-        _p = QtCore.QPointF(0, 0)
+        _p = QtCore.QPointF(self.origin[0], self.origin[1])
 
         for path in model.toSubpathPolygons():
 
@@ -709,6 +740,15 @@ class Device(Model):
         """ Whenever the status changes, log it """
         log.info("Device: {}".format(self.status))
 
+    def _observe_job(self, change):
+        """ Save the previous jobs """
+        if change['type'] == 'update':
+            job = change['value']
+            if job not in self.jobs:
+                jobs = self.jobs[:]
+                jobs.append(job)
+                self.jobs = jobs
+
 
 class DevicePlugin(Plugin):
     """ Plugin for configuring, using, and communicating with 
@@ -778,6 +818,12 @@ class DevicePlugin(Plugin):
             raise RuntimeError("No device drivers were registered. "
                                "This indicates a missing plugin.")
         return self.get_device_from_driver(self.drivers[0])
+
+    def _observe_device(self, change):
+        """ Whenever the device changes, redraw """
+        #: Redraw
+        plugin = self.workbench.get_plugin('inkcut.job')
+        plugin.refresh_preview()
 
     # -------------------------------------------------------------------------
     # Device Driver API
@@ -912,7 +958,7 @@ class DevicePlugin(Plugin):
             view_items.append(
                 dict(path=device.transform(device.area.path*t),
                      pen=plot.pen_device,
-                     skip_autorange=True)#(False, [area.size[0], 0]))
+                     skip_autorange=True)
             )
 
         if job and job.material:
@@ -920,7 +966,7 @@ class DevicePlugin(Plugin):
             view_items.extend([
                 dict(path=device.transform(job.material.path*t),
                      pen=plot.pen_media,
-                     skip_autorange=True),#(False, [0, job.size[1]])),
+                     skip_autorange=True),
                 dict(path=device.transform(job.material.padding_path*t),
                      pen=plot.pen_media_padding, skip_autorange=True)
             ])

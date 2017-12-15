@@ -57,11 +57,15 @@ class JobPlugin(Plugin):
 
         #: If we loaded from state, refresh
         if self.job.document:
-            self._refresh_preview({})
+            self.refresh_preview()
 
     # -------------------------------------------------------------------------
     # Job API
     # -------------------------------------------------------------------------
+    def refresh_preview(self):
+        """ Refresh the preview. Other plugins can request this """
+        self._refresh_preview({})
+
     def open_document(self, path):
         """ Set the job.document if it is empty, otherwise close and create
         a  new Job instance.
@@ -128,18 +132,23 @@ class JobPlugin(Plugin):
         #: Draw the device
         plugin = self.workbench.get_plugin('inkcut.device')
         device = plugin.device
+
+        #: Apply the finaly output transforms from the device
+        transform = device.transform if device else lambda p: p
+
         if device and device.area:
             area = device.area
             view_items.append(
-                dict(path=device.area.path*t, pen=plot.pen_device,
-                     skip_autorange=(False, [area.size[0], 0]))
+                dict(path=transform(device.area.path*t),
+                     pen=plot.pen_device,
+                     skip_autorange=True)#(False, [area.size[0], 0]))
             )
 
         #: The model is only set when a document is open and has no errors
         if job.model:
             view_items.extend([
-                dict(path=job.move_path, pen=plot.pen_up),
-                dict(path=job.cut_path, pen=plot.pen_down)
+                dict(path=transform(job.move_path), pen=plot.pen_up),
+                dict(path=transform(job.cut_path), pen=plot.pen_down)
             ])
             #: TODO: This
             #if self.show_offset_path:
@@ -148,9 +157,10 @@ class JobPlugin(Plugin):
         if job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([
-                dict(path=job.material.path*t, pen=plot.pen_media,
-                     skip_autorange=(False, [0, job.size[1]])),
-                dict(path=job.material.padding_path*t,
+                dict(path=transform(job.material.path*t),
+                     pen=plot.pen_media,
+                     skip_autorange=([0, job.size[0]], [0, job.size[1]])),
+                dict(path=transform(job.material.padding_path*t),
                      pen=plot.pen_media_padding, skip_autorange=True)
             ])
 

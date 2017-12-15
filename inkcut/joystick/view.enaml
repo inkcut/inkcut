@@ -31,11 +31,15 @@ enamldef JoystickDockItem(DockItem):
     Container:
         padding = 0
         constraints = [
-            hbox(controls, head, directions, status),
+            hbox(directions, spacer, status),
             #align('v_center', lbl2, spb1),
             #align('v_center', lbl3, spb2),
             #align('v_center', lbl4, spb3),
         ]
+#        Label: lbl:
+#            text = ""
+#            KeyEvent:
+#                pressed :: print(change)
         #KeyEvent:
         #    pressed ::
         #        print(change['value'])
@@ -66,34 +70,67 @@ enamldef JoystickDockItem(DockItem):
                 Label:
                     text = "Status"
                 Label:
-                    text << '(x=%0.3f x y=%0.3f z=%s) %s'%(
-                                device.position[0],
-                                device.position[1],
-                                device.position[2],
-                                'connected' if (device.connection and device.connection.connected)
-                                else 'disconnected')
+                    text << 'Position: (x=%0.3f x y=%0.3f z=%s) Origin: (x=%0.3f, y=%0.3f)  %s' % (
+                        device.position[0],
+                        device.position[1],
+                        device.position[2],
+                        device.origin[0],
+                        device.origin[1],
+                        'busy' if device.busy else 'idle'
+                        )
 #
-#        Label: lbl3:
-#            text = 'Speed'
-#        SpinBox: spb2:
-#            maximum = 10000
-#            single_step = 4
-#            #value := device.speed
-#
-#        Label: lbl4:
-#            text = 'Force'
-#        SpinBox: spb3:
-#            maximum = 10000
-#            single_step = 10
-#            #value := device.force
-        Container: controls:
-            Label:
-                text = "Connection"
-            PushButton:
-                icon = load_icon('arrow_refresh')
-                clicked :: plugin.reconnect()
-                tool_tip = "Reconnect to the device"
-            PushButton:
+
+        Container: directions:
+            constraints = [
+                vbox(lblpos,
+                     hbox(pb9, pb5, pb1, pb6, pb8),
+                     hbox(pb10, pb2, pb3, pb4, pb7))
+            ]
+            Label: lblpos:
+                text = "Control"
+            PushButton: pb9:
+                icon = load_icon("bullet_toggle_plus")
+                enabled << not device.busy
+                clicked :: plugin.move_head_up()
+                tool_tip = "Lift head up"
+            PushButton: pb10:
+                icon = load_icon("bullet_toggle_minus")
+                tool_tip = "Put head down"
+                enabled << not device.busy
+                clicked :: plugin.move_head_down()
+            PushButton: pb5:
+                enabled << not device.busy
+                clicked :: plugin.set_origin()
+                icon = load_icon('arrow_in')
+                tool_tip = 'Set the virtual origin'
+            PushButton: pb1:
+                enabled << not device.busy
+                clicked :: plugin.move_up()
+                icon = load_icon('arrow_up')
+                tool_tip = 'move up'
+            PushButton: pb6:
+                enabled << not device.busy
+                clicked :: plugin.move_to_origin()
+                icon = load_icon('arrow_undo')
+                tool_tip = 'Return to virtual origin'
+            PushButton: pb2:
+                enabled << not device.busy
+                clicked :: plugin.move_left()
+                icon = load_icon('arrow_left')
+                tool_tip = 'move left'
+            PushButton: pb3:
+                enabled << not device.busy
+                clicked :: plugin.move_down()
+                icon = load_icon('arrow_down')
+                tool_tip = 'move down'
+            PushButton: pb4:
+                enabled << not device.busy
+                clicked :: plugin.move_right()
+                icon = load_icon('arrow_right')
+                tool_tip = 'move right'
+
+            PushButton: pb7:
+                enabled << not device.busy
                 icon << load_icon('disconnect' if device.connection.connected else 'connect')
                 tool_tip << "{} the device".format('Disconnect from' if device.connection.connected
                                                    else 'Connect to')
@@ -102,46 +139,9 @@ enamldef JoystickDockItem(DockItem):
                             device.disconnect()
                         else:
                             device.connect()
-        Container: head:
-            Label:
-                text = "Head"
-            PushButton:
-                icon = load_icon("bullet_toggle_plus")
-                clicked :: plugin.move_head_up()
-            PushButton:
-                icon = load_icon("bullet_toggle_minus")
-                clicked :: plugin.move_head_down()
-        Container: directions:
-            constraints = [
-                vbox(lblpos,
-                     hbox(pb5, pb1, pb6),
-                     hbox(pb2, pb3, pb4))
-            ]
-            Label: lblpos:
-                text = "Position"
-            PushButton: pb5:
-                clicked :: plugin.set_origin()
-                icon = load_icon('arrow_in')
-                tool_tip = 'set origin'
-            PushButton: pb1:
-                clicked :: plugin.move_up()
-                icon = load_icon('arrow_up')
-                tool_tip = 'move up'
-            PushButton: pb6:
-                clicked :: plugin.move_to_origin()
-                icon = load_icon('arrow_undo')
-                tool_tip = 'return to origin'
-            PushButton: pb2:
-                clicked :: plugin.move_left()
-                icon = load_icon('arrow_left')
-                tool_tip = 'move left'
-            PushButton: pb3:
-                clicked :: plugin.move_down()
-                icon = load_icon('arrow_down')
-                tool_tip = 'move down'
-            PushButton: pb4:
-                clicked :: plugin.move_right()
-                icon = load_icon('arrow_right')
-                tool_tip = 'move right'
-            
 
+            PushButton: pb8:
+                enabled << not device.busy
+                icon << load_icon('arrow_out')
+                tool_tip = "Return to the system origin (0,0)"
+                clicked :: plugin.move_to_origin(system=True)

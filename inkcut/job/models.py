@@ -69,13 +69,14 @@ class JobInfo(Model):
     ended = Instance(datetime).tag(config=True)
     progress = Range(0, 100, 0).tag(config=True)
     data = Unicode().tag(config=True)
+    count = Int().tag(config=True)
 
     #: Device speed in px/s
     speed = Float(strict=False).tag(config=True)
     #: Length in px
     length = Float(strict=False).tag(config=True)
 
-    #: Estimates
+    #: Estimates based on length and speed
     eta = Instance(timedelta).tag(config=True)
 
     def reset(self):
@@ -83,6 +84,12 @@ class JobInfo(Model):
         self.paused = False
         self.cancelled = False
         self.done = False
+
+    def _observe_done(self, change):
+        if change['type'] == 'update':
+            #: Increment count every time it's completed
+            if self.done:
+                self.count += 1
 
     @observe('started', 'length', 'speed')
     def _update_eta(self, change):
@@ -204,7 +211,7 @@ class Job(Model):
             path = self.path * QtGui.QTransform.fromScale(s, s)
 
         # Move to bottom left
-        p = path.boundingRect().bottomLeft()
+        p = path.boundingRect().bottomRight()
 
         path = path * QtGui.QTransform.fromTranslate(-p.x(), -p.y())
 
