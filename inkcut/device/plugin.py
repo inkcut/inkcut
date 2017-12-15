@@ -222,7 +222,7 @@ class DeviceConfig(Model):
 
     #: Device output is spooled by an external service
     #: this will cause the job to run with no delays between commands
-    spooled = Bool().tag(config=False)
+    spooled = Bool().tag(config=True)
 
     def _default_step_time(self):
         """ Determine the step time based on the device speed setting 
