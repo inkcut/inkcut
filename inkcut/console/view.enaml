@@ -23,6 +23,6 @@ enamldef ConsoleDockItem(DockItem):
     Container:
         padding = 0
         IPythonConsole:
-            pass
+            minimum_size = (150, 150)
 
 
