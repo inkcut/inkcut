@@ -10,19 +10,25 @@ from inkcut.device.plugin import DeviceProtocol
 class GCodeProtocol(DeviceProtocol):
 
     def connection_made(self):
-        self.write("IN;")
+        self.write("G28; Return to home\n")
+        self.write("G98; Return to initial z\n")
+        self.write("G90; Use absolute coordinates\n")
     
     def move(self, x, y, z, absolute=True):
-        self.write("%s%i,%i;"%(z and "PD" or "PU", x, y))
+        self.write("G0%i X%i Y%i;\n" % (z, x, y))
         
     def set_force(self, f):
-        self.write("FS%i;"%f)
+        raise NotImplementedError
         
     def set_velocity(self, v):
-        self.write("VS%i;"%v)
+        raise NotImplementedError
         
     def set_pen(self, p):
-        self.write("SP%i;"%p)
+        raise NotImplementedError
+
+    def finish(self):
+        self.write("G28; Return to home\n")
+        self.write("G98; Return to initial z\n")
 
     def connection_lost(self):
         pass
