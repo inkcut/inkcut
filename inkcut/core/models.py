@@ -171,6 +171,10 @@ class Plugin(EnamlPlugin):
     # -------------------------------------------------------------------------
     # State API
     # -------------------------------------------------------------------------
+    def save(self):
+        """ Manually trigger a save """
+        self._save_state({'type': 'request'})
+
     def _default__state_file(self):
         return os.path.expanduser(
             "~/.config/inkcut/{}.json".format(self.manifest.id))
@@ -205,7 +209,7 @@ class Plugin(EnamlPlugin):
 
     def _save_state(self, change):
         """ Try to save the plugin state """
-        if change['type'] in ['update', 'container']:
+        if change['type'] in ['update', 'container', 'request']:
             try:
                 log.info("Saving state due to change: {}".format(change))
 
