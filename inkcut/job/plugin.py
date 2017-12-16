@@ -10,7 +10,6 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import os
-import enaml
 from atom.api import Instance, Enum, List, observe
 from inkcut.core.api import Plugin, unit_conversions, log
 
@@ -47,13 +46,10 @@ class JobPlugin(Plugin):
         """ Register the plugins this plugin depends on
 
         """
-        w = self.workbench
-        # with enaml.imports():
-        #     from inkcut.device.manifest import DeviceManifest
-        #     w.register(DeviceManifest())
-
         #: Now load state
         super(JobPlugin, self).start()
+
+        #: Parse cmd line args
 
         #: If we loaded from state, refresh
         if self.job.document:

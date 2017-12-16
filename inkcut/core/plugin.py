@@ -11,6 +11,7 @@ Created on Jul 12, 2015
 """
 import os
 import sys
+import enaml
 import logging
 import traceback
 from atom.api import Unicode
@@ -21,17 +22,30 @@ from logging.handlers import RotatingFileHandler
 class CorePlugin(Plugin):
 
     _log_filename = Unicode()
-    _log_format = Unicode('%(asctime)-15s | %(levelname)s | %(message)s')
+    _log_format = Unicode('%(asctime)-15s | %(levelname)-7s | %(name)s | %(message)s')
 
     def start(self):
         self.init_logging()
         log.debug("Inkcut started.")
-        self.workbench.application.deferred_call(self.start_default_workspace)
+
+        #: Load the cli plugin
+        w = self.workbench
+        with enaml.imports():
+            from inkcut.cli.manifest import CliManifest
+        w.register(CliManifest())
+
+        #: Start it
+        w.get_plugin('inkcut.cli')
+
+        #: Start the default workspace
+        w.application.deferred_call(self.start_default_workspace)
 
     def start_default_workspace(self):
         try:
             ui = self.workbench.get_plugin('enaml.workbench.ui')
             ui.select_workspace('inkcut.workspace')
+        except SystemExit:
+            raise
         except:
             log.error(traceback.format_exc())
             tb = traceback.format_exc().split("\n")

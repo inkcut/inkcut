@@ -18,23 +18,27 @@ from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
 from inkcut.job.models import JobError
 from inkcut.core.utils import menu_icon
 from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
-
+from inkcut.cli.extensions import CLI_COMMAND_POINT, CliCommand, StopSystemExit
 
 def open_document(event):
     workbench = event.workbench
     ui = workbench.get_plugin('enaml.workbench.ui')
     plugin = workbench.get_plugin('inkcut.job')
 
-    #: Get the previous path
-    if plugin.jobs:
-        current_path = dirname(plugin.jobs[-1].document)
-    else:
-        current_path = expanduser('~')
+    #: If one was passed in use that
+    path = event.parameters.get('path')
 
-    #: Get the file to open
-    path = FileDialogEx.get_open_file_name(
-        ui.window, current_path=current_path, name_filters=['*.svg']
-    )
+    if not path:
+        #: Get the previous path
+        if plugin.jobs:
+            current_path = dirname(plugin.jobs[-1].document)
+        else:
+            current_path = expanduser('~')
+
+        #: Get the file to open
+        path = FileDialogEx.get_open_file_name(
+            ui.window, current_path=current_path, name_filters=['*.svg']
+        )
 
     #: Open it
     if path:
@@ -44,6 +48,18 @@ def open_document(event):
             workbench.message_critical(
                 title="Error opening document",
                 message="Could not open {}\n\n{}".format(path, e))
+
+
+def cli_open_document(cmd):
+    """ Open the document passed from the command line
+
+    inkcut open <file.svg>
+
+    """
+    core = cmd.workbench.get_plugin("enaml.workbench.core")
+    core.invoke_command("inkcut.job.open", parameters={'path':cmd.args.path})
+    raise StopSystemExit()
+
 
 def close_document(event):
     plugin = event.workbench.get_plugin('inkcut.job')
@@ -107,7 +123,6 @@ enamldef JobManifest(PluginManifest):
             plugin_id = 'inkcut.job'
         Autostart:
             plugin_id = 'inkcut.device'
-
     Extension:
         id = 'commands'
         point = 'enaml.workbench.core.commands'
@@ -120,7 +135,16 @@ enamldef JobManifest(PluginManifest):
         Command:
             id = 'inkcut.job.material_setup'
             handler = media_setup
-
+    Extension:
+        id = 'cli'
+        point = CLI_COMMAND_POINT
+        CliCommand:
+            name = 'open'
+            help = "Open the given path"
+            args = [
+                ('path', dict(metavar='file', help="Path of the document to open")),
+            ]
+            handler = cli_open_document
     Extension:
         id = 'items'
         point = DOCK_ITEM_POINT

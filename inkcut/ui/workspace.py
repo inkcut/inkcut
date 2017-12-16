@@ -71,17 +71,12 @@ class InkcutWorkspace(Workspace):
         """ Load the dock area into the workspace content.
 
         """
-        area = None
         plugin = self.workbench.get_plugin("inkcut.ui")
-        try:
-            #with open('inkcut.workspace.db', 'r') as f:
-            #    area = pickle.loads(f.read())
-            pass #: TODO:
-        except Exception as e:
-            print(e)
-        if area is None:
-            print("Creating new area")
-            area = plugin.create_new_area()
-        else:
-            print("Loading existing doc area")
+        # try:
+        #     #with open('inkcut.workspace.db', 'r') as f:
+        #     #    area = pickle.loads(f.read())
+        #     pass #: TODO:
+        # except Exception as e:
+        #     print(e)
+        area = plugin.create_new_area()
         area.set_parent(self.content)
