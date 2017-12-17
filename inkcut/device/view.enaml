@@ -14,7 +14,8 @@ import os
 import textwrap
 from enaml.layout.api import hbox, vbox, spacer, align
 from enaml.widgets.api import (
-    Form, CheckBox, Container, Label, ProgressBar, PushButton, Notebook, Page, ObjectCombo
+    Form, CheckBox, Container, Label, ProgressBar, PushButton, Notebook, Page, ObjectCombo,
+    Action, Menu
 )
 from enamlx.widgets.api import DoubleSpinBox
 from inkcut.core.api import Model, DockItem
@@ -22,10 +23,12 @@ from inkcut.core.utils import to_unit, load_icon
 from inkcut.preview.plot_view import PlotView
 from .plugin import DeviceConfig
 
+
 enamldef ConfigView(Container):
     attr model: Model
     Label:
         text = "No configuration available."
+
 
 enamldef DeviceConfigView(Container):
     attr model: DeviceConfig
@@ -158,8 +161,6 @@ enamldef DeviceConfigView(Container):
                     """).strip()
 
 
-
-
 enamldef DeviceProgressDockItem(DockItem):
     title = "Live"
     name = "device-progress-item"
@@ -169,6 +170,7 @@ enamldef DeviceProgressDockItem(DockItem):
     attr job_plugin << plugin.workbench.get_plugin('inkcut.job')
     attr device << plugin.device
     attr job << device.job
+    attr clock << plugin.workbench.get_plugin("inkcut.ui").clock
     Container:
         padding = 0
         PlotView: plot:
@@ -178,26 +180,51 @@ enamldef DeviceProgressDockItem(DockItem):
                 'left': to_unit(1, preview.units),
                 'bottom': to_unit(1, preview.units)
             }
+
+            Menu:
+                context_menu = True
+                Action:
+                    text = 'Abort job'
+                    triggered :: job.info.cancelled = True
+                Action:
+                    separator = True
+                Action:
+                    text = 'View all'
+                    triggered :: plot_view.proxy.widget.autoRange()
+                Action:
+                    text = 'Clear plot'
+                    triggered :: plugin.reset_preview()
         Container:
             constraints = [
                 vbox(
-                    hbox(lbl1, lbl2, lbl3, spacer),
+                    hbox(lbl1, lbl2, lbl3, lbl4, lbl5, spacer),
                     hbox(prog, pb1,pb2)),
                 align('v_center', prog, pb1,pb2),
-                align('v_center', lbl1, lbl2, lbl3)
+                align('v_center', lbl1, lbl2, lbl3, lbl4, lbl5)
             ]
-
+            attr duration << job.info.duration.total_seconds() if job and job.info.duration else 0
             Label: lbl1:
-                text << "Job: {}".format(os.path.split(job.document)[-1] if job else "")
+                text << "Source: {}".format(os.path.split(job.document)[-1] if job else "")
             Label: lbl2:
-                text << "Started: {}".format(job.info.started.strftime('%c') if job else "")
+                text << "Size: {}{} x {}{}".format(
+                        round(to_unit(job.model.boundingRect().height(), job.info.units),2),
+                        preview.units,
+                        round(to_unit(job.model.boundingRect().width(), job.info.units), 2),
+                        preview.units
+                    ) if job and job.model else ""
             Label: lbl3:
-                text << "Eta: {} {}".format(
-                            (job.info.started + job.info.eta).strftime('%c') if (
-                                job and job.info.started and job.info.eta) else "",
-                            "({} min)".format(int(job.info.eta.total_seconds()/60)) if (job and
-                                    job.info.eta) else "",
-                        )
+                text << "Duration: {}".format(
+                        "{} min {} sec".format(int(duration/60),int(duration%60)
+                    ) if (job and job.info.duration) else "")
+            Label: lbl4:
+                attr t << max(0, ((job.info.started+job.info.duration)-clock.now).total_seconds()) if (
+                            job and job.info.duration) else 0
+                text << "Left: {}".format("{} min {} sec".format(int(t/60), int(t%60)
+                    ) if t else "")
+            Label: lbl5:
+                text << "Eta: {}".format(
+                    (job.info.started+job.info.duration).strftime("%X") if job and job.info.duration else ""
+                )
             # Label: lbl:
             # text << 'Position (x=%0.3f x y=%0.3f z=%s)'%(
             #     device.position[0],

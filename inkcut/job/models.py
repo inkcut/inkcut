@@ -14,7 +14,8 @@ from __future__ import division
 import os
 from datetime import datetime, timedelta
 from atom.api import (
-    Enum, Float, Int, Bool, Instance, ContainerList, Range, Unicode, observe
+    Enum, Float, Int, Bool, Instance, ContainerList, Range, Unicode,
+    Callable, observe
 )
 from contextlib import contextmanager
 from enaml.qt import QtCore, QtGui
@@ -60,9 +61,13 @@ class JobError(Exception):
 class JobInfo(Model):
     """ Job metadata """
     #: Controls
-    done = Bool(False).tag(config=True)
-    cancelled = Bool(False).tag(config=True)
-    paused = Bool(False).tag(config=True)
+    done = Bool()
+    cancelled = Bool()
+    paused = Bool()
+
+    #: Flags
+    status = Enum('staged', 'waiting', 'running', 'error',
+                  'approved', 'cancelled', 'complete').tag(config=True)
 
     #: Stats
     started = Instance(datetime).tag(config=True)
@@ -77,13 +82,24 @@ class JobInfo(Model):
     length = Float(strict=False).tag(config=True)
 
     #: Estimates based on length and speed
-    eta = Instance(timedelta).tag(config=True)
+    duration = Instance(timedelta).tag(config=True)
+
+    #: Units
+    units = Enum('in', 'cm', 'm', 'ft').tag(config=True)
+
+    #: Callback to open the approval dialog
+    auto_approve = Bool().tag(config=True)
+    request_approval = Callable(
+        lambda info: setattr(info, 'status', 'approved'))
 
     def reset(self):
+        """ Reset to initial states"""
+        #: TODO: This is a stupid design
         self.progress = 0
         self.paused = False
         self.cancelled = False
         self.done = False
+        self.status = 'staged'
 
     def _observe_done(self, change):
         if change['type'] == 'update':
@@ -91,13 +107,13 @@ class JobInfo(Model):
             if self.done:
                 self.count += 1
 
-    @observe('started', 'length', 'speed')
-    def _update_eta(self, change):
-        if not self.started or not self.length or not self.speed:
-            self.eta = None
+    @observe('length', 'speed')
+    def _update_duration(self, change):
+        if not self.length or not self.speed:
+            self.duration = None
             return
         dt = self.length/self.speed
-        self.eta = timedelta(seconds=dt)
+        self.duration = timedelta(seconds=dt)
 
 
 class Job(Model):

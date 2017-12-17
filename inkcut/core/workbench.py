@@ -16,7 +16,7 @@ enamlx.install()
 
 import enaml
 from atom.api import Unicode
-from enaml.qt import QtWidgets
+from enaml.qt import QtWidgets, QtGui
 from enaml.workbench.ui.api import UIWorkbench
 
 

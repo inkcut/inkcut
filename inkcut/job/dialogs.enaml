@@ -1,0 +1,90 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 16, 2017
+
+@author: jrm
+"""
+from enaml.core.api import Conditional, Include
+from enaml.layout.api import align, hbox, spacer
+from enaml.stdlib.mapped_view import MappedView
+from enaml.stdlib.task_dialog import (
+    TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet
+)
+from enaml.widgets.api import (
+    CheckBox, Container, Dialog, Field, Label, PushButton, Form, Notebook,
+    Page, ObjectCombo
+)
+from .plugin import Job
+from inkcut.core.api import to_unit
+
+
+enamldef JobApprovalDialog(Dialog): dialog:
+    title = 'Approve Job'
+    initial_size = (640, 320)
+    attr plugin
+    attr job: Job
+    TaskDialogStyleSheet:
+            pass
+    TaskDialogBody:
+        TaskDialogInstructionArea:
+            Label:
+                style_class = 'task-dialog-instructions'
+                text = 'Approve job'
+        TaskDialogContentArea:
+            Label:
+                style_class = 'task-dialog-content'
+                text = "Are you sure you want to start?"
+            Form:
+                Label:
+                    text = "Job"
+                    tool_tip = "Name of the document"
+                Label:
+                    text << job.document
+                Label:
+                    text = "Duration"
+                    tool_tip = "Estimated job duration based on given speed and the job size."
+                Label:
+                    text << "{} min {} sec".format(
+                            int(job.info.duration.total_seconds() / 60),
+                            int(job.info.duration.total_seconds() % 60),
+                        )
+                Label:
+                    text = "Material"
+                    tool_tip = "Estimated material usage"
+                Label:
+                    text << "Size: {}{} x {}{}".format(
+                            round(to_unit(job.model.boundingRect().height(), job.info.units),2),
+                            job.info.units,
+                            round(to_unit(job.model.boundingRect().width(), job.info.units), 2),
+                            job.info.units
+                        )
+#                Label:
+#                    text = "Cost"
+#                    tool_tip = "Estimated material cost"
+#                Label:
+#                    text << "${}".format(job.model.boundingRect())
+        TaskDialogCommandArea:
+            constraints = [
+                hbox(cbx, spacer, btn_yes, btn_no),
+                align('v_center', cbx, btn_yes, btn_no),
+            ]
+            CheckBox: cbx:
+                text = "Don't ask again"
+                checked := job.info.auto_approve
+            PushButton: btn_no:
+                text = "Cancel"
+                clicked ::
+                    job.info.status = 'cancelled'
+                    dialog.close()
+            PushButton: btn_yes:
+                text = "Start"
+                clicked ::
+                    job.info.status = 'approved'
+                    dialog.close()

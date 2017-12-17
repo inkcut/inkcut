@@ -283,7 +283,7 @@ class Device(Model):
     queue = List(Model).tag(config=True)
 
     #: Current job being processed
-    job = Instance(Model).tag(config=True)
+    job = Instance(Model)#.tag(config=True)
 
     #: The device specific config
     config = Instance(DeviceConfig, ()).tag(config=True)
@@ -557,42 +557,57 @@ class Device(Model):
             #: Get the time to sleep based for each unit of movement
             config = self.config
 
-            #: In px/ms
+            #: Rate px/ms
             if config.spooled:
-                delay = 0
+                rate = 0
             elif config.interpolate:
-                delay = config.step_size/float(config.step_time)
+                rate = config.step_size/float(config.step_time)
             else:
-                delay = from_unit(
+                rate = from_unit(
                     config.speed,  # in/s or cm/s
                     config.speed_units.split("/")[0])/1000.0
 
             # Device model is updated in real time
             model = yield defer.maybeDeferred(self.init, job)
 
+            #: Local references are faster
+            info = job.info
+
+            #: Determine the length for tracking progress
+            whole_path = QtGui.QPainterPath()
+            for path in model.toSubpathPolygons():
+                for i, p in enumerate(path):
+                    whole_path .lineTo(p)
+            total_length = whole_path.length()
+            total_moved = 0
+            log.debug("Path length: {}".format(total_length))
+
+            #: So a estimate of the duration can be determined
+            info.length = total_length
+            info.speed = rate*1000  #: Convert to px/s
+
+            #: Waiting for approval
+            info.status = 'waiting'
+
+            #: If marked for auto approve start now
+            if info.auto_approve:
+                info.status = 'approved'
+            else:
+                #: Check for approval before starting
+                yield defer.maybeDeferred(info.request_approval)
+                if info.status != 'approved':
+                    self.status = "Job cancelled"
+                    return
+
+            #: Update stats
+            info.status = 'running'
+            info.started = datetime.now()
+
             self.status = "Connecting to device"
-            with self.device_connection(test or config.test_mode) as connection:
+            with self.device_connection(
+                            test or config.test_mode) as connection:
                 self.status = "Processing job"
                 yield defer.maybeDeferred(self.connect)
-
-                #: Local references are faster
-                info = job.info
-
-                #: Determine the length for tracking progress
-                whole_path = QtGui.QPainterPath()
-                for path in model.toSubpathPolygons():
-                    for i, p in enumerate(path):
-                        whole_path .lineTo(p)
-                total_length = whole_path.length()
-                total_moved = 0
-                log.debug("Path length: {}".format(total_length))
-
-                #: Update stats
-                info.started = datetime.now()
-
-                #: So an eta can be determined
-                info.length = total_length
-                info.speed = delay
 
                 #: For point in the path
                 for (d, cmd, args, kwargs) in self.process(model):
@@ -609,10 +624,12 @@ class Device(Model):
                     #: Check for cancel for non interpolated jobs
                     if info.cancelled:
                         self.status = "Job cancelled"
-                        return
+                        info.status = 'cancelled'
+                        break
                     elif not connection.connected:
                         self.status = "Connection lost"
-                        return
+                        info.status = 'error'
+                        break
 
                     #: Invoke the command
                     #: If you want to let the device handle more complex
@@ -631,23 +648,28 @@ class Device(Model):
                     #: quickly gets filled and crappy china piece cutters
                     #: get all jacked up. If the transport sends to a spooled
                     #: output (such as a printer) this can be set to 0
-                    if delay > 0:
+                    if rate > 0:
                         # log.debug("d={}, delay={} t={}".format(
                         #     d, delay, d/delay
                         # ))
-                        yield async_sleep(d/delay)
+                        yield async_sleep(d/rate)
 
                     #: TODO: Check if we need to update the ui
                     #: Set the job progress based on how far we've gone
                     info.progress = int(max(0, min(100,
                                         100*total_moved/total_length)))
 
-                #: We're done, send any finalization commands
-                yield defer.maybeDeferred(self.finish)
+                if info.status != 'error':
+                    #: We're done, send any finalization commands
+                    yield defer.maybeDeferred(self.finish)
 
                 #: Update stats
                 info.ended = datetime.now()
-                info.done = True
+
+                #: If not cancelled or errored
+                if info.status == 'running':
+                    info.done = True
+                    info.status = 'complete'
 
                 yield defer.maybeDeferred(self.disconnect)
 
@@ -967,6 +989,10 @@ class DevicePlugin(Plugin):
     # -------------------------------------------------------------------------
     # Live progress API
     # -------------------------------------------------------------------------
+    def reset_preview(self):
+        """ Clear the preview """
+        self._reset_preview(None)
+
     @observe('device', 'device.job')
     def _reset_preview(self, change):
         """ Redraw the preview on the screen 

@@ -11,15 +11,46 @@ Created on Jul 12, 2015
 """
 import enaml
 import pkg_resources
-from atom.api import List, Unicode, Instance
+from datetime import datetime
+from atom.api import Atom, Int, List, Unicode, Instance, Bool
 from inkcut.core.api import Plugin, DockItem, log
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
+from enaml.application import timed_call
 from . import extensions
+
+
+class Clock(Atom):
+    """ A clock so widgets can observe each field as required. """
+    year = Int()
+    month = Int()
+    day = Int()
+    hour = Int()
+    minute = Int()
+    second = Int()
+    running = Bool(True)
+    now = Instance(datetime, factory=lambda: datetime.now())
+
+    def _observe_running(self, change):
+        if self.running:
+            timed_call(0, self.tick)
+
+    def _observe_now(self, change):
+        t = self.now
+        self.year, self.month, self.day = t.year, t.month, t.day
+        self.hour, self.minute, self.second = t.hour, t.minute, t.second
+        if self.running:
+            timed_call(1000, self.tick)
+
+    def tick(self):
+        self.now = datetime.now()
 
 
 class InkcutPlugin(Plugin):
     #: Project site
-    wiki_page = Unicode("https;//www.codelv.com/projects/inkcut")
+    wiki_page = Unicode("https://www.codelv.com/projects/inkcut")
+
+    #: For anything that needs to update every second
+    clock = Instance(Clock, ())
 
     #: Dock items to add
     dock_items = List(DockItem)

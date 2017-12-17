@@ -10,6 +10,7 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import os
+import enaml
 from atom.api import Instance, Enum, List, observe
 from inkcut.core.api import Plugin, unit_conversions, log
 
@@ -49,7 +50,9 @@ class JobPlugin(Plugin):
         #: Now load state
         super(JobPlugin, self).start()
 
-        #: Parse cmd line args
+        #: Update the approval dialog of all jobs
+        for job in self.jobs+[self.job]:
+            job.info.request_approval = lambda j=job: self.request_approval(j)
 
         #: If we loaded from state, refresh
         if self.job.document:
@@ -58,6 +61,16 @@ class JobPlugin(Plugin):
     # -------------------------------------------------------------------------
     # Job API
     # -------------------------------------------------------------------------
+    def request_approval(self, job):
+        """ Request approval to start a job. This will set the job.info.status
+        to either 'approved' or 'cancelled'.
+        
+        """
+        ui = self.workbench.get_plugin('enaml.workbench.ui')
+        with enaml.imports():
+            from .dialogs import JobApprovalDialog
+        JobApprovalDialog(ui.window, plugin=self, job=job).exec_()
+
     def refresh_preview(self):
         """ Refresh the preview. Other plugins can request this """
         self._refresh_preview({})

@@ -396,7 +396,8 @@ enamldef JobHistoryDockItem(DockItem):
     Container:
         padding = 0
         TableView: table:
-            horizontal_headers = ['Document', 'Count', 'Started', 'Finished']
+            horizontal_headers = ['Document', 'Count', 'Started', 'Finished', 'Duration', 'Status',
+                                    'Autostart']
             horizontal_stretch = True
             show_vertical_header = False
             items << plugin.jobs
@@ -412,10 +413,22 @@ enamldef JobHistoryDockItem(DockItem):
                     TableViewItem:
                         text << str(job.info.started.strftime('%c')) if job and job.info.started else ""
                     TableViewItem:
-                        icon << load_icon('accept'  if (job and job.info.done) else 'cancel')
+                        #icon << load_icon('accept'  if (job and job.info.done) else 'cancel')
                         text << "{} ({})".format(
                             job.info.ended.strftime('%c'), job.info.ended-job.info.started
                             ) if (job and job.info.ended and job.info.ended > job.info.started) else ""
+                    TableViewItem:
+                         attr duration << job.info.duration.total_seconds() if job and job.info.duration else 0
+                         text << "{} min {} sec".format(
+                                int(duration/60),
+                                int(duration%60)
+                                ) if (duration) else ""
+                    TableViewItem:
+                        text << str(job.info.status) if job  else ""
+                    TableViewItem:
+                        checkable = True
+                        checked << job.info.auto_approve if job  else False
+                        checked :: job.info.auto_approve = change['value']
                     Menu:
                         Action:
                             text = "Open job in preview"
