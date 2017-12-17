@@ -129,7 +129,7 @@ class JobPlugin(Plugin):
         plugin = self.workbench.get_plugin('inkcut.device')
         device = plugin.device
 
-        #: Apply the finaly output transforms from the device
+        #: Apply the final output transforms from the device
         transform = device.transform if device else lambda p: p
 
         if device and device.area:

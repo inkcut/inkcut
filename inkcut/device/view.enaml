@@ -99,15 +99,21 @@ enamldef DeviceConfigView(Container):
             title = "Advanced"
             Form:
                 Label:
+                    pass
+                CheckBox:
                     text = "Uses spooling service"
+                    checked := model.spooled
                     tool_tip = textwrap.dedent("""
                     If checked this will ignore interpolation settings and speed/delay settings.
                     Spooled data simply goes into the spooling service's buffer these features do
                     not apply. This should be enabled if using a device connected as a printer.
                     """).strip()
-                CheckBox:
-                    checked := model.spooled
+
                 Label:
+                    pass
+                CheckBox:
+                    enabled << not model.spooled
+                    checked := model.interpolate
                     text = "Interpolate paths"
                     tool_tip = textwrap.dedent("""
                     If enabled this will break down the commands into
@@ -115,9 +121,6 @@ enamldef DeviceConfigView(Container):
                     connections or motor control. It is not recommended for spooled (printer)
                     devices.
                     """).strip()
-                CheckBox:
-                    enabled << not model.spooled
-                    checked := model.interpolate
                 Label:
                     text = "Step size"
                     tool_tip = textwrap.dedent("""
@@ -142,6 +145,18 @@ enamldef DeviceConfigView(Container):
                     suffix << " ms"
                     minimum = 0
                     maximum = 1000
+        Page:
+            closable = False
+            title = "Developer"
+            Form:
+                CheckBox:
+                    checked := model.test_mode
+                    text = "Test mode"
+                    tool_tip = textwrap.dedent("""
+                    When enabled, instead of sending data to the device this will just be printed
+                    to the log. It is for debugging purposes and should not normally be used.
+                    """).strip()
+
 
 
 

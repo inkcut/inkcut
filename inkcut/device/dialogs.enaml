@@ -183,4 +183,9 @@ enamldef DeviceDialog(Dialog): dialog:
                         dev.connection.protocol = dev._default_protocol()
                     plugin.device = dev
                     plugin.save()
+
+                    #: Hackk...
+                    job_plugin = plugin.workbench.get_plugin('inkcut.job')
+                    job_plugin.refresh_preview()
+
                     dialog.close()

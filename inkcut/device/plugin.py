@@ -73,9 +73,12 @@ class TestTransport(DeviceTransport):
 
     def connect(self):
         self.connected = True
+        #: Save a reference
+        self.protocol.transport = self
         self.protocol.connection_made()
 
     def write(self, data):
+        log.debug("-> Test | {}".format(data))
         self.buffer.write(data)
 
     def read(self, size=None):
@@ -147,7 +150,8 @@ class DeviceProtocol(Model):
         This should typically not be overridden. 
         
         """
-        self.transport.write(data)
+        if self.transport is not None:
+            self.transport.write(data)
 
     def data_received(self, data):
         """ Called when the device replies back with data. This can occur
@@ -202,7 +206,7 @@ class DeviceConfig(Model):
     sample_rate = Int(100).tag(config=True)
 
     #: Final output rotation
-    rotation = Enum(0, 90, 180, 270, -90, -180, -270).tag(config=True)
+    rotation = Enum(0, 90, -90).tag(config=True)
 
     #: Final out scaling
     scale = ContainerList(Float(strict=False), default=[1, 1]).tag(config=True)
@@ -223,6 +227,9 @@ class DeviceConfig(Model):
     #: Device output is spooled by an external service
     #: this will cause the job to run with no delays between commands
     spooled = Bool().tag(config=True)
+
+    #: Use a virtual connection
+    test_mode = Bool().tag(config=True)
 
     def _default_step_time(self):
         """ Determine the step time based on the device speed setting 
@@ -295,9 +302,6 @@ class Device(Model):
     #: Status
     status = Unicode()
 
-    #: Put the device in test mode and don't actually send commands to it
-    test_mode = Bool()
-
     def _default_connection(self):
         if not self.transports:
             return None
@@ -349,7 +353,10 @@ class Device(Model):
         try:
             #: Create a test connection if necessary
             if test:
-                self.connection = TestTransport()
+                self.connection = TestTransport(
+                    protocol=connection.protocol,
+                    declaration=connection.declaration
+                )
             #: Connect
             yield self.connection
         finally:
@@ -384,18 +391,17 @@ class Device(Model):
 
         t = QtGui.QTransform()
 
-        if hasattr(config, 'scale'):
+        #: Order matters!
+        if config.scale:
             #: Do final output scaling
             t.scale(*config.scale)
 
-        if hasattr(config, 'rotation'):
+        if config.rotation:
             #: Do final output rotation
             t.rotate(config.rotation)
 
-        #: Translate back to 0,0 so all coordinates are positive
+        #: TODO: Translate back to 0,0 so all coordinates are positive
         path = path * t
-        #p = path.boundingRect().bottomLeft()
-        #path *= QtGui.QTransform.fromTranslate(-p.x(), -p.y())
 
         return path
 
@@ -421,9 +427,8 @@ class Device(Model):
         config = self.config
 
         #: Set the speed of this device for tracking purposes
-        if hasattr(config, 'speed'):
-            units = config.speed_units.split("/")[0]
-            job.info.speed = from_unit(config.speed, units)
+        units = config.speed_units.split("/")[0]
+        job.info.speed = from_unit(config.speed, units)
 
         #: Get the internal QPainterPath "model"
         model = job.model
@@ -547,8 +552,6 @@ class Device(Model):
         with self.device_busy():
             #: Set the current the job
             self.job = job
-            self.test_mode = test
-
             self.status = "Initializing job"
 
             #: Get the time to sleep based for each unit of movement
@@ -568,7 +571,7 @@ class Device(Model):
             model = yield defer.maybeDeferred(self.init, job)
 
             self.status = "Connecting to device"
-            with self.device_connection(test) as connection:
+            with self.device_connection(test or config.test_mode) as connection:
                 self.status = "Processing job"
                 yield defer.maybeDeferred(self.connect)
 
@@ -689,6 +692,10 @@ class Device(Model):
         #: Previous point
         _p = QtCore.QPointF(self.origin[0], self.origin[1])
 
+        #: Do a final translation since Qt's y axis is reversed
+        t = QtGui.QTransform.fromScale(1, -1)
+        model = model*t
+
         #: Determine if interpolation should be used
         skip_interpolation = config.spooled or not config.interpolate
 
@@ -716,7 +723,7 @@ class Device(Model):
                 #: If the device does not support streaming
                 #: the path interpolation is skipped entirely
                 if skip_interpolation:
-                    x, y = p.x(), -p.y()
+                    x, y = p.x(), p.y()
                     yield (l, self.move, ([x, y, z],), {})
                     continue
 
@@ -741,7 +748,7 @@ class Device(Model):
 
                     #: -y because Qt's axis is from top to bottom not bottom
                     #: to top
-                    x, y = sp.x(), -sp.y()
+                    x, y = sp.x(), sp.y()
                     yield (dl, self.move, ([x, y, z],), {})
 
                     #: When we reached the end but instead of breaking above
