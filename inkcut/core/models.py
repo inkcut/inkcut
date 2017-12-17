@@ -66,9 +66,6 @@ class Model(Atom):
 
 
 class AreaBase(Model):
-    # Qt model representing this area
-    model = Instance(QtCore.QRectF)
-
     #: Size (in px)
     size = ContainerList(Float(), default=[1800, 2700]).tag(config=True)
 
