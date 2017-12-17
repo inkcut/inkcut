@@ -80,10 +80,11 @@ class JobPlugin(Plugin):
         a  new Job instance.
         
         """
-        if not os.path.exists(path):
+        if path == '-':
+            log.debug("Opening document from lsstdin...")
+        elif not os.path.exists(path):
             raise JobError("Cannot open %s, it does not exist!" % path)
-
-        if not os.path.isfile(path):
+        elif not os.path.isfile(path):
             raise JobError("Cannot open %s, it is not a file!" % path)
 
         # Close any old docs

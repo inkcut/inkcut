@@ -12,6 +12,7 @@ Created on Jan 16, 2015
 """
 from __future__ import division
 import os
+import sys
 from datetime import datetime, timedelta
 from atom.api import (
     Enum, Float, Int, Bool, Instance, ContainerList, Range, Unicode,
@@ -173,7 +174,10 @@ class Job(Model):
     _desired_copies = Int(1)  # required for auto copies
 
     def _observe_document(self, change):
-        if self.document and os.path.exists(self.document):
+        """ Read the coument from stdin """
+        if self.document == '-':
+            self.path = QtSvgDoc(sys.stdin)
+        elif self.document and os.path.exists(self.document):
             self.path = QtSvgDoc(self.document)
 
     def _create_copy(self):
