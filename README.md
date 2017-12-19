@@ -60,10 +60,10 @@ ln -s /usr/lib/python2.7/dist-packages/sip.so ~/.virtualenvs/cv/lib/python2.7/si
 pip install .
 
 
-# On the raspberry pi, install RPI.GPIO (pi only)
+# On the raspberry pi, install RPI.GPIO (if using the motor control driver)
 pip install RPi.GPIO
 
-# Install zbar (pi only)
+# Install zbar (pi only for crop mark registration)
 pip install git+https://github.com/npinchot/zbar.git
 
 

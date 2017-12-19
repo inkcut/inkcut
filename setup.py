@@ -37,6 +37,10 @@ else:
     ])
 
 
+if sys.platform == 'win32':
+    install_requires.append('pywin32')
+
+
 setup(
     name='inkcut',
     packages=find_packages(),
