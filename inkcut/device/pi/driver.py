@@ -63,7 +63,7 @@ class StepperMotor(Model):
     def step(self, steps):
         ds = 0 if steps < 0 else 1                            # set ds to 0 or 1 for direction pin output
         
-        for i in xrange(abs(int(steps))):
+        for i in range(abs(int(steps))):
                 GPIO.output(self.driver_pins, [ds, 1])       # Set GPIO output (Direction pin to ds, Pulse Pin High)
                 time.sleep(self.delay)                      # Software Square Wave High Time
                 GPIO.output(self.driver_pins, [ds, 0])       # Set GPIO output (Direction pin to ds, Pulse Pin Low)
@@ -256,9 +256,9 @@ class PiDevice(Device):
         Device.set_velocity(self, v)
     
     def check_bounds(self):                              # TODO: Develop cutter range check with end stop switches       
-        for i in xrange(self.MAX_X):                     # Move -x until we hit min x bound pin
+        for i in range(self.MAX_X):                     # Move -x until we hit min x bound pin
             self.move(-1, 0)
-        for i in xrange(self.MAX_Y):                     # Move -y until we hit min y bound pin
+        for i in range(self.MAX_Y):                     # Move -y until we hit min y bound pin
             self.move(0, -1)
             # Move +x until we hit max x bound pin
             # Move +y until we hit max y bound pin
