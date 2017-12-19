@@ -32,8 +32,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
         """ Like cut but requires no selection and does no validation for 
         text nodes. 
         """
-        inkcut = '/home/jrm/Workspace/inkcut/venv3/bin/inkcut'
-        p = subprocess.Popen([inkcut, 'open', '-'],
+        p = subprocess.Popen(['inkcut', 'open', '-'],
                              stdin=subprocess.PIPE,
                              stdout=None,
                              stderr=subprocess.STDOUT,

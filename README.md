@@ -10,6 +10,9 @@ all the dependencies and build it from source.
 
 ### Activate the virtual env
 
+> Note: Using a virtual env is not required but highly recommended 
+so these dependencies do not conflict with any other applications
+
 On linux
 
 ```

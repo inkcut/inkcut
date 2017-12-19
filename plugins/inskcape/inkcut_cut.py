@@ -49,15 +49,13 @@ class InkscapeInkcutPlugin(inkex.Effect):
         elif not self.validate():
             return
 
-        inkcut = '/home/jrm/Workspace/inkcut/venv3/bin/inkcut'
-        p = subprocess.Popen([inkcut, 'open', '-'],
+        p = subprocess.Popen(['inkcut', 'open', '-'],
                              stdin=subprocess.PIPE,
                              stdout=None,
                              stderr=subprocess.STDOUT,
                              close_fds=True)
         p.stdin.write(inkex.etree.tostring(self.document))
         p.stdin.close()
-
 
 
 # Create effect instance and apply it.
