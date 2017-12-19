@@ -174,8 +174,11 @@ class Job(Model):
     _desired_copies = Int(1)  # required for auto copies
 
     def _observe_document(self, change):
-        """ Read the coument from stdin """
+        """ Read the document from stdin """
         if change['type'] == 'update' and self.document == '-':
+            #: Only load from stdin when explicitly changed to it (when doing
+            #: open from the cli) otherwise when restoring state this hangs
+            #: startup
             self.path = QtSvgDoc(sys.stdin)
         elif self.document and os.path.exists(self.document):
             self.path = QtSvgDoc(self.document)
