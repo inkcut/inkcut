@@ -15,7 +15,8 @@ On linux
 ```
 
 #: From this folder
-virtualenv venv
+#: Or just 'virtualenv venv' for python 2
+virtualenv -p python3 venv
 source venv activate
 
 
@@ -39,34 +40,27 @@ Now install the dependencies
 
 ```bash
 
-pip install git+https://github.com/nucleic/enaml.git
-pip install twisted
+
+pip install git+https://github.com/frmdstryr/enaml.git@latest
 pip install git+https://github.com/frmdstryr/enamlx.git
-pip install pyqtgraph
-pip install jsonpickle
-pip install qt4reactor
 
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
-pip install lxml
 
-# Install pyqt4
+
+# Only on Python 2 - you must install and link pyqt4
 sudo apt install python-qt4
 
 #: Replace ~/.virtualenvs/cv with venv/ on linux
 ln -s /usr/lib/python2.7/dist-packages/PyQt4/ ~/.virtualenvs/cv/lib/python2.7/site-packages/
 ln -s /usr/lib/python2.7/dist-packages/sip.so ~/.virtualenvs/cv/lib/python2.7/site-packages/
 
-# Install qtconsole
-pip install qtconsole
 
-# Install faulthandler
-pip install faulthandler
+#: Install inkcut
+pip install .
 
-# Install pyserial 
-pip install pyserial
 
-# Install RPI.GPIO (pi only)
+# On the raspberry pi, install RPI.GPIO (pi only)
 pip install RPi.GPIO
 
 # Install zbar (pi only)
@@ -77,7 +71,7 @@ pip install git+https://github.com/npinchot/zbar.git
 
 ## Running
 
-Run `python main.py`
+Run `python main.py` or to use the installed version simply run `inkcut`
 
 ## Docs
 
