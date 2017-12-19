@@ -21,9 +21,8 @@
 #	   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #	   MA 02110-1301, USA.
 """
-import os
-import sys
 import inkex
+inkex.localize()
 import subprocess
 
 
@@ -41,25 +40,25 @@ class InkscapeInkcutPlugin(inkex.Effect):
         return True  # passed :)
 
     def effect(self):
+        """ 
+        """
         nodes = self.selected
-        if len(nodes) and self.validate():
+        if not len(nodes):
+            inkex.errormsg("There were no paths were selected.")
+            return
+        elif not self.validate():
+            return
 
-            InkscapePlugin(self.document, nodes.keys(), inkex)
-            """
-            f = open('/home/rhino/projects/inkcut/app/tmp/inkscape.svg','w+')
-            f.write(inkex.etree.tostring(self.document))
-            cmd = [sys.executable, '/home/rhino/projects/inkcut/app/main.py']
-            cmd.extend(nodes)
-            #stdout=open(os.devnull, 'w+')
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, 
-                stdout=open(os.devnull, 'w+'), stderr=subprocess.STDOUT,
-                close_fds=True)
-            p.stdin.write(inkex.etree.tostring(self.document))
-            p.stdin.close()
-            """
-        else:
-            if not len(nodes):
-                inkex.errormsg("There were no paths were selected.")
+        inkcut = '/home/jrm/Workspace/inkcut/venv3/bin/inkcut'
+        p = subprocess.Popen([inkcut, 'open', '-'],
+                             stdin=subprocess.PIPE,
+                             stdout=None,
+                             stderr=subprocess.STDOUT,
+                             close_fds=True)
+        p.stdin.write(inkex.etree.tostring(self.document))
+        p.stdin.close()
+
+
 
 # Create effect instance and apply it.
 effect = InkscapeInkcutPlugin()
