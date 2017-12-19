@@ -1,0 +1,74 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 12, 2015
+
+@author: jrm
+"""
+import textwrap
+from inkcut.core.utils import load_icon
+from enaml.widgets.api import (
+    Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
+)
+
+enamldef SerialPortSettingsView(Container):
+    attr model
+    padding = 0
+
+    func selected_port(port, ports):
+        matches = [p for p in ports if p.device == port]
+        return matches[0] if matches else None
+
+    Form:
+        Label:
+            text = "Port"
+        ObjectCombo:
+            items << model.ports
+            selected << selected_port(model.port, model.ports)
+            selected ::
+                port = change['value']
+                if port:
+                    model.port = port.device
+            tool_tip = textwrap.dedent("""
+            List of serial ports detected by the system. If nothing is here you 
+            must install the device driver for your machine.
+            """).strip()
+        Label:
+            text = ""
+        PushButton:
+            text = "Refresh"
+            icon = load_icon("arrow_refresh")
+            clicked :: model.refresh()
+        Label:
+            text = "Baudrate"
+        SpinBox:
+            value := model.baudrate
+            maximum = 999999999
+            #step_size = 4800
+            minimum = 1
+        Label:
+            text = "Bytesize"
+        ObjectCombo:
+            items = list(model.get_member('bytesize').items)
+            selected := model.bytesize
+        Label:
+            text = "Parity"
+        ObjectCombo:
+            items = list(model.get_member('parity').items)
+            selected := model.parity
+        Label:
+            text = "Stopbits"
+        ObjectCombo:
+            items = list(model.get_member('stopbits').items)
+            selected := model.stopbits
+        CheckBox:
+            text = "RTS/CTS"
+            checked := model.rtscts
+        CheckBox:
+            text = "XON/XOFF"
+            checked := model.xonxoff

@@ -1,0 +1,192 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 14, 2015
+
+@author: jrm
+"""
+from enaml.core.api import Conditional, Include
+from enaml.layout.api import align, hbox, spacer
+from enaml.stdlib.mapped_view import MappedView
+from enaml.stdlib.task_dialog import (
+    TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet
+)
+from enaml.widgets.api import (
+    CheckBox, Container, Dialog, Field, Label, PushButton, Form, Notebook,
+    Page, ObjectCombo
+)
+from .plugin import Device, DeviceConfig
+from .view import ConfigView, DeviceConfigView
+from inkcut.core.api import Model
+
+
+enamldef DeviceDialog(Dialog): dialog:
+    title = 'Device Setup'
+    initial_size = (640, 320)
+    attr plugin
+    attr device: Device << plugin.device
+    attr driver << device.declaration
+    attr connection << device.connection
+    attr protocol << connection.protocol
+    TaskDialogStyleSheet:
+            pass
+    TaskDialogBody:
+        TaskDialogInstructionArea:
+            Label:
+                style_class = 'task-dialog-instructions'
+                text = 'Configure device'
+        TaskDialogContentArea:
+            Notebook: notebook:
+                tab_style = 'document'
+                Page:
+                    title = 'General'
+                    closable = False
+                    Container:
+                        padding = 0
+                        Form:
+                            Label:
+                                text = "Driver"
+                            ObjectCombo:
+                                items << plugin.drivers
+                                to_string = lambda d: d.id
+                                selected << [d for d in plugin.drivers if d.id==driver.id][0]
+                                selected ::
+                                    dialog.device = plugin.get_device_from_driver(change['value'])
+                            Label:
+                                text = "Manufacturer"
+                            Field:
+                                enabled << cb.checked
+                                text := driver.manufacturer
+                            Label:
+                                text = "Model"
+                            Field:
+                                enabled << cb.checked
+                                text := driver.model
+                            Label:
+                                text = "Width"
+                            Field:
+                                enabled << cb.checked
+                                text := driver.width
+                            Label:
+                                text = "Length"
+                            Field:
+                                enabled << cb.checked
+                                text := driver.length
+                            CheckBox: cb:
+                                text = "Customize"
+
+                    #Include:
+                    #    objects << device.config
+                Page:
+                    title = 'Device'
+                    closable = False
+                    MappedView:
+                        model << device.config if device else Model()
+                        typemap << {
+                            type(device.config): device.declaration.config_view(),
+                            Model: ConfigView
+                        } if device else {Model:ConfigView}
+                Page:
+                    title = 'Connection'
+                    closable = False
+                    Container:
+                        padding = 0
+                        Form:
+                            Label:
+                                text = "Type"
+                            ObjectCombo:
+                                items << [t for t in plugin.transports
+                                            if t.id in device.declaration.connections
+                                            ] if device and device.declaration.connections else plugin.transports
+                                to_string = lambda t: t.name
+                                #selected << (connection.declaration
+                                #             if connection  else None)
+                                selected << [t for t in plugin.transports
+                                             if t.id==connection.declaration.id][0]
+                                selected ::
+                                    declaration = change['value']
+                                    transport = declaration.factory()
+                                    transport.declaration = declaration
+                                    device.connection = transport
+                            # Label:
+                            #     text = ""
+                            # PushButton:
+                            #     text = "Test"
+                            #     clicked :: device.test()
+
+                        #MappedView:
+                        #    model << device.connection.config
+                        MappedView:
+                            model << connection.config if connection else Model()
+                            typemap << {
+                                type(connection.config): connection.declaration.config_view(),
+                                Model: ConfigView
+                            } if connection else {Model: ConfigView}
+
+                Page:
+                    title = 'Protocol'
+                    closable = False
+                    Container:
+                        padding = 0
+                        Form:
+                            Label:
+                                text = "Language"
+                            ObjectCombo:
+                                items << [p for p in plugin.protocols
+                                            if p.id in device.declaration.protocols
+                                          ] if device and device.declaration.protocols else plugin.protocols
+                                to_string = lambda t: t.name
+                                #selected << (protocol.declaration
+                                #             if protocol else None)
+                                selected << [p for p in plugin.protocols
+                                             if p.id==protocol.declaration.id][0]
+                                selected ::
+                                    declaration = change['value']
+                                    protocol = declaration.factory()
+                                    protocol.declaration = declaration
+                                    device.connection.protocol = protocol
+                        #MappedView:
+                        #    model << device.connection.config
+                        MappedView:
+                            model << protocol.config if protocol else Model()
+                            typemap << {
+                                type(protocol.config): protocol.declaration.config_view(),
+                                Model: ConfigView
+                            } if protocol else {Model: ConfigView}
+                    #MappedView:
+                    #    model << device.connection.protocol.config
+            # Label:
+            #     style_class = 'task-dialog-content'
+            #     text = 'Enter the new file name'
+
+        TaskDialogCommandArea:
+            constraints = [
+                hbox(spacer, btn_yes, btn_no),
+                align('v_center', btn_yes, btn_no),
+            ]
+            PushButton: btn_no:
+                text = "Cancel"
+                clicked :: dialog.close()
+            PushButton: btn_yes:
+                text = "OK"
+                enabled << dialog.device is not None
+                clicked ::
+                    dev = dialog.device
+                    if not dev.connection:
+                        dev.connection = dev._default_connection()
+                    if not dev.connection.protocol:
+                        dev.connection.protocol = dev._default_protocol()
+                    plugin.device = dev
+                    plugin.save()
+
+                    #: Hackk...
+                    job_plugin = plugin.workbench.get_plugin('inkcut.job')
+                    job_plugin.refresh_preview()
+
+                    dialog.close()

@@ -1,0 +1,87 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2015
+
+@author: jrm
+"""
+from enaml.core.include import Include
+from enaml.layout.api import AreaLayout, TabLayout, DockBarLayout, HSplitLayout
+from inkcut.core.api import DockArea, DockItem
+# from inkcut.preview.view import PreviewDockItem
+# from inkcut.job.view import (
+#     GraphicDockItem, WeedlinesDockItem, MaterialDockItem, JobHistoryDockItem,
+#     JobProgressDockItem
+# )
+# from inkcut.joystick.view import JoystickDockItem
+# from inkcut.console.view import ConsoleDockItem
+# from inkcut.device.view import DeviceProgressDockItem
+
+enamldef DockView(DockArea):
+    attr workbench
+    attr plugin
+    layout << plugin.dock_layout
+    # layout = AreaLayout(
+    #     HSplitLayout('graphic-item','preview-item'),
+    #     dock_bars=[
+    #         DockBarLayout(
+    #             'material-item',
+    #             'weedline-item',
+    #             position='left'
+    #         ),
+    #         DockBarLayout(
+    #             'control-item',
+    #             'job-history-item',
+    #             'job-progress-item',
+    #             'console-item',
+    #             position='bottom'
+    #         )
+    #     ]
+    # )
+    #
+    # PreviewDockItem:
+    #     name = 'preview-item'
+    #     stretch = 3
+    #     closable = False
+    #     model << workbench.get_plugin('inkcut.preview')
+    # GraphicDockItem:
+    #     name = 'graphic-item'
+    #     title = "Graphic"
+    #     closable = False
+    #     model << workbench.get_plugin('inkcut.job')
+    # MaterialDockItem:
+    #     name = 'material-item'
+    #     title = "Material"
+    #     closable = False
+    #     model << workbench.get_plugin('inkcut.job')
+    # WeedlinesDockItem:
+    #     name = 'weedline-item'
+    #     title = "Weedlines"
+    #     closable = False
+    #     model << workbench.get_plugin('inkcut.job')
+    # JobHistoryDockItem:
+    #     name = 'job-history-item'
+    #     title = "Jobs"
+    #     closable = False
+    #     model << workbench.get_plugin('inkcut.job')
+    # JoystickDockItem:
+    #     name = 'control-item'
+    #     title = "Control"
+    #     closable = False
+    #     model << workbench.get_plugin('inkcut.joystick')
+    # ConsoleDockItem:
+    #     name = 'console-item'
+    #     title = "Console"
+    #     closable = False
+    #     model << workbench.get_plugin('inkcut.console')
+    # DeviceProgressDockItem:
+    #     name = 'job-progress-item'
+    #     title = "Progress"
+    #     closable = False
+    #     model << workbench.get_plugin('inkcut.device')
+    Include:
+        objects << plugin.dock_items

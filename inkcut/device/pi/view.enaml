@@ -1,0 +1,145 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 8, 2017
+
+@author: jrm
+"""
+from enaml.core.api import Looper
+from enaml.widgets.api import (
+    Container, Form, Label, ObjectCombo, SpinBox, CheckBox, Notebook, Page
+)
+from enamlx.widgets.api import DoubleSpinBox
+from .driver import PiConfig
+
+
+enamldef StepperMotorForm(Form):
+    attr model
+    attr axis = 0
+    attr label << 'x-axis' if axis == 0 else 'y-axis'
+    attr rpi_pins = list(range(32))  # Python 3 is crap
+    Label:
+        text = "Enable pin"
+    ObjectCombo:
+        items = rpi_pins
+        selected << model.motor_enable_pins[axis]
+        selected :: model.motor_enable_pins[axis] = change['value']
+    Label:
+        text = "Direction pin"
+    ObjectCombo:
+        items = rpi_pins
+        selected << model.motor_driver_pins[axis][0]
+        selected :: model.motor_driver_pins[axis][0] = change['value']
+    Label:
+        text = "Step pulse pin"
+    ObjectCombo:
+        items = rpi_pins
+        selected << model.motor_driver_pins[axis][1]
+        selected :: model.motor_driver_pins[axis][1] = change['value']
+
+
+enamldef ConfigView(Container): view:
+    """ Config editor for the PiDevice when the 
+    user selects it. The device.config Model is
+    passed in here so it can be modified.
+    """
+    attr model: PiConfig
+    padding = 0
+    attr rpi_pins = list(range(32)) # Python 3 is crap
+    Notebook:
+        tab_style = 'document'
+        tab_position = 'left'
+        Page:
+            closable = False
+            title = "Config"
+            Form:
+                Label:
+                    text = "Step delay"
+                Form:
+                    DoubleSpinBox:
+                        suffix = " (ms)"
+                        value << model.delay*1000
+                        value :: model.delay = change['value']/1000.0
+                        minimum = 0.0
+                        single_step = 0.1
+                        maximum = 5000.0
+                Label:
+                    text = "Scale"
+                Form:
+                    Label:
+                        text = "x"
+                    DoubleSpinBox:
+                        value << model.scale[0]
+                        value :: model.scale[0] = change['value']
+                    Label:
+                        text = "y"
+                    DoubleSpinBox:
+                        value << model.scale[1]
+                        value :: model.scale[1] = change['value']
+                Label:
+                    text = "Registration"
+                Form:
+                    CheckBox:
+                        text = "Crop mark registration"
+                        checked := model.crop_mark_registration
+        Page:
+            closable = False
+            title = "Pinouts"
+            Container:
+                Label:
+                    text = "Stepper motor pinout"
+                Form:
+                    Label:
+                        text = "x"
+                    StepperMotorForm:
+                        model << view.model
+                        axis = 0
+                    Label:
+                        text = "y"
+                    StepperMotorForm:
+                        model << view.model
+                        axis = 1
+                Label:
+                    text = "Servo pinout"
+                Form:
+                    Label:
+                        text = "z"
+                    Form:
+                        Looper:
+                            iterable = ['-', '+']
+                            Label:
+                                text = loop_item
+                            ObjectCombo:
+                                items = rpi_pins
+                                selected << model.servo_gpio_pins[loop_index]
+                                selected :: model.servo_gpio_pins[loop_index] = change['value']
+        Page:
+            closable = False
+            title = "Bounds"
+            Container:
+                Form:
+                    Looper:
+                        iterable = ['x', 'y']
+                        Label:
+                            text = "Pin ({}-min)".format(loop_item)
+                        ObjectCombo:
+                            items = rpi_pins
+                            selected << model.boundary_gpio_pins[loop_index][0]
+                            selected :: model.boundary_gpio_pins[loop_index][0] = change['value']
+                        Label:
+                            text = "Pin ({}-max)".format(loop_item)
+                        ObjectCombo:
+                            items = rpi_pins
+                            selected << model.boundary_gpio_pins[loop_index][1]
+                            selected :: model.boundary_gpio_pins[loop_index][1] = change['value']
+                    Label:
+                        text = "De-bounce timeout"
+                    SpinBox:
+                        suffix = " (ms)"
+                        value := model.boundary_bounce_timeout
+                        maximum = 1000

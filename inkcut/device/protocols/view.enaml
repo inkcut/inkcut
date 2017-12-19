@@ -1,0 +1,31 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 11, 2017
+
+@author: jrm
+"""
+from enaml.widgets.api import Container, Label, ObjectCombo
+
+
+enamldef DMPLConfigView(Container):
+    attr model
+    Label:
+        text = "Mode"
+    ObjectCombo:
+        items  = list(model.get_member('mode').items)
+        selected := model.mode
+
+
+enamldef CAMMConfigView(Container):
+    attr model
+    Label:
+        text = "Mode"
+    ObjectCombo:
+        items  = list(model.get_member('mode').items)
+        selected := model.mode

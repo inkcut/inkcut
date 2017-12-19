@@ -1,0 +1,93 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Jul 25, 2015
+
+@author: jrm
+"""
+import enaml
+from enaml.workbench.api import Extension
+from enaml.workbench.plugin_manifest import PluginManifest
+from inkcut.device.extensions import DEVICE_PROTOCOL_POINT, DeviceProtocol
+
+
+def gpgl_factory():
+    from .gpgl import GPGLProtocol
+    return GPGLProtocol()
+
+
+def hpgl_factory():
+    from .hpgl import HPGLProtocol
+    return HPGLProtocol()
+
+
+def dmpl_factory():
+    from .dmpl import DMPLProtocol
+    return DMPLProtocol()
+
+
+def dmpl_config_view():
+    with enaml.imports():
+        from .view import DMPLConfigView
+    return DMPLConfigView
+
+
+def cammgl1_factory():
+    from .camm import CAMMGL1Protocol
+    return CAMMGL1Protocol()
+
+
+def gcode_factory():
+    from .gcode import GCodeProtocol
+    return GCodeProtocol()
+
+
+def mock_factory():
+    from .debug import DebugProtocol
+    return DebugProtocol()
+
+
+enamldef ProtocolManifest(PluginManifest):
+    """ Add new protocols here or within any other plugin.
+    
+    All protocols should implement the IDeviceProtocol and then
+    register as an extension to the point 'inkcut.device.protocols'
+    
+    """
+    id = 'inkcut.device.protocols'
+    
+    Extension:
+        id = 'protocols'
+        point = DEVICE_PROTOCOL_POINT
+
+        DeviceProtocol:
+            id = 'gpgl'
+            name = 'GPGL'
+            factory = gpgl_factory
+
+        DeviceProtocol:
+            id = 'hpgl'
+            name = 'HPGL'
+            factory = hpgl_factory
+
+        DeviceProtocol:
+            id = 'dmpl'
+            name = 'DMPL'
+            factory = dmpl_factory
+            config_view = dmpl_config_view
+
+        DeviceProtocol:
+            id = 'camm-gl1'
+            name = 'CAMM-GL I'
+            factory = cammgl1_factory
+
+        DeviceProtocol:
+            id = 'gcode'
+            name = 'G-Code'
+            factory = gcode_factory
+
+        DeviceProtocol:
+            id = 'debug'
+            name = 'Virtual'
+            factory = mock_factory
+
+        

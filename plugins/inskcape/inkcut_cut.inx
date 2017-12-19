@@ -1,0 +1,16 @@
+<inkscape-extension>
+  <_name>Cut selection...</_name>
+  <id>org.ekips.filter.inkcut.cut</id>
+  <dependency type="executable" location="extensions">inkcut_cut.py</dependency>
+  <dependency type="executable" location="extensions">inkex.py</dependency>  
+  <effect>
+    <object-type>all</object-type>
+    <effects-menu>
+       <submenu _name="Inkcut"/>
+    </effects-menu>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">inkcut_cut.py</command>
+  </script>
+</inkscape-extension>
+

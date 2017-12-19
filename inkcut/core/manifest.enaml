@@ -1,0 +1,111 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2015
+
+@author: jrm
+"""
+import sys
+from enaml.workbench.api import Extension, PluginManifest
+from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
+
+
+def application_factory():
+    """ A factory function which creates the default Application
+    and installs twisted support.
+    """
+    from enaml.qt.qt_application import QtApplication
+    app = QtApplication()
+
+    #: Install twisted support into the Qt event loop
+    if sys.version_info.major == 2:
+        import qt4reactor
+        qt4reactor.install()
+    else:
+        import qt5reactor
+        qt5reactor.install()
+
+    return app
+
+
+def window_factory(workbench):
+    """ A factory function which creates the default WorkbenchWindow
+    with a reasonable initial size.
+
+    """
+    import enaml
+    with enaml.imports():
+        from enaml.workbench.ui.workbench_window import WorkbenchWindow
+    return WorkbenchWindow(initial_size=(960, 720))
+
+
+def workspace_factory(workbench):
+    from inkcut.ui.workspace import InkcutWorkspace
+    space = InkcutWorkspace()
+    space.window_title = 'Inkcut'
+    return space
+
+
+def plugin_factory():
+    from inkcut.core.plugin import CorePlugin
+    return CorePlugin()
+
+
+enamldef InkcutManifest(PluginManifest):
+    """ The plugin manifest for the primary example plugin.
+
+    This plugin acts as the entry point for all other plugins in this
+    example. It contributes the window branding, default actions, and
+    the workspace definitions.
+
+    """
+    id = 'inkcut.core'
+
+    factory = plugin_factory
+
+    Extension:
+        id = 'default_application_factory'
+        point = 'enaml.workbench.ui.application_factory'
+        factory = application_factory
+    Extension:
+        id = 'actions'
+        point = 'enaml.workbench.ui.actions'
+        MenuItem:
+            path = '/file'
+            label = 'File'
+            ItemGroup:
+                id = 'user'
+            ItemGroup:
+                id = 'document'
+
+        ActionItem:
+            path = '/file/quit'
+            label = 'Quit'
+            shortcut = 'Ctrl+Q'
+            command = 'enaml.workbench.ui.close_window'
+
+        MenuItem:
+            path = '/settings'
+            label = 'Settings'
+            after = 'file'
+            before = 'help'
+            ItemGroup:
+                id = 'settings'
+        MenuItem:
+            path = '/help'
+            label = 'Help'
+            after = 'settings'
+            ItemGroup:
+                id = 'help'
+    Extension:
+        id = 'inkcut.workspace'
+        point = 'enaml.workbench.ui.workspaces'
+        factory = workspace_factory
+    Extension:
+        id = 'window'
+        point = 'enaml.workbench.ui.window_factory'
+        factory = window_factory

@@ -1,0 +1,446 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 14, 2015
+
+@author: jrm 
+"""
+import os
+from inkcut.core.api import DockItem
+from enaml.widgets.api import (
+    Container, Label, ImageView, SpinBox, CheckBox, PushButton, RadioButton,
+    Form, ComboBox, Menu, Action
+)
+from enaml.core.api import Looper
+from enaml.layout.api import hbox,vbox,spacer,align
+from enamlx.widgets.api import (
+    DoubleSpinBox, TableView, TableViewRow, TableViewItem
+)
+from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
+from inkcut.job.plugin import Job
+
+
+enamldef GraphicDockItem(DockItem):
+    attr plugin
+    attr job: Job << plugin.job
+    icon = load_icon('vector')
+    name = 'graphic-item'
+    title = "Graphic"
+    Container:
+        Container:
+            padding = 0
+            Label:
+                text = "Graphic Size"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('text_letterspacing')
+                DoubleSpinBox:
+                    value << to_unit(job.size[0], plugin.units)
+                    value ::
+                        #print("callback",change)
+                        v = to_unit(job.size[0], plugin.units)
+                        changed = v != change['value']
+                        if changed and change['oldvalue']>0 and change['value']>0:
+                            s = job.scale[0] * change['value']/change['oldvalue']
+                            if job.lock_scale:
+                                job.scale = [s,s]
+                            else:
+                                job.scale[0] = s
+
+                    suffix << " "+plugin.units
+                    minimum = 0.00001
+                    maximum = 99999.9
+                ImageView:
+                    image = load_image('text_linespacing')
+                DoubleSpinBox:
+                    value << to_unit(job.size[1], plugin.units)
+                    value ::
+                        #print("callback",change)
+                        v = to_unit(job.size[1], plugin.units)
+                        changed = v != change['value']
+                        if changed and change['oldvalue']>0 and change['value']>0:
+                            s = job.scale[1] * change['value']/change['oldvalue']
+                            if job.lock_scale:
+                                job.scale = [s,s]
+                            else:
+                                job.scale[1] = s
+                    suffix << " "+plugin.units
+                    minimum = 0.00001
+                    maximum = 99999.9
+                ImageView:
+                    image << load_image(job.lock_scale and 'text_kerning' or 'text_letterspacing')
+                DoubleSpinBox:
+                    value << 100*job.scale[0]
+                    value ::
+                        s = change['value']/100.0
+                        if job.lock_scale:
+                            job.scale = [s,s]
+                        else:
+                            job.scale[0] = s
+
+                    suffix = ' %'
+                    minimum = 0.00001
+                    maximum = 99999.9
+                ImageView:
+                    visible << not job.lock_scale
+                    image = load_image('text_linespacing')
+                DoubleSpinBox:
+                    visible << not job.lock_scale
+                    value << 100*job.scale[1]
+                    value ::
+                        s = change['value']/100.0
+                        if job.lock_scale:
+                            job.scale = [s,s]
+                        else:
+                            job.scale[1] = s
+                    suffix = ' %'
+                    minimum = 0.00001
+                    maximum = 99999.9
+            CheckBox:
+                text = 'Lock aspect ratio'
+                checked := job.lock_scale
+            #CheckBox:
+            #    text = 'Scale to fit'
+            #    checked := job.auto_scale
+        Container:
+            constraints = [
+                vbox(hdr,
+                     form,
+                     hbox(pb1,pb2,cb1,spacer)),
+                align('v_center',pb1,pb2,cb1)
+            ]
+            padding = 0
+            Label: hdr:
+                text = "Graphic Copies"
+            Form: form:
+                padding = 0
+                ImageView:
+                    image = load_image('shape_copy')
+                SpinBox:
+                    value := job.copies
+                    minimum = 1
+                    maximum = 99999
+                    suffix << job.auto_copies and "   (minimum set to %s)"%job._desired_copies or ""
+            PushButton: pb1:
+                icon = load_icon('shape_square_add')
+                clicked :: job.add_stack()
+            PushButton: pb2:
+                icon = load_icon('shape_square_delete')
+                clicked :: job.remove_stack()
+            CheckBox: cb1:
+                text = 'Fill to save space'
+                checked := job.auto_copies
+
+        Container:
+            padding = 0
+            Label:
+                text = "Graphic Rotation"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('shape_rotate_clockwise')
+                DoubleSpinBox:
+                    value := job.rotation
+                    suffix = " °"
+                    maximum = 180
+                    minimum = -180
+                    wrapping = True
+                    single_step = 15
+            CheckBox:
+                text = 'Rotate to save space'
+                checked := job.auto_rotate
+        Container:
+            padding = 0
+
+            Label:
+                text = "Graphic Mirroring"
+            CheckBox:
+                text = 'Mirror about x-axis'
+                icon = load_icon('shape_flip_vertical')
+                checked := job.mirror[0]
+            CheckBox:
+                text = 'Mirror about y-axis'
+                icon = load_icon('shape_flip_horizontal')
+                checked := job.mirror[1]
+
+
+enamldef WeedlinesDockItem(DockItem):
+    attr plugin
+    attr job: Job << plugin.job
+    title = "Weedlines"
+    name = 'weedlines-item'
+    icon = load_icon('shape_group')
+    Container:
+        Container:
+            padding = 0
+            Label:
+                text = "Graphic Spacing"
+            Form:
+                padding = 0
+                Label:
+                    text = "Row"
+                DoubleSpinBox:
+                    value << to_unit(job.copy_spacing[0], plugin.units)
+                    value :: job.copy_spacing[0] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                Label:
+                    text = "Col"
+                DoubleSpinBox:
+                    value << to_unit(job.copy_spacing[1], plugin.units)
+                    value :: job.copy_spacing[1] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plotting Order"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('chart_line')
+                ComboBox:
+                    items = list(job.__class__.order.items)
+                    index << job.__class__.order.items.index(job.order)
+                    index :: job.order = job.__class__.order.items[change['value']]
+                    hug_width = 'ignore' # Expanding
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plot Weedlines"
+            CheckBox:
+                text = 'Add weedline to plot'
+                icon = load_icon('shape_group')
+                checked := job.plot_weedline
+            CheckBox:
+                text = 'Add weedline to copies'
+                icon = load_icon('shape_ungroup')
+                checked := job.copy_weedline
+        Container:
+            padding = 0
+
+            Label:
+                text = "Weedline Padding"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('text_padding_left')
+                DoubleSpinBox:
+                    value << to_unit(job.copy_weedline_padding[0], plugin.units)
+                    value :: job.copy_weedline_padding[0] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_top')
+                DoubleSpinBox:
+                    value << to_unit(job.copy_weedline_padding[1], plugin.units)
+                    value :: job.copy_weedline_padding[1] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_right')
+                DoubleSpinBox:
+                    value << to_unit(job.copy_weedline_padding[2], plugin.units)
+                    value :: job.copy_weedline_padding[2] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_bottom')
+                DoubleSpinBox:
+                    value << to_unit(job.copy_weedline_padding[3], plugin.units)
+                    value :: job.copy_weedline_padding[3] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+
+
+enamldef MaterialDockItem(DockItem):
+    attr plugin
+    attr job: Job << plugin.job
+    title = "Material"
+    name = "material-item"
+    icon = load_icon('layers')
+    Container:
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plot Area"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('shape_square_width')
+                DoubleSpinBox:
+                    value << to_unit(job.material.size[0], plugin.units)
+                    value :: job.material.size[0] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    #maximum << to_unit(job.material.size[0], plugin.units)
+                    #single_step = 0.1
+                ImageView:
+                    image = load_image('shape_square_height')
+                DoubleSpinBox:
+                    value << to_unit(job.material.size[1], plugin.units)
+                    value :: job.material.size[1] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    #maximum << to_unit(job.material.size[1], plugin.units)
+                    #single_step = 0.1
+                Label:
+                    text = ""
+                PushButton:
+                    text = "Read from device"
+                    tool_tip = "Get the material size by querying the device."
+                    clicked ::
+                        try:
+                            job.material.size = plugin.device.querySize()
+                        except NotImplementedError:
+                            pass
+
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plot Margins"
+            Form:
+                padding = 0
+                ImageView:
+                    image = load_image('text_padding_left')
+                DoubleSpinBox:
+                    value << to_unit(job.material.padding[0], plugin.units)
+                    value :: job.material.padding[0] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_top')
+                DoubleSpinBox:
+                    value << to_unit(job.material.padding[1], plugin.units)
+                    value :: job.material.padding[1] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_right')
+                DoubleSpinBox:
+                    value << to_unit(job.material.padding[2], plugin.units)
+                    value :: job.material.padding[2] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+                ImageView:
+                    image = load_image('text_padding_bottom')
+                DoubleSpinBox:
+                    value << to_unit(job.material.padding[3], plugin.units)
+                    value :: job.material.padding[3] = from_unit(change['value'],plugin.units)
+                    suffix << " "+plugin.units
+                    maximum = 99999.9
+                    single_step = 0.1
+        Container:
+            padding = 0
+
+            Label:
+                text = "Plot Alignment"
+            CheckBox:
+                text = 'Align center horizontally'
+                icon = load_icon('shape_align_center')
+                checked := job.align_center[0]
+            CheckBox:
+                text = 'Align center vertically'
+                icon = load_icon('shape_align_middle')
+                checked := job.align_center[1]
+
+        Container:
+            padding = 0
+            constraints = [
+                vbox(lbl,
+                     rb1,
+                     hbox(rb2,dsb)),
+                align('v_center',rb2,dsb)
+            ]
+            Label: lbl:
+                text = "Plot Feeding"
+            RadioButton: rb1:
+                text = 'Return to origin'
+                #checked := job.feed_to_end
+            RadioButton: rb2:
+                text = 'Feed after'
+                checked := job.feed_to_end
+            DoubleSpinBox: dsb:
+                value << to_unit(job.feed_after, plugin.units)
+                value :: job.feed_after = from_unit(change['value'],plugin.units)
+                suffix << " "+plugin.units
+                maximum = 99999.9
+                single_step = 0.1
+
+
+enamldef JobHistoryDockItem(DockItem):
+    attr plugin
+    title = "Jobs"
+    name = 'job-history-item'
+    icon = load_icon('application_view_list')
+    Container:
+        padding = 0
+        TableView: table:
+            horizontal_headers = ['Document', 'Count', 'Started', 'Finished', 'Duration', 'Status',
+                                    'Autostart']
+            horizontal_stretch = True
+            show_vertical_header = False
+            items << plugin.jobs
+            Looper:
+                iterable << plugin.jobs
+                TableViewRow:
+                    attr job << table.items[loop_index] if loop_index < len(table.items) else None
+                    TableViewItem:
+                        text << str(os.path.split(job.document)[-1]) if job else ""
+                        tool_tip = str(job.document) if job else ""
+                    TableViewItem:
+                        text << str(job.info.count) if job else "0"
+                    TableViewItem:
+                        text << str(job.info.started.strftime('%c')) if job and job.info.started else ""
+                    TableViewItem:
+                        #icon << load_icon('accept'  if (job and job.info.done) else 'cancel')
+                        text << "{} ({})".format(
+                            job.info.ended.strftime('%c'), job.info.ended-job.info.started
+                            ) if (job and job.info.ended and job.info.ended > job.info.started) else ""
+                    TableViewItem:
+                         attr duration << job.info.duration.total_seconds() if job and job.info.duration else 0
+                         text << "{} min {} sec".format(
+                                int(duration/60),
+                                int(duration%60)
+                                ) if (duration) else ""
+                    TableViewItem:
+                        text << str(job.info.status) if job  else ""
+                    TableViewItem:
+                        checkable = True
+                        checked << job.info.auto_approve if job  else False
+                        checked :: job.info.auto_approve = change['value']
+                    Menu:
+                        Action:
+                            text = "Open job in preview"
+                            icon = load_icon("control_equalizer_blue")
+                            triggered :: plugin.job = job
+                        Action:
+                            separator = True
+                        Action:
+                            text = "Send job to device"
+                            icon = load_icon("control_repeat_blue")
+                            triggered ::
+                                core = plugin.workbench.get_plugin("enaml.workbench.core")
+                                core.invoke_command('inkcut.device.submit', parameters={'job': job})
+
+

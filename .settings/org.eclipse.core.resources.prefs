@@ -21,3 +21,6 @@ encoding//src/inkcut/workbench/ui/plugin.py=utf-8
 encoding//src/inkcut/workbench/ui/widgets/api.py=utf-8
 encoding//src/inkcut/workbench/ui/widgets/plot_view.py=utf-8
 encoding//src/main.py=utf-8
+encoding//venv/lib/python2.7/site-packages/jsonpickle/__init__.py=utf-8
+encoding//venv/lib/python2.7/site-packages/jsonpickle/pickler.py=utf-8
+encoding//venv/lib/python2.7/site-packages/jsonpickle/util.py=utf-8

@@ -1,0 +1,204 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 6, 2015
+
+@author: jrm
+"""
+import enaml
+from os.path import dirname, expanduser
+from enaml.widgets.api import FileDialogEx
+from enaml.workbench.api import Extension, PluginManifest
+from enaml.workbench.core.api import Command
+from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
+from inkcut.job.models import JobError
+from inkcut.core.utils import menu_icon
+from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
+from inkcut.cli.extensions import CLI_COMMAND_POINT, CliCommand, StopSystemExit
+
+def open_document(event):
+    workbench = event.workbench
+    ui = workbench.get_plugin('enaml.workbench.ui')
+    plugin = workbench.get_plugin('inkcut.job')
+
+    #: If one was passed in use that
+    path = event.parameters.get('path')
+
+    if not path:
+        #: Get the previous path
+        if plugin.jobs:
+            current_path = dirname(plugin.jobs[-1].document)
+        else:
+            current_path = expanduser('~')
+
+        #: Get the file to open
+        path = FileDialogEx.get_open_file_name(
+            ui.window, current_path=current_path, name_filters=['*.svg']
+        )
+
+    #: Open it
+    if path:
+        try:
+            plugin.open_document(path)
+        except JobError as e:
+            workbench.message_critical(
+                title="Error opening document",
+                message="Could not open {}\n\n{}".format(path, e))
+
+
+def cli_open_document(cmd):
+    """ Open the document passed from the command line
+
+    inkcut open <file.svg>
+
+    """
+    core = cmd.workbench.get_plugin("enaml.workbench.core")
+    core.invoke_command("inkcut.job.open", parameters={'path':cmd.args.path})
+    raise StopSystemExit()
+
+
+def close_document(event):
+    plugin = event.workbench.get_plugin('inkcut.job')
+    plugin.close_document()
+
+
+def media_setup(event):
+    with enaml.imports():
+        from inkcut.ui.media_view import MediaDialog
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    ui = event.workbench.get_plugin('enaml.workbench.ui')
+    dlg = MediaDialog(ui.window, plugin=plugin)
+    if dlg.exec_():
+        plugin.available_media = dlg.available_media
+
+
+def plugin_factory():
+    from .plugin import JobPlugin
+    return JobPlugin()
+
+
+def graphic_dock_item_factory():
+    with enaml.imports():
+        from .view import GraphicDockItem
+    return GraphicDockItem
+
+
+def material_dock_item_factory():
+    with enaml.imports():
+        from .view import MaterialDockItem
+    return MaterialDockItem
+
+
+def weedlines_dock_item_factory():
+    with enaml.imports():
+        from .view import WeedlinesDockItem
+    return WeedlinesDockItem
+
+
+def job_history_dock_item_factory():
+    with enaml.imports():
+        from .view import JobHistoryDockItem
+    return JobHistoryDockItem
+
+
+enamldef JobManifest(PluginManifest):
+    """ The plugin manifest for the primary example plugin.
+
+    This plugin acts as the entry point for all other plugins in this
+    example. It contributes the window branding, default actions, and
+    the workspace definitions.
+
+    """
+    id = 'inkcut.job'
+    factory = plugin_factory
+
+    Extension:
+        id = 'autostart'
+        point = 'enaml.workbench.ui.autostart'
+        Autostart:
+            plugin_id = 'inkcut.job'
+        Autostart:
+            plugin_id = 'inkcut.device'
+    Extension:
+        id = 'commands'
+        point = 'enaml.workbench.core.commands'
+        Command:
+            id = 'inkcut.job.open'
+            handler = open_document
+        Command:
+            id = 'inkcut.job.close'
+            handler = close_document
+        Command:
+            id = 'inkcut.job.material_setup'
+            handler = media_setup
+    Extension:
+        id = 'cli'
+        point = CLI_COMMAND_POINT
+        CliCommand:
+            name = 'open'
+            help = "Open the given path"
+            args = [
+                ('path', dict(metavar='file', help="Path of the document to open")),
+            ]
+            handler = cli_open_document
+    Extension:
+        id = 'items'
+        point = DOCK_ITEM_POINT
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = graphic_dock_item_factory
+            layout = 'main'
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = material_dock_item_factory
+            layout = 'left'
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = weedlines_dock_item_factory
+            layout = 'left'
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = job_history_dock_item_factory
+            layout = 'bottom'
+
+    Extension:
+        id = 'actions'
+        point = 'enaml.workbench.ui.actions'
+        ActionItem:
+            path = '/file/open'
+            label = 'Open...'
+            shortcut = 'Ctrl+O'
+            group = 'document'
+            command = 'inkcut.job.open'
+            icon = menu_icon('folder_page')
+
+        # Looper:
+        #     iterable << plugin.recent_documents
+        #     ActionItem:
+        #         path = '/file/recent/%i'%loop_index
+        #         label = loop_item
+        #         command = 'inkcut.workbench.ui.open'
+        #         parameters = {'path':loop_item}
+        ActionItem:
+            path = '/file/close'
+            label = 'Close'
+            group = 'document'
+            shortcut = 'Ctrl+W'
+            command = 'inkcut.job.close'
+#        MenuItem:
+#            path = '/material'
+#            label = 'Material'
+#            after = 'file'
+#            before = 'settings'
+#            ItemGroup:
+#                id = 'material'
+#        ActionItem:
+#            path = '/material/manage'
+#            label = 'Manage'
+#            shortcut = 'Ctrl+M'
+#            command = 'inkcut.job.material_setup'
+#            icon = menu_icon('chart_curve_go')

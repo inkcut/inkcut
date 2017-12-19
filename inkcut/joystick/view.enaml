@@ -1,0 +1,147 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Jul 19, 2015
+
+@author: jrm
+"""
+from enaml.layout.api import align, hbox, vbox,spacer
+from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet)
+from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
+    ImageView, PushButton, RadioButton, Window,ProgressBar, Form, ObjectCombo)
+
+from enaml.widgets.spin_box import SpinBox
+from enamlx.widgets.api import KeyEvent
+from inkcut.core.api import DockItem, to_unit
+from inkcut.core.utils import load_icon
+
+enamldef JoystickDockItem(DockItem):
+    title = 'Control'
+    name = 'joystick-item'
+    attr plugin
+    attr device << plugin.device
+    attr device_plugin << plugin.workbench.get_plugin('inkcut.device')
+    icon = load_icon('controller')
+    Container:
+        padding = 0
+        constraints = [
+            hbox(directions, spacer, status),
+            #align('v_center', lbl2, spb1),
+            #align('v_center', lbl3, spb2),
+            #align('v_center', lbl4, spb3),
+        ]
+#        Label: lbl:
+#            text = ""
+#            KeyEvent:
+#                pressed :: print(change)
+        #KeyEvent:
+        #    pressed ::
+        #        print(change['value'])
+        Container: status:
+            padding = 0
+            Form:
+                Label:
+                    text = 'Device'
+                ObjectCombo:
+                    items << device_plugin.devices or [device] if device else []
+                    to_string = lambda d: "{} @ {} ({})".format(
+                        d.declaration.id,
+                        d.connection if d.connection else "",
+                        d.connection.protocol.declaration.name if d.connection and d.connection.protocol else ""
+                    )
+                    selected << device
+                    selected ::
+                        dev = change['value']
+                        if dev:
+                            device_plugin.device = dev
+
+                Label:
+                    text = 'Step'
+                SpinBox:
+                    maximum = 10000
+                    single_step = 10
+                    value := plugin.rate
+                Label:
+                    text = "Status"
+                Label:
+                    text << 'Position: (x=%0.3f x y=%0.3f z=%s) Origin: (x=%0.3f, y=%0.3f)  %s' % (
+                        device.position[0],
+                        device.position[1],
+                        device.position[2],
+                        device.origin[0],
+                        device.origin[1],
+                        'busy' if device.busy else 'idle'
+                        )
+#
+
+        Container: directions:
+            constraints = [
+                vbox(lblpos,
+                     hbox(pb9, pb5, pb1, pb6, pb8),
+                     hbox(pb10, pb2, pb3, pb4, pb7))
+            ]
+            Label: lblpos:
+                text = "Control"
+            PushButton: pb9:
+                icon = load_icon("bullet_toggle_plus")
+                enabled << not device.busy
+                clicked :: plugin.move_head_up()
+                tool_tip = "Lift head up"
+            PushButton: pb10:
+                icon = load_icon("bullet_toggle_minus")
+                tool_tip = "Put head down"
+                enabled << not device.busy
+                clicked :: plugin.move_head_down()
+            PushButton: pb5:
+                enabled << not device.busy
+                clicked :: plugin.set_origin()
+                icon = load_icon('arrow_in')
+                tool_tip = 'Set the virtual origin'
+            PushButton: pb1:
+                enabled << not device.busy
+                clicked :: plugin.move_up()
+                icon = load_icon('arrow_up')
+                tool_tip = 'move up'
+            PushButton: pb6:
+                enabled << not device.busy
+                clicked :: plugin.move_to_origin()
+                icon = load_icon('arrow_undo')
+                tool_tip = 'Return to virtual origin'
+            PushButton: pb2:
+                enabled << not device.busy
+                clicked :: plugin.move_left()
+                icon = load_icon('arrow_left')
+                tool_tip = 'move left'
+            PushButton: pb3:
+                enabled << not device.busy
+                clicked :: plugin.move_down()
+                icon = load_icon('arrow_down')
+                tool_tip = 'move down'
+            PushButton: pb4:
+                enabled << not device.busy
+                clicked :: plugin.move_right()
+                icon = load_icon('arrow_right')
+                tool_tip = 'move right'
+
+            PushButton: pb7:
+                enabled << not device.busy
+                icon << load_icon('disconnect' if device.connection.connected else 'connect')
+                tool_tip << "{} the device".format('Disconnect from' if device.connection.connected
+                                                   else 'Connect to')
+                clicked ::
+                        if device.connection.connected:
+                            device.disconnect()
+                        else:
+                            device.connect()
+
+            PushButton: pb8:
+                enabled << not device.busy
+                icon << load_icon('arrow_out')
+                tool_tip = "Return to the system origin (0,0)"
+                clicked :: plugin.move_to_origin(system=True)

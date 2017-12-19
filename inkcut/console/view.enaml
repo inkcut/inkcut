@@ -1,0 +1,28 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 10, 2015
+
+@author: jrm
+"""
+from enaml.widgets.api import  Container
+from enaml.widgets.api import IPythonConsole
+from inkcut.core.api import DockItem
+from inkcut.core.utils import load_icon
+
+
+enamldef ConsoleDockItem(DockItem):
+    title = 'Console'
+    name = 'console-item'
+    attr plugin
+    icon = load_icon('application_xp_terminal')
+    Container:
+        padding = 0
+        IPythonConsole:
+            minimum_size = (150, 150)
+
+
