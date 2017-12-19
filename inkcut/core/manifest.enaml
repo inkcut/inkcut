@@ -9,6 +9,7 @@ Created on Dec 6, 2015
 
 @author: jrm
 """
+import sys
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
 
@@ -21,8 +22,12 @@ def application_factory():
     app = QtApplication()
 
     #: Install twisted support into the Qt event loop
-    import qt4reactor
-    qt4reactor.install()
+    if sys.version_info.major == 2:
+        import qt4reactor
+        qt4reactor.install()
+    else:
+        import qt5reactor
+        qt5reactor.install()
 
     return app
 

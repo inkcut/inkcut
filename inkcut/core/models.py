@@ -198,7 +198,7 @@ class Plugin(EnamlPlugin):
             pass  #: No state
         except Exception as e:
             log.warning("Plugin {} failed to load state: {}".format(
-                self.manifest.id, traceback.format_exc(e)))
+                self.manifest.id, traceback.format_exc()))
 
         #: Hook up observers
         for member in self._state_members:

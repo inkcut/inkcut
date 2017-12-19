@@ -10,6 +10,7 @@ Created on Jan 16, 2015
 
 @author: jrm
 """
+import sys
 import enaml
 from atom.api import (
     Typed, List, Instance, ForwardInstance, ContainerList, Bool, Unicode,
@@ -79,6 +80,11 @@ class TestTransport(DeviceTransport):
 
     def write(self, data):
         log.debug("-> Test | {}".format(data))
+
+        #: Python 3 is annoying
+        if hasattr(data, 'encode'):
+            data = data.encode()
+
         self.buffer.write(data)
 
     def read(self, size=None):
@@ -477,7 +483,7 @@ class Device(Model):
         """
         if absolute:
             #: Clip
-            position = map(lambda p: max(0, p), position)
+            position = [max(0, p) for p in position]
             #: Clip everything to never go below zero in absoulte mode
             self.position = position
         else:

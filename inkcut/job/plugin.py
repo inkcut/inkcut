@@ -10,6 +10,7 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import os
+import sys
 import enaml
 from atom.api import Instance, Enum, List, observe
 from inkcut.core.api import Plugin, unit_conversions, log

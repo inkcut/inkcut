@@ -22,7 +22,7 @@ enamldef StepperMotorForm(Form):
     attr model
     attr axis = 0
     attr label << 'x-axis' if axis == 0 else 'y-axis'
-    attr rpi_pins = range(32)
+    attr rpi_pins = list(range(32))  # Python 3 is crap
     Label:
         text = "Enable pin"
     ObjectCombo:
@@ -50,7 +50,7 @@ enamldef ConfigView(Container): view:
     """
     attr model: PiConfig
     padding = 0
-    attr rpi_pins = range(32)
+    attr rpi_pins = list(range(32)) # Python 3 is crap
     Notebook:
         tab_style = 'document'
         tab_position = 'left'

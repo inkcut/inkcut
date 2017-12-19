@@ -19,6 +19,7 @@ import math
 from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
+from future.builtins import str
 
 ElementType = QtGui.QPainterPath.ElementType
 EtreeElement = etree._Element
@@ -114,7 +115,7 @@ class QtSvgItem(QtGui.QPainterPath):
         """ Returns userunits given a string representation of units 
         in another system
         """
-        if not isinstance(string, basestring):
+        if not isinstance(string, str):
             return string
         unit = re.compile('(%s)$' % '|'.join(QtSvgItem._uuconv.keys()))
         param = re.compile(
@@ -350,7 +351,7 @@ class QtSvgPath(QtSvgItem):
         
         while True:
             try:
-                token, isCommand = lexer.next()
+                token, isCommand = next(lexer)
             except StopIteration:
                 break
             params = []
@@ -376,7 +377,7 @@ class QtSvgPath(QtSvgItem):
             while numParams > 0:
                 if needParam:
                     try: 
-                        token, isCommand = lexer.next()
+                        token, isCommand = next(lexer)
                         if isCommand:
                             raise ValueError('Invalid number of parameters '
                                              'for %s' % (command, ))

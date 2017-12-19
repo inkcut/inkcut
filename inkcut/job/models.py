@@ -175,7 +175,7 @@ class Job(Model):
 
     def _observe_document(self, change):
         """ Read the coument from stdin """
-        if self.document == '-':
+        if change['type'] == 'update' and self.document == '-':
             self.path = QtSvgDoc(sys.stdin)
         elif self.document and os.path.exists(self.document):
             self.path = QtSvgDoc(self.document)
@@ -290,7 +290,7 @@ class Job(Model):
                         self.add_stack()
 
         while c < self.copies:
-            x, y = points.next()
+            x, y = next(points)
             model.addPath(path * QtGui.QTransform.fromTranslate(x, -y))
             c += 1
 
@@ -356,7 +356,7 @@ class Job(Model):
             p[axis] = 0
             yield p  # Beginning of each row
 
-            for i in xrange(stack_size[axis]-1):
+            for i in range(stack_size[axis]-1):
                 p[axis] += d[axis]+pad[axis]
                 yield p
 
@@ -375,7 +375,7 @@ class Job(Model):
 
         stack_size = [0, 0]
         p = [0, 0]
-        for i in xrange(2):
+        for i in range(2):
             # Compute stack
             while (p[i]+size[i]) < a[i]:  # while another one fits
                 stack_size[i] += 1
