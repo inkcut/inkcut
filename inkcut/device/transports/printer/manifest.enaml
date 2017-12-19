@@ -9,38 +9,39 @@ from enaml.workbench.api import Extension
 from enaml.workbench.plugin_manifest import PluginManifest
 from inkcut.device.extensions import DeviceTransport, DEVICE_TRANSPORT_POINT
 
+
 def transport_factory():
-    from .plugin import SerialTransport
-    return SerialTransport()
+    from .plugin import PrinterTransport
+    return PrinterTransport()
 
 
 def config_view_factory():
     with enaml.imports():
-        from .settings import SerialPortSettingsView
-    return SerialPortSettingsView
+        from .settings import PrinterSettingsView
+    return PrinterSettingsView
 
 
 def plugin_factory():
-    from .plugin import SerialPlugin
-    return SerialPlugin()
+    from .plugin import PrinterPlugin
+    return PrinterPlugin()
 
 
-enamldef SerialManifest(PluginManifest):
+enamldef PrinterManifest(PluginManifest):
     """ Add new protocols here or within any other plugin.
     
     All protocols should implement the IDeviceProtocol and then
     register as an extension to the point 'inkcut.device.protocols'
     
     """
-    id = 'inkcut.device.transport.serialport'
+    id = 'inkcut.device.transport.printer'
     factory = plugin_factory
     Extension:
         id = 'protocols'
         point = DEVICE_TRANSPORT_POINT
 
         DeviceTransport:
-            id = 'serial'
-            name = 'Serial Port'
+            id = 'printer'
+            name = 'Printer'
             factory = transport_factory
             config_view = config_view_factory
             

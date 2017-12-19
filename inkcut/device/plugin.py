@@ -10,8 +10,8 @@ Created on Jan 16, 2015
 
 @author: jrm
 """
-import sys
 import enaml
+import traceback
 from atom.api import (
     Typed, List, Instance, ForwardInstance, ContainerList, Bool, Unicode,
     Int, Float, Enum, observe
@@ -26,6 +26,9 @@ from twisted.internet import defer
 from io import BytesIO
 from . import extensions
 
+
+class DeviceError(AssertionError):
+    """ Error for whatever """
 
 class DeviceTransport(Model):
 
@@ -613,71 +616,76 @@ class Device(Model):
             with self.device_connection(
                             test or config.test_mode) as connection:
                 self.status = "Processing job"
-                yield defer.maybeDeferred(self.connect)
+                try:
+                    yield defer.maybeDeferred(self.connect)
 
-                #: For point in the path
-                for (d, cmd, args, kwargs) in self.process(model):
+                    #: For point in the path
+                    for (d, cmd, args, kwargs) in self.process(model):
 
-                    #: Check if we paused
-                    if info.paused:
-                        self.status = "Job paused"
-                        #: Sleep until resumed, cancelled, or the
-                        #: connection drops
-                        while (info.paused and not info.cancelled
-                               and connection.connected):
-                            yield async_sleep(300)  # ms
+                        #: Check if we paused
+                        if info.paused:
+                            self.status = "Job paused"
+                            #: Sleep until resumed, cancelled, or the
+                            #: connection drops
+                            while (info.paused and not info.cancelled
+                                   and connection.connected):
+                                yield async_sleep(300)  # ms
 
-                    #: Check for cancel for non interpolated jobs
-                    if info.cancelled:
-                        self.status = "Job cancelled"
-                        info.status = 'cancelled'
-                        break
-                    elif not connection.connected:
-                        self.status = "Connection lost"
-                        info.status = 'error'
-                        break
+                        #: Check for cancel for non interpolated jobs
+                        if info.cancelled:
+                            self.status = "Job cancelled"
+                            info.status = 'cancelled'
+                            break
+                        elif not connection.connected:
+                            self.status = "Connection lost"
+                            info.status = 'error'
+                            break
 
-                    #: Invoke the command
-                    #: If you want to let the device handle more complex
-                    #: commands such as curves do it in process and handle
-                    yield defer.maybeDeferred(cmd, *args, **kwargs)
-                    total_moved += d
+                        #: Invoke the command
+                        #: If you want to let the device handle more complex
+                        #: commands such as curves do it in process and handle
+                        yield defer.maybeDeferred(cmd, *args, **kwargs)
+                        total_moved += d
 
-                    #: d should be the device must move in px
-                    #: so wait a proportional amount of time for the device
-                    #: to catch up. This avoids buffer errors from dumping
-                    #: everything at once.
+                        #: d should be the device must move in px
+                        #: so wait a proportional amount of time for the device
+                        #: to catch up. This avoids buffer errors from dumping
+                        #: everything at once.
 
-                    #: Since sending is way faster than cutting
-                    #: we must delay (without blocking the UI) before
-                    #: sending the next command or the device's buffer
-                    #: quickly gets filled and crappy china piece cutters
-                    #: get all jacked up. If the transport sends to a spooled
-                    #: output (such as a printer) this can be set to 0
-                    if rate > 0:
-                        # log.debug("d={}, delay={} t={}".format(
-                        #     d, delay, d/delay
-                        # ))
-                        yield async_sleep(d/rate)
+                        #: Since sending is way faster than cutting
+                        #: we must delay (without blocking the UI) before
+                        #: sending the next command or the device's buffer
+                        #: quickly gets filled and crappy china piece cutters
+                        #: get all jacked up. If the transport sends to a spooled
+                        #: output (such as a printer) this can be set to 0
+                        if rate > 0:
+                            # log.debug("d={}, delay={} t={}".format(
+                            #     d, delay, d/delay
+                            # ))
+                            yield async_sleep(d/rate)
 
-                    #: TODO: Check if we need to update the ui
-                    #: Set the job progress based on how far we've gone
-                    info.progress = int(max(0, min(100,
-                                        100*total_moved/total_length)))
+                        #: TODO: Check if we need to update the ui
+                        #: Set the job progress based on how far we've gone
+                        info.progress = int(max(0, min(100,
+                                            100*total_moved/total_length)))
 
-                if info.status != 'error':
-                    #: We're done, send any finalization commands
-                    yield defer.maybeDeferred(self.finish)
+                    if info.status != 'error':
+                        #: We're done, send any finalization commands
+                        yield defer.maybeDeferred(self.finish)
 
-                #: Update stats
-                info.ended = datetime.now()
+                    #: Update stats
+                    info.ended = datetime.now()
 
-                #: If not cancelled or errored
-                if info.status == 'running':
-                    info.done = True
-                    info.status = 'complete'
-
-                yield defer.maybeDeferred(self.disconnect)
+                    #: If not cancelled or errored
+                    if info.status == 'running':
+                        info.done = True
+                        info.status = 'complete'
+                except Exception as e:
+                    log.error(e)
+                    raise
+                finally:
+                    if connection.connected:
+                        yield defer.maybeDeferred(self.disconnect)
 
         #: Set the origin
         if job.feed_to_end and not job.info.cancelled:
@@ -834,17 +842,22 @@ class DevicePlugin(Plugin):
     def start(self):
         """ Load all the plugins the device is dependent on """
         w = self.workbench
+        plugins = []
         with enaml.imports():
-            from inkcut.device.transports.serialport.manifest import (
-                SerialManifest
-            )
+            from .transports.serialport.manifest import SerialManifest
+            from .transports.printer.manifest import PrinterManifest
             from inkcut.device.protocols.manifest import ProtocolManifest
             from inkcut.device.drivers.manifest import DriversManifest
             from inkcut.device.pi.manifest import PiManifest
-            w.register(SerialManifest())
-            w.register(ProtocolManifest())
-            w.register(DriversManifest())
-            w.register(PiManifest())
+
+            plugins.append(SerialManifest)
+            plugins.append(PrinterManifest)
+            plugins.append(ProtocolManifest)
+            plugins.append(DriversManifest)
+            plugins.append(PiManifest)
+
+        for Manifest in plugins:
+            w.register(Manifest())
 
         #: This refreshes everything else
         self._refresh_extensions()

@@ -1,6 +1,18 @@
+"""
+Created on Jul 25, 2015
+
+@author: jrm
+"""
+from enaml.core.api import Include
 from enaml.workbench.plugin_manifest import PluginManifest
 from enaml.workbench.api import Extension
 from inkcut.device.extensions import DeviceDriver
+
+
+def load_drivers():
+    """ At some point in time load these from a server """
+
+    return []
 
 
 enamldef DriversManifest(PluginManifest):
@@ -35,7 +47,7 @@ enamldef DriversManifest(PluginManifest):
             model = 'Refine MH-1351'
             width = '120cm'
             protocols = ['hpgl', 'dmpl']
-            connections = ['serial']
+            connections = ['serial', 'printer']
             
         DeviceDriver:
             manufacturer = 'US Cutter'
@@ -49,7 +61,7 @@ enamldef DriversManifest(PluginManifest):
             model = 'Laser Point'
             width = '61cm'
             protocols = ['hpgl', 'dmpl']
-            connections = ['serial']
+            connections = ['serial', 'printer']
             
         DeviceDriver:
             manufacturer = 'Graphtec'
@@ -143,3 +155,7 @@ enamldef DriversManifest(PluginManifest):
             width = '720cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
+
+        #: Load any drivers from external sources
+        Include:
+            objects = load_drivers()

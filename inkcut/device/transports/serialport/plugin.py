@@ -11,13 +11,15 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import serial
-from serial.tools.list_ports import comports
+import traceback
 from atom.api import List, Instance, Enum, Bool, Int, Unicode
 from inkcut.core.api import Plugin, Model, log
+from inkcut.device.plugin import DeviceTransport
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, connectionDone
 from twisted.internet.serialport import SerialPort
-from inkcut.device.plugin import DeviceTransport
+from serial.tools.list_ports import comports
+
 
 #: Reverse key values
 SERIAL_PARITIES = {v: k for k, v in serial.PARITY_NAMES.items()}
@@ -91,26 +93,34 @@ class SerialTransport(DeviceTransport):
     _protocol = Instance(InkcutProtocol)
 
     def connect(self):
-        config = self.config
+        try:
+            config = self.config
 
-        #: Save a reference
-        self.protocol.transport = self
+            #: Save a reference
+            self.protocol.transport = self
 
-        #: Make the wrapper
-        self._protocol = InkcutProtocol(self, self.protocol)
+            #: Make the wrapper
+            self._protocol = InkcutProtocol(self, self.protocol)
 
-        self.connection = SerialPort(
-            self._protocol,
-            config.port,
-            reactor,
-            baudrate=config.baudrate,
-            bytesize=config.bytesize,
-            parity=SERIAL_PARITIES[config.parity],
-            stopbits=config.stopbits,
-            xonxoff=config.xonxoff,
-            rtscts=config.rtscts
-        )
-        log.debug("{} | opened".format(self.config.port))
+            self.connection = SerialPort(
+                self._protocol,
+                config.port,
+                reactor,
+                baudrate=config.baudrate,
+                bytesize=config.bytesize,
+                parity=SERIAL_PARITIES[config.parity],
+                stopbits=config.stopbits,
+                xonxoff=config.xonxoff,
+                rtscts=config.rtscts
+            )
+            log.debug("{} | opened".format(self.config.port))
+        except Exception as e:
+            #: Make sure to log any issues as these tracebacks can get
+            #: squashed by twisted
+            log.error("{} | {}".format(
+                self.config.port, traceback.format_exc()
+            ))
+            raise
 
     def write(self, data):
         if not self.connection:

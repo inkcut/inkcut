@@ -12,9 +12,9 @@ Created on Jul 12, 2015
 """
 import textwrap
 from inkcut.core.utils import load_icon
-from enaml.widgets.api import (
-    Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
-)
+from enaml.layout.api import hbox, align
+from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
+
 
 enamldef SerialPortSettingsView(Container):
     attr model
@@ -27,23 +27,27 @@ enamldef SerialPortSettingsView(Container):
     Form:
         Label:
             text = "Port"
-        ObjectCombo:
-            items << model.ports
-            selected << selected_port(model.port, model.ports)
-            selected ::
-                port = change['value']
-                if port:
-                    model.port = port.device
-            tool_tip = textwrap.dedent("""
-            List of serial ports detected by the system. If nothing is here you 
-            must install the device driver for your machine.
-            """).strip()
-        Label:
-            text = ""
-        PushButton:
-            text = "Refresh"
-            icon = load_icon("arrow_refresh")
-            clicked :: model.refresh()
+        Container:
+            padding = 0
+            constraints = [
+                hbox(cb, pb),
+                align('v_center', cb, pb)
+            ]
+            ObjectCombo: cb:
+                items << model.ports
+                selected << selected_port(model.port, model.ports)
+                selected ::
+                    port = change['value']
+                    if port:
+                        model.port = port.device
+                tool_tip = textwrap.dedent("""
+                List of serial ports detected by the system. If nothing is here you
+                must install the device driver for your machine.
+                """).strip()
+            PushButton: pb:
+                text = "Refresh"
+                icon = load_icon("arrow_refresh")
+                clicked :: model.refresh()
         Label:
             text = "Baudrate"
         SpinBox:
