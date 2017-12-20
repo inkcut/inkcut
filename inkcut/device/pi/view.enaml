@@ -63,10 +63,9 @@ enamldef ConfigView(Container): view:
                 Form:
                     DoubleSpinBox:
                         suffix = " (ms)"
-                        value << model.delay*1000
-                        value :: model.delay = change['value']/1000.0
+                        value := model.delay
                         minimum = 0.0
-                        single_step = 0.1
+                        single_step = 0.001
                         maximum = 5000.0
                 Label:
                     text = "Scale"
