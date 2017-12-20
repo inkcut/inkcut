@@ -4,8 +4,10 @@ This section is meant to be a quickstart guide on using Inkcut.
 If you need help with something, first try searching the 
 [issues list](https://github.com/codelv/inkcut/issues).
 
+
 ### Tutorial
 
+Coming soon... Hopefully it's easy enough without this. 
 
 ### Previous versions
 

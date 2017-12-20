@@ -88,17 +88,17 @@ enamldef InkcutManifest(PluginManifest):
             shortcut = 'Ctrl+Q'
             command = 'enaml.workbench.ui.close_window'
 
-        MenuItem:
-            path = '/settings'
-            label = 'Settings'
-            after = 'file'
-            before = 'help'
-            ItemGroup:
-                id = 'settings'
+#        MenuItem:
+#            path = '/settings'
+#            label = 'Settings'
+#            after = 'file'
+#            before = 'help'
+#            ItemGroup:
+#                id = 'settings'
         MenuItem:
             path = '/help'
             label = 'Help'
-            after = 'settings'
+            after = 'file'
             ItemGroup:
                 id = 'help'
     Extension:

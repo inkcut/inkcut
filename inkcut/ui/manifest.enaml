@@ -63,10 +63,6 @@ def open_webpage(page):
         cmd = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.call([cmd, page])
 
-def open_wiki(event):
-    plugin = event.workbench.get_plugin('inkcut.ui')
-    open_webpage(plugin.wiki_page)
-
 
 enamldef UIManifest(PluginManifest):
     """ The plugin manifest for the primary example plugin.
@@ -98,11 +94,8 @@ enamldef UIManifest(PluginManifest):
 #             id = 'inkcut.ui.redo'
 #             handler = redo
         Command:
-            id = 'inkcut.ui.about_inkcut'
-            handler = about_inkcut
-        Command:
-            id = 'inkcut.ui.open_wiki'
-            handler = open_wiki
+            id = 'inkcut.ui.open_webpage'
+            handler = lambda e:open_webpage(e.parameters['url'])
 
     Extension:
         id = 'autostart'
@@ -118,20 +111,35 @@ enamldef UIManifest(PluginManifest):
     Extension:
         id = 'actions'
         point = 'enaml.workbench.ui.actions'
-        ActionItem:
-            path = '/settings/prefs'
-            label = 'Preferences'
-            command = 'inkcut.ui.open_preferences'
-
-        ActionItem:
-            path = '/help/wiki'
-            label = 'Wiki'
-            command = 'inkcut.ui.open_wiki'
-
+#        ActionItem:
+#            path = '/settings/prefs'
+#            label = 'Preferences'
+#            command = 'inkcut.ui.open_preferences'
         ActionItem:
             path = '/help/about'
             label = 'About'
-            command = 'inkcut.ui.about_inkcut'
+            command = 'inkcut.ui.open_webpage'
+            parameters = {'url':'https://www.codelv.com/projects/inkcut/'}
+        ActionItem:
+            path = '/help/project'
+            label = 'Docs'
+            command = 'inkcut.ui.open_webpage'
+            parameters = {'url':'https://www.codelv.com/projects/inkcut/docs/'}
+        ActionItem:
+            path = '/help/report'
+            label = 'Report issue'
+            command = 'inkcut.ui.open_webpage'
+            parameters = {'url':'https://github.com/codelv/inkcut/issues'}
+        ActionItem:
+            path = '/help/donate'
+            label = 'Donate'
+            command = 'inkcut.ui.open_webpage'
+            parameters = {'url':'https://www.codelv.com/projects/inkcut/support/'}
+
+#        ActionItem:
+#            path = '/help/about'
+#            label = 'About'
+#            command = 'inkcut.ui.about_inkcut'
 
 #         ActionItem:
 #             path = '/edit/undo'

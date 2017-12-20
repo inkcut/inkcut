@@ -1,13 +1,35 @@
 ### Install
 
+See [original version](#original-version) for installing v1.0 on linux.
 
-See [original version](#original-version) for installing v1.0.
+> There are no install packages for v2.0+ as it is an early release and is NOT
+intended for end users. 
 
-There are no install packages (yet). For now you can install 
-all the dependencies and build it from source.
+Developers can install all the dependencies and [build it from source](#building-from-source).
 
-> This is an early release and is NOT intended for end users. 
- 
+
+### Original version
+
+To install on linux, simply extract the contents of the package into /home/your_username/.config/inkscape/extensions/
+
+Before starting, ensure that the target machine has the required dependencies
+
+    :::bash
+    pygtk and gtk
+    pyserial
+    librsvg2-common
+
+
+Assuming the tar.gz archive is saved in your Downloads folder, you can use this command to install it. Replace inkcut-1.0.tar.gz with the archive name.
+
+    :::bash
+    tar -xzvf Downloads/inkCut-1.0.tar.gz -C .config/inkscape/extensions/
+
+Then restart all instances of inkscape.
+
+
+### Building from source
+
 
 
 #### Virtual environment
@@ -74,24 +96,5 @@ Now install the dependencies
 ### Running
 
 Run `python main.py` or to use the installed version simply run `inkcut`
-
-### Original version
-
-To install on linux, simply extract the contents of the package into /home/your_username/.config/inkscape/extensions/
-
-Before starting, ensure that the target machine has the required dependencies
-
-    :::bash
-    pygtk and gtk
-    pyserial
-    librsvg2-common
-
-
-Assuming the tar.gz archive is saved in your Downloads folder, you can use this command to install it. Replace inkcut-1.0.tar.gz with the archive name.
-
-    :::bash
-    tar -xzvf Downloads/inkCut-1.0.tar.gz -C .config/inkscape/extensions/
-
-Then restart all instances of inkscape.
 
 

@@ -2,23 +2,113 @@
 
 This is documentation is intended for developers wishing to modify or extend Inkcut. 
 
-
 ### Plugins
 
-Inkcut is designed entirely using plugins. You can define plugins and install them using python 
-entry points. Inkcut loads external plugins from the `inkcut.plugin` entry point. Using this you can 
-create python packages that when installed will extend Inkcut. The entry point implementation shall 
-return an enaml `PluginManifest` factory (either the PluginManifest subclass or a function that
-when called returns a PluginManifest instance).   
+Inkcut is designed entirely using plugins using enaml's workbench framework. 
+The inkcut source is separated into packages where each is a plugin (and any plugins 
+that plugin adds).  
 
-> See a nice intro on entry points here [using-plugins](https://docs.pylonsproject.org/projects/pylons-webframework/en/latest/advanced_pylons/entry_points_and_plugins.html#using-plugins)
-
-Plugins can define:
+The default plugins allow developers to define:
 
 - New dock items
 - Menu items and commands
-- Custom device drivers
-- Custom device protocols
-- Custom device connection types
+- Cli commands and hooks
+- New device drivers
+- Device protocols
+- Special connection types
 
 These plugins can interact with all builtin plugins using the enaml workbench interface.
+
+
+### External plugins
+
+You can define plugins and install them using python entry points. 
+Inkcut loads external plugins from the `inkcut.plugin` entry point. Using this you can 
+create python packages usesrs can install to extend Inkcut. The entry point implementation 
+shall return an enaml `PluginManifest` factory (either the PluginManifest subclass or a 
+function that when called returns a PluginManifest instance).   
+
+> See a nice intro on entry points here [using-plugins](https://docs.pylonsproject.org/projects/pylons-webframework/en/latest/advanced_pylons/entry_points_and_plugins.html#using-plugins)
+
+
+### Device extensions
+
+Inkcut was redesigned to have separation between the device job processing, 
+device connection, the protocol used, and the configuration of each. All of these 
+can be completely customized as is needed for your specific hardware. 
+
+This extensibility should allow Inkcut to be used for more than vinyl cutters and 
+plotters as discussed below. 
+
+##### Device drivers
+
+Custom device "drivers" can be implemented to enable Inkcut to control specific device. 
+A custom stepper motor driver for Inkcut using the raspberry pi demonstrates the usage of 
+this. DeviceDrivers must implement the [Device](../inkcut/device/extensions.py) interface.
+
+The driver may have it's own configuration and UI for editing the configuration without
+needing to modify any core functionality. Adding a driver is done by simply registering
+it with a plugin.
+
+A driver may also transform, manipulate, and do any post processing of a path before it
+is sent to the device. The actual connecting, sending, and processing can all be 
+overridden as is needed by the driver.
+
+
+##### Device protocols
+
+If the builtin driver is sufficient for processing the job but uses a custom
+communication protocol. The custom protocol can be added as an external plugins or to the
+builtin device protocols (such as HPGL, DMPL, etc.. ) in the 
+[inkcut.device.protocols](../inkcut/device/protocols/manifest.enaml) plugin.
+The protocol must implement the basic [DeviceProtocol](../inkcut/device/plugin.py) interface.
+
+The protocol may have it's own configuration options and UI for editing the options 
+without needing to modify any core functionality.
+
+##### Device connections
+
+Connections (such as Serial port, Printer, etc.. ) are added in the 
+[inkcut.device.transports](../inkcut/device/transports) packages. Serial and printer
+connections are included by default. More can be added by external plugins. The plugin 
+must implement the basic [DeviceTransport](../inkcut/device/plugin.py) interface.
+
+Again, the connection may have it's own configuration and UI for editing the configuration 
+without needing to modify any core functionality.
+
+### Jobs
+
+Inkcut now uses the concept of a "Job" to represent an SVG graphic and the configuration
+settings required to create the final output. The core piece of this is the svg parser
+that generates a QPainterPath 
+
+### Contributing
+
+Contributions are welcome. Please document any enhancements using markdown. 
+New pages can be added to the `site.json` in the docs folder and can link to 
+markdown files. The project website updates it's cached pages after about an hour.  
+
+#### How to use markdown
+
+See [mastering-markdown](https://guides.github.com/features/mastering-markdown/)
+
+
+#### Pushing changes with git
+
+Cd to the folder and
+
+    :::bash
+    
+    git add <file/path>
+    git commit -m "Some message"
+    git push origin master
+    
+    #: Config is in .git/config
+
+
+#### Donations
+
+I put a lot of work into this project. Initial development started in 2015 and Inkcut was
+completely rewritten 4 times since then improving every iteration.  Please consider
+donating or sponsoring the development of Inkcut [here](https://www.codelv.com/projects/inkcut/support/).
+

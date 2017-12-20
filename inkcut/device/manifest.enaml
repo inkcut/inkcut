@@ -118,7 +118,7 @@ enamldef DeviceManifest(PluginManifest):
             path = '/device'
             label = 'Device'
             after = 'file'
-            before = 'settings'
+            before = 'help'
             ItemGroup:
                 id = 'device'
         ActionItem:
