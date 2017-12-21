@@ -8,6 +8,11 @@ Select the `Connection` tab and choose the connection type. Finally choose the l
 
 ![Inkcut - device setup](https://user-images.githubusercontent.com/380158/34272197-757a0ba0-e65d-11e7-9a12-d707bf0d68b9.gif)
 
+### Speed settings
+
+Inkcut attempts to send data to the device at a rate that will not cause the device's data buffer to overflow on large jobs. 
+For this to work properly it is important that the speed setting matches the actual device speed.
+
 ### Output rotation
 
 You can change final output scaling and rotation that Inkcut uses for your device under the `Output` tab within the `Device` tab.
