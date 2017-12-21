@@ -5,6 +5,8 @@
 
 An application for controlling 2D plotters, cutters, engravers, and CNC machines.
 
+![Inkcut - vinyl cutting and plotting](https://user-images.githubusercontent.com/380158/34273634-29e60a08-e663-11e7-9977-5125eae738f7.gif)
+
 You can download the release versions from [here](https://github.com/codelv/inkcut/releases). 
 
 > Note: This version is currently in alpha and only intended for testing and development purposes
@@ -17,6 +19,8 @@ You can download the release versions from [here](https://github.com/codelv/inkc
 - Inkscape integration
 - Device control panel
 - Job history list
+- Live plot status
+- Pause, resume, and abort jobs mid way
 - Python 2 and 3 support (Qt5 on python 3) 
  
 ### Docs and tutorials
