@@ -30,9 +30,9 @@ See the [project docs site](https://www.codelv.com/projects/inkcut/docs/)
 
 ### Supported devices
 
-See the [supported device list](https://docs.google.com/spreadsheets/d/1KYNZMkNy0qYcpnXaNHgXKvdEhnUYKfGqZOH0Dw6siAg/edit#gid=0&fvid=820852346]).
+See the [supported device list](https://www.codelv.com/projects/inkcut/docs/supported-devices).
 
-Please create an issue to request a device be added to the list.  
+Please create an issue or submit a pull request to add a device to the list.  
 
 ### Donate and support
 
