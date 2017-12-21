@@ -10,7 +10,7 @@ If you need help with something, first try searching the
 Inkcut is now a stand alone application. You can either open an `svg` document
 directly from Inkcut or from the Inkscape plugin.
 
-### Opening from Inkscape
+##### Opening from Inkscape
 
 The Inkscape extension for Inkcut is under `Extensions -> Inkcut`. 
 There are two options:
@@ -21,14 +21,17 @@ There are two options:
 > Inkcut currently does not attempt to handle text nodes. Convert text to a path before
 opening.
 
-### Opening directly
+##### Opening directly
 
 Once installed, running the command `inkcut` will launch the application. Desktop
 icons can also be used to launch it. Once launched use the `File -> Open...` menu
 to open a document.
 
+![Inkcut - opening a svg document ](https://user-images.githubusercontent.com/380158/34272025-b9cd6b22-e65c-11e7-99fd-7bb01f110432.gif)
 
-### Using inkcut
+
+
+##### Using inkcut
 
 The basic workflow is the same. 
 
@@ -39,7 +42,7 @@ The basic workflow is the same.
 The new interface uses panels to separate similar options, such as weedlines or 
 material size. These can be opened, closed, and move around however preferred.
 
-### Starting a job
+##### Starting a job
 
 There are multiple ways to start a job:
  
@@ -54,8 +57,6 @@ The status of the job can be monitored from the `Live` plot item which defaults
 to a tab at the bottom of the screen. It displays a plot of the device movement path
 with a progressbar to show how far along it is and options to pause or cancel midway
 when supported by the device.
-
-
 
 
 ### Previous versions
