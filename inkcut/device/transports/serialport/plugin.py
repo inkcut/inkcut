@@ -126,6 +126,8 @@ class SerialTransport(DeviceTransport):
         if not self.connection:
             raise IOError("Port is not opened")
         log.debug("-> {} | {}".format(self.config.port, data))
+        if hasattr(data, 'encode'):
+            data = data.encode()
         self._protocol.transport.write(data)
 
     def disconnect(self):
