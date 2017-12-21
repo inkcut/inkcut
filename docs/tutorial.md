@@ -53,6 +53,8 @@ There are multiple ways to start a job:
 All of these will prompt for approval with a summary of the job before
 starting. Pressing start will begin the process.
 
+![Inkcut - live plot](https://user-images.githubusercontent.com/380158/34273634-29e60a08-e663-11e7-9977-5125eae738f7.gif)
+
 The status of the job can be monitored from the `Live` plot item which defaults
 to a tab at the bottom of the screen. It displays a plot of the device movement path
 with a progressbar to show how far along it is and options to pause or cancel midway
