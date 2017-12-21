@@ -21,6 +21,9 @@ You can change final output scaling and rotation that Inkcut uses for your devic
 
 ### Add missing device
 
+The list of supported devices from the old website was moved to a google spreadsheet [here](https://docs.google.com/spreadsheets/d/1KYNZMkNy0qYcpnXaNHgXKvdEhnUYKfGqZOH0Dw6siAg/). These must also be added into Inkcut
+for them to display in the device dropdown list.
+
 If you would like to add a missing device, please create an issue and provide the following:
 
 - Manufacturer
