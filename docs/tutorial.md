@@ -60,6 +60,21 @@ to a tab at the bottom of the screen. It displays a plot of the device movement 
 with a progressbar to show how far along it is and options to pause or cancel midway
 when supported by the device.
 
+##### Stacking jobs
+
+Inkcut will now let you plot one job after another without having to manually update the device origin. It uses the
+"virtual" origin that may be set or cleared from the Control panel. The origin is automatically updated when the
+"feed to end" option is selected.
+
+![Inkcut - stacking jobs](https://user-images.githubusercontent.com/380158/34274274-d529df46-e665-11e7-8a6f-48d9a56209da.gif)
+
+
+##### Manual device control
+
+There is now a Control panel for manually positioning the device from within inkcut. This is useful for testing and
+future features (such as contour cutting) that are planned to be added.
+
+![Inkcut - device control panel](https://user-images.githubusercontent.com/380158/34273636-2c829c40-e663-11e7-8ff8-3d3e882b38c5.gif)
 
 ### Previous versions
 
