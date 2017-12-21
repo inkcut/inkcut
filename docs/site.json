@@ -6,6 +6,8 @@
       "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/installing.md"},
     {"title":"Tutorial",
       "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/tutorial.md"},
+    {"title":"Device Setup",
+      "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/device-setup.md"},
     {"title":"Developer",
       "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/developer.md"}
   ]
