@@ -257,7 +257,8 @@ class DeviceConfig(Model):
 
     @observe('speed', 'speed_units', 'step_size')
     def _update_step_time(self, change):
-        self.step_time = self._default_step_time()
+        if change['type'] == 'update':
+            self.step_time = self._default_step_time()
 
 
 class Device(Model):

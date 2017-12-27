@@ -25,8 +25,10 @@ try:
         pass
     else:
         import cups
+    PRINTER_AVAILABLE = True
 except ImportError as e:
     log.error(e)
+    PRINTER_AVAILABLE = False
 
 # -----------------------------------------------------------------------------
 # Abstract API
@@ -77,6 +79,8 @@ class PrinterConnection(Model):
 class Win32PrinterConfig(PrinterConfig):
 
     def _default_printers(self):
+        if not PRINTER_AVAILABLE:
+            return []
         return [p.Name for p in win32print.EnumPrinters()]
 
 
@@ -114,6 +118,8 @@ class Win32PrinterConnection(PrinterConnection):
 class CupsPrinterConfig(PrinterConfig):
 
     def _default_printers(self):
+        if not PRINTER_AVAILABLE:
+            return []
         return list(cups.Connection().getPrinters().keys())
 
 

@@ -19,7 +19,6 @@ import math
 from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
-from future.builtins import str
 
 ElementType = QtGui.QPainterPath.ElementType
 EtreeElement = etree._Element
@@ -115,8 +114,6 @@ class QtSvgItem(QtGui.QPainterPath):
         """ Returns userunits given a string representation of units 
         in another system
         """
-        if not isinstance(string, str):
-            return string
         unit = re.compile('(%s)$' % '|'.join(QtSvgItem._uuconv.keys()))
         param = re.compile(
             r'(([-+]?[0-9]+(\.[0-9]*)?|[-+]?\.[0-9]+)([eE][-+]?[0-9]+)?)')
