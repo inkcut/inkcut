@@ -666,7 +666,8 @@ class Device(Model):
 
                         #: TODO: Check if we need to update the ui
                         #: Set the job progress based on how far we've gone
-                        info.progress = int(max(0, min(100,
+                        if total_length > 0:
+                            info.progress = int(max(0, min(100,
                                             100*total_moved/total_length)))
 
                     if info.status != 'error':

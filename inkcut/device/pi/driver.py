@@ -195,6 +195,8 @@ class PiDevice(Device):
     @observe('config', 'config.motor_driver_pins', 'config.motor_enable_pins')
     def init_motors(self, change):
         """ Creates motor instances and sets the output pins """
+        if change['type'] == 'create':
+            return
         config = self.config
         # Init motors
         self.motor[0] = StepperMotor(driver_pins=config.motor_driver_pins[0],

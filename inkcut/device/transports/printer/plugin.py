@@ -18,14 +18,15 @@ from inkcut.device.plugin import DeviceTransport
 from twisted.internet import reactor
 from twisted.internet.protocol import ProcessProtocol
 
-
-if sys.platform == 'win32':
-    import win32print
-elif sys.platform == 'darwin':
-    pass
-else:
-    import cups
-
+try:
+    if sys.platform == 'win32':
+        import win32print
+    elif sys.platform == 'darwin':
+        pass
+    else:
+        import cups
+except ImportError as e:
+    log.error(e)
 
 # -----------------------------------------------------------------------------
 # Abstract API
