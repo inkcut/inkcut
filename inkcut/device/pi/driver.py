@@ -160,7 +160,7 @@ class PiDevice(Device):
     def connect(self):
         log.info("Device connected")
         self.init_rpi()
-        self.init_motors()
+        self.init_motors({'type':'manual'})
 
     def disconnect(self):
         """ Set the motors to disabled """

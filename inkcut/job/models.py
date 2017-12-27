@@ -83,7 +83,7 @@ class JobInfo(Model):
     length = Float(strict=False).tag(config=True)
 
     #: Estimates based on length and speed
-    duration = Instance(timedelta).tag(config=True)
+    duration = Instance(timedelta, ()).tag(config=True)
 
     #: Units
     units = Enum('in', 'cm', 'm', 'ft').tag(config=True)
@@ -111,7 +111,7 @@ class JobInfo(Model):
     @observe('length', 'speed')
     def _update_duration(self, change):
         if not self.length or not self.speed:
-            self.duration = None
+            self.duration = timedelta()
             return
         dt = self.length/self.speed
         self.duration = timedelta(seconds=dt)

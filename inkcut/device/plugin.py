@@ -571,7 +571,10 @@ class Device(Model):
             if config.spooled:
                 rate = 0
             elif config.interpolate:
-                rate = config.step_size/float(config.step_time)
+                if config.step_time > 0:
+                    rate = config.step_size/float(config.step_time)
+                else:
+                    rate = 0 # Undefined
             else:
                 rate = from_unit(
                     config.speed,  # in/s or cm/s
@@ -721,11 +724,6 @@ class Device(Model):
         
         """
         config = self.config
-        # speed = distance/seconds
-        # So distance/speed = seconds to wait
-        step_size = config.step_size
-        if step_size <= 0:
-            raise ValueError("Cannot have a step size <= 0!")
 
         #: Previous point
         _p = QtCore.QPointF(self.origin[0], self.origin[1])
@@ -736,6 +734,12 @@ class Device(Model):
 
         #: Determine if interpolation should be used
         skip_interpolation = config.spooled or not config.interpolate
+
+        # speed = distance/seconds
+        # So distance/speed = seconds to wait
+        step_size = config.step_size
+        if not skip_interpolation and step_size <= 0:
+            raise ValueError("Cannot have a step size <= 0!")
 
         for path in model.toSubpathPolygons():
 
@@ -805,7 +809,7 @@ class Device(Model):
 
     def _observe_status(self, change):
         """ Whenever the status changes, log it """
-        log.info("Device: {}".format(self.status))
+        log.info("device | {}".format(self.status))
 
     def _observe_job(self, change):
         """ Save the previous jobs """
