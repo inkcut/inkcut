@@ -10,6 +10,9 @@ Created on Jan 24, 2015
 @author: jrm
 @author: jjm
 """
+import time
+import pstats
+from cProfile import Profile
 from atom.api import Instance, List, Int, Float, Tuple, Dict, Bool, observe
 from inkcut.core.api import Model
 from inkcut.core.utils import async_sleep, log
@@ -31,6 +34,7 @@ except ImportError:
     registration = None
     CM_AVAILABLE = False
 
+PROFILER = Profile()
 
 class StepperMotor(Model):
     DIR_POS = 1
@@ -81,24 +85,31 @@ class StepperMotor(Model):
         finally:
             self.enabled = False
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def step(self, steps):
         # set ds to 0 or 1 for direction pin output
         ds = 0 if steps < 0 else 1
-        
-        for i in range(abs(int(steps))):
+        n = int(steps)
+
+        pins = self.driver_pins
+        output = GPIO.output
+        i=0
+        while i < n:
 
             # Set GPIO output (Direction pin to ds, Pulse Pin High)
-            GPIO.output(self.driver_pins, [ds, 1])
+            output(pins, (ds, 1))
 
             # Software Square Wave High Time
-            yield async_sleep(self.delay)
+            #time.sleep(self.delay)
+            #yield async_sleep(0)#self.delay)
 
             # Set GPIO output (Direction pin to ds, Pulse Pin Low)
-            GPIO.output(self.driver_pins, [ds, 0])
+            output(pins, (ds, 0))
 
             # Software Square Wave Low Time
-            yield async_sleep(self.delay)
+            #yield async_sleep(self.delay)
+
+            i+=1
                   
 
 class PiConfig(DeviceConfig):
@@ -140,8 +151,11 @@ class PiConfig(DeviceConfig):
     # TODO: integrate Real-Time Clock to replace software square wave
     delay = Float(3.5).tag(config=True)
 
+    def _default_custom_rate(self):
+        return 0
+
     def _default_step_time(self):
-        return 0.0
+        return 0.0    
 
     def _default_step_size(self):
         return self.scale[0]
@@ -155,17 +169,32 @@ class PiDevice(Device):
     config = Instance(PiConfig, ())
 
     #: Internal position
-    _position = List(int, default=[0, 0])
+    _position = List(int, default=[0, 0, 0])
+
+    #: Last update time
+    _updated = Float()
     
     def connect(self):
-        log.info("Device connected")
         self.init_rpi()
         self.init_motors({'type':'manual'})
+        for motor in self.motor.values():
+            motor.enabled = True
+        self.connection.connected = True
+        log.info("Pi mmotors enabled")
+        PROFILER.enable()
 
     def disconnect(self):
         """ Set the motors to disabled """
         for motor in self.motor.values():
             motor.enabled = False
+        self.connection.connected = False
+        log.info("Pi mmotors disabled")
+
+        #: Debugging...
+        PROFILER.disable()
+        stats = pstats.Stats(PROFILER)
+        stats.sort_stats('tottime')
+        stats.print_stats()
 
     def init(self, job):
         if not CM_AVAILABLE:
@@ -203,6 +232,7 @@ class PiDevice(Device):
                                      enable_pin=config.motor_enable_pins[0])
         self.motor[1] = StepperMotor(driver_pins=config.motor_driver_pins[1],
                                      enable_pin=config.motor_enable_pins[1])
+        
 
     def enable(self):
         """ Set the motors to disabled """
@@ -241,8 +271,8 @@ class PiDevice(Device):
         yield self.check_bounds()
         yield self.move(0, 0, absolute=True)
 
-    @inlineCallbacks
-    def move(self, dx, dy, z, absolute=False):
+    #@inlineCallbacks
+    def move(self, position, absolute=True):
         """ Move to position. Based on this publication
         http://goldberg.berkeley.edu/pubs/XY-Interpolation-Algorithms.pdf
          
@@ -257,51 +287,66 @@ class PiDevice(Device):
                 current position
         
         """
-        #log.debug("Move: to ({},{},{}) 
-        # from ({}) (abs {})".format(dx,dy,z,self.position, absolute))
+        dx, dy, z = position
+        log.debug("Move: to ({},{},{}) {}".format(dx, dy, z, absolute))
+
+        #: Local refs are faster
         config = self.config
         dx, dy = int(dx*config.scale[0]), int(dy*config.scale[1])
-              
+        _pos = self._position
+        mx, my = self.motor[0], self.motor[1]
+        
         if absolute:
-            dx -= self._position[0]
-            dy -= self._position[1]
+            dx -= _pos[0]
+            dy -= _pos[1]
 
         if dx == dy == 0:
             return
         
         sx = dx > 0 and 1 or -1
         sy = dy > 0 and 1 or -1
-
         fxy = abs(dx)-abs(dy)
         x, y = 0, 0
+        ax, ay = abs(dx), abs(dy)
+        stepx, stepy = self.motor[0].step, self.motor[1].step
+        log.info("{}, {}".format(dx, dy))
         try:
             while True:
                 if fxy < 0:
                     mx, my = 0, sy
-                    fxy += abs(dx)
+                    fxy += ax
                 else:
                     mx, my = sx, 0
-                    fxy -= abs(dy)
+                    fxy -= ay
 
                 #: Wait for both movements to complete
-                yield DeferredList(self.motor[0].step(mx),
-                                   self.motor[1].step(my))
-
+                #yield DeferredList([stepx(mx),
+                #                    stepy(my)])
+                
+                stepx(mx)
+                stepy(my)
                 x += mx
                 y += my
                 
-                self._position = [self._position[0]+mx,
-                                  self._position[1]+my,
-                                  self.position[2]]
                 #  log.debug("x={} dx={}, y={} dy={}".format(x,dx,y,dy))
                 if x == dx and y == dy:
+                    self._position = [_pos[0]+dx, _pos[1]+dy, z]
                     break
                 
         except KeyboardInterrupt:
             self.disconnect()
             raise
+        log.debug(self._position)
 
         # Update for Inkcut Real-Time Update
+        #t = time.time()
+        #if t-self._updated > 1:
+        #    self._updated = t
+        #    #: The control panel uses relative
+        #    #: so always update
+        #    self.position = position
+        #else:
+        # TODO: Update every so often    
         # self.position = [dx, dy, z]
         # return self.position
 

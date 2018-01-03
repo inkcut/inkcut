@@ -15,7 +15,7 @@ import textwrap
 from enaml.layout.api import hbox, vbox, spacer, align
 from enaml.widgets.api import (
     Form, CheckBox, Container, Label, ProgressBar, PushButton, Notebook, Page, ObjectCombo,
-    Action, Menu
+    Action, Menu, MultilineField
 )
 from enamlx.widgets.api import DoubleSpinBox
 from inkcut.core.api import Model, DockItem
@@ -159,6 +159,34 @@ enamldef DeviceConfigView(Container):
                     When enabled, instead of sending data to the device this will just be printed
                     to the log. It is for debugging purposes and should not normally be used.
                     """).strip()
+        Page:
+           title = "Job commands"
+           closable = False
+           Form:
+               Label:
+                  text = "Before job"
+               MultilineField:
+                  text := model.commands_before    
+                  tool_tip = "Commands here will get sent before starting a job"
+               Label:
+                  text = "After job"
+               MultilineField:
+                  text := model.commands_after    
+                  tool_tip = "Commands here will get sent after finishing a job"
+        Page:
+           title = "Connection commands"
+           closable = False
+           Form:
+               Label:
+                   text = "After connect"
+               MultilineField:
+                   text := model.commands_connect
+                   tool_tip = "Commands here will get sent right after a connection is opened"
+               Label:
+                   text = "Before disconnect"
+               MultilineField:
+                   text := model.commands_disconnect
+                   tool_tip = "Commands here will get sent right before a connection is closed"
 
 
 enamldef DeviceProgressDockItem(DockItem):

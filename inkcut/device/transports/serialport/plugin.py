@@ -78,6 +78,8 @@ class InkcutProtocol(Protocol):
 
     def connectionLost(self, reason=connectionDone):
         self.parent.connected = False
+        log.debug("-- {} | dropped: {}".format(self.parent.config.port,
+                                               reason))
         self.delegate.connection_lost()
 
 

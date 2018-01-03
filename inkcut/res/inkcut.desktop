@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Inkcut
+GenericName=Inkcut
+Comment=Open-source 2D plotting software
+Exec=/home/pi/Desktop/inkcut/main.py
+Icon=/home/pi/Desktop/inkcut/inkcut/res/media/inkcut.svg
+Terminal=false
+Categories=Graphics;Office;
+MimeType=image/svg+xml;
+Keywords=plotter;cutter;vinyl;cnc;2D;
+

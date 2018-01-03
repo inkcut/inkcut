@@ -200,6 +200,7 @@ class DeviceConfig(Model):
     #: Time to wait between each step so we don't get
     #: way ahead of the cutter and fill up it's buffer
     step_time = Float(strict=False).tag(config=True)
+    custom_rate = Float(-1, strict=False).tag(config=True)
 
     #: Distance between each command in user units
     #: this is effectively the resolution the software supplies
@@ -208,7 +209,7 @@ class DeviceConfig(Model):
     #: Interpolate paths breaking them into small sections that
     #: can be sent. This allows pausing mid plot as many devices do not have
     #: a cancel command.
-    interpolate = Bool(True).tag(config=True)
+    interpolate = Bool(False).tag(config=True)
 
     #: How often the position will be updated in ms. Low power devices should
     #: set this to a high number like 2000 or 3000
@@ -239,6 +240,12 @@ class DeviceConfig(Model):
 
     #: Use a virtual connection
     test_mode = Bool().tag(config=True)
+
+    #: Initi commands
+    commands_before = Unicode().tag(config=True)
+    commands_after = Unicode().tag(config=True)
+    commands_connect = Unicode().tag(config=True)
+    commands_disconnect = Unicode().tag(config=True)
 
     def _default_step_time(self):
         """ Determine the step time based on the device speed setting 
@@ -434,6 +441,7 @@ class Device(Model):
                 is then interpolated and sent to the device. 
         
         """
+        log.debug("device | init {}".format(job))
         config = self.config
 
         #: Set the speed of this device for tracking purposes
@@ -454,6 +462,7 @@ class Device(Model):
         #: Return the transformed model
         return model
 
+    @defer.inlineCallbacks
     def connect(self):
         """ Connect to the device. By default this delegates handling
         to the active transport or connection handler. 
@@ -465,7 +474,12 @@ class Device(Model):
                 completion before continuing.
         
         """
-        return self.connection.connect()
+        log.debug("device | connect")
+        yield defer.maybeDeferred(self.connection.connect)
+        cmd = self.config.commands_connect
+        if cmd:
+            yield defer.maybeDeferred(self.connection.write, cmd)
+        
 
     def move(self, position, absolute=True):
         """ Move to the given position. By default this delegates handling
@@ -505,14 +519,21 @@ class Device(Model):
         """ Finish the job applying any cleanup necessary.  
         
         """
+        log.debug("device | finish")
         return self.connection.protocol.finish()
 
+    @defer.inlineCallbacks
     def disconnect(self):
         """ Disconnect from the device. By default this delegates handling
         to the active transport or connection handler. 
         
         """
-        return self.connection.disconnect()
+        log.debug("device | disconnect")
+        cmd = self.config.commands_disconnect
+        if cmd:
+            yield defer.maybeDeferred(self.connection.write, cmd)
+        yield defer.maybeDeferred(self.connection.disconnect)
+        
 
     @defer.inlineCallbacks
     def submit(self, job, test=False):
@@ -551,6 +572,7 @@ class Device(Model):
                 command output.
                 
         """
+        log.debug("device | submit {}".format(job))
         #: Only allow one job at a time
         if self.busy:
             queue = self.queue[:]
@@ -568,7 +590,9 @@ class Device(Model):
             config = self.config
 
             #: Rate px/ms
-            if config.spooled:
+            if config.custom_rate >= 0:
+                rate = config.custom_rate
+            elif config.spooled:
                 rate = 0
             elif config.interpolate:
                 if config.step_time > 0:
@@ -593,7 +617,7 @@ class Device(Model):
                     whole_path .lineTo(p)
             total_length = whole_path.length()
             total_moved = 0
-            log.debug("Path length: {}".format(total_length))
+            log.debug("device | Path length: {}".format(total_length))
 
             #: So a estimate of the duration can be determined
             info.length = total_length
@@ -623,6 +647,12 @@ class Device(Model):
                 try:
                     yield defer.maybeDeferred(self.connect)
 
+                    #: Write startup command
+                    if config.commands_before:
+                        yield defer.maybeDeferred(connection.write, config.commands_before)
+
+                    self.status = "Working..."
+
                     #: For point in the path
                     for (d, cmd, args, kwargs) in self.process(model):
 
@@ -641,7 +671,7 @@ class Device(Model):
                             info.status = 'cancelled'
                             break
                         elif not connection.connected:
-                            self.status = "Connection lost"
+                            self.status = "connection error"
                             info.status = 'error'
                             break
 
@@ -662,6 +692,7 @@ class Device(Model):
                         #: quickly gets filled and crappy china piece cutters
                         #: get all jacked up. If the transport sends to a spooled
                         #: output (such as a printer) this can be set to 0
+                        log.debug("Rate is :{}".format(rate))
                         if rate > 0:
                             # log.debug("d={}, delay={} t={}".format(
                             #     d, delay, d/delay
@@ -677,6 +708,10 @@ class Device(Model):
                     if info.status != 'error':
                         #: We're done, send any finalization commands
                         yield defer.maybeDeferred(self.finish)
+
+                    #: Write finalize command
+                    if config.commands_after:
+                        yield defer.maybeDeferred(connection.write, config.commands_after)
 
                     #: Update stats
                     info.ended = datetime.now()
@@ -740,72 +775,75 @@ class Device(Model):
         step_size = config.step_size
         if not skip_interpolation and step_size <= 0:
             raise ValueError("Cannot have a step size <= 0!")
+        try:
+            for path in model.toSubpathPolygons():
 
-        for path in model.toSubpathPolygons():
+                #: And then each point within the path
+                #: this is a polygon
+                for i, p in enumerate(path):
 
-            #: And then each point within the path
-            #: this is a polygon
-            for i, p in enumerate(path):
+                    #: Head state
+                    # 0 move, 1 cut
+                    z = 0 if i == 0 else 1
 
-                #: Head state
-                # 0 move, 1 cut
-                z = 0 if i == 0 else 1
+                    #: Make a subpath
+                    subpath = QtGui.QPainterPath()
+                    subpath.moveTo(_p)
+                    subpath.lineTo(p)
 
-                #: Make a subpath
-                subpath = QtGui.QPainterPath()
-                subpath.moveTo(_p)
-                subpath.lineTo(p)
+                    #: Update the last point
+                    _p = p
 
-                #: Update the last point
-                _p = p
+                    #: Total length
+                    l = subpath.length()
 
-                #: Total length
-                l = subpath.length()
+                    #: If the device does not support streaming
+                    #: the path interpolation is skipped entirely
+                    if skip_interpolation:
+                        x, y = p.x(), p.y()
+                        yield (l, self.move, ([x, y, z],), {})
+                        continue
 
-                #: If the device does not support streaming
-                #: the path interpolation is skipped entirely
-                if skip_interpolation:
-                    x, y = p.x(), p.y()
-                    yield (l, self.move, ([x, y, z],), {})
-                    continue
+                    #: Where we are within the subpath
+                    d = 0
 
-                #: Where we are within the subpath
-                d = 0
+                    #: Interpolate path in steps of dl and ensure we get
+                    #: _p and p (t=0 and t=1)
+                    #: This allows us to cancel mid point
+                    while d <= l:
+                        #: Now set d to the next point by step_size
+                        #: if the end of the path is less than the step size
+                        #: use the minimum of the two
+                        dl = min(l-d, step_size)
 
-                #: Interpolate path in steps of dl and ensure we get
-                #: _p and p (t=0 and t=1)
-                #: This allows us to cancel mid point
-                while d <= l:
-                    #: Now set d to the next point by step_size
-                    #: if the end of the path is less than the step size
-                    #: use the minimum of the two
-                    dl = min(l-d, step_size)
+                        #: Now find the point at the given step size
+                        #: the first point d=0 so t=0, the last point d=l so t=1
+                        t = subpath.percentAtLength(d)
+                        sp = subpath.pointAtPercent(t)
+                        #if d == l:
+                        #    break  #: Um don't we want to send the last point??
 
-                    #: Now find the point at the given step size
-                    #: the first point d=0 so t=0, the last point d=l so t=1
-                    t = subpath.percentAtLength(d)
-                    sp = subpath.pointAtPercent(t)
-                    #if d == l:
-                    #    break  #: Um don't we want to send the last point??
+                        #: -y because Qt's axis is from top to bottom not bottom
+                        #: to top
+                        x, y = sp.x(), sp.y()
+                        yield (dl, self.move, ([x, y, z],), {})
 
-                    #: -y because Qt's axis is from top to bottom not bottom
-                    #: to top
-                    x, y = sp.x(), sp.y()
-                    yield (dl, self.move, ([x, y, z],), {})
+                        #: When we reached the end but instead of breaking above
+                        #: with a d < l we do it here to ensure we get the last
+                        #: point
+                        if d == l:
+                            #: We reached the end
+                            break
 
-                    #: When we reached the end but instead of breaking above
-                    #: with a d < l we do it here to ensure we get the last
-                    #: point
-                    if d == l:
-                        #: We reached the end
-                        break
+                        #: Add step size
+                        d += dl
 
-                    #: Add step size
-                    d += dl
-
-        #: Make sure we get the endpoint
-        ep = model.currentPosition()
-        yield (0, self.move, ([ep.x(), ep.y(), 0],), {})
+            #: Make sure we get the endpoint
+            ep = model.currentPosition()
+            yield (0, self.move, ([ep.x(), ep.y(), 0],), {})
+        except Exception as e:
+            log.error("device | processing error: {}".format(e))
+            raise e
 
     def _observe_status(self, change):
         """ Whenever the status changes, log it """
@@ -819,7 +857,7 @@ class Device(Model):
                 jobs = self.jobs[:]
                 jobs.append(job)
                 self.jobs = jobs
-
+            
 
 class DevicePlugin(Plugin):
     """ Plugin for configuring, using, and communicating with 
