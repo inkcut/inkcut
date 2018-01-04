@@ -219,7 +219,7 @@ class QtSvgEllipse(QtSvgItem):
 class QtSvgCircle(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}circle"
     
-    def parse(self,e):
+    def parse(self, e):
         c = QtCore.QPointF(*map(self.parseUnit, (e.attrib.get('cx', 0),
                                                  e.attrib.get('cy', 0))))
         r = self.parseUnit(e.attrib.get('r', 0))
@@ -549,13 +549,16 @@ class QtSvgText(QtSvgItem):
 
 class QtSvgG(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}g"
-    
+    ids = None
+
     def parse(self, e):
         for node in e:
             if node.tag == QtSvgText.tag:
                 raise ValueError("Text nodes are not supported. "
                                  "Please convert all text to paths and "
                                  "re-open the document.")
+            if self.ids and node.get('id') not in self.ids:
+                continue
 
             for cls in [
                         QtSvgG,
@@ -581,17 +584,22 @@ class QtSvgSymbol(QtSvgG):
 
 class QtSvgDoc(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}svg"
-    
-    def __init__(self, e):
+
+    def __init__(self, e, ids=None):
         """
         Creates a QtPainterPath from an SVG document applying all transforms. 
         
         Does NOT include any styling.
         
-        @param e: An lxml etree.Element or an argument to pass to etree.parse()
+        Parameters
+        ----------
+            e: Element or string
+                An lxml etree.Element or an argument to pass to etree.parse()
+            ids: List
+                List of node ids to include. If not given all will be used.
         """
         self.isParentSvg = not isinstance(e, EtreeElement)
-        
+        self.ids = ids or []
         if self.isParentSvg:
             self._doc = etree.parse(e)
             self._svg = self._doc.getroot()

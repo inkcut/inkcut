@@ -21,9 +21,18 @@ Inkcut, Plot HPGL directly from Inkscape.
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
    MA 02110-1301, USA.
 """
+import os
+import sys
 import inkex
 inkex.localize()
 import subprocess
+
+DEBUG = False
+try:
+    from subprocess import DEVNULL # py3k
+except ImportError:
+    import os
+    DEVNULL = open(os.devnull, 'wb')
 
 
 class InkscapeInkcutPlugin(inkex.Effect):
@@ -32,9 +41,18 @@ class InkscapeInkcutPlugin(inkex.Effect):
         """ Like cut but requires no selection and does no validation for 
         text nodes. 
         """
-        p = subprocess.Popen(['inkcut', 'open', '-'],
+        #: If running from source
+        if DEBUG:
+            python = '~/inkcut/venv/bin/python'
+            inkcut = '~/inkcut/main.py'
+            cmd = [python, inkcut]
+        else:
+            cmd = ['inkcut']
+
+        cmd += ['open', '-']
+        p = subprocess.Popen(cmd,
                              stdin=subprocess.PIPE,
-                             stdout=None,
+                             stdout=DEVNULL,
                              stderr=subprocess.STDOUT,
                              close_fds=True)
         p.stdin.write(inkex.etree.tostring(self.document))

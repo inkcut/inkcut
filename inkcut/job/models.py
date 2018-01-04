@@ -16,7 +16,7 @@ import sys
 from datetime import datetime, timedelta
 from atom.api import (
     Enum, Float, Int, Bool, Instance, ContainerList, Range, Unicode,
-    Callable, observe
+    Dict, Callable, observe
 )
 from contextlib import contextmanager
 from enaml.qt import QtCore, QtGui
@@ -128,6 +128,9 @@ class Job(Model):
     #: Path to svg document this job parses
     document = Unicode().tag(config=True)
 
+    #: Nodes to restrict
+    document_kwargs = Dict().tag(config=True)
+
     #: Meta info a the job
     info = Instance(JobInfo, ()).tag(config=True)
 
@@ -179,9 +182,9 @@ class Job(Model):
             #: Only load from stdin when explicitly changed to it (when doing
             #: open from the cli) otherwise when restoring state this hangs
             #: startup
-            self.path = QtSvgDoc(sys.stdin)
+            self.path = QtSvgDoc(sys.stdin, **self.document_kwargs)
         elif self.document and os.path.exists(self.document):
-            self.path = QtSvgDoc(self.document)
+            self.path = QtSvgDoc(self.document, **self.document_kwargs)
 
     def _create_copy(self):
         """ Creates a copy of the original graphic applying the given 

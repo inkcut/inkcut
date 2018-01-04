@@ -43,7 +43,7 @@ def open_document(event):
     #: Open it
     if path:
         try:
-            plugin.open_document(path)
+            plugin.open_document(path, nodes=event.parameters.get('nodes'))
         except JobError as e:
             workbench.message_critical(
                 title="Error opening document",
@@ -53,11 +53,19 @@ def open_document(event):
 def cli_open_document(cmd):
     """ Open the document passed from the command line
 
+    Examples
+    ---------
+
     inkcut open <file.svg>
+
+    cat file.svg | inkcut open -
+
+    inkcut open <file.svg> --nodes id1 id2 ...
 
     """
     core = cmd.workbench.get_plugin("enaml.workbench.core")
-    core.invoke_command("inkcut.job.open", parameters={'path':cmd.args.path})
+    core.invoke_command("inkcut.job.open", parameters={'path':cmd.args.path,
+                                                       'nodes':cmd.args.nodes})
     raise StopSystemExit()
 
 
@@ -142,7 +150,8 @@ enamldef JobManifest(PluginManifest):
             name = 'open'
             help = "Open the given path"
             args = [
-                ('path', dict(metavar='file', help="Path of the document to open")),
+                ('path', dict(metavar='file', help="Path of the document to open or - for stdin")),
+                ('--nodes', dict(help="Selected nodes to use", nargs="*", default=None)),
             ]
             handler = cli_open_document
     Extension:

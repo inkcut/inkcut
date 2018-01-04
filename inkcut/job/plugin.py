@@ -76,13 +76,13 @@ class JobPlugin(Plugin):
         """ Refresh the preview. Other plugins can request this """
         self._refresh_preview({})
 
-    def open_document(self, path):
+    def open_document(self, path, nodes=None):
         """ Set the job.document if it is empty, otherwise close and create
         a  new Job instance.
         
         """
         if path == '-':
-            log.debug("Opening document from lsstdin...")
+            log.debug("Opening document from stdin...")
         elif not os.path.exists(path):
             raise JobError("Cannot open %s, it does not exist!" % path)
         elif not os.path.isfile(path):
@@ -93,6 +93,7 @@ class JobPlugin(Plugin):
 
         log.info("Opening {doc}".format(doc=path))
         try:
+            self.job.document_kwargs = dict(ids=nodes)
             self.job.document = path
         except ValueError as e:
             #: Wrap in a JobError
