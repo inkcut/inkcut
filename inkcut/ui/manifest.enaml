@@ -117,24 +117,29 @@ enamldef UIManifest(PluginManifest):
 #            command = 'inkcut.ui.open_preferences'
         ActionItem:
             path = '/help/about'
-            label = 'About'
+            label = 'About...'
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://www.codelv.com/projects/inkcut/'}
         ActionItem:
             path = '/help/project'
-            label = 'Docs'
+            label = 'Docs...'
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://www.codelv.com/projects/inkcut/docs/'}
         ActionItem:
             path = '/help/report'
-            label = 'Report issue'
+            label = 'Report issue...'
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://github.com/codelv/inkcut/issues'}
         ActionItem:
             path = '/help/donate'
-            label = 'Donate'
+            label = 'Donate...'
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://www.codelv.com/projects/inkcut/support/'}
+        ActionItem:
+            path = '/help/logs'
+            label = 'Logs...'
+            command = 'inkcut.ui.open_webpage'
+            parameters = {'url':os.path.expanduser('~/.config/inkcut/logs/')}
 
 #        ActionItem:
 #            path = '/help/about'

@@ -43,6 +43,13 @@ enamldef DriversManifest(PluginManifest):
             length = '60cm'
 
         DeviceDriver:
+            manufacturer = 'ANAgraph'
+            model = 'AE-70e'
+            width = '76cm'
+            protocols = ['hpgl', 'dmpl']
+            connections = ['serial', 'printer']
+
+        DeviceDriver:
             manufacturer = 'US Cutter'
             model = 'Refine MH-1351'
             width = '120cm'
