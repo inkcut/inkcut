@@ -479,7 +479,6 @@ class Device(Model):
         cmd = self.config.commands_connect
         if cmd:
             yield defer.maybeDeferred(self.connection.write, cmd)
-        
 
     def move(self, position, absolute=True):
         """ Move to the given position. By default this delegates handling
@@ -573,174 +572,179 @@ class Device(Model):
                 
         """
         log.debug("device | submit {}".format(job))
-        #: Only allow one job at a time
-        if self.busy:
-            queue = self.queue[:]
-            queue.append(job)
-            self.queue = queue  #: Copy and reassign so the UI updates
-            log.info("Job {} put in device queue".format(job))
-            return
+        try:
 
-        with self.device_busy():
-            #: Set the current the job
-            self.job = job
-            self.status = "Initializing job"
+            #: Only allow one job at a time
+            if self.busy:
+                queue = self.queue[:]
+                queue.append(job)
+                self.queue = queue  #: Copy and reassign so the UI updates
+                log.info("Job {} put in device queue".format(job))
+                return
 
-            #: Get the time to sleep based for each unit of movement
-            config = self.config
+            with self.device_busy():
+                #: Set the current the job
+                self.job = job
+                self.status = "Initializing job"
 
-            #: Rate px/ms
-            if config.custom_rate >= 0:
-                rate = config.custom_rate
-            elif config.spooled:
-                rate = 0
-            elif config.interpolate:
-                if config.step_time > 0:
-                    rate = config.step_size/float(config.step_time)
+                #: Get the time to sleep based for each unit of movement
+                config = self.config
+
+                #: Rate px/ms
+                if config.custom_rate >= 0:
+                    rate = config.custom_rate
+                elif config.spooled:
+                    rate = 0
+                elif config.interpolate:
+                    if config.step_time > 0:
+                        rate = config.step_size/float(config.step_time)
+                    else:
+                        rate = 0 # Undefined
                 else:
-                    rate = 0 # Undefined
-            else:
-                rate = from_unit(
-                    config.speed,  # in/s or cm/s
-                    config.speed_units.split("/")[0])/1000.0
+                    rate = from_unit(
+                        config.speed,  # in/s or cm/s
+                        config.speed_units.split("/")[0])/1000.0
 
-            # Device model is updated in real time
-            model = yield defer.maybeDeferred(self.init, job)
+                # Device model is updated in real time
+                model = yield defer.maybeDeferred(self.init, job)
 
-            #: Local references are faster
-            info = job.info
+                #: Local references are faster
+                info = job.info
 
-            #: Determine the length for tracking progress
-            whole_path = QtGui.QPainterPath()
-            for path in model.toSubpathPolygons():
-                for i, p in enumerate(path):
-                    whole_path .lineTo(p)
-            total_length = whole_path.length()
-            total_moved = 0
-            log.debug("device | Path length: {}".format(total_length))
+                #: Determine the length for tracking progress
+                whole_path = QtGui.QPainterPath()
+                for path in model.toSubpathPolygons():
+                    for i, p in enumerate(path):
+                        whole_path .lineTo(p)
+                total_length = whole_path.length()
+                total_moved = 0
+                log.debug("device | Path length: {}".format(total_length))
 
-            #: So a estimate of the duration can be determined
-            info.length = total_length
-            info.speed = rate*1000  #: Convert to px/s
+                #: So a estimate of the duration can be determined
+                info.length = total_length
+                info.speed = rate*1000  #: Convert to px/s
 
-            #: Waiting for approval
-            info.status = 'waiting'
+                #: Waiting for approval
+                info.status = 'waiting'
 
-            #: If marked for auto approve start now
-            if info.auto_approve:
-                info.status = 'approved'
-            else:
-                #: Check for approval before starting
-                yield defer.maybeDeferred(info.request_approval)
-                if info.status != 'approved':
-                    self.status = "Job cancelled"
-                    return
+                #: If marked for auto approve start now
+                if info.auto_approve:
+                    info.status = 'approved'
+                else:
+                    #: Check for approval before starting
+                    yield defer.maybeDeferred(info.request_approval)
+                    if info.status != 'approved':
+                        self.status = "Job cancelled"
+                        return
 
-            #: Update stats
-            info.status = 'running'
-            info.started = datetime.now()
+                #: Update stats
+                info.status = 'running'
+                info.started = datetime.now()
 
-            self.status = "Connecting to device"
-            with self.device_connection(
-                            test or config.test_mode) as connection:
-                self.status = "Processing job"
-                try:
-                    yield defer.maybeDeferred(self.connect)
+                self.status = "Connecting to device"
+                with self.device_connection(
+                                test or config.test_mode) as connection:
+                    self.status = "Processing job"
+                    try:
+                        yield defer.maybeDeferred(self.connect)
 
-                    #: Write startup command
-                    if config.commands_before:
-                        yield defer.maybeDeferred(connection.write, config.commands_before)
+                        #: Write startup command
+                        if config.commands_before:
+                            yield defer.maybeDeferred(connection.write, config.commands_before)
 
-                    self.status = "Working..."
+                        self.status = "Working..."
 
-                    #: For point in the path
-                    for (d, cmd, args, kwargs) in self.process(model):
+                        #: For point in the path
+                        for (d, cmd, args, kwargs) in self.process(model):
 
-                        #: Check if we paused
-                        if info.paused:
-                            self.status = "Job paused"
-                            #: Sleep until resumed, cancelled, or the
-                            #: connection drops
-                            while (info.paused and not info.cancelled
-                                   and connection.connected):
-                                yield async_sleep(300)  # ms
+                            #: Check if we paused
+                            if info.paused:
+                                self.status = "Job paused"
+                                #: Sleep until resumed, cancelled, or the
+                                #: connection drops
+                                while (info.paused and not info.cancelled
+                                       and connection.connected):
+                                    yield async_sleep(300)  # ms
 
-                        #: Check for cancel for non interpolated jobs
-                        if info.cancelled:
-                            self.status = "Job cancelled"
-                            info.status = 'cancelled'
-                            break
-                        elif not connection.connected:
-                            self.status = "connection error"
-                            info.status = 'error'
-                            break
+                            #: Check for cancel for non interpolated jobs
+                            if info.cancelled:
+                                self.status = "Job cancelled"
+                                info.status = 'cancelled'
+                                break
+                            elif not connection.connected:
+                                self.status = "connection error"
+                                info.status = 'error'
+                                break
 
-                        #: Invoke the command
-                        #: If you want to let the device handle more complex
-                        #: commands such as curves do it in process and handle
-                        yield defer.maybeDeferred(cmd, *args, **kwargs)
-                        total_moved += d
+                            #: Invoke the command
+                            #: If you want to let the device handle more complex
+                            #: commands such as curves do it in process and handle
+                            yield defer.maybeDeferred(cmd, *args, **kwargs)
+                            total_moved += d
 
-                        #: d should be the device must move in px
-                        #: so wait a proportional amount of time for the device
-                        #: to catch up. This avoids buffer errors from dumping
-                        #: everything at once.
+                            #: d should be the device must move in px
+                            #: so wait a proportional amount of time for the device
+                            #: to catch up. This avoids buffer errors from dumping
+                            #: everything at once.
 
-                        #: Since sending is way faster than cutting
-                        #: we must delay (without blocking the UI) before
-                        #: sending the next command or the device's buffer
-                        #: quickly gets filled and crappy china piece cutters
-                        #: get all jacked up. If the transport sends to a spooled
-                        #: output (such as a printer) this can be set to 0
-                        log.debug("Rate is :{}".format(rate))
-                        if rate > 0:
-                            # log.debug("d={}, delay={} t={}".format(
-                            #     d, delay, d/delay
-                            # ))
-                            yield async_sleep(d/rate)
+                            #: Since sending is way faster than cutting
+                            #: we must delay (without blocking the UI) before
+                            #: sending the next command or the device's buffer
+                            #: quickly gets filled and crappy china piece cutters
+                            #: get all jacked up. If the transport sends to a spooled
+                            #: output (such as a printer) this can be set to 0
+                            log.debug("Rate is :{}".format(rate))
+                            if rate > 0:
+                                # log.debug("d={}, delay={} t={}".format(
+                                #     d, delay, d/delay
+                                # ))
+                                yield async_sleep(d/rate)
 
-                        #: TODO: Check if we need to update the ui
-                        #: Set the job progress based on how far we've gone
-                        if total_length > 0:
-                            info.progress = int(max(0, min(100,
-                                            100*total_moved/total_length)))
+                            #: TODO: Check if we need to update the ui
+                            #: Set the job progress based on how far we've gone
+                            if total_length > 0:
+                                info.progress = int(max(0, min(100,
+                                                100*total_moved/total_length)))
 
-                    if info.status != 'error':
-                        #: We're done, send any finalization commands
-                        yield defer.maybeDeferred(self.finish)
+                        if info.status != 'error':
+                            #: We're done, send any finalization commands
+                            yield defer.maybeDeferred(self.finish)
 
-                    #: Write finalize command
-                    if config.commands_after:
-                        yield defer.maybeDeferred(connection.write, config.commands_after)
+                        #: Write finalize command
+                        if config.commands_after:
+                            yield defer.maybeDeferred(connection.write, config.commands_after)
 
-                    #: Update stats
-                    info.ended = datetime.now()
+                        #: Update stats
+                        info.ended = datetime.now()
 
-                    #: If not cancelled or errored
-                    if info.status == 'running':
-                        info.done = True
-                        info.status = 'complete'
-                except Exception as e:
-                    log.error(e)
-                    raise
-                finally:
-                    if connection.connected:
-                        yield defer.maybeDeferred(self.disconnect)
+                        #: If not cancelled or errored
+                        if info.status == 'running':
+                            info.done = True
+                            info.status = 'complete'
+                    except Exception as e:
+                        log.error(e)
+                        raise
+                    finally:
+                        if connection.connected:
+                            yield defer.maybeDeferred(self.disconnect)
 
-        #: Set the origin
-        if job.feed_to_end and not job.info.cancelled:
-            self.origin = self.position
+            #: Set the origin
+            if job.feed_to_end and job.info.status == 'complete':
+                self.origin = self.position
 
-        #: If the user didn't cancel, set the origin and
-        #: Process any jobs that entered the queue while this was running
-        if self.queue and not job.info.cancelled:
-            queue = self.queue[:]
-            job = queue.pop(0)  #: Pull the first job off the queue
-            log.info("Rescheduling {} from queue".format(job))
-            self.queue = queue  #: Copy and reassign so the UI updates
+            #: If the user didn't cancel, set the origin and
+            #: Process any jobs that entered the queue while this was running
+            if self.queue and not job.info.cancelled:
+                queue = self.queue[:]
+                job = queue.pop(0)  #: Pull the first job off the queue
+                log.info("Rescheduling {} from queue".format(job))
+                self.queue = queue  #: Copy and reassign so the UI updates
 
-            #: Call a minute later
-            timed_call(60000, self.submit, job)
+                #: Call a minute later
+                timed_call(60000, self.submit, job)
+        except Exception as e:
+            log.error(e)
+            raise
 
     def process(self, model):
         """  Process the path model of a job and return each command

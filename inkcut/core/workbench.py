@@ -18,7 +18,7 @@ import enaml
 from atom.api import Unicode
 from enaml.qt import QtWidgets, QtGui
 from enaml.workbench.ui.api import UIWorkbench
-
+from inkcut.core.utils import log
 
 class InkcutWorkbench(UIWorkbench):
     #: Singleton instance
@@ -55,6 +55,7 @@ class InkcutWorkbench(UIWorkbench):
         """ Shortcut to display a critical popup dialog.
         
         """
+        log.critical(message)
         return QtWidgets.QMessageBox.critical(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
@@ -62,6 +63,7 @@ class InkcutWorkbench(UIWorkbench):
         """ Shortcut to display a warning popup dialog.
         
         """
+        log.warning(message)
         return QtWidgets.QMessageBox.warning(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
@@ -69,6 +71,7 @@ class InkcutWorkbench(UIWorkbench):
         """ Shortcut to display an info popup dialog.
         
         """
+        log.info(message)
         return QtWidgets.QMessageBox.information(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
@@ -76,6 +79,7 @@ class InkcutWorkbench(UIWorkbench):
         """ Shortcut to display an about popup dialog.
         
         """
+        log.info(message)
         return QtWidgets.QMessageBox.about(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
@@ -83,6 +87,7 @@ class InkcutWorkbench(UIWorkbench):
         """ Shortcut to display a question popup dialog.
         
         """
+        log.info(message)
         return QtWidgets.QMessageBox.question(self.window, "{0} - {1}".format(
             self.app_name, title), message, *args, **kwargs)
 
