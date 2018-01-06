@@ -41,7 +41,7 @@ class StepperMotor(Model):
     DIR_NEG = -1
 
     # Default Software Square Wave Time Delay (in ms)
-    delay = Float(0.001)
+    delay = Float(0.0001)
 
     # StepperMotor Class driver GPIO board pins
     driver_pins = Tuple()
@@ -100,7 +100,7 @@ class StepperMotor(Model):
             output(pins, (ds, 1))
 
             # Software Square Wave High Time
-            #time.sleep(self.delay)
+            time.sleep(self.delay/1000000.0)
             #yield async_sleep(0)#self.delay)
 
             # Set GPIO output (Direction pin to ds, Pulse Pin Low)
@@ -145,7 +145,8 @@ class PiConfig(DeviceConfig):
 
     # MAGIC VOODOO NUMBER AKA [pixels/motor steps] could also be flipped?
     # not sure
-    scale = Tuple(float, default=(36.4, 36.4)).tag(config=True)
+    #scale = Tuple(float, default=(36.4, 36.4)).tag(config=True)
+    scale = List(float, default=[36.4, 36.4]).tag(config=True)
 
     # Time Delay for Software Implemented Square Wave in ms
     # TODO: integrate Real-Time Clock to replace software square wave
@@ -221,7 +222,7 @@ class PiDevice(Device):
             return
         GPIO.setmode(GPIO.BOARD)
 
-    @observe('config', 'config.motor_driver_pins', 'config.motor_enable_pins')
+    @observe('config', 'config.motor_driver_pins', 'config.motor_enable_pins', 'config.delay')
     def init_motors(self, change):
         """ Creates motor instances and sets the output pins """
         if change['type'] == 'create':
@@ -229,9 +230,11 @@ class PiDevice(Device):
         config = self.config
         # Init motors
         self.motor[0] = StepperMotor(driver_pins=config.motor_driver_pins[0],
-                                     enable_pin=config.motor_enable_pins[0])
+                                     enable_pin=config.motor_enable_pins[0],
+                                     delay=config.delay)
         self.motor[1] = StepperMotor(driver_pins=config.motor_driver_pins[1],
-                                     enable_pin=config.motor_enable_pins[1])
+                                     enable_pin=config.motor_enable_pins[1],
+                                     delay=config.delay)
         
 
     def enable(self):
@@ -288,6 +291,7 @@ class PiDevice(Device):
         
         """
         dx, dy, z = position
+        self.position=position
         log.debug("Move: to ({},{},{}) {}".format(dx, dy, z, absolute))
 
         #: Local refs are faster
@@ -301,6 +305,7 @@ class PiDevice(Device):
             dy -= _pos[1]
 
         if dx == dy == 0:
+            log.info("{}, {}".format(_pos, _pos))
             return
         
         sx = dx > 0 and 1 or -1
@@ -337,6 +342,7 @@ class PiDevice(Device):
             self.disconnect()
             raise
         log.debug(self._position)
+        
 
         # Update for Inkcut Real-Time Update
         #t = time.time()
