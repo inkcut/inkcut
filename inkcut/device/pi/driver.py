@@ -45,7 +45,7 @@ class StepperMotor(Model):
     delay = Float(3.5)
 
     # StepperMotor Class driver GPIO board pins
-    driver_pins = Tuple()
+    driver_pins = List()
 
     # StepperMotor Class enable GPIO board pins
     enable_pin = Int()
