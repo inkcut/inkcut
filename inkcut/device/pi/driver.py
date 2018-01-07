@@ -36,12 +36,13 @@ except ImportError:
 
 PROFILER = Profile()
 
+
 class StepperMotor(Model):
     DIR_POS = 1
     DIR_NEG = -1
 
     # Default Software Square Wave Time Delay (in ms)
-    delay = Float(0.0001)
+    delay = Float(3.5)
 
     # StepperMotor Class driver GPIO board pins
     driver_pins = Tuple()
@@ -93,7 +94,7 @@ class StepperMotor(Model):
 
         pins = self.driver_pins
         output = GPIO.output
-        i=0
+        i = 0
         while i < n:
 
             # Set GPIO output (Direction pin to ds, Pulse Pin High)
@@ -119,25 +120,25 @@ class PiConfig(DeviceConfig):
 
     # End Bounds for Inkcut
     # TODO: Implement this with actual cutter end bounds
-    bounds = Tuple(default=[[0, 0], [0, 0]]).tag(config=True)
+    bounds = List(default=[[0, 0], [0, 0]]).tag(config=True)
 
     # (X Driver Enable GPIO Pin, Y Driver Enable GPIO Pin)
-    motor_enable_pins = Tuple(int, default=(3, 8)).tag(config=True)
+    motor_enable_pins = List(int, default=[3, 8]).tag(config=True)
 
-    motor_driver_pins = Tuple(tuple, default=(
-        (7, 5),   # (X Direction Pin, X direction Step Pulse Pin)
-        (12, 10)) # (Y Direction Pin, Y direction Step Pulse Pin)
-    ).tag(config=True)
+    motor_driver_pins = List(list, default=[
+        [7, 5],   # (X Direction Pin, X direction Step Pulse Pin)
+        [12, 10] # (Y Direction Pin, Y direction Step Pulse Pin)
+    ]).tag(config=True)
 
     # TODO: need to connect these pins to cutter blade outputs
-    servo_gpio_pins = Tuple(int, default=(19, 17)).tag(config=True)
+    servo_gpio_pins = List(int, default=[19, 17]).tag(config=True)
 
     # TODO: need to connect these boundary pins to end stop switches
     # TODO: connect hardware switches to these pins
-    boundary_gpio_pins = Tuple(tuple, default=(
-        (5, 6),  # (-X switch GPIO boundary Pin, +X boundary switch pin)
-        (11, 12)) # (-Y switch GPIO boundary Pin, +Y boundary switch pin)
-    ).tag(config=True)
+    boundary_gpio_pins = List(list, default=[
+        [5, 6],  # (-X switch GPIO boundary Pin, +X boundary switch pin)
+        [11, 12] # (-Y switch GPIO boundary Pin, +Y boundary switch pin)
+    ]).tag(config=True)
 
     # Bounce timer for switches [ms]
     # TODO: integrate timer with end stop switches
@@ -145,7 +146,6 @@ class PiConfig(DeviceConfig):
 
     # MAGIC VOODOO NUMBER AKA [pixels/motor steps] could also be flipped?
     # not sure
-    #scale = Tuple(float, default=(36.4, 36.4)).tag(config=True)
     scale = List(float, default=[36.4, 36.4]).tag(config=True)
 
     # Time Delay for Software Implemented Square Wave in ms
@@ -222,7 +222,7 @@ class PiDevice(Device):
             return
         GPIO.setmode(GPIO.BOARD)
 
-    @observe('config', 'config.motor_driver_pins', 'config.motor_enable_pins', 'config.delay')
+    @observe('config', 'config.motor_driver_pins', 'config.motor_enable_pins')
     def init_motors(self, change):
         """ Creates motor instances and sets the output pins """
         if change['type'] == 'create':
@@ -291,15 +291,13 @@ class PiDevice(Device):
         
         """
         dx, dy, z = position
-        self.position=position
         log.debug("Move: to ({},{},{}) {}".format(dx, dy, z, absolute))
 
         #: Local refs are faster
         config = self.config
         dx, dy = int(dx*config.scale[0]), int(dy*config.scale[1])
         _pos = self._position
-        mx, my = self.motor[0], self.motor[1]
-        
+
         if absolute:
             dx -= _pos[0]
             dy -= _pos[1]
@@ -318,21 +316,18 @@ class PiDevice(Device):
         try:
             while True:
                 if fxy < 0:
-                    mx, my = 0, sy
                     fxy += ax
+                    stepy(sy)
+                    y += sy
                 else:
-                    mx, my = sx, 0
                     fxy -= ay
+                    stepx(sx)
+                    x += sx
 
                 #: Wait for both movements to complete
                 #yield DeferredList([stepx(mx),
                 #                    stepy(my)])
-                
-                stepx(mx)
-                stepy(my)
-                x += mx
-                y += my
-                
+
                 #  log.debug("x={} dx={}, y={} dy={}".format(x,dx,y,dy))
                 if x == dx and y == dy:
                     self._position = [_pos[0]+dx, _pos[1]+dy, z]
@@ -342,8 +337,7 @@ class PiDevice(Device):
             self.disconnect()
             raise
         log.debug(self._position)
-        
-
+        self.position = position
         # Update for Inkcut Real-Time Update
         #t = time.time()
         #if t-self._updated > 1:

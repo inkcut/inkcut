@@ -62,11 +62,11 @@ enamldef ConfigView(Container): view:
                     text = "Step delay"
                 Form:
                     DoubleSpinBox:
-                        suffix = " (ms)"
+                        suffix = " (us)"
                         value := model.delay
                         minimum = 0.0
                         single_step = 0.001
-                        maximum = 5000.0
+                        maximum = 1000000.0
                 Label:
                     text = "Scale"
                 Form:
