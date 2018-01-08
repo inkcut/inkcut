@@ -90,8 +90,7 @@ class StepperMotor(Model):
     def step(self, steps):
         # set ds to 0 or 1 for direction pin output
         ds = 0 if steps < 0 else 1
-        n = int(steps)
-
+        n = int(abs(steps))
         pins = self.driver_pins
         output = GPIO.output
         i = 0
@@ -291,8 +290,6 @@ class PiDevice(Device):
         
         """
         dx, dy, z = position
-        log.debug("Move: to ({},{},{}) {}".format(dx, dy, z, absolute))
-
         #: Local refs are faster
         config = self.config
         dx, dy = int(dx*config.scale[0]), int(dy*config.scale[1])
@@ -305,7 +302,7 @@ class PiDevice(Device):
         if dx == dy == 0:
             log.info("{}, {}".format(_pos, _pos))
             return
-        
+
         sx = dx > 0 and 1 or -1
         sy = dy > 0 and 1 or -1
         fxy = abs(dx)-abs(dy)
