@@ -1,6 +1,7 @@
 # Inkcut
 
 [![SourceForge downloads](https://img.shields.io/sourceforge/dm/inkcut.svg)](https://github.com/codelv/inkcut/releases) 
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/inkcut/Lobby#)
 
 An application for controlling 2D plotters, cutters, engravers, and CNC machines.
 
