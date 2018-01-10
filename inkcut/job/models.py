@@ -151,7 +151,7 @@ class Job(Model):
         config=True, help="automatically rotate if it saves space")
 
     copies = Int(1).tag(config=True)
-    auto_copies = Bool(True).tag(config=True,
+    auto_copies = Bool(False).tag(config=True,
                                  help="always use a full stack")
     copy_spacing = ContainerList(Float(),
                                  default=[10, 10]).tag(config=True)
