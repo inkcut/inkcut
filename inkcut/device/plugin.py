@@ -613,7 +613,11 @@ class Device(Model):
 
                 #: Determine the length for tracking progress
                 whole_path = QtGui.QPainterPath()
-                for path in model.toSubpathPolygons():
+
+                #: Some versions of Qt seem to require a value in
+                #: toSubpathPolygons
+                m = QtGui.QTransform.fromScale(1, 1)
+                for path in model.toSubpathPolygons(m):
                     for i, p in enumerate(path):
                         whole_path .lineTo(p)
                 total_length = whole_path.length()
@@ -650,7 +654,8 @@ class Device(Model):
 
                         #: Write startup command
                         if config.commands_before:
-                            yield defer.maybeDeferred(connection.write, config.commands_before)
+                            yield defer.maybeDeferred(connection.write,
+                                                      config.commands_before)
 
                         self.status = "Working..."
 
@@ -712,7 +717,8 @@ class Device(Model):
 
                         #: Write finalize command
                         if config.commands_after:
-                            yield defer.maybeDeferred(connection.write, config.commands_after)
+                            yield defer.maybeDeferred(connection.write,
+                                                      config.commands_after)
 
                         #: Update stats
                         info.ended = datetime.now()
@@ -780,7 +786,9 @@ class Device(Model):
         if not skip_interpolation and step_size <= 0:
             raise ValueError("Cannot have a step size <= 0!")
         try:
-            for path in model.toSubpathPolygons():
+            #: Some versions of Qt seem to require a value in toSubpathPolygons
+            m = QtGui.QTransform.fromScale(1, 1)
+            for path in model.toSubpathPolygons(m):
 
                 #: And then each point within the path
                 #: this is a polygon
