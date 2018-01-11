@@ -90,8 +90,14 @@ class JobInfo(Model):
 
     #: Callback to open the approval dialog
     auto_approve = Bool().tag(config=True)
-    request_approval = Callable(
-        lambda info: setattr(info, 'status', 'approved'))
+    request_approval = Callable()
+
+    def _default_request_approval(self):
+        """ Request approval using the current job """
+        from inkcut.core.workbench import InkcutWorkbench
+        workbench = InkcutWorkbench.instance()
+        plugin = workbench.get_plugin("inkcut.job")
+        return lambda: plugin.request_approval(plugin.job)
 
     def reset(self):
         """ Reset to initial states"""

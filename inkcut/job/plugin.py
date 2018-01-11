@@ -51,10 +51,6 @@ class JobPlugin(Plugin):
         #: Now load state
         super(JobPlugin, self).start()
 
-        #: Update the approval dialog of all jobs
-        for job in self.jobs+[self.job]:
-            job.info.request_approval = lambda j=job: self.request_approval(j)
-
         #: If we loaded from state, refresh
         if self.job.document:
             self.refresh_preview()
