@@ -43,7 +43,7 @@ class StepperMotor(Model):
 
     # Default Software Square Wave Time Delay (in ms)
     delay = Float(3.5)
-    Clock_Time=Float(time.time())         # Initializate Step_Time
+    clock_time = Float(time.time())         # Initializate Step_Time
 
     # StepperMotor Class driver GPIO board pins
     driver_pins = List()
@@ -96,22 +96,26 @@ class StepperMotor(Model):
         output = GPIO.output
         i = 0
         while i < n:
-            while time.time()<(self.Clock_Time+(self.delay/1000000.0)):
-                if 0:            # Do nothing # This is effectively time.sleep() however the sleep time is adjusted based on how long it takes to execute other sections of code
-                    time.time()
-            
-            self.Clock_Time = time.time()                   # Set previous clock time to current time
+            dt = (self.clock_time+(self.delay/1000000.0))-time.time()
+            # Do nothing # This is effectively time.sleep() however the sleep
+            # time is adjusted based on how long it takes to execute other
+            # sections of code
+            time.sleep(dt)
+
+            # Set previous clock time to current time
+            self.clock_time = time.time()
 
             # Set GPIO output (Direction pin to ds, Pulse Pin High)
             output(pins, (ds, 1))
 
             # Software Square Wave High Time
-            time.sleep(0.000003)                            # DRV8825 requires a minium high pulse of 2us making 3us for margin
+            # DRV8825 requires a minium high pulse of 2us making 3us for margin
+            time.sleep(0.000003)
 
             # Set GPIO output (Direction pin to ds, Pulse Pin Low)
             output(pins, (ds, 0))
 
-            i+=1
+            i += 1
                   
 
 class PiConfig(DeviceConfig):
