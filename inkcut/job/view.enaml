@@ -376,7 +376,7 @@ enamldef MaterialDockItem(DockItem):
                 text = "Plot Feeding"
             RadioButton: rb1:
                 text = 'Return to origin'
-                #checked := job.feed_to_end
+                checked << not job.feed_to_end
             RadioButton: rb2:
                 text = 'Feed after'
                 checked := job.feed_to_end

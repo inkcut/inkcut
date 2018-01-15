@@ -174,3 +174,6 @@ class JobPlugin(Plugin):
 
         #: Update the plot
         preview_plugin.set_preview(*view_items)
+        
+        #: Save config
+        self.save()
