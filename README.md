@@ -38,9 +38,3 @@ Please create an issue or submit a pull request to add a device to the list.
 
 If you use Inkcut and want to help continue the development open source cutting software 
 please consider [donating](https://www.codelv.com/projects/inkcut/support/). 
-
-I would like to begin maintaining, updating, and adding new features to Inkcut on a 
-regular basis, but I don't get paid to work on this so it's hard to justify spending 
-the time.
-
-> If you would like paid support or something developed please [contact me](https://www.codelv.com/contact/)  
