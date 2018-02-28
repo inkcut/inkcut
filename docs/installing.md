@@ -7,29 +7,6 @@ intended for end users.
 
 Developers can install all the dependencies and [build it from source](#building-from-source).
 
-
-### Original version
-
-To install on linux, simply extract the contents of the package into /home/your_username/.config/inkscape/extensions/
-
-Before starting, ensure that the target machine has the required dependencies
-
-```bash
-pygtk and gtk
-pyserial
-librsvg2-common
-```
-
-
-Assuming the tar.gz archive is saved in your Downloads folder, you can use this command to install it. Replace inkcut-1.0.tar.gz with the archive name.
-
- ```bash
-tar -xzvf Downloads/inkCut-1.0.tar.gz -C .config/inkscape/extensions/
-```
-
-Then restart all instances of inkscape.
-
-
 ### Building from source
 
 To build from source use the commands below. Using Python 3 is recommended.
@@ -41,9 +18,6 @@ To build from source use the commands below. Using Python 3 is recommended.
 
 virtualenv -p python3 venv
 source venv activate
-
-pip install git+https://github.com/frmdstryr/enaml.git@latest
-pip install git+https://github.com/frmdstryr/enamlx.git
 
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
@@ -59,9 +33,6 @@ pip install .
 
 virtualenv -p python2 venv
 source venv activate
-
-pip install git+https://github.com/frmdstryr/enaml.git@latest
-pip install git+https://github.com/frmdstryr/enamlx.git
 
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
@@ -86,9 +57,6 @@ pip install .
 source ~/.profile           #" loads virtual environment profile settings
 workon cv                   #" opens virtual environment cv
 
-pip install git+https://github.com/frmdstryr/enaml.git@latest
-pip install git+https://github.com/frmdstryr/enamlx.git
-
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
 
@@ -109,6 +77,28 @@ pip install RPi.GPIO
 pip install git+https://github.com/npinchot/zbar.git
 
 ```
+
+### Original version
+
+To install on linux, simply extract the contents of the package into /home/your_username/.config/inkscape/extensions/
+
+Before starting, ensure that the target machine has the required dependencies
+
+```bash
+pygtk and gtk
+pyserial
+librsvg2-common
+```
+
+
+Assuming the tar.gz archive is saved in your Downloads folder, you can use this command to install it. Replace inkcut-1.0.tar.gz with the archive name.
+
+ ```bash
+tar -xzvf Downloads/inkCut-1.0.tar.gz -C .config/inkscape/extensions/
+```
+
+Then restart all instances of inkscape.
+
 
 
 ### Running
