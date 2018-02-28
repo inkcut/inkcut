@@ -114,6 +114,10 @@ class QtSvgItem(QtGui.QPainterPath):
         """ Returns userunits given a string representation of units 
         in another system
         """
+
+        if not string:
+            return 0
+
         unit = re.compile('(%s)$' % '|'.join(QtSvgItem._uuconv.keys()))
         param = re.compile(
             r'(([-+]?[0-9]+(\.[0-9]*)?|[-+]?\.[0-9]+)([eE][-+]?[0-9]+)?)')
