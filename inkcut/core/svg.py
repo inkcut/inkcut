@@ -110,20 +110,20 @@ class QtSvgItem(QtGui.QPainterPath):
         return paths
     
     @staticmethod
-    def parseUnit(string):
+    def parseUnit(value):
         """ Returns userunits given a string representation of units 
         in another system
         """
 
-        if not string:
-            return 0
+        if isinstance(value, (int, float)):
+            return value
 
         unit = re.compile('(%s)$' % '|'.join(QtSvgItem._uuconv.keys()))
         param = re.compile(
             r'(([-+]?[0-9]+(\.[0-9]*)?|[-+]?\.[0-9]+)([eE][-+]?[0-9]+)?)')
     
-        p = param.match(string)
-        u = unit.search(string)    
+        p = param.match(value)
+        u = unit.search(value)
         if p:
             retval = float(p.string[p.start():p.end()])
         else:
