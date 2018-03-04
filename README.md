@@ -2,7 +2,7 @@
 
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/inkcut/discussion)
 
-An application for controlling 2D plotters, cutters, engravers, and CNC machines.
+An application for controlling 2D plotters, cutters, engravers, and CNC machines. [Project homepage](https://www.codelv.com/projects/inkcut/)
 
 ![Inkcut - vinyl cutting and plotting](https://user-images.githubusercontent.com/380158/34273634-29e60a08-e663-11e7-9977-5125eae738f7.gif)
 
