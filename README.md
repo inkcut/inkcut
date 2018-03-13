@@ -24,14 +24,13 @@ You can download the release versions from [here](https://github.com/codelv/inkc
  
 ### Docs and tutorials
 
-See the [project docs site](https://www.codelv.com/projects/inkcut/docs/)
+See the [project docs site](https://www.codelv.com/projects/inkcut/docs/):
 
-
-### Supported devices
-
-See the [supported device list](https://www.codelv.com/projects/inkcut/docs/supported-devices).
-
-Please create an issue or submit a pull request to add a device to the list.  
+* [Installing](https://www.codelv.com/projects/inkcut/docs/installing)
+* [Tutorial](https://www.codelv.com/projects/inkcut/docs/tutorial)
+* [Device Setup](https://www.codelv.com/projects/inkcut/docs/device-setup)
+* [Supported Devices](https://www.codelv.com/projects/inkcut/docs/supported-devices)
+* [Developer](https://www.codelv.com/projects/inkcut/docs/developer)
 
 ### Donate and support
 
