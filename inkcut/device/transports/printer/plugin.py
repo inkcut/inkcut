@@ -195,14 +195,17 @@ class PrinterTransport(DeviceTransport):
 
     def connect(self):
         try:
-            #: Save a reference
+            # Always create a new connection
+            self.connection = self._default_connection()
+
+            # Save a reference
             self.protocol.transport = self
             self.connection.transport = self
             self.connection.open()
             log.debug("{} | opened".format(self.config.printer))
         except Exception as e:
-            #: Make sure to log any issues as these tracebacks can get
-            #: squashed by twisted
+            # Make sure to log any issues as these tracebacks can get
+            # squashed by twisted
             log.error("{} | {}".format(
                 self.config.printer, traceback.format_exc()
             ))
