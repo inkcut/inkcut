@@ -26,6 +26,19 @@ You can download the release versions from [here](https://github.com/codelv/inkc
 
 See the [project docs site](https://www.codelv.com/projects/inkcut/docs/)
 
+#### Installing your cutter
+
+##### Linux
+
+###### Cutters with a parallel interface
+
+Cutters with a parallel interface (either a 'real' parallel port or using a
+built-in parallel-to-USB converter) must be added to your system as a printer
+before using them from Inkcut. Start your printer configuration utility (e.g.
+[system-config-printer](http://cyberelk.net/tim/software/system-config-printer)),
+which at least when connecting via USB should detect the connected cutter.
+Proceed to add it with a generic driver, such as 'Generic Text-Only Printer'.
+Do not print a test page.
 
 ### Supported devices
 
