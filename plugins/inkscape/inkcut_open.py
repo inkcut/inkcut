@@ -27,8 +27,6 @@ import inkex
 inkex.localize()
 import subprocess
 
-from inkcut import convert_objects_to_paths
-
 DEBUG = False
 try:
     from subprocess import DEVNULL # py3k
@@ -38,9 +36,10 @@ except ImportError:
 
 
 class InkscapeInkcutPlugin(inkex.Effect):
+
     def effect(self):
-        """ Like cut but requires no selection and does no validation for
-        text nodes.
+        """ Like cut but requires no selection and does no validation for 
+        text nodes. 
         """
         #: If running from source
         if DEBUG:
@@ -50,15 +49,13 @@ class InkscapeInkcutPlugin(inkex.Effect):
         else:
             cmd = ['inkcut']
 
-        document = convert_objects_to_paths(self.args[-1], self.document)
-
         cmd += ['open', '-']
         p = subprocess.Popen(cmd,
                              stdin=subprocess.PIPE,
                              stdout=DEVNULL,
                              stderr=subprocess.STDOUT,
                              close_fds=True)
-        p.stdin.write(inkex.etree.tostring(document))
+        p.stdin.write(inkex.etree.tostring(self.document))
         p.stdin.close()
 
 # Create effect instance and apply it.
