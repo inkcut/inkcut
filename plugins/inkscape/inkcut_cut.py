@@ -26,7 +26,6 @@ import sys
 import inkex
 inkex.localize()
 import subprocess
-from inkcut import contains_text, convert_objects_to_paths
 
 DEBUG = False
 
@@ -36,20 +35,27 @@ except ImportError:
     import os
     DEVNULL = open(os.devnull, 'wb')
 
+
 class InkscapeInkcutPlugin(inkex.Effect):
+    def validate(self):
+        nodes = self.selected.values()
+        for node in nodes:
+            tag = node.tag[node.tag.rfind("}")+1:]
+            if tag == 'text':
+                inkex.errormsg("A text node was found in the selection, "
+                               "please convert all text objects to paths and "
+                               "try again.")
+                return False
+        return True
+
     def effect(self):
-        """ Like cut but requires no selection and does no validation for
-        text nodes.
+        """ Like cut but requires no selection and does no validation for 
+        text nodes. 
         """
         nodes = self.selected
-        if not len(nodes):
+        if not len(nodes) or not self.validate():
             inkex.errormsg("There were no paths were selected.")
             return
-
-        document = self.document
-        if contains_text(self.selected.values()):
-            document = convert_objects_to_paths(self.args[-1], self.document)
-
         #: If running from source
         if DEBUG:
             python = '~/inkcut/venv/bin/python'
@@ -65,7 +71,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
                              stdout=DEVNULL,
                              stderr=subprocess.STDOUT,
                              close_fds=True)
-        p.stdin.write(inkex.etree.tostring(document))
+        p.stdin.write(inkex.etree.tostring(self.document))
         p.stdin.close()
 
 # Create effect instance and apply it.
