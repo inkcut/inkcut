@@ -27,6 +27,10 @@ import inkex
 inkex.localize()
 import subprocess
 
+from subprocess import Popen, PIPE
+from shutil import copy2
+from distutils.spawn import find_executable
+
 DEBUG = False
 try:
     from subprocess import DEVNULL # py3k
@@ -36,6 +40,35 @@ except ImportError:
 
 
 class InkscapeInkcutPlugin(inkex.Effect):
+    def contains_text(self):
+        nodes = self.selected.values()
+        for node in nodes:
+            tag = node.tag[node.tag.rfind("}")+1:]
+            if tag == 'text':
+                return True
+        return False
+
+    def convertObjectsToPaths(self, file, document):
+        tempfile = inkex.os.path.splitext(file)[0] + "-prepare.svg"
+        # tempfile is needed here only because we want to force the extension to be .svg
+        # so that we can open and close it silently
+        copy2(file, tempfile)
+
+        command = 'inkscape --verb=EditSelectAllInAllLayers --verb=EditUnlinkClone --verb=ObjectToPath --verb=FileSave --verb=FileQuit ' + tempfile
+
+        if find_executable('xvfb-run'):
+            command = 'xvfb-run ' + command
+
+        p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+        (out, err) = p.communicate()
+
+        if p.returncode != 0:
+            inkex.errormsg(_("Failed to convert objects to paths. Continued without converting."))
+            inkex.errormsg(out)
+            inkex.errormsg(err)
+            return document.getroot()
+        else:
+            return inkex.etree.parse(tempfile).getroot()
 
     def effect(self):
         """ Like cut but requires no selection and does no validation for 
@@ -49,13 +82,17 @@ class InkscapeInkcutPlugin(inkex.Effect):
         else:
             cmd = ['inkcut']
 
+        document = self.document
+        if self.contains_text():
+            document = self.convertObjectsToPaths(self.args[-1], self.document)
+
         cmd += ['open', '-']
         p = subprocess.Popen(cmd,
                              stdin=subprocess.PIPE,
                              stdout=DEVNULL,
                              stderr=subprocess.STDOUT,
                              close_fds=True)
-        p.stdin.write(inkex.etree.tostring(self.document))
+        p.stdin.write(inkex.etree.tostring(document))
         p.stdin.close()
 
 # Create effect instance and apply it.
