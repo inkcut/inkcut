@@ -991,7 +991,7 @@ class DevicePlugin(Plugin):
         #: Set the protocols based on the declaration
         if driver.connections:
             device.transports = [t for t in self.transports
-                                 if t.id in driver.connections]
+                                 if t.id == 'disk' or t.id in driver.connections]
         else:
             device.transports = self.transports[:]
 
