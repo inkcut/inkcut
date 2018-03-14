@@ -9,8 +9,6 @@ Created on Mar 14, 2018
 
 @author: jrm
 """
-import os
-import pytest
 from threading import Timer
 
 
