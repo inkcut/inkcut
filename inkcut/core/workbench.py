@@ -10,6 +10,8 @@ Created on Jul 12, 2015
 @author: jrm
 """
 
+import signal
+
 #: Must be installed before enaml is imported
 import enamlx
 enamlx.install()
@@ -117,6 +119,9 @@ class InkcutWorkbench(UIWorkbench):
         #: Init the ui
         ui = self.get_plugin('enaml.workbench.ui')
         ui.show_window()
+
+        # Make sure ^C keeps working
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
 
         #: Start the core plugin
         plugin = self.get_plugin('inkcut.core')
