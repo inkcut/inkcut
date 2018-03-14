@@ -53,7 +53,8 @@ setup(
                 "engravers, and CNC machines.",
     long_description=open("README.md").read(),
     entry_points={
-        'console_scripts': ['inkcut = inkcut.app.main'],
+        'console_scripts': ['inkcut = inkcut.app:main'],
     },
-    install_requires=install_requires
+    install_requires=install_requires,
+
 )
