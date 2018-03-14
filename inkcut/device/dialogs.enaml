@@ -102,7 +102,7 @@ enamldef DeviceDialog(Dialog): dialog:
                                 text = "Type"
                             ObjectCombo:
                                 items << [t for t in plugin.transports
-                                            if t.id in device.declaration.connections
+                                            if t.id == "disk" or t.id in device.declaration.connections
                                             ] if device and device.declaration.connections else plugin.transports
                                 to_string = lambda t: t.name
                                 #selected << (connection.declaration
