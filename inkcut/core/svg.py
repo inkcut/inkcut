@@ -345,7 +345,7 @@ class QtSvgPath(QtSvgItem):
         """
         lexer = self.pathLexer(d)
     
-        pen = (0.0,0.0)
+        pen = (0.0, 0.0)
         subPathStart = pen
         lastControl = pen
         lastCommand = ''
@@ -425,10 +425,36 @@ class QtSvgPath(QtSvgItem):
                 lastControl = tuple(params[-4:-2])
             else:
                 lastControl = pen
+
+            if outputCommand == 'A':
+                params = self._convertArcToParams(pen, params)
             
             lastCommand = command
     
             yield [outputCommand, params]
+
+    def _convertArcToParams(self, pen, params):
+        """ Convert SVG path A parameters to the format required by
+        QPainterPath's arcTo.
+        
+        SVG A (rx ry x-axis-rotation large-arc-flag sweep-flag x y)
+        
+        QPainterPath.arcTo(self, float x, float y, float w, float h, 
+                            float startAngle, float arcLenght)
+        
+        """
+        # x, y is the end point
+        rx, ry, a, laf, sf, x, y = params
+
+        # Reverse the equation to get the center point at t = 0
+        cx = pen[0] - rx*math.cos(a)
+        cy = pen[1] - ry*math.sin(a)
+
+        # Find arc length by solving for x, y at t=1
+        # x = cx+rx*cos(theta) -> cos(theta) = (x-cx)/rx
+        # y = cy+ry*sin(theta) -> sin(theta) = (y-cy)/ry
+        theta = math.atan(rx*(y-cy) / (ry*(x-cx)))
+        return (cx, cy, 2*rx, 2*ry, a, theta)
 
 
 class QtSvgPolyline(QtSvgPath):
