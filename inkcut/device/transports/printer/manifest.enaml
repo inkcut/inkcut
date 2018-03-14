@@ -36,7 +36,7 @@ enamldef PrinterManifest(PluginManifest):
     id = 'inkcut.device.transport.printer'
     factory = plugin_factory
     Extension:
-        id = 'protocols'
+        id = 'transports'
         point = DEVICE_TRANSPORT_POINT
 
         DeviceTransport:

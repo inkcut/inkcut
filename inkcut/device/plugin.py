@@ -902,12 +902,14 @@ class DevicePlugin(Plugin):
         with enaml.imports():
             from .transports.serialport.manifest import SerialManifest
             from .transports.printer.manifest import PrinterManifest
+            from .transports.disk.manifest import FileManifest
             from inkcut.device.protocols.manifest import ProtocolManifest
             from inkcut.device.drivers.manifest import DriversManifest
             from inkcut.device.pi.manifest import PiManifest
 
             plugins.append(SerialManifest)
             plugins.append(PrinterManifest)
+            plugins.append(FileManifest)
             plugins.append(ProtocolManifest)
             plugins.append(DriversManifest)
             plugins.append(PiManifest)

@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2018, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Mar 14, 2018
+
+@author: jrm
+"""
+from os.path import exists
+from inkcut.core.utils import load_icon
+from enaml.layout.api import hbox, align
+from enaml.widgets.api import Container, Form, Label, Field, PushButton, FileDialogEx
+
+enamldef FileSettingsView(Container):
+    attr model
+    padding = 0
+
+    Form:
+        Label:
+            text = "Format"
+        Field:
+            text := model.format
+        Label:
+            text = "Directory"
+        Container:
+            constraints = [hbox(field, browse)]
+            Field: field:
+                text := model.directory
+            PushButton: browse:
+                text = "Browse"
+                clicked ::
+                     #: Get the file to open
+                     path = FileDialogEx.get_existing_directory(
+                        self, current_path=model.directory
+                     )
+                     if exists(path):
+                        model.directory = path
