@@ -403,7 +403,7 @@ class QtSvgPath(QtSvgItem):
         """
         lexer = self.pathLexer(d)
     
-        pen = (0.0,0.0)
+        pen = (0.0, 0.0)
         subPathStart = pen
         lastControl = pen
         lastCommand = ''
@@ -483,11 +483,10 @@ class QtSvgPath(QtSvgItem):
                 lastControl = tuple(params[-4:-2])
             else:
                 lastControl = pen
-            
+
             lastCommand = command
     
             yield [outputCommand, params]
-
 
 class QtSvgPolyline(QtSvgPath):
     tag = "{http://www.w3.org/2000/svg}polyline"
