@@ -286,9 +286,6 @@ class QtSvgPath(QtSvgItem):
     def parsePathData(self, e):
         return e.attrib.get('d', '')
 
-    def getAngle(self, bx, by):
-        return math.fmod(2*pi + (1 if by > 0 else -1) * acos(bx / sqrt(bx * bx + by * by)), 2*pi)
-
     def arc(self, x1, y1, rx, ry, phi, large_arc_flag, sweep_flag, x2, y2):
         # https://www.w3.org/TR/SVG/implnote.html F.6.6
         rx = abs(rx)
@@ -312,35 +309,33 @@ class QtSvgPath(QtSvgItem):
         cyprime = 0
 
         if radicand < 0:
-            ratio = rx/ry
-            radicand = y1prime*y1prime + x1prime*x1prime/ratio/ratio
-            ry=sqrt(radicand)
-            rx=ratio*ry
-        else:
-            factor = (-1 if large_arc_flag==sweep_flag else 1)*sqrt(radicand)
+            radicand = 0
 
-            cxprime = factor*rx*y1prime/ry
-            cyprime = -factor*ry*x1prime/rx
+        factor = (-1 if large_arc_flag==sweep_flag else 1)*sqrt(radicand)
+
+        cxprime = factor*rx*y1prime/ry
+        cyprime = -factor*ry*x1prime/rx
 
         cx = cxprime*cos(phi) - cyprime*sin(phi) + (x1 + x2)/2
         cy = cxprime*sin(phi) + cyprime*cos(phi) + (y1 + y2)/2
-        
-        start_phi = self.getAngle(x1 - cx, cy - y1)
-        start_angle = atan((rx/ry) * tan(start_phi))
-        end_phi = self.getAngle(x2 - cx, cy - y2)
-        end_angle = atan((rx/ry) * tan(end_phi))
-
-        sweep_length = end_phi - start_phi
-
-        if sweep_length < 0 and not sweep_flag:
-            sweep_length += 2 * pi;
-        elif sweep_length > 0 and sweep_flag:
-            sweep_length -= 2 * pi;
 
         if phi == 0:
-            # Simple case, model as 1 arc.
-            self.arcTo(cx - rx, cy - ry, rx * 2, ry * 2, start_angle * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
+            start_theta = -atan2((y1 - cy) * rx, (x1 - cx) * ry)
+
+            start_phi = -atan2(y1 - cy, x1 - cx)
+            end_phi = -atan2(y2 - cy, x2 - cx)
+
+            sweep_length = end_phi - start_phi
+
+            if sweep_length < 0 and not sweep_flag:
+                sweep_length += 2 * pi;
+            elif sweep_length > 0 and sweep_flag:
+                sweep_length -= 2 * pi;
+
+            self.arcTo(cx - rx, cy - ry, rx * 2, ry * 2, start_theta * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
             return
+
+        # TODO rotated arcs cannot be expressed as QPainterPath arcs, so we have to approximate them
 
     def parse(self, e):
         d = self.parsePathData(e)
