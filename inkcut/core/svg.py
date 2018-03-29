@@ -324,10 +324,13 @@ class QtSvgPath(QtSvgItem):
 
         cx = cxprime*cos(phi) - cyprime*sin(phi) + (x1 + x2)/2
         cy = cxprime*sin(phi) + cyprime*cos(phi) + (y1 + y2)/2
-        start_angle = self.getAngle(x1 - cx, cy - y1)
-        end_angle = self.getAngle(x2 - cx, cy - y2)
+        
+        start_phi = self.getAngle(x1 - cx, cy - y1)
+        start_angle = atan((rx/ry) * tan(start_phi))
+        end_phi = self.getAngle(x2 - cx, cy - y2)
+        end_angle = atan((rx/ry) * tan(end_phi))
 
-        sweep_length = end_angle - start_angle
+        sweep_length = end_phi - start_phi
 
         if sweep_length < 0 and not sweep_flag:
             sweep_length += 2 * pi;
