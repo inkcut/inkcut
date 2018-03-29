@@ -26,6 +26,10 @@ sudo apt install libxml2-dev libxslt-dev
 pip install .
 
 ```
+##### NOTES:
+1. Install commands should be run from the folder Inkcut is cloned/downloaded into using either `cd /path/to/inkcut/folder`
+2. If `pip install . ` gives an error regarding enamlx, you may need to install enamlx, then re-run `pip install . `
+In Ubuntu 16, this can be done by: `pip install git+https://github.com/frmdstryr/enamlx.git`.
 
 #### Python 2
 
@@ -103,6 +107,6 @@ Then restart all instances of inkscape.
 
 ### Running
 
-Run `python main.py` or to use the installed version simply run `inkcut`
+Run `python main.py` (or `python3 main.py` depending on the system default) or to use the installed version simply run `inkcut`
 
 
