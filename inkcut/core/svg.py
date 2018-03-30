@@ -335,7 +335,9 @@ class QtSvgPath(QtSvgItem):
             self.arcTo(cx - rx, cy - ry, rx * 2, ry * 2, start_theta * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
             return
 
-        # TODO rotated arcs cannot be expressed as QPainterPath arcs, so we have to approximate them
+        # TODO rotated arcs cannot be expressed as QPainterPath arcs, so we
+        # have to approximate them. For now just skip.
+        self.moveTo(x2, y2)
 
     def parse(self, e):
         d = self.parsePathData(e)
