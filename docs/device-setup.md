@@ -9,8 +9,7 @@ built-in parallel-to-USB converter) must be added to your system as a printer
 before using them from Inkcut. Start your printer configuration utility (e.g.
 [system-config-printer](http://cyberelk.net/tim/software/system-config-printer)),
 which at least when connecting via USB should detect the connected cutter.
-Proceed to add it with a generic driver, such as 'Generic Text-Only Printer'.
-Do not print a test page.
+Proceed to add it with the 'Generic' 'Raw Queue' driver.
 
 ### Device Setup
 
