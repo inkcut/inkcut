@@ -140,7 +140,7 @@ enamldef DriversManifest(PluginManifest):
             width = '60cm'
             length = '50cm'
             protocols = ['hpgl', 'dmpl']
-            connections = ['serial']
+            connections = ['serial','printer']
             
         DeviceDriver:
             manufacturer = 'SeikiTech'
