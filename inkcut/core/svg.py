@@ -337,7 +337,7 @@ class QtSvgPath(QtSvgItem):
 
         # TODO rotated arcs cannot be expressed as QPainterPath arcs, so we
         # have to approximate them. For now just skip.
-        self.moveTo(x2, y2)
+        raise NotImplementedError("This file contains paths with rotated arc segments, which is not currently supported. See https://github.com/codelv/inkcut/issues/45")
 
     def parse(self, e):
         d = self.parsePathData(e)
