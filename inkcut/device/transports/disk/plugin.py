@@ -13,6 +13,7 @@ Created on Mar 13, 2018
 import os
 import time
 from os.path import join, exists
+from atom.atom import set_default
 from atom.api import Instance, Unicode
 from inkcut.core.api import Plugin, Model, log
 from inkcut.device.plugin import DeviceTransport
@@ -28,11 +29,11 @@ class FileTransport(DeviceTransport):
     #: Default config
     config = Instance(FileConfig, ())
 
+    #: The OS spools file writes
+    always_spools = set_default(True)
+
     #: The output buffer
     file = Instance(object)
-
-    #: The OS spools file writes
-    always_spools = True
 
     def connect(self):
         config = self.config

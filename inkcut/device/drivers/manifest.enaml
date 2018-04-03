@@ -16,22 +16,22 @@ def load_drivers():
 
 
 enamldef DriversManifest(PluginManifest):
-    """ Device drivers manifest.  
-    
+    """ Device drivers manifest.
+
     A "DeviceDriver" is simply a declaration of the device name, dimensions,
     and supported protocols and connection types.
-    
+
     To fully customize how the "Driver" works, define a factory that creates
-    a Device subclass implementing the desired behavior.A config_view can 
+    a Device subclass implementing the desired behavior.A config_view can
     also be set to provide a customized settings UI for the device.
-    
+
     """
     id = 'inkcut.device.drivers'
-    
+
     Extension:
         id = 'protocols'
         point = 'inkcut.device.driver'
-        
+
         DeviceDriver:
             manufacturer = 'Inkcut'
             model = 'Generic Driver'
@@ -55,28 +55,28 @@ enamldef DriversManifest(PluginManifest):
             width = '120cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial', 'printer']
-            
+
         DeviceDriver:
             manufacturer = 'US Cutter'
             model = 'Refine MH-721'
             width = '60cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial', 'printer']
-            
+
         DeviceDriver:
             manufacturer = 'US Cutter'
             model = 'Laser Point'
             width = '61cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial', 'printer']
-            
+
         DeviceDriver:
             manufacturer = 'Graphtec'
             model = 'CE5000-60'
             width = '60cm'
             protocols = ['hpgl', 'gpgl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Graphtec'
             model = '8000-130'
@@ -84,56 +84,64 @@ enamldef DriversManifest(PluginManifest):
             length = '700cm'
             protocols = ['hpgl', 'gpgl']
             connections = ['serial']
-            
+
+        DeviceDriver:
+            manufacturer = 'Silhouette'
+            model = 'Portrait'
+            width = '20cm'
+            length = '300cm'
+            protocols = ['gpgl']
+            connections = ['printer']
+
         DeviceDriver:
             manufacturer = 'Ioline'
             model = 'Classic'
             width = '60cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Creation'
             model = 'PCut CT-630'
             width = '61cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Mimaki'
             model = 'CG-60ST'
             width = '60cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Gcc'
             model = 'Bob cat 60'
             width = '60cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Summa'
             model = 'D120R'
             width = '120cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Summa'
             model = 'T600'
             width = '575cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Roland'
             model = 'CM 24'
             width = '610cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Roland'
             model = 'CX-24'
@@ -148,14 +156,14 @@ enamldef DriversManifest(PluginManifest):
             width = '86cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Redsail'
             model = 'RS1360C'
             width = '120cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Rheinstern'
             model = ' LB-720A'

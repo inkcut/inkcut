@@ -12,6 +12,7 @@ Created on Jul 12, 2015
 """
 import serial
 import traceback
+from atom.atom import set_default
 from atom.api import List, Instance, Enum, Bool, Int, Unicode
 from inkcut.core.api import Plugin, Model, log
 from inkcut.device.plugin import DeviceTransport
@@ -92,7 +93,7 @@ class SerialTransport(DeviceTransport):
     connection = Instance(SerialPort)
 
     #: Whether a serial connection spools depends on the device (configuration)
-    always_spools = False
+    always_spools = set_default(False)
 
     #: Wrapper
     _protocol = Instance(InkcutProtocol)

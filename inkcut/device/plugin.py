@@ -44,6 +44,10 @@ class DeviceTransport(Model):
     #: Connection state. Subclasses must implement and properly update this
     connected = Bool()
 
+    #: Distinguish between transports that always spool (e.g. Printer, File I/O)
+    #: or are dependent on the 'spooling' configuration option (e.g. Serial)
+    always_spools = Bool()
+
     def connect(self):
         """ Connect using whatever implementation necessary
         
