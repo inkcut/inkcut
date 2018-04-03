@@ -1,0 +1,6 @@
+*.pyc
+/build
+__enamlcache__
+/inkcut-*.tar.gz
+/dist
+/inkcut.egg-info/
