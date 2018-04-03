@@ -91,6 +91,9 @@ class SerialTransport(DeviceTransport):
     #: Connection port
     connection = Instance(SerialPort)
 
+    #: Whether a serial connection spools depends on the device (configuration)
+    always_spools = False
+
     #: Wrapper
     _protocol = Instance(InkcutProtocol)
 

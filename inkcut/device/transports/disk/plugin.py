@@ -31,6 +31,9 @@ class FileTransport(DeviceTransport):
     #: The output buffer
     file = Instance(object)
 
+    #: The OS spools file writes
+    always_spools = True
+
     def connect(self):
         config = self.config
         params = dict(

@@ -179,6 +179,9 @@ class PrinterTransport(DeviceTransport):
     #: Delegate to the implementation based on the current platform
     connection = Instance(PrinterConnection)
 
+    #: The OS printing subsystem will take care of spooling
+    always_spools = True
+
     def _default_config(self):
         if sys.platform == 'win32':
             return Win32PrinterConfig()

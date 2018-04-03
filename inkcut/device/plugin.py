@@ -593,7 +593,7 @@ class Device(Model):
                 #: Rate px/ms
                 if config.custom_rate >= 0:
                     rate = config.custom_rate
-                elif config.spooled:
+                elif self.connection.always_spools or config.spooled:
                     rate = 0
                 elif config.interpolate:
                     if config.step_time > 0:
@@ -619,7 +619,7 @@ class Device(Model):
                 m = QtGui.QTransform.fromScale(1, 1)
                 for path in model.toSubpathPolygons(m):
                     for i, p in enumerate(path):
-                        whole_path .lineTo(p)
+                        whole_path.lineTo(p)
                 total_length = whole_path.length()
                 total_moved = 0
                 log.debug("device | Path length: {}".format(total_length))
@@ -778,7 +778,7 @@ class Device(Model):
         model = model*t
 
         #: Determine if interpolation should be used
-        skip_interpolation = config.spooled or not config.interpolate
+        skip_interpolation = self.connection.always_spools or config.spooled or not config.interpolate
 
         # speed = distance/seconds
         # So distance/speed = seconds to wait
