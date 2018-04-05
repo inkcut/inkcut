@@ -92,6 +92,9 @@ enamldef DriversManifest(PluginManifest):
             length = '300cm'
             protocols = ['gpgl']
             connections = ['printer']
+            default_config = {
+              'scale': [ 5.64, 5.64 ]
+            }
 
         DeviceDriver:
             manufacturer = 'Ioline'

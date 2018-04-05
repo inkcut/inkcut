@@ -11,7 +11,7 @@ Created on Jan 16, 2015
 @author: jrm
 """
 import enaml
-from atom.api import Unicode, List, Callable
+from atom.api import Unicode, List, Callable, Dict
 from inkcut.core.declarative import Declarative, d_
 
 DEVICE_DRIVER_POINT = 'inkcut.device.driver'
@@ -19,16 +19,16 @@ DEVICE_PROTOCOL_POINT = 'inkcut.device.protocols'
 DEVICE_TRANSPORT_POINT = 'inkcut.device.transport'
 
 
-def default_device_factory():
+def default_device_factory(default_config):
     """ Generates a device if none is given by the driver.
-    
+
     Returns
     -------
         result: Device
             A configured Device that the application can use.
     """
-    from .plugin import Device
-    return Device()
+    from .plugin import Device, DeviceConfig
+    return Device(config=DeviceConfig(**default_config))
 
 
 def default_device_config_view_factory():
@@ -78,6 +78,8 @@ class DeviceDriver(Declarative):
     #: Config view for editing the config of this device
     config_view = d_(Callable(default=default_device_config_view_factory))
 
+    #: Default settings to contribute to the config when selected
+    default_config = d_(Dict())
 
 class DeviceProtocol(Declarative):
     # Id of the protocol
