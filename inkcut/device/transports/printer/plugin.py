@@ -12,6 +12,8 @@ Created on Dec 19, 2017
 """
 import sys
 import traceback
+
+from atom.atom import set_default
 from atom.api import List, Instance, Unicode
 from inkcut.core.api import Plugin, Model, log
 from inkcut.device.plugin import DeviceTransport
@@ -178,6 +180,9 @@ class PrinterTransport(DeviceTransport):
 
     #: Delegate to the implementation based on the current platform
     connection = Instance(PrinterConnection)
+
+    #: The OS printing subsystem will take care of spooling
+    always_spools = set_default(True)
 
     def _default_config(self):
         if sys.platform == 'win32':
