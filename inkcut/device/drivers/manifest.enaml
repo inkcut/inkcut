@@ -88,8 +88,8 @@ enamldef DriversManifest(PluginManifest):
         DeviceDriver:
             manufacturer = 'Silhouette'
             model = 'Portrait'
-            width = '20cm'
-            length = '300cm'
+            width = '300cm'
+            length = '20cm'
             protocols = ['gpgl']
             connections = ['printer']
 
