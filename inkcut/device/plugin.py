@@ -980,7 +980,7 @@ class DevicePlugin(Plugin):
         
         """
         #: Generate the device
-        device = driver.factory()
+        device = driver.factory(driver.default_config)
 
         #: Now set the declaration
         device.declaration = driver
