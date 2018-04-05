@@ -12,6 +12,7 @@ Created on Mar 13, 2018
 """
 import os
 import time
+import tempfile
 from os.path import join, exists
 from atom.atom import set_default
 from atom.api import Instance, Unicode
@@ -22,6 +23,9 @@ from inkcut.device.plugin import DeviceTransport
 class FileConfig(Model):
     format = Unicode("inkcut-{time}.{protocol}")
     directory = Unicode()
+
+    def _default_directory(self):
+        return tempfile.gettempdir()
 
 
 class FileTransport(DeviceTransport):
