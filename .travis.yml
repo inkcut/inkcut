@@ -16,6 +16,7 @@ before_script:
 script:
   - pwd
   - ls
+  - python setup.py build
   - py.test tests --cov inkcut --cov-report xml -v
 
 after_success:
