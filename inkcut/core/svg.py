@@ -20,6 +20,7 @@ from math import sqrt, tan, atan, atan2, cos, acos, sin, pi
 from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
+from .utils import from_unit, to_unit, parse_unit
 
 ElementType = QtGui.QPainterPath.ElementType
 EtreeElement = etree._Element
@@ -27,12 +28,8 @@ EtreeElement = etree._Element
 
 class QtSvgItem(QtGui.QPainterPath):
     tag = None
-    
-    _uuconv = {'in': 90.0, 'pt': 1.25, 'px': 1, 'mm': 3.5433070866,
-               'cm': 35.433070866, 'm': 3543.3070866,
-               'km': 3543307.0866, 'pc': 15.0, 'yd': 3240, 'ft': 1080}
-    
-    def __init__(self, e, *args, **kwargs):
+
+    def __init__(self, doc, e, *args, **kwargs):
         if not isinstance(e, EtreeElement):
             raise TypeError("%s only works with etree Elements, "
                             "given %s" % (self, type(e)))
@@ -42,7 +39,9 @@ class QtSvgItem(QtGui.QPainterPath):
         super(QtSvgItem, self).__init__(*args, **kwargs)
         
         self._e = e
-        
+
+        self.doc = doc
+
         # Parse from node
         self.parse(e)
         
@@ -109,43 +108,17 @@ class QtSvgItem(QtGui.QPainterPath):
         if not path.isEmpty():
             paths.append(path)
         return paths
-    
-    @staticmethod
-    def parseUnit(value):
-        """ Returns userunits given a string representation of units 
-        in another system
-        """
 
-        if isinstance(value, (int, float)):
-            return value
-
-        unit = re.compile('(%s)$' % '|'.join(QtSvgItem._uuconv.keys()))
-        param = re.compile(
-            r'(([-+]?[0-9]+(\.[0-9]*)?|[-+]?\.[0-9]+)([eE][-+]?[0-9]+)?)')
-    
-        p = param.match(value)
-        u = unit.search(value)
-        if p:
-            retval = float(p.string[p.start():p.end()])
-        else:
-            retval = 0.0
-        if u:
-            try:
-                return retval * QtSvgItem._uuconv[u.string[u.start():u.end()]]
-            except KeyError:
-                pass
-        return retval
-    
     @staticmethod
     def convertToUnit(val, unit='px'):
         """ Convert from px to given unit """
-        return val/QtSvgItem._uuconv[unit]
-    
+        return to_unit(val, unit)
+
     @staticmethod
     def convertFromUnit(val, unit='px'):
         """ Convert from given unit to px """
-        return QtSvgItem._uuconv[unit]*val
-        
+        return from_unit(val, unit)
+
     def parse(self, e):
         raise NotImplementedError("Parse must be implemented in sublcasses!")
     
@@ -247,7 +220,7 @@ class QtSvgRect(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}rect"
     
     def parse(self, e):
-        x, y, w, h, rx, ry = map(self.parseUnit, (
+        x, y, w, h, rx, ry = map(self.doc.parseUnit, (
                     e.attrib.get('x', 0), e.attrib.get('y', 0),
                     e.attrib.get('width', 0), e.attrib.get('height', 0),
                     e.attrib.get('rx', 0), e.attrib.get('ry', 0),
@@ -636,9 +609,9 @@ class QtSvgG(QtSvgItem):
                         #QtSvgText
                     ]:
                 if node.tag == cls.tag:
-                    self.addPath(cls(node))
+                    self.addPath(cls(self.doc, node))
                     break
-    
+
 
 class QtSvgSymbol(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}symbol"
@@ -665,24 +638,57 @@ class QtSvgDoc(QtSvgG):
         if self.isParentSvg:
             self._doc = etree.parse(e)
             self._svg = self._doc.getroot()
-            self.viewBox = QtCore.QRectF(0, 0, -1, -1)
-        
-        super(QtSvgDoc, self).__init__(self._svg)
-    
+            e = self._svg
+            box = e.attrib.get('viewBox')
+            if box is None:
+                self.viewBox = None
+            else:
+                (x, y, width, height) = box.split()
+                # Before setting the viewbox, so no unit = px:
+                self.width = self.parseUnit(e.attrib.get('width',None))
+                self.height = self.parseUnit(e.attrib.get('height',None))
+                self.viewBox = QtCore.QRectF(
+                    float(x), float(y),
+                    float(width), float(height))
+
+        super(QtSvgDoc, self).__init__(self, self._svg)
+
     def parseTransform(self, e):
         t = QtGui.QTransform()
-        # transforms don't apply to the root svg element
+        # x/y transforms don't apply to the root svg element
         if not self.isParentSvg:
             x, y = map(self.parseUnit, (e.attrib.get('x', 0),
                                         e.attrib.get('y', 0)))
             t.translate(x, y)
-            
-        # TODO: Handle width/height and viewBox stuff
-        #         else:
-        #             w,h = map(self.parseUnit,(e.attrib.get('width',None),
-        # e.attrib.get('height',None)))
-        #             if w is not None or h is not None:
-        #                 sx,sy = 
-        #             
-            
+
         return t
+
+    def numericValue(self, value):
+        if isinstance(value, (int, float)):
+            return value
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return float(value)
+            except ValueError:
+                return None
+
+    # Cannot be static because the size of a unitless value depends
+    # on the document viewport and viewbox
+    def parseUnit(self, value):
+        """ Returns userunits given a string representation of units
+        in another system
+        """
+        numericValue = self.numericValue(value)
+        if numericValue is None:
+            return parse_unit(value)
+        else:
+            if self.viewBox is None:
+                # Then these are pixels. Do they need conversion?
+                return numericValue
+            else:
+                # TODO in theory the scaling depends on the 'preserveAspectRatio'
+                # and perhaps even on whether this is an x or an y distance (or even angled?)
+                # For now assume the viewBox maintains the image aspect ratio.
+                return numericValue * self.width / self.viewBox.width()

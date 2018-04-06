@@ -10,13 +10,13 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import os
+import re
 import sys
 import logging
 from enaml.image import Image
 from enaml.icon import Icon, IconImage
 from enaml.application import timed_call
 from twisted.internet.defer import Deferred
-from .svg import QtSvgDoc
 
 
 # -----------------------------------------------------------------------------
@@ -77,20 +77,43 @@ def menu_icon(name):
 # -----------------------------------------------------------------------------
 # Unit conversion
 # -----------------------------------------------------------------------------
+unit_conversions = {'in': 90.0, 'pt': 1.25, 'px': 1, 'mm': 3.5433070866,
+           'cm': 35.433070866, 'm': 3543.3070866,
+           'km': 3543307.0866, 'pc': 15.0, 'yd': 3240, 'ft': 1080}
+
 def from_unit(val, unit='px'):
-    return QtSvgDoc.convertFromUnit(val, unit)
+    return unit_conversions[unit]*val
 
 
 def to_unit(val, unit='px'):
-    return QtSvgDoc.convertToUnit(val, unit)
+    return val/unit_conversions[unit]
 
 
-def parse_unit(val):
+def parse_unit(value):
     """ Parse a string into pixels """
-    return  QtSvgDoc.parseUnit(val)
+    if isinstance(value, (int, float)):
+        raise ValueError("No unit found in '%s', unitless values only have meaning in the context of a specifc SVG document" % value)
+
+    unit = re.compile('(%s)$' % '|'.join(unit_conversions.keys()))
+    param = re.compile(
+        r'(([-+]?[0-9]+(\.[0-9]*)?|[-+]?\.[0-9]+)([eE][-+]?[0-9]+)?)')
+
+    p = param.match(value)
+    u = unit.search(value)
+    if p:
+        retval = float(p.string[p.start():p.end()])
+    else:
+        retval = 0.0
+    if u:
+        try:
+            return retval * unit_conversions[u.string[u.start():u.end()]]
+        except KeyError:
+            raise ValueError("No unit found in '%s', unitless values only have meaning in the context of a specifc SVG document" % value)
+    else:
+        raise ValueError("No unit found in '%s', unitless values only have meaning in the context of a specifc SVG document" % value)
+    return retval
 
 
-unit_conversions = QtSvgDoc._uuconv
 
 # -----------------------------------------------------------------------------
 # Async helpers
