@@ -1,37 +1,11 @@
-sudo: false
-dist: trusty
-branches:
-  only:
-    - master
-
-matrix:
-  include:
-    - env: PYTHON=2
-    - env: PYTHON=3
+language: python
+python:
+  - "2.7"
+  - "3.6"
 
 before_install:
-  - sudo apt install libxml2-dev libxslt-dev
-
-  - if [[ "$PYTHON" == "2" ]]; then sudo apt install python-dev python-qt4; fi
-  - if [[ "$PYTHON" == "3" ]]; then sudo apt install python3-dev python3-pyqt5; fi
-
-  # Install dependencies
-  - pip install enaml>=0.10.2 twisted enamlx pyqtgraph qtconsole pyserial>=3.4 jsonpickle lxml
-  - if [[ "$PYTHON" == "2" ]]; then pip install future faulthandler qt4reactor; fi
-  - if [[ "$PYTHON" == "3" ]]; then pip install PyQt5 qt5reactor; fi
-
-
-  # Intall test tools (we require pytest > 3.3 to get the builtin logging
-  # features)
-  - pip install pytest pytest-cov pytest-qt codecov
-
-
-install:
-
-  # Install inkcut
-  - cd $TRAVIS_BUILD_DIR
-  - python setup.py develop
-  - cd ~
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libxml2-dev libxslt-dev
 
 before_script:
   # We need a (fake) display on Travis so I need to start a X server.
@@ -39,10 +13,7 @@ before_script:
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 
 script:
-  # Run the test suite
-  - cd $TRAVIS_BUILD_DIR
   - py.test tests --cov inkcut --cov-report xml -v
 
 after_success:
-  - cd $TRAVIS_BUILD_DIR
   - codecov
