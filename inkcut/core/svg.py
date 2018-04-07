@@ -671,18 +671,22 @@ class QtSvgDoc(QtSvgG):
     
     def parseTransform(self, e):
         t = QtGui.QTransform()
-        # transforms don't apply to the root svg element
-        if not self.isParentSvg:
+        # transforms don't apply to the root svg element, but we do need to
+        # take into account the viewBox there
+        if self.isParentSvg:
+            viewBox = e.attrib.get('viewBox', None)
+            if viewBox is not None:
+                (x, y, innerWidth, innerHeight) = map(self.parseUnit, re.split("[ ,]+", viewBox))
+
+                if x != 0 or y != 0:
+                    raise ValueError("viewBox '%s' needs to be translated because is not at the origin. See https://github.com/codelv/inkcut/issues/69" % viewBox)
+
+                outerWidth, outerHeight = map(self.parseUnit,(e.attrib.get('width',None), e.attrib.get('height',None)))
+                if outerWidth is not None and outerHeight is not None:
+                    t.scale(outerWidth / innerWidth, outerHeight / innerHeight)
+        else:
             x, y = map(self.parseUnit, (e.attrib.get('x', 0),
                                         e.attrib.get('y', 0)))
             t.translate(x, y)
-            
-        # TODO: Handle width/height and viewBox stuff
-        #         else:
-        #             w,h = map(self.parseUnit,(e.attrib.get('width',None),
-        # e.attrib.get('height',None)))
-        #             if w is not None or h is not None:
-        #                 sx,sy = 
-        #             
             
         return t
