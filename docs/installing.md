@@ -9,8 +9,9 @@ Developers can install all the dependencies and [build it from source](#building
 
 ### Building from source
 
-To build from source use the commands below. Using Python 3 is recommended.
+To build from source use the commands below.
 
+We intend to support both Python 2 (with qt 4) and Python 3 (with qt 5), however using Python 3 is recommended. On 32-bit systems only Python 2 works, since PyQt5 only has a 64-bit package.
 
 #### Python 3 (Recommended)
 
