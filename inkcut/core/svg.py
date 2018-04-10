@@ -116,6 +116,9 @@ class QtSvgItem(QtGui.QPainterPath):
         in another system
         """
 
+        if value is None:
+            return None
+
         if isinstance(value, (int, float)):
             return value
 
