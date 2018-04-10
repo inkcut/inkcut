@@ -18,7 +18,7 @@ We intend to support both Python 2 (with qt 4) and Python 3 (with qt 5), however
 ```bash
 
 virtualenv -p python3 venv
-source venv activate
+source venv/bin/activate
 
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
@@ -37,7 +37,7 @@ In Ubuntu 16, this can be done by: `pip install git+https://github.com/frmdstryr
 ```bash
 
 virtualenv -p python2 venv
-source venv activate
+source venv/bin/activate
 
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
