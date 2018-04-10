@@ -23,8 +23,6 @@ from twisted.internet.protocol import ProcessProtocol
 try:
     if sys.platform == 'win32':
         import win32print
-    elif sys.platform == 'darwin':
-        pass
     else:
         import cups
     PRINTER_AVAILABLE = True
@@ -187,8 +185,6 @@ class PrinterTransport(DeviceTransport):
     def _default_config(self):
         if sys.platform == 'win32':
             return Win32PrinterConfig()
-        elif sys.platform == 'darwin':
-            raise NotImplementedError
         else:
             return CupsPrinterConfig()
 
