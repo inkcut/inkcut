@@ -458,9 +458,11 @@ class Device(Model):
         #: Transform the path to the device coordinates
         model = self.transform(model)
 
-        #: Move the job to the new origin
-        x, y, z = self.origin
-        model.translate(x, y)
+        if job.feed_to_end:
+            #: Move the job to the new origin
+            x, y, z = self.origin
+            model.translate(x, -y)
+
         #: TODO: Apply filters here
 
         #: Return the transformed model
@@ -503,9 +505,8 @@ class Device(Model):
         
         """
         if absolute:
-            #: Clip
+            #: Clip everything to never go below zero in absolute mode
             position = [max(0, p) for p in position]
-            #: Clip everything to never go below zero in absoulte mode
             self.position = position
         else:
             #: Convert to relative to absolute for the UI
