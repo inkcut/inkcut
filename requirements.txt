@@ -1,1 +1,19 @@
--e git+https://github.com/MatthieuDartiailh/enaml.git@qt5_support
+enaml>=0.10.2
+twisted
+enamlx
+pyqtgraph
+qtconsole
+pyserial>=3.4
+jsonpickle
+lxml
+future; python_version < '3.0'
+faulthandler; python_version < '3.0'
+qt4reactor; python_version < '3.0'
+PyQt5; python_version >= '3.0'
+qt5reactor; python_version >= '3.0'
+pytest
+pytest-cov
+# for pytest-qt:
+PySide; python_version < '3.0'
+pytest-qt
+codecov
