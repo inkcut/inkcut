@@ -171,7 +171,7 @@ class Job(Model):
 
     order = Enum('Normal', 'Reversed').tag(config=True)
 
-    feed_to_end = Bool(True).tag(config=True)
+    feed_to_end = Bool(False).tag(config=True)
     feed_after = Float(0).tag(config=True)
 
     stack_size = ContainerList(Int(), default=[0, 0])
