@@ -11,6 +11,20 @@ before using them from Inkcut. Start your printer configuration utility (e.g.
 which at least when connecting via USB should detect the connected cutter.
 Proceed to add it with the 'Generic' 'Raw Queue' driver.
 
+#### OS X
+
+##### Cutters with a parallel interface
+
+Cutters with a parallel interface (either a 'real' parallel port or using a
+built-in parallel-to-USB converter) must be added to your system as a printer
+before using them from Inkcut.
+
+Enable the CUPS web interface by executing `cupsctl WebInterface=yes` on the
+command line. Then visit the admin interface on http://127.0.0.1:631/admin and
+add a printer using an admin username and password. Select the relevant 'local
+printer', continue and select 'Raw' for the 'Make' and 'Raw Queue' for the
+model.
+
 ### Device Setup
 
 Choose `Device -> Setup...` from the menu. Select your device driver from the list. 
