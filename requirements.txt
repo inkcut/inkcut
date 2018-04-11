@@ -1,6 +1,6 @@
 enaml>=0.10.2
-twisted
-pyopenssl
+# https://twistedmatrix.com/trac/ticket/9121
+twisted[tls]
 enamlx
 pyqtgraph
 qtconsole
