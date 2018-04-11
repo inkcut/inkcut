@@ -12,13 +12,11 @@ before_install:
   # Old version
   - sudo apt-get remove python-openssl
 
-before_script:
+script:
+  - pip install .
   # We need a (fake) display on Travis so I need to start a X server.
   - export DISPLAY=:99.0
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
-
-script:
-  - pip install .
   - py.test tests --cov inkcut --cov-report xml -v
 
 after_success:
