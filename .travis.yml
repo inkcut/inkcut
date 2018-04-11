@@ -1,10 +1,8 @@
 language: python
-virtualenv:
-  system_site_packages: true
 cache: pip
 python:
   - "2.7"
-  - "3.4"
+  - "3.5"
 
 before_install:
   - sudo apt-get -qq update
