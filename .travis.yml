@@ -7,7 +7,7 @@ python:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libxml2-dev libxslt-dev python-qt4 python3-pyqt5 python3-sip python-tornado
+  - sudo apt-get install -y libxml2-dev libxslt-dev python-qt4 python-qt4-dev python-pyqt5-dev python3-sip-dev python-tornado
   # Old version
   - sudo apt-get remove python-openssl
 
