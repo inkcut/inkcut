@@ -1,4 +1,6 @@
 language: python
+virtualenv:
+  system_site_packages: true
 cache: pip
 python:
   - "2.7"
@@ -6,7 +8,7 @@ python:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libxml2-dev libxslt-dev python-qt4
+  - sudo apt-get install -y libxml2-dev libxslt-dev python-qt4 python3-pyqt5
   # Old version
   - sudo apt-get remove python-openssl
 
