@@ -10,6 +10,7 @@ lxml
 future; python_version < '3.0'
 faulthandler; python_version < '3.0'
 qt4reactor; python_version < '3.0'
+PyQt4; python_version < '3.0'
 PyQt5; python_version >= '3.0'
 qt5reactor; python_version >= '3.0'
 pytest
