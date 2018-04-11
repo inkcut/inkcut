@@ -9,6 +9,8 @@ python:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libxml2-dev libxslt-dev python-qt4
+  # Old version
+  - sudo apt-get remove python-openssl
 
 before_script:
   # We need a (fake) display on Travis so I need to start a X server.

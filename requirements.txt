@@ -1,5 +1,6 @@
 enaml>=0.10.2
 twisted
+pyopenssl
 enamlx
 pyqtgraph
 qtconsole
