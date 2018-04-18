@@ -178,7 +178,7 @@ enamldef DriversManifest(PluginManifest):
             manufacturer = 'Vision'
             model = ' VE-810 (XD) Engraver'
             width = '10in'
-            height = '8in'
+            length = '8in'
             protocols = ['hpgl']
             connections = ['serial']
 
