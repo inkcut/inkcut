@@ -14,9 +14,6 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y python-qt4
 
-install:
-  - pip install --user -r requirements.txt
-
 script:
   - py.test tests --cov inkcut --cov-report xml -v
 
