@@ -1,22 +1,23 @@
+dist: trusty
+sudo: required
 language: python
-cache: pip
 python:
   - "2.7"
-  - "3.5"
-
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libxml2-dev libxslt-dev
+  - "3.6"
 
 before_script:
   # We need a (fake) display on Travis so I need to start a X server.
   - export DISPLAY=:99.0
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y python-qt4
+
+install:
+  - pip install --user -r requirements.txt
+
 script:
-  - pwd
-  - ls
-  - python setup.py build
   - py.test tests --cov inkcut --cov-report xml -v
 
 after_success:
