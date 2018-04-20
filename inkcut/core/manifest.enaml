@@ -24,9 +24,11 @@ def application_factory():
     #: Install twisted support into the Qt event loop
     if sys.version_info.major == 2:
         try:
-            import PyQt4
             import qt4reactor
         except ImportError:
+            # Hack. What a stupid design
+            from qtractor import qtreactor_config
+            qtreactor_config._instance.qtname = "PySide"
             from qtreactor import pyside4reactor as qtreactor
         qt4reactor.install()
     else:
