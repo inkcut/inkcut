@@ -1,6 +1,6 @@
 # Inkcut
 
-[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/inkcut/discussion)
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/inkcut/discussion) [![Build Status](https://travis-ci.org/codelv/inkcut.svg?branch=master)](https://travis-ci.org/codelv/inkcut) 
 
 An application for controlling 2D plotters, cutters, engravers, and CNC machines. [Project homepage](https://www.codelv.com/projects/inkcut/)
 
