@@ -86,6 +86,9 @@ enamldef DeviceConfigView(Container):
                         maximum = 9999.9
                         tool_tip = textwrap.dedent("""
                         Final output scale for the x-axis.
+                        A value of '1' here means '90 points per inch'. For example:
+                        Suppose your device is 96 ppi, configure 96/90=1.06 here.
+                        Suppose your device is 200 points per cm, configure 200*2.54/90=5.64 here.
                         """).strip()
                     Label:
                         text = "y"
@@ -95,6 +98,9 @@ enamldef DeviceConfigView(Container):
                         maximum = 9999.9
                         tool_tip = textwrap.dedent("""
                             Final output scale for the y-axis.
+                            A value of '1' here means '90 points per inch'. For example:
+                            Suppose your device is 96 ppi, configure 96/90=1.06 here.
+                            Suppose your device is 200 points per cm, configure 200*2.54/90=5.64 here.
                             """).strip()
 
         Page:

@@ -9,15 +9,16 @@ Developers can install all the dependencies and [build it from source](#building
 
 ### Building from source
 
-To build from source use the commands below. Using Python 3 is recommended.
+To build from source use the commands below.
 
+We intend to support both Python 2 (with qt 4) and Python 3 (with qt 5), however using Python 3 is recommended. On 32-bit systems only Python 2 works, since PyQt5 only has a 64-bit package.
 
 #### Python 3 (Recommended)
 
 ```bash
 
 virtualenv -p python3 venv
-source venv activate
+source venv/bin/activate
 
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
@@ -26,13 +27,17 @@ sudo apt install libxml2-dev libxslt-dev
 pip install .
 
 ```
+##### NOTES:
+1. Install commands should be run from the folder Inkcut is cloned/downloaded into using either `cd /path/to/inkcut/folder`
+2. If `pip install . ` gives an error regarding enamlx, you may need to install enamlx, then re-run `pip install . `
+In Ubuntu 16, this can be done by: `pip install git+https://github.com/frmdstryr/enamlx.git`.
 
 #### Python 2
 
 ```bash
 
 virtualenv -p python2 venv
-source venv activate
+source venv/bin/activate
 
 # Install lxml
 sudo apt install libxml2-dev libxslt-dev
@@ -103,6 +108,6 @@ Then restart all instances of inkscape.
 
 ### Running
 
-Run `python main.py` or to use the installed version simply run `inkcut`
+Run `python main.py` (or `python3 main.py` depending on the system default) or to use the installed version simply run `inkcut`
 
 

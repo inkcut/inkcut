@@ -44,6 +44,10 @@ class DeviceTransport(Model):
     #: Connection state. Subclasses must implement and properly update this
     connected = Bool()
 
+    #: Distinguish between transports that always spool (e.g. Printer, File I/O)
+    #: or are dependent on the 'spooling' configuration option (e.g. Serial)
+    always_spools = Bool()
+
     def connect(self):
         """ Connect using whatever implementation necessary
         
@@ -454,9 +458,11 @@ class Device(Model):
         #: Transform the path to the device coordinates
         model = self.transform(model)
 
-        #: Move the job to the new origin
-        x, y, z = self.origin
-        model.translate(x, y)
+        if job.feed_to_end:
+            #: Move the job to the new origin
+            x, y, z = self.origin
+            model.translate(x, -y)
+
         #: TODO: Apply filters here
 
         #: Return the transformed model
@@ -499,9 +505,8 @@ class Device(Model):
         
         """
         if absolute:
-            #: Clip
+            #: Clip everything to never go below zero in absolute mode
             position = [max(0, p) for p in position]
-            #: Clip everything to never go below zero in absoulte mode
             self.position = position
         else:
             #: Convert to relative to absolute for the UI
@@ -593,7 +598,7 @@ class Device(Model):
                 #: Rate px/ms
                 if config.custom_rate >= 0:
                     rate = config.custom_rate
-                elif config.spooled:
+                elif self.connection.always_spools or config.spooled:
                     rate = 0
                 elif config.interpolate:
                     if config.step_time > 0:
@@ -619,7 +624,7 @@ class Device(Model):
                 m = QtGui.QTransform.fromScale(1, 1)
                 for path in model.toSubpathPolygons(m):
                     for i, p in enumerate(path):
-                        whole_path .lineTo(p)
+                        whole_path.lineTo(p)
                 total_length = whole_path.length()
                 total_moved = 0
                 log.debug("device | Path length: {}".format(total_length))
@@ -778,7 +783,7 @@ class Device(Model):
         model = model*t
 
         #: Determine if interpolation should be used
-        skip_interpolation = config.spooled or not config.interpolate
+        skip_interpolation = self.connection.always_spools or config.spooled or not config.interpolate
 
         # speed = distance/seconds
         # So distance/speed = seconds to wait
@@ -976,7 +981,7 @@ class DevicePlugin(Plugin):
         
         """
         #: Generate the device
-        device = driver.factory()
+        device = driver.factory(driver.default_config)
 
         #: Now set the declaration
         device.declaration = driver
@@ -991,7 +996,7 @@ class DevicePlugin(Plugin):
         #: Set the protocols based on the declaration
         if driver.connections:
             device.transports = [t for t in self.transports
-                                 if t.id in driver.connections]
+                                 if t.id == 'disk' or t.id in driver.connections]
         else:
             device.transports = self.transports[:]
 

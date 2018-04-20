@@ -16,6 +16,7 @@ Created on Jan 5, 2015
 """
 import re
 import math
+from math import sqrt, tan, atan, atan2, cos, acos, sin, pi
 from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
@@ -114,6 +115,9 @@ class QtSvgItem(QtGui.QPainterPath):
         """ Returns userunits given a string representation of units 
         in another system
         """
+
+        if value is None:
+            return None
 
         if isinstance(value, (int, float)):
             return value
@@ -278,18 +282,71 @@ class QtSvgPath(QtSvgItem):
         'Q': ['Q', 4, [float, float, float, float], ['x', 'y', 'x', 'y']],
         'T': ['T', 2, [float, float], ['x', 'y']],
         'A': ['A', 7, [float, float, float, int, int, float, float],
-                        ['r', 'r', 'a', 0, 's', 'x', 'y']],
+                        ['r', 'r', 'a', 'a', 's', 'x', 'y']],
         'Z': ['L', 0, [], []]
     }
-    
+
     def parsePathData(self, e):
         return e.attrib.get('d', '')
-    
+
+    def arc(self, x1, y1, rx, ry, phi, large_arc_flag, sweep_flag, x2, y2):
+        # https://www.w3.org/TR/SVG/implnote.html F.6.6
+        rx = abs(rx)
+        ry = abs(ry)
+
+        # https://www.w3.org/TR/SVG/implnote.html F.6.5
+        x1prime = cos(phi)*(x1 - x2)/2 + sin(phi)*(y1 - y2)/2
+        y1prime = -sin(phi)*(x1 - x2)/2 + cos(phi)*(y1 - y2)/2
+
+        # https://www.w3.org/TR/SVG/implnote.html F.6.6
+        lamb = (x1prime*x1prime)/(rx*rx) + (y1prime*y1prime)/(ry*ry)
+        if lamb >= 1:
+            ry = sqrt(lamb)*ry
+            rx = sqrt(lamb)*rx
+
+        # Back to https://www.w3.org/TR/SVG/implnote.html F.6.5
+        radicand = (rx*rx*ry*ry - rx*rx*y1prime*y1prime - ry*ry*x1prime*x1prime)
+        radicand /= (rx*rx*y1prime*y1prime + ry*ry*x1prime*x1prime)
+
+        cxprime = 0
+        cyprime = 0
+
+        if radicand < 0:
+            radicand = 0
+
+        factor = (-1 if large_arc_flag==sweep_flag else 1)*sqrt(radicand)
+
+        cxprime = factor*rx*y1prime/ry
+        cyprime = -factor*ry*x1prime/rx
+
+        cx = cxprime*cos(phi) - cyprime*sin(phi) + (x1 + x2)/2
+        cy = cxprime*sin(phi) + cyprime*cos(phi) + (y1 + y2)/2
+
+        if phi == 0:
+            start_theta = -atan2((y1 - cy) * rx, (x1 - cx) * ry)
+
+            start_phi = -atan2(y1 - cy, x1 - cx)
+            end_phi = -atan2(y2 - cy, x2 - cx)
+
+            sweep_length = end_phi - start_phi
+
+            if sweep_length < 0 and not sweep_flag:
+                sweep_length += 2 * pi;
+            elif sweep_length > 0 and sweep_flag:
+                sweep_length -= 2 * pi;
+
+            self.arcTo(cx - rx, cy - ry, rx * 2, ry * 2, start_theta * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
+            return
+
+        # TODO rotated arcs cannot be expressed as QPainterPath arcs, so we
+        # have to approximate them. For now just skip.
+        raise NotImplementedError("This file contains paths with rotated arc segments, which is not currently supported. See https://github.com/codelv/inkcut/issues/45")
+
     def parse(self, e):
         d = self.parsePathData(e)
         if not d:
             return
-        
+
         for cmd, params in self.parsePath(d):
             if cmd == 'M':
                 self.moveTo(*params)
@@ -300,7 +357,11 @@ class QtSvgPath(QtSvgItem):
             elif cmd == 'Q':
                 self.quadTo(*params)
             elif cmd == 'A':
-                self.arcTo(*params)
+                x1 = self.currentPosition().x()
+                y1 = self.currentPosition().y()
+                (rx, ry, x_axis_rotation, large_arc_flag, sweep_flag, x2, y2) = params
+
+                self.arc(x1, y1, rx, ry, x_axis_rotation, large_arc_flag, sweep_flag, x2, y2)
             elif cmd == 'Z':
                 self.closeSubpath()
 
@@ -639,18 +700,22 @@ class QtSvgDoc(QtSvgG):
     
     def parseTransform(self, e):
         t = QtGui.QTransform()
-        # transforms don't apply to the root svg element
-        if not self.isParentSvg:
+        # transforms don't apply to the root svg element, but we do need to
+        # take into account the viewBox there
+        if self.isParentSvg:
+            viewBox = e.attrib.get('viewBox', None)
+            if viewBox is not None:
+                (x, y, innerWidth, innerHeight) = map(self.parseUnit, re.split("[ ,]+", viewBox))
+
+                if x != 0 or y != 0:
+                    raise ValueError("viewBox '%s' needs to be translated because is not at the origin. See https://github.com/codelv/inkcut/issues/69" % viewBox)
+
+                outerWidth, outerHeight = map(self.parseUnit,(e.attrib.get('width',None), e.attrib.get('height',None)))
+                if outerWidth is not None and outerHeight is not None:
+                    t.scale(outerWidth / innerWidth, outerHeight / innerHeight)
+        else:
             x, y = map(self.parseUnit, (e.attrib.get('x', 0),
                                         e.attrib.get('y', 0)))
             t.translate(x, y)
-            
-        # TODO: Handle width/height and viewBox stuff
-        #         else:
-        #             w,h = map(self.parseUnit,(e.attrib.get('width',None),
-        # e.attrib.get('height',None)))
-        #             if w is not None or h is not None:
-        #                 sx,sy = 
-        #             
             
         return t

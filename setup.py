@@ -44,6 +44,7 @@ if sys.platform == 'win32':
 setup(
     name='inkcut',
     packages=find_packages(),
+    include_package_data=True,
     version="2.0.4",
     author="CodeLV",
     author_email="frmdstryr@gmail.com",

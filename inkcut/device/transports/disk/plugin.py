@@ -12,7 +12,9 @@ Created on Mar 13, 2018
 """
 import os
 import time
+import tempfile
 from os.path import join, exists
+from atom.atom import set_default
 from atom.api import Instance, Unicode
 from inkcut.core.api import Plugin, Model, log
 from inkcut.device.plugin import DeviceTransport
@@ -22,11 +24,17 @@ class FileConfig(Model):
     format = Unicode("inkcut-{time}.{protocol}")
     directory = Unicode()
 
+    def _default_directory(self):
+        return tempfile.gettempdir()
+
 
 class FileTransport(DeviceTransport):
 
     #: Default config
     config = Instance(FileConfig, ())
+
+    #: The OS spools file writes
+    always_spools = set_default(True)
 
     #: The output buffer
     file = Instance(object)
