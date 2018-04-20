@@ -29,7 +29,7 @@ def application_factory():
             # Hack. What a stupid design
             from qtractor import qtreactor_config
             qtreactor_config._instance.qtname = "PySide"
-            from qtreactor import pyside4reactor as qtreactor
+            from qtreactor import pyside4reactor as qt4reactor
         qt4reactor.install()
     else:
         import qt5reactor
