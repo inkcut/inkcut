@@ -16,16 +16,19 @@ from enaml.workbench.api import Extension
 from inkcut.device.extensions import DeviceDriver
 
 
-def device_factory(default_config):
+def device_factory(driver, transports, protocols):
     """ Import our custom device driver """
     from .driver import PiDevice, PiConfig
-    return PiDevice(config=PiConfig(**default_config))
+    return PiDevice(declaration=driver, transports=transports, protocols=protocols,
+                    config=PiConfig(**driver.default_config))
+
 
 def config_view_factory():
     """ Import our custom config view """
     with enaml.imports():
         from .view import ConfigView
     return ConfigView
+
 
 enamldef PiManifest(PluginManifest):
     id = 'inkcut.device.pi'

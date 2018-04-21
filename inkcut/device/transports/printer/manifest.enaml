@@ -4,15 +4,21 @@ Created on Jul 25, 2015
 
 @author: jrm
 """
+import sys
 import enaml
 from enaml.workbench.api import Extension
 from enaml.workbench.plugin_manifest import PluginManifest
 from inkcut.device.extensions import DeviceTransport, DEVICE_TRANSPORT_POINT
 
 
-def transport_factory():
-    from .plugin import PrinterTransport
-    return PrinterTransport()
+def transport_factory(driver, declaration, protocol):
+    from .plugin import PrinterTransport, Win32PrinterConfig, CupsPrinterConfig
+    if sys.platform == 'win32':
+        PrinterConfig = Win32PrinterConfig
+    else:
+        PrinterConfig = CupsPrinterConfig
+    config = PrinterConfig(**driver.get_connection_config('printer'))
+    return PrinterTransport(declaration=declaration, protocol=protocol, config=config)
 
 
 def config_view_factory():
