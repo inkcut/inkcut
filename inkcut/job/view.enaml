@@ -25,6 +25,19 @@ from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
 from inkcut.job.plugin import Job
 
 
+def try_update_setting(plugin, view, field, index, change, title="Does not fit"):
+    """ Try to update the field with the given index and change. If it fails with a JobError,
+    revert
+
+    """
+    try:
+        field[index] = from_unit(change['value'], plugin.units)
+    except Exception as e:
+        plugin.workbench.message_critical(title=title, message=str(e))
+        field[index] = from_unit(change['oldvalue'], plugin.units)
+        view.value = change['oldvalue']
+
+
 enamldef GraphicDockItem(DockItem):
     attr plugin
     attr job: Job << plugin.job
@@ -48,11 +61,16 @@ enamldef GraphicDockItem(DockItem):
                         changed = v != change['value']
                         if changed and change['oldvalue']>0 and change['value']>0:
                             s = job.scale[0] * change['value']/change['oldvalue']
-                            if job.lock_scale:
-                                job.scale = [s,s]
-                            else:
-                                job.scale[0] = s
-
+                            oldvalue = job.scale
+                            try:
+                                if job.lock_scale:
+                                    job.scale = [s,s]
+                                else:
+                                    job.scale[0] = s
+                            except Exception as e:
+                               plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                               job.scale = oldvalue
+                               self.value = change['oldvalue']
                     suffix << " "+plugin.units
                     minimum = 0.00001
                     maximum = 99999.9
@@ -66,10 +84,16 @@ enamldef GraphicDockItem(DockItem):
                         changed = v != change['value']
                         if changed and change['oldvalue']>0 and change['value']>0:
                             s = job.scale[1] * change['value']/change['oldvalue']
-                            if job.lock_scale:
-                                job.scale = [s,s]
-                            else:
-                                job.scale[1] = s
+                            oldvalue = job.scale
+                            try:
+                                if job.lock_scale:
+                                    job.scale = [s,s]
+                                else:
+                                    job.scale[1] = s
+                            except Exception as e:
+                               plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                               job.scale = oldvalue
+                               self.value = change['oldvalue']
                     suffix << " "+plugin.units
                     minimum = 0.00001
                     maximum = 99999.9
@@ -79,11 +103,16 @@ enamldef GraphicDockItem(DockItem):
                     value << 100*job.scale[0]
                     value ::
                         s = change['value']/100.0
-                        if job.lock_scale:
-                            job.scale = [s,s]
-                        else:
-                            job.scale[0] = s
-
+                        oldvalue = job.scale
+                        try:
+                            if job.lock_scale:
+                                job.scale = [s,s]
+                            else:
+                                job.scale[0] = s
+                        except Exception as e:
+                           plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                           job.scale = oldvalue
+                           self.value = change['oldvalue']
                     suffix = ' %'
                     minimum = 0.00001
                     maximum = 99999.9
@@ -95,10 +124,16 @@ enamldef GraphicDockItem(DockItem):
                     value << 100*job.scale[1]
                     value ::
                         s = change['value']/100.0
-                        if job.lock_scale:
-                            job.scale = [s,s]
-                        else:
-                            job.scale[1] = s
+                        oldvalue = job.scale
+                        try:
+                            if job.lock_scale:
+                                job.scale = [s,s]
+                            else:
+                                job.scale[1] = s
+                        except Exception as e:
+                           plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                           job.scale = oldvalue
+                           self.value = change['oldvalue']
                     suffix = ' %'
                     minimum = 0.00001
                     maximum = 99999.9
@@ -123,13 +158,28 @@ enamldef GraphicDockItem(DockItem):
                 ImageView:
                     image = load_image('shape_copy')
                 SpinBox:
-                    value := job.copies
+                    value << job.copies
+                    value ::
+                        oldvalue = job.copies
+                        try:
+                            job.copies = change['value']
+                        except Exception as e:
+                           plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                           job.copies = oldvalue
+                           self.value = change['oldvalue']
                     minimum = 1
                     maximum = 99999
                     suffix << job.auto_copies and "   (minimum set to %s)"%job._desired_copies or ""
             PushButton: pb1:
                 icon = load_icon('shape_square_add')
-                clicked :: job.add_stack()
+                clicked ::
+                    oldvalue = job.copies
+                    try:
+                        job.add_stack()
+                    except Exception as e:
+                       plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                       job.copies = oldvalue
+                       self.value = change['oldvalue']
             PushButton: pb2:
                 icon = load_icon('shape_square_delete')
                 clicked :: job.remove_stack()
@@ -146,7 +196,15 @@ enamldef GraphicDockItem(DockItem):
                 ImageView:
                     image = load_image('shape_rotate_clockwise')
                 DoubleSpinBox:
-                    value := job.rotation
+                    value << job.rotation
+                    value ::
+                        oldvalue = job.rotation
+                        try:
+                            job.rotation = change['value']
+                        except Exception as e:
+                            plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                            job.rotation = oldvalue
+                            self.value = change['oldvalue']
                     suffix = " °"
                     maximum = 180
                     minimum = -180
@@ -187,7 +245,7 @@ enamldef WeedlinesDockItem(DockItem):
                     text = "Row"
                 DoubleSpinBox:
                     value << to_unit(job.copy_spacing[0], plugin.units)
-                    value :: job.copy_spacing[0] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.copy_spacing, 0, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -195,7 +253,7 @@ enamldef WeedlinesDockItem(DockItem):
                     text = "Col"
                 DoubleSpinBox:
                     value << to_unit(job.copy_spacing[1], plugin.units)
-                    value :: job.copy_spacing[1] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.copy_spacing, 1, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -238,7 +296,7 @@ enamldef WeedlinesDockItem(DockItem):
                     image = load_image('text_padding_left')
                 DoubleSpinBox:
                     value << to_unit(job.copy_weedline_padding[0], plugin.units)
-                    value :: job.copy_weedline_padding[0] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.copy_weedline_padding, 0, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -246,7 +304,7 @@ enamldef WeedlinesDockItem(DockItem):
                     image = load_image('text_padding_top')
                 DoubleSpinBox:
                     value << to_unit(job.copy_weedline_padding[1], plugin.units)
-                    value :: job.copy_weedline_padding[1] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.copy_weedline_padding, 1, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -254,7 +312,7 @@ enamldef WeedlinesDockItem(DockItem):
                     image = load_image('text_padding_right')
                 DoubleSpinBox:
                     value << to_unit(job.copy_weedline_padding[2], plugin.units)
-                    value :: job.copy_weedline_padding[2] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.copy_weedline_padding, 2, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -262,7 +320,7 @@ enamldef WeedlinesDockItem(DockItem):
                     image = load_image('text_padding_bottom')
                 DoubleSpinBox:
                     value << to_unit(job.copy_weedline_padding[3], plugin.units)
-                    value :: job.copy_weedline_padding[3] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.copy_weedline_padding, 3, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -286,7 +344,7 @@ enamldef MaterialDockItem(DockItem):
                     image = load_image('shape_square_width')
                 DoubleSpinBox:
                     value << to_unit(job.material.size[0], plugin.units)
-                    value :: job.material.size[0] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.material.size, 0, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     #maximum << to_unit(job.material.size[0], plugin.units)
@@ -295,21 +353,21 @@ enamldef MaterialDockItem(DockItem):
                     image = load_image('shape_square_height')
                 DoubleSpinBox:
                     value << to_unit(job.material.size[1], plugin.units)
-                    value :: job.material.size[1] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.material.size, 1, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     #maximum << to_unit(job.material.size[1], plugin.units)
                     #single_step = 0.1
-                Label:
-                    text = ""
-                PushButton:
-                    text = "Read from device"
-                    tool_tip = "Get the material size by querying the device."
-                    clicked ::
-                        try:
-                            job.material.size = plugin.device.querySize()
-                        except NotImplementedError:
-                            pass
+#                Label:
+#                    text = ""
+#                PushButton:
+#                    text = "Read from device"
+#                    tool_tip = "Get the material size by querying the device."
+#                    clicked ::
+#                        try:
+#                            job.material.size = plugin.device.querySize()
+#                        except NotImplementedError:
+#                            pass
 
         Container:
             padding = 0
@@ -322,7 +380,7 @@ enamldef MaterialDockItem(DockItem):
                     image = load_image('text_padding_left')
                 DoubleSpinBox:
                     value << to_unit(job.material.padding[0], plugin.units)
-                    value :: job.material.padding[0] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.material.padding, 0, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -330,7 +388,7 @@ enamldef MaterialDockItem(DockItem):
                     image = load_image('text_padding_top')
                 DoubleSpinBox:
                     value << to_unit(job.material.padding[1], plugin.units)
-                    value :: job.material.padding[1] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.material.padding, 1, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -338,7 +396,7 @@ enamldef MaterialDockItem(DockItem):
                     image = load_image('text_padding_right')
                 DoubleSpinBox:
                     value << to_unit(job.material.padding[2], plugin.units)
-                    value :: job.material.padding[2] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.material.padding, 2, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
@@ -346,7 +404,7 @@ enamldef MaterialDockItem(DockItem):
                     image = load_image('text_padding_bottom')
                 DoubleSpinBox:
                     value << to_unit(job.material.padding[3], plugin.units)
-                    value :: job.material.padding[3] = from_unit(change['value'],plugin.units)
+                    value :: try_update_setting(plugin, self, job.material.padding, 3, change)
                     suffix << " "+plugin.units
                     maximum = 99999.9
                     single_step = 0.1
