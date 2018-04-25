@@ -87,7 +87,7 @@ class InkcutProtocol(Protocol):
 class SerialTransport(DeviceTransport):
 
     #: Default config
-    config = Instance(SerialConfig, ())
+    config = Instance(SerialConfig, ()).tag(config=True)
 
     #: Connection port
     connection = Instance(SerialPort)

@@ -182,6 +182,25 @@ enamldef DriversManifest(PluginManifest):
             protocols = ['hpgl']
             connections = ['serial']
 
+#        DeviceDriver:
+#            manufacturer = 'Vision'
+#            model = ' VE-810 (XD) Engraver (configured)'
+#            width = '10in'
+#            length = '8in'
+#            protocols = ['hpgl']
+#            connections = ['serial']
+#            default_config = dict(
+#                scale=[-1, 1],
+#                connection=dict(
+#                    serial=dict(
+#                        baudrate=123456,
+#                        port='/dev/ttyUSB0',
+#                        rtscts=True,
+#                    )
+#                )
+#            )
+
+
         #: Load any drivers from external sources
         Include:
             objects = load_drivers()

@@ -10,19 +10,20 @@ from enaml.workbench.plugin_manifest import PluginManifest
 from inkcut.device.extensions import DEVICE_PROTOCOL_POINT, DeviceProtocol
 
 
-def gpgl_factory():
+def gpgl_factory(driver, declaration):
     from .gpgl import GPGLProtocol
-    return GPGLProtocol()
+    return GPGLProtocol(declaration=declaration)
 
 
-def hpgl_factory():
+def hpgl_factory(driver, declaration):
     from .hpgl import HPGLProtocol
-    return HPGLProtocol()
+    return HPGLProtocol(declaration=declaration)
 
 
-def dmpl_factory():
-    from .dmpl import DMPLProtocol
-    return DMPLProtocol()
+def dmpl_factory(driver, declaration):
+    from .dmpl import DMPLProtocol, DMPLConfig
+    return DMPLProtocol(declaration=declaration,
+                        config=DMPLConfig(**driver.get_protocol_config('dmpl')))
 
 
 def dmpl_config_view():
@@ -31,19 +32,19 @@ def dmpl_config_view():
     return DMPLConfigView
 
 
-def cammgl1_factory():
+def cammgl1_factory(driver, declaration):
     from .camm import CAMMGL1Protocol
-    return CAMMGL1Protocol()
+    return CAMMGL1Protocol(declaration=declaration)
 
 
-def gcode_factory():
+def gcode_factory(driver, declaration):
     from .gcode import GCodeProtocol
-    return GCodeProtocol()
+    return GCodeProtocol(declaration=declaration)
 
 
-def mock_factory():
+def mock_factory(driver, declaration):
     from .debug import DebugProtocol
-    return DebugProtocol()
+    return DebugProtocol(declaration=declaration)
 
 
 enamldef ProtocolManifest(PluginManifest):

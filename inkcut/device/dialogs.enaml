@@ -54,8 +54,9 @@ enamldef DeviceDialog(Dialog): dialog:
                                 text = "Driver"
                             ObjectCombo:
                                 items << plugin.drivers
+                                attr selected_driver << [d for d in plugin.drivers if d.id==driver.id]
                                 to_string = lambda d: d.id
-                                selected << [d for d in plugin.drivers if d.id==driver.id][0]
+                                selected << selected_driver[0] if selected_driver else None
                                 selected ::
                                     dialog.device = plugin.get_device_from_driver(change['value'])
                             Label:
@@ -110,13 +111,11 @@ enamldef DeviceDialog(Dialog): dialog:
                                 selected ::
                                     declaration = change['value']
                                     if declaration is not None:
-                                        transport = declaration.factory()
-                                        transport.declaration = declaration
+                                        protocol = None
                                         if device.connection and device.connection.protocol:
                                             # Copy from old connection
-                                            transport.protocol = device.connection.protocol
-
-                                        device.connection = transport
+                                            protocol = device.connection.protocol
+                                        device.connection = declaration.factory(driver, declaration, protocol)
                             # Label:
                             #     text = ""
                             # PushButton:
@@ -152,9 +151,7 @@ enamldef DeviceDialog(Dialog): dialog:
                                 selected ::
                                     declaration = change['value']
                                     if declaration is not None:
-                                        protocol = declaration.factory()
-                                        protocol.declaration = declaration
-                                        device.connection.protocol = protocol
+                                        device.connection.protocol = declaration.factory(driver, declaration)
                         #MappedView:
                         #    model << device.connection.config
                         MappedView:

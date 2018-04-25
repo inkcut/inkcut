@@ -30,6 +30,7 @@ from . import extensions
 class DeviceError(AssertionError):
     """ Error for whatever """
 
+
 class DeviceTransport(Model):
 
     #: The declaration that defined this transport
@@ -47,6 +48,18 @@ class DeviceTransport(Model):
     #: Distinguish between transports that always spool (e.g. Printer, File I/O)
     #: or are dependent on the 'spooling' configuration option (e.g. Serial)
     always_spools = Bool()
+
+    def __init__(self, *args, **kwargs):
+        super(DeviceTransport, self).__init__(*args, **kwargs)
+        if self.protocol:
+            self.protocol.transport = self
+
+    def _observe_protocol(self, change):
+        """ Whenever the protocol changes update the transport reference 
+        
+        """
+        if change['type'] == 'update' and change['value']:
+            self.protocol.transport = self
 
     def connect(self):
         """ Connect using whatever implementation necessary
@@ -324,21 +337,23 @@ class Device(Model):
     status = Unicode()
 
     def _default_connection(self):
+        """ If no connection is set when the device is created, 
+        create one using the first "connection" type the driver supports. 
+        """
         if not self.transports:
-            return None
+            return TestTransport()
         declaration = self.transports[0]
-        transport = declaration.factory()
-        transport.declaration = declaration
-        transport.protocol = self._default_protocol()
-        return transport
+        driver = self.declaration
+        protocol = self._default_protocol()
+        return declaration.factory(driver, declaration, protocol)
 
     def _default_protocol(self):
+        """ Create the protocol for this device. """
         if not self.protocols:
-            return None
+            return DeviceProtocol()
         declaration = self.protocols[0]
-        protocol = declaration.factory()
-        protocol.declaration = declaration
-        return protocol
+        driver = self.declaration
+        return declaration.factory(driver, declaration)
 
     def _default_area(self):
         """ Create the area based on the size specified by the Device Driver
@@ -537,7 +552,6 @@ class Device(Model):
         if cmd:
             yield defer.maybeDeferred(self.connection.write, cmd)
         yield defer.maybeDeferred(self.connection.disconnect)
-        
 
     @defer.inlineCallbacks
     def submit(self, job, test=False):
@@ -783,7 +797,8 @@ class Device(Model):
         model = model*t
 
         #: Determine if interpolation should be used
-        skip_interpolation = self.connection.always_spools or config.spooled or not config.interpolate
+        skip_interpolation = (self.connection.always_spools or config.spooled
+                              or not config.interpolate)
 
         # speed = distance/seconds
         # So distance/speed = seconds to wait
@@ -980,27 +995,17 @@ class DevicePlugin(Plugin):
                 and processing the jobs.
         
         """
-        #: Generate the device
-        device = driver.factory(driver.default_config)
+        # Set the protocols based on the declaration
+        transports = [t for t in self.transports
+                      if not driver.connections or t.id == 'disk' or
+                      t.id in driver.connections]
 
-        #: Now set the declaration
-        device.declaration = driver
+        # Set the protocols based on the declaration
+        protocols = [p for p in self.protocols
+                     if not driver.protocols or p.id in driver.protocols]
 
-        #: Set the protocols based on the declaration
-        if driver.protocols:
-            device.protocols = [p for p in self.protocols
-                                if p.id in driver.protocols]
-        else:
-            device.protocols = self.protocols[:]
-
-        #: Set the protocols based on the declaration
-        if driver.connections:
-            device.transports = [t for t in self.transports
-                                 if t.id == 'disk' or t.id in driver.connections]
-        else:
-            device.transports = self.transports[:]
-
-        return device
+        # Generate the device
+        return driver.factory(driver, transports, protocols)
 
     # -------------------------------------------------------------------------
     # Device Extensions API
@@ -1064,8 +1069,9 @@ class DevicePlugin(Plugin):
                     driver.id = "{} {}".format(driver.manufacturer,
                                                driver.model)
                 drivers.append(driver)
+        drivers.sort(key=lambda d: d.id)
 
-        #: Update
+        # Update
         self.drivers = drivers
 
     # -------------------------------------------------------------------------

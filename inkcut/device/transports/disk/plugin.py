@@ -21,8 +21,8 @@ from inkcut.device.plugin import DeviceTransport
 
 
 class FileConfig(Model):
-    format = Unicode("inkcut-{time}.{protocol}")
-    directory = Unicode()
+    format = Unicode("inkcut-{time}.{protocol}").tag(config=True)
+    directory = Unicode().tag(config=True)
 
     def _default_directory(self):
         return tempfile.gettempdir()
@@ -31,7 +31,7 @@ class FileConfig(Model):
 class FileTransport(DeviceTransport):
 
     #: Default config
-    config = Instance(FileConfig, ())
+    config = Instance(FileConfig, ()).tag(config=True)
 
     #: The OS spools file writes
     always_spools = set_default(True)
