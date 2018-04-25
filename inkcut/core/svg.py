@@ -237,7 +237,7 @@ class QtSvgCircle(QtSvgItem):
 class QtSvgLine(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}line"
     
-    def parse(self,e):
+    def parse(self, e):
         x1, y1, x2, y2 = map(self.parseUnit, (
                 e.attrib.get('x1', 0), e.attrib.get('y1', 0),
                 e.attrib.get('x2', 0), e.attrib.get('y2', 0),
@@ -314,7 +314,7 @@ class QtSvgPath(QtSvgItem):
         if radicand < 0:
             radicand = 0
 
-        factor = (-1 if large_arc_flag==sweep_flag else 1)*sqrt(radicand)
+        factor = (-1 if large_arc_flag == sweep_flag else 1)*sqrt(radicand)
 
         cxprime = factor*rx*y1prime/ry
         cyprime = -factor*ry*x1prime/rx
@@ -331,16 +331,20 @@ class QtSvgPath(QtSvgItem):
             sweep_length = end_phi - start_phi
 
             if sweep_length < 0 and not sweep_flag:
-                sweep_length += 2 * pi;
+                sweep_length += 2 * pi
             elif sweep_length > 0 and sweep_flag:
-                sweep_length -= 2 * pi;
+                sweep_length -= 2 * pi
 
-            self.arcTo(cx - rx, cy - ry, rx * 2, ry * 2, start_theta * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
+            self.arcTo(cx - rx, cy - ry, rx * 2, ry * 2,
+                       start_theta * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
             return
 
         # TODO rotated arcs cannot be expressed as QPainterPath arcs, so we
         # have to approximate them. For now just skip.
-        raise NotImplementedError("This file contains paths with rotated arc segments, which is not currently supported. See https://github.com/codelv/inkcut/issues/45")
+        raise NotImplementedError(
+            "This file contains paths with rotated arc "
+            "segments, which is not currently supported. "
+            "See https://github.com/codelv/inkcut/issues/45")
 
     def parse(self, e):
         d = self.parsePathData(e)
@@ -359,9 +363,11 @@ class QtSvgPath(QtSvgItem):
             elif cmd == 'A':
                 x1 = self.currentPosition().x()
                 y1 = self.currentPosition().y()
-                (rx, ry, x_axis_rotation, large_arc_flag, sweep_flag, x2, y2) = params
+                (rx, ry, x_axis_rotation, large_arc_flag, sweep_flag,
+                 x2, y2) = params
 
-                self.arc(x1, y1, rx, ry, x_axis_rotation, large_arc_flag, sweep_flag, x2, y2)
+                self.arc(x1, y1, rx, ry, x_axis_rotation, large_arc_flag,
+                         sweep_flag, x2, y2)
             elif cmd == 'Z':
                 self.closeSubpath()
 
@@ -406,7 +412,7 @@ class QtSvgPath(QtSvgItem):
         """
         lexer = self.pathLexer(d)
     
-        pen = (0.0,0.0)
+        pen = (0.0, 0.0)
         subPathStart = pen
         lastControl = pen
         lastCommand = ''
@@ -506,7 +512,7 @@ class QtSvgPolyline(QtSvgPath):
 class QtSvgPolygon(QtSvgPolyline):
     tag = "{http://www.w3.org/2000/svg}polygon"
     
-    def parsePathData(self,e):
+    def parsePathData(self, e):
         d = super(QtSvgPolygon, self).parsePathData(e)
         if not d:
             return
@@ -517,7 +523,7 @@ class QtSvgUse(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}use"
     xlink = "{http://www.w3.org/1999/xlink}href"
     
-    def parseLink(self,e):
+    def parseLink(self, e):
         link = e.attrib.get(self.xlink, '').split("#")
         if len(link) != 2:
             raise NotImplementedError(
@@ -679,12 +685,20 @@ class QtSvgDoc(QtSvgG):
         if self.isParentSvg:
             viewBox = e.attrib.get('viewBox', None)
             if viewBox is not None:
-                (x, y, innerWidth, innerHeight) = map(self.parseUnit, re.split("[ ,]+", viewBox))
+                (x, y, innerWidth, innerHeight) = map(self.parseUnit,
+                                                      re.split("[ ,]+",
+                                                               viewBox))
 
                 if x != 0 or y != 0:
-                    raise ValueError("viewBox '%s' needs to be translated because is not at the origin. See https://github.com/codelv/inkcut/issues/69" % viewBox)
+                    raise ValueError(
+                        "viewBox '%s' needs to be translated "
+                        "because is not at the origin. "
+                        "See https://github.com/codelv/inkcut/issues/69"
+                        % viewBox)
 
-                outerWidth, outerHeight = map(self.parseUnit,(e.attrib.get('width',None), e.attrib.get('height',None)))
+                outerWidth, outerHeight = map(self.parseUnit,
+                                              (e.attrib.get('width', None),
+                                               e.attrib.get('height', None)))
                 if outerWidth is not None and outerHeight is not None:
                     t.scale(outerWidth / innerWidth, outerHeight / innerHeight)
         else:
