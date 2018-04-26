@@ -19,7 +19,7 @@ install_requires = [
      'enamlx',
      'pyqtgraph',
      'qtconsole',
-     'pyserial>=3.4',
+     'pyserial',
      'jsonpickle',
      'lxml',  # use sudo apt install libxml2-dev libxslt-dev
 ]
@@ -45,8 +45,8 @@ setup(
     name='inkcut',
     packages=find_packages(),
     include_package_data=True,
-    version="2.0.4",
-    author="CodeLV",
+    version="2.0.5",
+    author="frmdstryr",
     author_email="frmdstryr@gmail.com",
     license='GPLv3',
     url='https://github.com/codelv/inkcut/',
