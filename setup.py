@@ -28,7 +28,7 @@ install_requires = [
 
     # Python 2:
     'faulthandler; python_version < \'3.0\'',
-    'enaml==0.10; python_version < \'3.0\'',
+    'enaml<=0.10.3; python_version < \'3.0\'',
 
     # Python 3
     'enaml>=0.10; python_version > \'3.0\'',
