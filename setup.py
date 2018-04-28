@@ -40,6 +40,12 @@ else:
 if sys.platform == 'win32':
     install_requires.append('pywin32')
 
+test_requires = [
+  'pytest',
+  'pytest-cov',
+  'pytest-qt',
+  'codecov'
+]
 
 setup(
     name='inkcut',
@@ -57,5 +63,5 @@ setup(
         'console_scripts': ['inkcut = inkcut.app:main'],
     },
     install_requires=install_requires,
-
+    test_require=test_requires,
 )
