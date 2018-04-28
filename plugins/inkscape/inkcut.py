@@ -43,7 +43,7 @@ def convert_objects_to_paths(file, document):
     command = 'inkscape --verb=EditSelectAllInAllLayers --verb=EditUnlinkClone --verb=ObjectToPath --verb=FileSave --verb=FileQuit ' + tempfile
 
     if find_executable('xvfb-run'):
-        command = 'xvfb-run ' + command
+        command = 'xvfb-run -a ' + command
 
     p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
     (out, err) = p.communicate()
