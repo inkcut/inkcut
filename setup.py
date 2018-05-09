@@ -22,23 +22,19 @@ install_requires = [
      'pyserial>=3.4',
      'jsonpickle',
      'lxml',  # use sudo apt install libxml2-dev libxslt-dev
-]
 
-if sys.version_info.major == 2:
-    install_requires.extend([
-        'future',
-        'faulthandler',
-        'qt4reactor',
-    ])
-else:
-    install_requires.extend([
-        'PyQt5',  # Only works on Python 3
-        'qt5reactor',  # Use qt4reactor on 2.7
-    ])
+     # Python 2:
+     'future; python_version < \'3.0\'',
+     'faulthandler; python_version < \'3.0\'',
+     'qt4reactor; python_version < \'3.0\'',
 
+     # Python 3:
+     'PyQt5; python_version >= \'3.0\'',
+     'qt5reactor; python_version >= \'3.0\'',
 
-if sys.platform == 'win32':
-    install_requires.append('pywin32')
+     # Windows:
+    'pywin32; sys_platform == \'win32\''
+];
 
 
 setup(
