@@ -15,7 +15,7 @@ For example on ubuntu:
 
     :::bash
     
-    apt-get install python3-pip python3-pyside libcups2-dev
+    apt-get install python3-pip python3-pyqt5 libcups2-dev
     pip3 install inkcut
 
 ##### Raspberry Pi
