@@ -32,6 +32,10 @@ install_requires = [
      'PyQt5; python_version >= \'3.0\'',
      'qt5reactor; python_version >= \'3.0\'',
 
+     # Linux:
+    'pycups; sys_platform == \'linux2\'',
+    'pycups; sys_platform == \'linux\'',
+
      # Windows:
     'pywin32; sys_platform == \'win32\''
 ];
