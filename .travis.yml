@@ -5,6 +5,10 @@ cache: pip
 python:
   - "2.7"
   - "3.6"
+addons:
+  apt:
+    packages:
+    - libcups2-dev
 
 before_script:
   # We need a (fake) display on Travis so I need to start a X server.
