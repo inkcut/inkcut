@@ -45,7 +45,7 @@ setup(
     name='inkcut',
     packages=find_packages(),
     include_package_data=True,
-    version="2.0.4",
+    version="2.0.6",
     author="CodeLV",
     author_email="frmdstryr@gmail.com",
     license='GPLv3',
