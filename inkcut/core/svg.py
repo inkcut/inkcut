@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2017, Jairus Martin.
+Copyright (c) 2017-2020, The Inkcut Team.
 
 Distributed under the terms of the GPL v3 License.
 
