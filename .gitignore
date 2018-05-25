@@ -4,3 +4,4 @@ __enamlcache__
 /inkcut-*.tar.gz
 /dist
 /inkcut.egg-info/
+/packages

@@ -1,6 +1,14 @@
+# Builds inkcut debian packages
+# requires:
+# - apt-get install python3-stdeb python-all-dev python3-all-dev
+# - a gpg private key installed for the user in the MAINTAINER variable
+
 MAINTAINER="frmdstryr <frmdstryr@gmail.com>"
+# MAINTAINER="Arnout Engelen <arnout@bzzt.net>"
 DISTRO="xenial"
 PPA="ppa:inkcut/ppa"
+
+all: atom kiwisolver qtpy enaml enamlx qt5reactor inkcut
 
 clean:
 	rm -Rf deb_dist
