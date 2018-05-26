@@ -3,8 +3,8 @@
 # - apt-get install python3-stdeb python-all-dev python3-all-dev
 # - a gpg private key installed for the user in the MAINTAINER variable
 
-MAINTAINER="frmdstryr <frmdstryr@gmail.com>"
-# MAINTAINER="Arnout Engelen <arnout@bzzt.net>"
+# MAINTAINER="frmdstryr <frmdstryr@gmail.com>"
+MAINTAINER="Arnout Engelen <arnout@bzzt.net>"
 DISTRO="xenial"
 PPA="ppa:inkcut/ppa"
 
@@ -51,9 +51,11 @@ qtpy: pkg
 
 enaml: pkg
 	cd packages; \
-	    pypi-download enaml; \
-	    tar xzf enaml-*.gz; \
-	    cd enaml-*; \
+	    # pypi-download enaml; \
+	    # tar xzf enaml-*.gz; \
+	    # cd enaml-*; \
+	    git clone https://github.com/nucleic/enaml; \
+	    cd enaml; \
 	    python3 setup.py --command-packages=stdeb.command sdist_dsc --with-python2=True \
                          --with-python3=True --maintainer=$(MAINTAINER) --suite=$(DISTRO) \
                          --depends="python-atom, python-ply, python-qtpy, python-kiwisolver, python-future"\
@@ -63,9 +65,11 @@ enaml: pkg
 
 enamlx: pkg
 	cd packages; \
-	    pypi-download enamlx; \
-	    tar xzf enamlx-*.gz; \
-	    cd enamlx-*; \
+	    # pypi-download enamlx; \
+	    # tar xzf enamlx-*.gz; \
+	    # cd enamlx-*; \
+	    git clone https://github.com/frmdstryr/enamlx; \
+	    cd enamlx; \
 	    python3 setup.py --command-packages=stdeb.command sdist_dsc --with-python2=True \
                          --with-python3=True --maintainer=$(MAINTAINER) --suite=$(DISTRO) \
                          --depends="python-enaml"\
@@ -86,12 +90,12 @@ qt5reactor: pkg
 	    debuild -S -sa
 
 inkcut: pkg
+	# --mime-desktop-files="inkcut/res/inkcut.desktop"\
 	python3 setup.py --command-packages=stdeb.command sdist_dsc \
 	 --package=inkcut\
 	 --with-python2=True \
 	 --with-python3=False \
 	 --section=graphics \
-	 --mime-desktop-files="inkcut/res/inkcut.desktop"\
 	 --maintainer=$(MAINTAINER) \
 	 --suite=$(DISTRO)\
 	 --depends="python-enaml, python-twisted, ipython-qtconsole, python-pyqtgraph, \
@@ -102,4 +106,4 @@ inkcut: pkg
 
 upload: pkg
 	#find . -name "*_source.changes" -exec dput ppa:inkcut/ppa {} \;
-	dput ppa:inkcut/ppa deb_dist/*_source.changes
+	dput -d ppa:arnouten/inkcut deb_dist/*_source.changes
