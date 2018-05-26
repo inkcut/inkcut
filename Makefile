@@ -82,7 +82,7 @@ qt5reactor: pkg
                          --with-python3=True --maintainer=$(MAINTAINER) --suite=$(DISTRO) \
                          --depends="python-twisted, python-pyqt5"\
                          --depends3="python3-twisted, python3-pyqt5"; \
-	    cd deb_dist/enamlx-*; \
+	    cd deb_dist/qt5reactor-*; \
 	    debuild -S -sa
 
 inkcut: pkg
