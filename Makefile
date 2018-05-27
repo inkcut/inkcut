@@ -7,6 +7,7 @@ MAINTAINER="frmdstryr <frmdstryr@gmail.com>"
 # MAINTAINER="Arnout Engelen <arnout@bzzt.net>"
 DISTRO="xenial"
 PPA="ppa:inkcut/ppa"
+# PPA="ppa:arnouten/inkcut"
 
 all: atom kiwisolver qtpy enaml enamlx qt5reactor inkcut
 
@@ -102,4 +103,4 @@ inkcut: pkg
 
 upload: pkg
 	#find . -name "*_source.changes" -exec dput ppa:inkcut/ppa {} \;
-	dput ppa:inkcut/ppa deb_dist/*_source.changes
+	dput $(PPA) deb_dist/*_source.changes
