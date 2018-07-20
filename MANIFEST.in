@@ -1,2 +1,3 @@
 recursive-include inkcut/res *.png
+recursive-include inkcut/res *.svg
 recursive-include inkcut *.enaml
