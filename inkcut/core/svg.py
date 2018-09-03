@@ -27,20 +27,21 @@ EtreeElement = etree._Element
 
 class QtSvgItem(QtGui.QPainterPath):
     tag = None
-    
+    _nodes = None
     _uuconv = {'in': 90.0, 'pt': 1.25, 'px': 1, 'mm': 3.5433070866,
                'cm': 35.433070866, 'm': 3543.3070866,
                'km': 3543307.0866, 'pc': 15.0, 'yd': 3240, 'ft': 1080}
     
-    def __init__(self, e, *args, **kwargs):
+    def __init__(self, e, nodes=None, **kwargs):
         if not isinstance(e, EtreeElement):
             raise TypeError("%s only works with etree Elements, "
                             "given %s" % (self, type(e)))
         elif e.tag != self.tag:
             raise ValueError("%s only works with %s elements, "
                              "given %s" % (self, self.tag, e.tag))
-        super(QtSvgItem, self).__init__(*args, **kwargs)
-        
+        super(QtSvgItem, self).__init__(**kwargs)
+
+        self._nodes = nodes
         self._e = e
         
         # Parse from node
@@ -541,11 +542,11 @@ class QtSvgUse(QtSvgItem):
         if ref is None:
             return
         elif ref.tag == QtSvgSymbol.tag:
-            self.addPath(QtSvgSymbol(ref))
+            self.addPath(QtSvgSymbol(ref, self._nodes))
         else:
             g = etree.Element(QtSvgG.tag)
             g.append(deepcopy(ref))
-            self.addPath(QtSvgG(g))
+            self.addPath(QtSvgG(g, self._nodes))
             
     def parseTransform(self, e):
         t = super(QtSvgUse, self).parseTransform(e)
@@ -620,15 +621,15 @@ class QtSvgText(QtSvgItem):
 
 class QtSvgG(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}g"
-    ids = None
 
     def parse(self, e):
+        valid_nodes = self._nodes
         for node in e:
             if node.tag == QtSvgText.tag:
                 raise ValueError("Text nodes are not supported. "
                                  "Please convert all text to paths and "
                                  "re-open the document.")
-            if self.ids and node.get('id') not in self.ids:
+            if valid_nodes and node not in valid_nodes:
                 continue
 
             for cls in [
@@ -645,7 +646,7 @@ class QtSvgG(QtSvgItem):
                         #QtSvgText
                     ]:
                 if node.tag == cls.tag:
-                    self.addPath(cls(node))
+                    self.addPath(cls(node, valid_nodes))
                     break
     
 
@@ -670,13 +671,28 @@ class QtSvgDoc(QtSvgG):
                 List of node ids to include. If not given all will be used.
         """
         self.isParentSvg = not isinstance(e, EtreeElement)
-        self.ids = ids or []
         if self.isParentSvg:
             self._doc = etree.parse(e)
             self._svg = self._doc.getroot()
+            if ids:
+                nodes = set()
+                xpath = self._svg.xpath
+                for node_id in ids:
+                    nodes.update(set(xpath('//*[@id="%s"]' % node_id)))
+
+                # Find all nodes and their parents
+                valid_nodes = set()
+                for node in nodes:
+                    valid_nodes.add(node)
+                    parent = node.getparent()
+                    while parent:
+                        valid_nodes.add(parent)
+                        parent = parent.getparent()
+                self._nodes = valid_nodes
+
             self.viewBox = QtCore.QRectF(0, 0, -1, -1)
         
-        super(QtSvgDoc, self).__init__(self._svg)
+        super(QtSvgDoc, self).__init__(self._svg, self._nodes)
     
     def parseTransform(self, e):
         t = QtGui.QTransform()
