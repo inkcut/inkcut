@@ -4,7 +4,7 @@
 Inkcut, Plot HPGL directly from Inkscape.
    extension.py
 
-   Copyright 2010 Jairus Martin <frmdstryr@gmail.com>
+   Copyright 2010-2018 The Inkcut Team
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
