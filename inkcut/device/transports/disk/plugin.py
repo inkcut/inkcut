@@ -38,14 +38,21 @@ class FileTransport(DeviceTransport):
 
     #: The output buffer
     file = Instance(object)
-
-    def connect(self):
+    
+    #: Current path
+    path = Unicode()
+    
+    def _default_path(self):
         config = self.config
         params = dict(
             time=str(time.time()).split(".")[0],
             protocol=str(self.protocol.declaration.id).lower()
         )
-        path = join(config.directory, config.format.format(**params))
+        return join(config.directory, config.format.format(**params))
+
+    def connect(self):
+        config = self.config
+        path = self.path = self._default_path()
         if not exists(config.directory):
             os.makedirs(config.directory)
         log.debug("-- File | Writing to '{}'".format(path))
@@ -68,11 +75,13 @@ class FileTransport(DeviceTransport):
         return ""
 
     def disconnect(self):
-        log.debug("-- File | closed")
+        log.debug("-- File | Closed '{}'".format(self.path))
         self.connected = False
         self.protocol.connection_lost()
         if self.file:
             self.file.close()
             self.file = None
-
+        
+    def __repr__(self):
+        return self.path
 
