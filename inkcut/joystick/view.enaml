@@ -50,7 +50,7 @@ enamldef JoystickDockItem(DockItem):
                     text = 'Device'
                 ObjectCombo:
                     items << device_plugin.devices or [device] if device else []
-                    to_string = lambda d: "{} @ {} ({})".format(
+                    to_string << lambda d: "{} @ {} ({})".format(
                         d.declaration.id,
                         d.connection if d.connection else "",
                         d.connection.protocol.declaration.name if d.connection and d.connection.protocol else ""
@@ -64,7 +64,7 @@ enamldef JoystickDockItem(DockItem):
                 Label:
                     text = 'Step'
                 SpinBox:
-                    maximum = 10000
+                    maximum = 1000000000
                     single_step = 10
                     value := plugin.rate
                 Label:
