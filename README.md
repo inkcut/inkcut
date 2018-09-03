@@ -8,8 +8,6 @@ An application for controlling 2D plotters, cutters, engravers, and CNC machines
 
 You can download the release versions from [here](https://github.com/codelv/inkcut/releases). 
 
-> Note: This version is currently in alpha and only intended for testing and development purposes
-
 ### Features
 
 - Graphic manipulation (Rotation, scaling, mirroring)
@@ -32,7 +30,13 @@ See the [project docs site](https://www.codelv.com/projects/inkcut/docs/):
 * [Supported Devices](https://www.codelv.com/projects/inkcut/docs/supported-devices)
 * [Developer](https://www.codelv.com/projects/inkcut/docs/developer)
 
-### Donate and support
+### Support
+
+Get help by posting an [issue](https://github.com/codelv/inkcut/issues) or asking on the [discussion channel](https://gitter.im/inkcut/discussion). 
 
 If you use Inkcut and want to help continue the development open source cutting software 
 please consider [donating](https://www.codelv.com/projects/inkcut/support/). 
+
+### Thanks
+
+Thank you to [all who have contributed](https://github.com/codelv/inkcut/graphs/contributors) to Inkcut and to [Inkscape](http://inkscape.org/) for making this possible!
