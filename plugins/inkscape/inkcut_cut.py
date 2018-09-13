@@ -64,7 +64,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
                              stdin=subprocess.PIPE,
                              stdout=DEVNULL,
                              stderr=subprocess.STDOUT,
-                             close_fds=True)
+                             close_fds=sys.platform != "win32")
         p.stdin.write(inkex.etree.tostring(document))
         p.stdin.close()
 
