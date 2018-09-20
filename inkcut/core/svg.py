@@ -263,7 +263,7 @@ class QtSvgRect(QtSvgItem):
         else: 
             if rx == 0:
                 rx = ry
-            else:
+            elif ry == 0:
                 ry = rx
             self.addRoundedRect(x, y, w, h, rx, ry)
 
