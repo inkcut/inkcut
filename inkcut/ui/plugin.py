@@ -12,11 +12,14 @@ Created on Jul 12, 2015
 import enaml
 import pkg_resources
 from datetime import datetime
-from atom.api import Atom, Int, List, Unicode, Instance, Bool
+from atom.api import Atom, Int, List, Unicode, Instance, Bool, Enum
 from inkcut.core.api import Plugin, DockItem, log
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
 from enaml.application import timed_call
 from . import extensions
+
+with enaml.imports():
+    from enaml.stdlib.dock_area_styles import available_styles
 
 
 class Clock(Atom):
@@ -55,6 +58,7 @@ class InkcutPlugin(Plugin):
     #: Dock items to add
     dock_items = List(DockItem)
     dock_layout = Instance(AreaLayout)
+    dock_style = Enum(*(['system']+available_styles()))
 
     def start(self):
         """ Load all plugins, refresh the dock area and then 
