@@ -12,13 +12,17 @@ Created on Dec 6, 2015
 import os
 import sys
 import enaml
-from inkcut.core.utils import menu_icon
+from enaml.core.api import Looper
+from enaml.stdlib.dock_area_styles import available_styles
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import (
     ActionItem, Branding, MenuItem, ItemGroup, Autostart
 )
+
 from .extensions import DOCK_ITEM_POINT
+from inkcut.core.utils import menu_icon
+
 
 def plugin_factory():
     from inkcut.ui.plugin import InkcutPlugin
@@ -62,6 +66,11 @@ def open_webpage(page):
         import subprocess
         cmd = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.call([cmd, page])
+        
+
+def set_theme(event):
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    plugin.dock_style = event.parameters.get('theme', 'system')
 
 
 enamldef UIManifest(PluginManifest):
@@ -94,6 +103,9 @@ enamldef UIManifest(PluginManifest):
 #             id = 'inkcut.ui.redo'
 #             handler = redo
         Command:
+            id = 'inkcut.ui.set_theme'
+            handler = set_theme
+        Command:
             id = 'inkcut.ui.open_webpage'
             handler = lambda e:open_webpage(e.parameters['url'])
 
@@ -115,6 +127,11 @@ enamldef UIManifest(PluginManifest):
 #            path = '/settings/prefs'
 #            label = 'Preferences'
 #            command = 'inkcut.ui.open_preferences'
+        MenuItem:
+            path = '/settings'
+            label = 'Settings'
+            before = 'help'
+            after = 'file'
         ActionItem:
             path = '/help/about'
             label = 'About...'
@@ -140,7 +157,16 @@ enamldef UIManifest(PluginManifest):
             label = 'Logs...'
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':os.path.expanduser('~/.config/inkcut/logs/')}
-
+        MenuItem:
+            path = '/settings/theme'
+            label = 'Theme'
+        Looper:
+            iterable << available_styles()+['system']
+            ActionItem:
+                path = '/settings/theme/{}'.format(loop_item)
+                label = loop_item.replace("-", " ").title()
+                command = 'inkcut.ui.set_theme'
+                parameters = {'theme':loop_item}
 #        ActionItem:
 #            path = '/help/about'
 #            label = 'About'

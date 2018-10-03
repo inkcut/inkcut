@@ -9,8 +9,13 @@ Created on Dec 6, 2015
 
 @author: jrm
 """
+import enaml
 from enaml.core.include import Include
 from enaml.layout.api import AreaLayout, TabLayout, DockBarLayout, HSplitLayout
+from enaml.stdlib.dock_area_styles import (
+    register_styles, available_styles, CommonStyles, AreaStyle, ItemStyle, 
+    TitleBarStyle
+)
 from inkcut.core.api import DockArea, DockItem
 # from inkcut.preview.view import PreviewDockItem
 # from inkcut.job.view import (
@@ -21,9 +26,36 @@ from inkcut.core.api import DockArea, DockItem
 # from inkcut.console.view import ConsoleDockItem
 # from inkcut.device.view import DeviceProgressDockItem
 
+def get_system_color(name='window'):
+    from enaml.qt.QtWidgets import QWidget
+    palette = QWidget().palette()
+    qcolor = getattr(palette, name)().color()
+    return qcolor.name(qcolor.HexArgb)
+
+
+template SystemStyle():
+    """ DockArea style sheet styles that uses the system colors
+
+    """
+    CommonStyles():
+        pass
+    AreaStyle:
+        background = get_system_color('window')
+    ItemStyle:
+        background = get_system_color('window')
+        border = '1px solid '+get_system_color('base')
+    TitleBarStyle:
+        background = get_system_color('base')
+
+
+if 'system' not in available_styles():
+    register_styles('system', SystemStyle)
+
+
 enamldef DockView(DockArea):
     attr workbench
     attr plugin
+    style << plugin.dock_style
     layout << plugin.dock_layout
     # layout = AreaLayout(
     #     HSplitLayout('graphic-item','preview-item'),
