@@ -1,6 +1,13 @@
 *.pyc
 /build
 __enamlcache__
-/inkcut-*.tar.gz
+inkcut-*.tar.gz
 /dist
 /inkcut.egg-info/
+*.kdev4
+*.kate-swp
+/.cache
+/.pytest_cache
+/.idea
+/.coverage
+/release

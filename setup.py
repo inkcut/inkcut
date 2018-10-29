@@ -22,15 +22,13 @@ install_requires = [
      'pyserial>=3.4',
      'jsonpickle',
      'lxml',  # use sudo apt install libxml2-dev libxslt-dev
-
+     #'PyQt5', # Let users install whatever Qt they want
+     'qt4reactor',
+     'qt5reactor',
+     
      # Python 2:
      'future; python_version < \'3.0\'',
      'faulthandler; python_version < \'3.0\'',
-     'qt4reactor; python_version < \'3.0\'',
-
-     # Python 3:
-     'PyQt5; python_version >= \'3.0\'',
-     'qt5reactor; python_version >= \'3.0\'',
 
      # Linux:
     'pycups; sys_platform == \'linux2\'',
