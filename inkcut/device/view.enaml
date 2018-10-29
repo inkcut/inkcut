@@ -12,16 +12,17 @@ Created on Dec 7, 2017
 """
 import os
 import textwrap
+from enaml.core.api import Looper
 from enaml.layout.api import hbox, vbox, spacer, align
+from enaml.qt.QtCore import Qt
 from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import (
     Form, CheckBox, Container, Label, ProgressBar, PushButton, Notebook, Page, ObjectCombo,
     Action, Menu, MultilineField
 )
-from enamlx.widgets.api import DoubleSpinBox
+from enamlx.widgets.api import DoubleSpinBox, GraphicsView, GraphicsPathItem, Pen
 from inkcut.core.api import Model, DockItem
 from inkcut.core.utils import to_unit, load_icon
-from inkcut.preview.plot_view import PlotView
 from .plugin import DeviceConfig
 
 
@@ -241,15 +242,43 @@ enamldef DeviceProgressDockItem(DockItem):
     attr clock << plugin.workbench.get_plugin("inkcut.ui").clock
     Container:
         padding = 0
-        PlotView: plot:
+        GraphicsView: plot:
             minimum_size = (540, 320)
-            data := preview.plot
-            grid << (preview_plugin.show_grid_x, preview_plugin.show_grid_y)
-            grid_alpha << preview_plugin.grid_alpha/100.0
-            axis_scales << {
-                'left': to_unit(1, job_plugin.units),
-                'bottom': to_unit(1, job_plugin.units)
-            }
+            #data := preview.plot
+            #grid << (preview_plugin.show_grid_x, preview_plugin.show_grid_y)
+            #grid_alpha << preview_plugin.grid_alpha/100.0
+            #axis_scales << {
+            #    'left': to_unit(1, job_plugin.units),
+            #    'bottom': to_unit(1, job_plugin.units)
+            #}
+            attr last_point = None
+
+            mouse_press_event => (evt):
+                self.last_point = evt.pos()
+            mouse_move_event => (evt):
+                if self.last_point is None:
+                    self.last_point = evt.pos()
+
+                dp = evt.pos()-self.last_point
+                delta = Point(dp.x(), dp.y())
+                self.last_point = evt.pos()
+
+                if evt.buttons() in (Qt.MidButton, Qt.LeftButton):
+                    px = self.pixel_density()
+                    tr = -delta*px
+                    self.translate_view(tr.x, tr.y)
+            wheel_event => (evt):
+                if hasattr(evt, 'delta'):
+                    d = evt.delta()
+                else:
+                    d = evt.angleDelta().y()
+                s = 1.001 ** d
+                self.scale_view(s, s)
+
+            Looper:
+                iterable << preview.items
+                GraphicsPathItem:
+                    path << loop_item.get('path')
 
             Menu:
                 context_menu = True
@@ -260,10 +289,11 @@ enamldef DeviceProgressDockItem(DockItem):
                     separator = True
                 Action:
                     text = QApplication.translate("device", "View all")
-                    triggered :: plot.proxy.widget.autoRange()
+                    triggered :: plot_view.reset_view()
                 Action:
                     text = QApplication.translate("device", "Clear plot")
                     triggered :: plugin.reset_preview()
+
         Container:
             constraints = [
                 vbox(

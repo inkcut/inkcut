@@ -10,13 +10,15 @@ Created on Dec 6, 2015
 @author: jrm
 """
 import textwrap
+
+from enaml.core.api import Looper
 from enaml.widgets.api import Container, Menu, Action
+from enamlx.widgets.api import GraphicsView, GraphicsPathItem, Point
+from enaml.qt.QtCore import Qt
 from enaml.qt.QtWidgets import QApplication
 
 from inkcut.core.api import DockItem, to_unit, from_unit
 from inkcut.core.utils import load_icon
-
-from .plot_view import PlotView
 
 
 enamldef PreviewDockItem(DockItem):
@@ -31,20 +33,50 @@ enamldef PreviewDockItem(DockItem):
     icon = load_icon('page_white_swoosh')
     Container:
         padding = 0
-        PlotView: plot_view:
+        GraphicsView: plot_view:
             tool_tip = textwrap.dedent("""
             The red dashed border is the device's x-y plane.
             The solid black border is the material. The dashed black border is
             the available area for use. The blue lines is the movement path.
             """).strip()
-            minimum_size = (360,None)
-            data := preview.plot
-            grid << (plugin.show_grid_x, plugin.show_grid_y)
-            grid_alpha << plugin.grid_alpha/100.0
-            axis_scales << {'left':to_unit(1, job_plugin.units),
-                            'bottom':to_unit(1, job_plugin.units)}
+            minimum_size = (360, None)
+
+            #data := preview.plot
+            #grid << (plugin.show_grid_x, plugin.show_grid_y)
+            #grid_alpha << plugin.grid_alpha/100.0
+            #axis_scales << {'left':to_unit(1, job_plugin.units),
+                            #'bottom':to_unit(1, job_plugin.units)}
+
+            attr last_point = None
+
+            mouse_press_event => (evt):
+                self.last_point = evt.pos()
+            mouse_move_event => (evt):
+                if self.last_point is None:
+                    self.last_point = evt.pos()
+
+                dp = evt.pos()-self.last_point
+                delta = Point(dp.x(), dp.y())
+                self.last_point = evt.pos()
+
+                if evt.buttons() in (Qt.MidButton, Qt.LeftButton):
+                    px = self.pixel_density()
+                    tr = -delta*px
+                    self.translate_view(tr.x, tr.y)
+            wheel_event => (evt):
+                if hasattr(evt, 'delta'):
+                    d = evt.delta()
+                else:
+                    d = evt.angleDelta().y()
+                s = 1.001 ** d
+                self.scale_view(s, s)
+            Looper:
+                iterable << preview.items
+                GraphicsPathItem:
+                    pen << loop_item.get('pen', preview.pen_down)
+                    path << loop_item.get('path')
             Menu:
                 context_menu = True
                 Action:
                     text = QApplication.translate("preview", "View all")
-                    triggered :: plot_view.proxy.widget.autoRange()
+                    triggered :: plot_view.reset_view()
