@@ -10,6 +10,7 @@ Created on Dec 6, 2015
 @author: jrm
 """
 import sys
+from enaml.qt import QT_API, PYSIDE_API, PYQT4_API
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
 
@@ -22,7 +23,10 @@ def application_factory():
     app = QtApplication()
 
     #: Install twisted support into the Qt event loop
-    if sys.version_info.major == 2:
+    # Detect Qt version
+    IS_QT4 = QT_API in PYSIDE_API + PYQT4_API
+
+    if IS_QT4:
         try:
             import qt4reactor
         except ImportError:
