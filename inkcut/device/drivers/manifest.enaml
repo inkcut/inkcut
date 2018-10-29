@@ -43,11 +43,22 @@ enamldef DriversManifest(PluginManifest):
             length = '60cm'
 
         DeviceDriver:
+            manufacturer = 'Roland'
+            model = 'PNC-900'
+            width = '12in'
+            protocols = ['camm-gl3']
+
+        DeviceDriver:
             manufacturer = 'ANAgraph'
             model = 'AE-70e'
             width = '76cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial', 'printer']
+        
+        DeviceDriver:
+            manufacturer = 'KNK'
+            model = 'ACS Eagle/KNK Maxx'
+            width = '28in'
 
         DeviceDriver:
             manufacturer = 'US Cutter'
