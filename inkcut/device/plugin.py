@@ -747,7 +747,7 @@ class Device(Model):
                             info.done = True
                             info.status = 'complete'
                     except Exception as e:
-                        log.error(e)
+                        log.error(traceback.format_exc())
                         raise
                     finally:
                         if connection.connected:
@@ -768,7 +768,7 @@ class Device(Model):
                 #: Call a minute later
                 timed_call(60000, self.submit, job)
         except Exception as e:
-            log.error(e)
+            log.error(traceback.format_exc())
             raise
 
     def process(self, model):

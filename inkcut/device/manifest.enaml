@@ -33,12 +33,17 @@ def job_start(event):
     job = event.parameters.get('job')
     if not job:
         job = workbench.get_plugin('inkcut.job').job
-    if not job.document:
+    if not job.document or not job.model:
+        workbench.message_warning("Error starting job", 
+                                  "No file is open! Please open a file first.")
         return
 
     plugin = workbench.get_plugin('inkcut.device')
     device = plugin.device
     if not device:
+        workbench.message_warning("Error starting job", 
+                                  "No device is setup! "
+                                  "Please select Device->Setup from the menu.")
         return
 
     try:
