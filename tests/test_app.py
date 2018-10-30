@@ -9,7 +9,14 @@ Created on Mar 14, 2018
 
 @author: jrm
 """
+import pytest
 from threading import Timer
+
+try:
+    import pyqtgraph
+    is_pyqtgraph_available = True
+except:
+    is_pyqtgraph_available = False
 
 
 def close():
@@ -19,6 +26,8 @@ def close():
     core.invoke_command('enaml.workbench.ui.close_window')
 
 
+@pytest.mark.skipif(not is_pyqtgraph_available, 
+                    reason='pyqtgraph is not available')
 def test_app():
     # Must close programatically
     Timer(10, close).start()
