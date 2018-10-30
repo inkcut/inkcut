@@ -9,24 +9,16 @@ Created on Jul 12, 2015
 
 @author: jrm
 """
-import os
-import sys
 import enaml
-import logging
 import traceback
-from atom.api import Unicode
 from inkcut.core.api import Plugin, log
-from logging.handlers import RotatingFileHandler
 
 
 class CorePlugin(Plugin):
 
-    _log_filename = Unicode()
-    _log_format = Unicode('%(asctime)-15s | %(levelname)-7s | %(name)s | %(message)s')
-
     def start(self):
         self.init_logging()
-        log.debug("Inkcut started.")
+        log.debug("Inkcut loaded.")
 
         #: Load the cli plugin
         w = self.workbench
@@ -58,36 +50,10 @@ class CorePlugin(Plugin):
                 "https://github.com/codelv/inkcut ".format(msg.strip()))
             raise
 
-    def _default__log_filename(self):
-        log_dir = os.path.expanduser('~/.config/inkcut/logs')
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        return os.path.join(log_dir, 'inkcut.txt')
-
     def init_logging(self):
-        """ Log to stdout and the file """
-        root = logging.getLogger()
-        root.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(self._log_format)
-
-        #: Log to stdout
-        stream = logging.StreamHandler(sys.stdout)
-        stream.setLevel(logging.DEBUG)
-        stream.setFormatter(formatter)
-
-        #: Log to rotating handler
-        disk = RotatingFileHandler(
-            self._log_filename,
-            maxBytes=1024*1024*10,  # 10 MB
-            backupCount=10,
-        )
-        disk.setLevel(logging.DEBUG)
-        disk.setFormatter(formatter)
-
-        root.addHandler(disk)
-        root.addHandler(stream)
-
+        """ Initialize twisted logging  """
         #: Start twisted logger
         from twisted.python.log import PythonLoggingObserver
         observer = PythonLoggingObserver()
         observer.start()
+        
