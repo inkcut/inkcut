@@ -120,7 +120,11 @@ class CupsPrinterConfig(PrinterConfig):
     def _default_printers(self):
         if not PRINTER_AVAILABLE:
             return []
-        return list(cups.Connection().getPrinters().keys())
+        try:
+            return list(cups.Connection().getPrinters().keys())
+        except Exception as e:
+            log.warning("Failed to get printer list: {}".format(e))
+            return []
 
 
 # -----------------------------------------------------------------------------
