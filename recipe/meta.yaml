@@ -1,0 +1,47 @@
+package:
+  name: inkcut
+  version: 2.0.7
+
+channels:
+  - codelv
+
+requirements:
+  build:
+  - python
+  - enaml
+  - twisted
+  - pyqtgraph
+  - qtconsole
+  - pyserial
+  - jsonpickle
+  - lxml  # use sudo apt install libxml2-dev libxslt-dev
+  - pyqt>=5
+  pip:
+    - enamlx
+    - qt-reactor
+  run:
+  - python
+  - enaml
+  - twisted
+  - pyqtgraph
+  - qtconsole
+  - pyserial
+  - jsonpickle
+  - lxml  # use sudo apt install libxml2-dev libxslt-dev
+  - pyqt>=5
+  pip:
+    - enamlx
+    - qt-reactor
+
+build:
+  number: 0
+  noarch: python
+  script:
+    - cd $RECIPE_DIR/../
+    - python setup.py install --single-version-externally-managed --record=record.txt --no-compile
+  entry_points:
+    - inkcut = inkcut.app:main
+about:
+  home: https://codelv.com/projects/inkcut/
+  summary: "An application for controlling 2D plotters, cutters, engravers, and CNC machines"
+  license: GPLv3
