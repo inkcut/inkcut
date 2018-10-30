@@ -9,7 +9,6 @@ Created on Jul 12, 2015
 
 @author: jrm
 """
-
 import signal
 
 #: Must be installed before enaml is imported
@@ -18,9 +17,42 @@ enamlx.install()
 
 import enaml
 from atom.api import Unicode
-from enaml.qt import QtWidgets, QtGui
+from enaml.qt import QT_API, QtCore, QtWidgets, QtGui
 from enaml.workbench.ui.api import UIWorkbench
 from inkcut.core.utils import log
+
+
+def pyside_dialog_patch():
+    # Apply patch from https://github.com/nucleic/enaml/pull/111/files
+    from atom.api import atomref
+    from enaml.qt.qt_dialog import QWindowDialog
+    from enaml.qt.q_window_base import QWindowLayout
+    
+    def __init__(self, proxy, parent, flags=QtCore.Qt.Widget):
+        """ Initialize a QWindowDialog.
+ 
+         Parameters
+         ----------
+         parent : QWidget, optional
+             The parent of the dialog.
+        """
+        super(QWindowDialog, self).__init__(parent, flags)
+        # PySide2 segfaults
+        self._proxy_ref = None if QT_API in 'pyside2' else atomref(proxy)
+        self._expl_min_size = QtCore.QSize()
+        self._expl_max_size = QtCore.QSize()
+        layout = QWindowLayout()
+        layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+        self.setLayout(layout)
+    
+    QWindowDialog.__init__ = __init__
+    pyside_dialog_patch.applied = True
+pyside_dialog_patch.applied = False
+
+
+if QT_API in ('pyside', 'pyside2') and not pyside_dialog_patch.applied:
+    pyside_dialog_patch()
+
 
 class InkcutWorkbench(UIWorkbench):
     #: Singleton instance
