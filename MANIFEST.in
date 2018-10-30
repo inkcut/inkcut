@@ -4,4 +4,3 @@ recursive-include inkcut/res *.qm
 recursive-include inkcut/res *.ts
 recursive-include inkcut/res *.desktop
 recursive-include inkcut *.enaml
-
