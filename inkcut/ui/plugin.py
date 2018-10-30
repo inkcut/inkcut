@@ -22,6 +22,9 @@ with enaml.imports():
     from enaml.stdlib.dock_area_styles import available_styles
 
 
+ALL_STYLES = sorted(['system']+available_styles())
+
+
 class Clock(Atom):
     """ A clock so widgets can observe each field as required. """
     year = Int()
@@ -58,7 +61,7 @@ class InkcutPlugin(Plugin):
     #: Dock items to add
     dock_items = List(DockItem)
     dock_layout = Instance(AreaLayout)
-    dock_style = Enum(*(['system']+available_styles()))
+    dock_style = Enum(*reversed(ALL_STYLES)).tag(config=True)
 
     def start(self):
         """ Load all plugins, refresh the dock area and then 

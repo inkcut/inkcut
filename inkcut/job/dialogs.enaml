@@ -30,8 +30,11 @@ enamldef JobApprovalDialog(Dialog): dialog:
     initial_size = (640, 320)
     attr plugin
     attr job: Job
-    TaskDialogStyleSheet:
-            pass
+    Conditional:
+        # Only use this if not using the system theme
+        condition << not (plugin.workbench.get_plugin('inkcut.ui').dock_style == 'system')
+        TaskDialogStyleSheet:
+                pass
     TaskDialogBody:
         TaskDialogInstructionArea:
             Label:

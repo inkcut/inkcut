@@ -34,8 +34,11 @@ enamldef DeviceDialog(Dialog): dialog:
     attr driver << device.declaration
     attr connection << device.connection
     attr protocol << connection.protocol
-    TaskDialogStyleSheet:
-            pass
+    Conditional:
+        # Only use this if not using the system theme
+        condition << not (plugin.workbench.get_plugin('inkcut.ui').dock_style == 'system')
+        TaskDialogStyleSheet:
+                pass
     TaskDialogBody:
         TaskDialogInstructionArea:
             Label:
