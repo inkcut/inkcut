@@ -33,22 +33,22 @@ class PreviewModel(Model):
     pen_device = Instance(Pen)
 
     def _default_pen_media(self):
-        return Pen(color="rgb(128, 128, 128)")
+        return Pen(color="rgb(128, 128, 128)", width=0)
 
     def _default_pen_media_padding(self):
-        return Pen(color="rgb(128, 128, 128)", line_style="dash")
+        return Pen(color="rgb(128, 128, 128)", line_style="dash", width=0)
 
     def _default_pen_device(self):
-        return Pen(color="rgb(235, 194, 194)", line_style="dash")
+        return Pen(color="rgb(235, 194, 194)", line_style="dash", width=0)
 
     def _default_pen_up(self):
-        return Pen(color="#00d0ff")
+        return Pen(color="#00d0ff", width=0)
 
     def _default_pen_offset(self):
-        return Pen(color="#ff00b2")
+        return Pen(color="#ff00b2", width=0)
 
     def _default_pen_down(self):
-        return Pen(color="rgb(128, 128, 128)")
+        return Pen(color="rgb(128, 128, 128)", width=0)
 
     def init(self, view_items):
         self.paths = [QPainterPath(), QPainterPath()]
