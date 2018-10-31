@@ -20,7 +20,7 @@ from enaml.widgets.api import (
     Form, CheckBox, Container, Label, ProgressBar, PushButton, Notebook, Page, ObjectCombo,
     Action, Menu, MultilineField
 )
-from enamlx.widgets.api import DoubleSpinBox, GraphicsView, GraphicsPathItem, Pen
+from enamlx.widgets.api import DoubleSpinBox, GraphicsView, GraphicsPathItem, Point
 from inkcut.core.api import Model, DockItem
 from inkcut.core.utils import to_unit, load_icon
 from .plugin import DeviceConfig

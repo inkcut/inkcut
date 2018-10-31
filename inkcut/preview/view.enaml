@@ -63,6 +63,7 @@ enamldef PreviewDockItem(DockItem):
                     px = self.pixel_density()
                     tr = -delta*px
                     self.translate_view(tr.x, tr.y)
+
             wheel_event => (evt):
                 if hasattr(evt, 'delta'):
                     d = evt.delta()
