@@ -139,7 +139,7 @@
 |Secabo              |C120III                       |Serial    |120       |Unlimited           |Yes    |
 |Secabo              |C30III                        |Serial    |42        |Unlimited           |Yes    |
 |Secabo              |c60iv                         |Serial    |100       |72                  |Yes    |
-|Secabo              |c60iv                         |Serial    |100       |72                  |Yes    |
+|Secabo              |C60ii                         |Serial    |60        |Unlimited           |Yes    |
 |SeikiTech           |sk-1305T                      |Serial    |6         |53                  |Yes    |
 |SeikiTech           |SK-870T                       |Serial    |86        |Unlimited           |Yes    |
 |SeikiTech           |sk1350t                       |Serial    |134       |Unlimited           |Yes    |

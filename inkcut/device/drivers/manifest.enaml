@@ -152,7 +152,7 @@ enamldef DriversManifest(PluginManifest):
         DeviceDriver:
             manufacturer = 'Roland'
             model = 'CM 24'
-            width = '610cm'
+            width = '61cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
 
@@ -163,6 +163,12 @@ enamldef DriversManifest(PluginManifest):
             length = '50cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial','printer']
+        
+        DeviceDriver:
+            manufacturer = 'Secabo'
+            model = 'C60ii'
+            width = '60cm'
+            protocols = ['hpgl']
             
         DeviceDriver:
             manufacturer = 'SeikiTech'
@@ -192,7 +198,7 @@ enamldef DriversManifest(PluginManifest):
             length = '8in'
             protocols = ['hpgl']
             connections = ['serial']
-
+        
 #        DeviceDriver:
 #            manufacturer = 'Vision'
 #            model = ' VE-810 (XD) Engraver (configured)'
