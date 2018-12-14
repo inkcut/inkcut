@@ -224,7 +224,7 @@ enamldef DeviceProgressDockItem(DockItem):
                     separator = True
                 Action:
                     text = 'View all'
-                    triggered :: plot_view.proxy.widget.autoRange()
+                    triggered :: plot.proxy.widget.autoRange()
                 Action:
                     text = 'Clear plot'
                     triggered :: plugin.reset_preview()

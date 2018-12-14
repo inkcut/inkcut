@@ -208,6 +208,52 @@ class DeviceProtocol(Model):
         pass
 
 
+class DeviceFilter(Model):
+    """ A device filter is applied to apply either the QPainterPath or to the
+    list of polygons generated when the path is converted to simple move
+    and line segments.
+    
+    """
+    
+    #: The declaration that defined this filter
+    declaration = Typed(extensions.DeviceFilter).tag(config=True)
+    
+    #: The protocol specific config
+    config = Instance(Model, ()).tag(config=True)
+    
+    def apply_to_model(self, model):
+        """ Apply the filter to the model
+        
+        Parameters
+        ----------
+        model: QPainterPath
+            The path model to process
+        
+        Returns
+        -------
+        model: QPainterPath
+            The path model with the filter applied
+        
+        """
+        return model
+    
+    def apply_to_polypath(self, polypath):
+        """ Apply the filter to the model
+        
+        Parameters
+        ----------
+        polypath: List of QPolygon
+            List of polygons to process
+        
+        Returns
+        -------
+        polypath: List of QPolygon
+            List of polygons with the filter applied
+        
+        """
+        return polypath
+    
+
 class DeviceConfig(Model):
     """ The default device configuration. Custom devices may want to subclass 
     this. 
@@ -306,6 +352,9 @@ class Device(Model):
 
     #: Transports supported by this device (ex the SerialPort
     transports = List(extensions.DeviceTransport)
+    
+    #: Filters that this device applies to the output
+    filters = List(DeviceFilter).tag(config=True)
 
     #: The active transport
     connection = Instance(DeviceTransport).tag(config=True)
@@ -717,7 +766,6 @@ class Device(Model):
                             #: quickly gets filled and crappy china piece cutters
                             #: get all jacked up. If the transport sends to a spooled
                             #: output (such as a printer) this can be set to 0
-                            log.debug("Rate is :{}".format(rate))
                             if rate > 0:
                                 # log.debug("d={}, delay={} t={}".format(
                                 #     d, delay, d/delay
@@ -768,7 +816,8 @@ class Device(Model):
                 #: Call a minute later
                 timed_call(60000, self.submit, job)
         except Exception as e:
-            log.error(traceback.format_exc())
+            log.error(' device | Execution error {}'.format(
+                traceback.format_exc()))
             raise
 
     def process(self, model):
@@ -806,9 +855,21 @@ class Device(Model):
         if not skip_interpolation and step_size <= 0:
             raise ValueError("Cannot have a step size <= 0!")
         try:
-            #: Some versions of Qt seem to require a value in toSubpathPolygons
+            # Apply device filters
+            for f in self.filters:
+                log.debug(" filter | Running {} on model".format(f))
+                model = f.apply_to_model(model)
+            
+            # Some versions of Qt seem to require a value in toSubpathPolygons
             m = QtGui.QTransform.fromScale(1, 1)
-            for path in model.toSubpathPolygons(m):
+            polypath = model.toSubpathPolygons(m)
+            
+            # Apply device filters to polypath
+            for f in self.filters:
+                log.debug(" filter | Running {} on polypath".format(f))
+                polypath = f.apply_to_polypath(polypath)
+            
+            for path in polypath:
 
                 #: And then each point within the path
                 #: this is a polygon
@@ -874,7 +935,8 @@ class Device(Model):
             ep = model.currentPosition()
             yield (0, self.move, ([ep.x(), ep.y(), 0],), {})
         except Exception as e:
-            log.error("device | processing error: {}".format(e))
+            log.error("device | processing error: {}".format(
+                traceback.format_exc()))
             raise e
 
     def _observe_status(self, change):
@@ -905,6 +967,9 @@ class DevicePlugin(Plugin):
 
     #: Drivers registered in the system
     drivers = List(extensions.DeviceDriver)
+    
+    #: Filters registered in the system
+    filters = List(extensions.DeviceFilter)
 
     #: Devices configured
     devices = List(Device).tag(config=True)
@@ -925,6 +990,7 @@ class DevicePlugin(Plugin):
             from .transports.disk.manifest import FileManifest
             from inkcut.device.protocols.manifest import ProtocolManifest
             from inkcut.device.drivers.manifest import DriversManifest
+            from inkcut.device.filters.manifest import FiltersManifest
             from inkcut.device.pi.manifest import PiManifest
 
             plugins.append(SerialManifest)
@@ -932,6 +998,7 @@ class DevicePlugin(Plugin):
             plugins.append(FileManifest)
             plugins.append(ProtocolManifest)
             plugins.append(DriversManifest)
+            plugins.append(FiltersManifest)
             plugins.append(PiManifest)
 
         for Manifest in plugins:
@@ -1015,6 +1082,7 @@ class DevicePlugin(Plugin):
         self._refresh_protocols()
         self._refresh_transports()
         self._refresh_drivers()
+        self._refresh_filters()
 
     def _refresh_protocols(self):
         """ Reload all DeviceProtocols registered by any Plugins 
@@ -1073,6 +1141,21 @@ class DevicePlugin(Plugin):
 
         # Update
         self.drivers = drivers
+        
+    def _refresh_filters(self):
+        """ Reload all DeviceFilters registered by any Plugins 
+        
+        Any plugin can add to this list by providing a DeviceFilter 
+        extension in the PluginManifest.
+        
+        """
+        workbench = self.workbench
+        point = workbench.get_extension_point(extensions.DEVICE_FILTER_POINT)
+        filters = []
+        for extension in sorted(point.extensions, key=lambda ext: ext.rank):
+            for t in extension.get_children(extensions.DeviceFilter):
+                filters.append(t)
+        self.filters = filters
 
     # -------------------------------------------------------------------------
     # Live progress API

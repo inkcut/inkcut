@@ -1,0 +1,65 @@
+"""
+Copyright (c) 2018, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 14, 2018
+
+@author: jrm
+"""
+import enaml
+from enaml.core.api import Include
+from enaml.workbench.plugin_manifest import PluginManifest
+from enaml.workbench.api import Extension
+from inkcut.device.extensions import DEVICE_FILTER_POINT, DeviceFilter
+
+
+def blade_offset_factory():
+    from .blade_offset import BladeOffsetFilter
+    return BladeOffsetFilter()
+
+
+def blade_offset_config_view():
+    with enaml.imports():
+        from .view import BladeOffsetConfigView
+    return BladeOffsetConfigView
+
+
+def overcut_factory():
+    from .overcut import OvercutFilter
+    return OvercutFilter()
+
+
+def overcut_config_view():
+    with enaml.imports():
+        from .view import OvercutConfigView
+    return OvercutConfigView
+
+
+
+enamldef FiltersManifest(PluginManifest):
+    """ Add new filters here or within any other plugin.
+    
+    All filters should implement the IFilterProtocol and then
+    register as an extension to the point 'inkcut.device.filters'
+    
+    """
+    id = 'inkcut.device.filters'
+    
+    Extension:
+        id = 'filters'
+        point = DEVICE_FILTER_POINT
+
+        DeviceFilter:
+            id = 'overcut'
+            name = 'Overcut'
+            factory = overcut_factory
+            config_view = overcut_config_view
+            
+        DeviceFilter:
+            id = 'blade-offset'
+            name = 'Blade Offset'
+            factory = blade_offset_factory
+            config_view = blade_offset_config_view
