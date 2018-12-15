@@ -36,4 +36,8 @@ class HPGLProtocol(DeviceProtocol):
         
     def set_pen(self, p):
         self.write("SP%i;" % p)
+        
+    def finish(self):
+        # Reinitialize
+        self.write("IN;")
 
