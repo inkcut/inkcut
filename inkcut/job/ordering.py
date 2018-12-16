@@ -39,6 +39,7 @@ class OrderReversed(OrderHandler):
     name = 'Reversed'
 
     def order(self, job, path):
+        print("REVERSED?????")
         return path.toReversed()
 
 
@@ -72,38 +73,6 @@ class OrderMaxY(OrderHandler):
     def order(self, job, path):
         return self.order_by_func(
             job, path, lambda p: p.boundingRect().top())
-
-
-class OrderMinWidth(OrderHandler):
-    name = 'Min width'
-
-    def order(self, job, path):
-        return self.order_by_func(
-            job, path, lambda p: p.boundingRect().width())
-
-
-class OrderMaxWidth(OrderHandler):
-    name = 'Max width'
-
-    def order(self, job, path):
-        return self.order_by_func(
-            job, path, lambda p: -p.boundingRect().width())
-
-
-class OrderMinHeight(OrderHandler):
-    name = 'Min height'
-
-    def order(self, job, path):
-        return self.order_by_func(
-            job, path, lambda p: p.boundingRect().height())
-
-
-class OrderMaxHeight(OrderHandler):
-    name = 'Max height'
-
-    def order(self, job, path):
-        return self.order_by_func(
-            job, path, lambda p: -p.boundingRect().height())
 
 
 class OrderShortestPath(OrderHandler):

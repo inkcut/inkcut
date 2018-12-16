@@ -172,7 +172,7 @@ class Job(Model):
     plot_weedline_padding = ContainerList(
         Float(), default=[10, 10, 10, 10]).tag(config=True)
 
-    order = Enum(*ordering.REGISTRY.keys()).tag(config=True)
+    order = Enum(*sorted(ordering.REGISTRY.keys())).tag(config=True)
     
     def _default_order(self):
         return 'Normal'

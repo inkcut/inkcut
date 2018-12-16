@@ -105,34 +105,25 @@ def async_sleep(ms):
     timed_call(ms, d.callback, True)
     return d
 
+
 # -----------------------------------------------------------------------------
 # QPainterPath helpers
 # -----------------------------------------------------------------------------
 def split_painter_path(path):
-    """ Split a QPainterPath into subpaths. 
-    
-    Parameters
-    ----------
-    path: QPainterPath
-    
-    Returns
-    -------
-    result: List of QPainterPath
-        
-    """
+    """ Split a QPainterPath into subpaths. """
     if not isinstance(path, QPainterPath):
         raise TypeError("path must be a QPainterPath, got: {}".format(path))
-    
+
     # Element types
     MoveToElement = QPainterPath.MoveToElement
     LineToElement = QPainterPath.LineToElement
     CurveToElement = QPainterPath.CurveToElement
     CurveToDataElement = QPainterPath.CurveToDataElement
-    
+
     subpaths = []
     params = []
     e = None
-    
+
     def finish_curve(p, params):
         if len(params) == 2:
             p.quadTo(*params)
@@ -140,16 +131,16 @@ def split_painter_path(path):
             p.cubicTo(*params)
         else:
             raise ValueError("Invalid curve parameters: {}".format(params))
-            
+
     for i in range(path.elementCount()):
         e = path.elementAt(i)
-        
+
         # Finish the previous curve (if there was one)
         if params and e.type != CurveToDataElement:
             finish_curve(p, params)
             params = []
-        
-        # Reconstrcut the path 
+
+        # Reconstruct the path 
         if e.type == MoveToElement:
             p = QPainterPath()
             p.moveTo(e.x, e.y)
@@ -160,25 +151,15 @@ def split_painter_path(path):
             params = [QPointF(e.x, e.y)]
         elif e.type == CurveToDataElement:
             params.append(QPointF(e.x, e.y))
-    
+
     # Finish the previous curve (if there was one)
     if params and e and e.type != CurveToDataElement:
         finish_curve(p, params)
-    assert len(subpaths) == len(path.toSubpathPolygons())
     return subpaths
-            
-    
+
+
 def join_painter_paths(paths):
-    """ Join a list of QPainterPath into a single path
-    
-    Parameters
-    ----------
-    paths: List of QPainterPath
-    
-    Returns
-    -------
-    result: QPainterPath
-    """
+    """ Join a list of QPainterPath into a single path """
     result = QPainterPath()
     for p in paths:
         result.addPath(p)
