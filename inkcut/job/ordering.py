@@ -9,8 +9,10 @@ Created on Dec 15, 2018
 
 @author: jrm
 """
+import sys
 import itertools
 from time import time
+from enaml.qt.QtCore import QPointF
 from enaml.qt.QtGui import QVector2D
 from inkcut.core.utils import (
     log, split_painter_path, join_painter_paths, to_unit
@@ -39,7 +41,6 @@ class OrderReversed(OrderHandler):
     name = 'Reversed'
 
     def order(self, job, path):
-        print("REVERSED?????")
         return path.toReversed()
 
 
@@ -74,15 +75,13 @@ class OrderMaxY(OrderHandler):
         return self.order_by_func(
             job, path, lambda p: p.boundingRect().top())
 
-
+    
 class OrderShortestPath(OrderHandler):
-    """  This is a very stupid shortest path search that brute force goes
-    through each iteration until time runs out.
+    """  This uses Dijkstra's algorithm to find the shortest path.
     
     """
     name = 'Shortest Path'
     time_limit = 0.2  # This is in the UI thread
-    
     
     def order(self, job, path):
         """ Sort subpaths by minimizing the distances between all start
@@ -91,37 +90,45 @@ class OrderShortestPath(OrderHandler):
         """
         subpaths = split_painter_path(path)
         
-        # If the actual distance is longer than this you're screwed anyways
-        d = 9999999999999999999999
-        shortest = subpaths
-        time_limit = time()+self.time_limit
-        
         # Cache all start and end points
+        time_limit = time()+self.time_limit
         zero = QVector2D(0, 0)
         for sp in subpaths:
-            # Save start and end points
+            # Average start and end into one "vertex"
             start = sp.elementAt(0)
             end = sp.elementAt(sp.elementCount()-1)
             sp.start_point = QVector2D(start.x, start.y)
             sp.end_point = QVector2D(end.x, end.y)
             
-        i = 0
-        # TODO: This is a "stupid" search
-        path_distance = self.subpath_move_distance
-        for sp in itertools.permutations(subpaths):
-            l = path_distance(zero, sp, d)
-            if l < d:
-                d = l
-                shortest = sp
-            i += 1
+        distance = QVector2D.distanceToPoint
+        original = subpaths[:]
+        result = []
+        p = zero
+        while subpaths:
+            best = sys.maxint
+            shortest = None
+            for sp in subpaths:
+                d = distance(p, sp.start_point)
+                if d < best:
+                    best = d
+                    shortest = sp
+                    
+            p = shortest.end_point
+            result.append(shortest)
+            subpaths.remove(shortest)
+            
             # time.time() is slow so limit the calls
-            if i > 1000 and time() > time_limit:
+            if time() > time_limit:
+                result = original
+                log.debug("Shortest path search aborted (time limit reached)")
                 break
-        log.debug("Shortest path search: {} in {} iterations".format(
-            to_unit(d, 'in'), i))
-        return join_painter_paths(shortest)
+        d = self.subpath_move_distance(zero, original)
+        d = d-self.subpath_move_distance(zero, result)
+        log.debug("Shortest path search: Saved {} in of movement ".format(
+            to_unit(d, 'in')))
+        return join_painter_paths(result)
     
-    def subpath_move_distance(self, p, subpaths, limit):
+    def subpath_move_distance(self, p, subpaths, limit=sys.maxint):
         # Collect start and end points
         d = 0
         
@@ -134,7 +141,7 @@ class OrderShortestPath(OrderHandler):
             p = sp.end_point
         return d
     
-
+    
 def find_sublcasses(cls):
     """ Finds all known (imported) subclasses of the given class """
     cmds = []
@@ -144,5 +151,5 @@ def find_sublcasses(cls):
     return cmds
 
 
-#: Register all sublcasses
+#: Register all subclasses
 REGISTRY = {c.name: c for c in find_sublcasses(OrderHandler)}
