@@ -89,6 +89,7 @@ class OrderShortestPath(OrderHandler):
         
         """
         subpaths = split_painter_path(path)
+        log.debug("Subpath count: {}".format(len(subpaths)))
         
         # Cache all start and end points
         time_limit = time()+self.time_limit
@@ -119,7 +120,7 @@ class OrderShortestPath(OrderHandler):
             
             # time.time() is slow so limit the calls
             if time() > time_limit:
-                result = original
+                result.extend(subpaths)  # At least part of it is optimized
                 log.debug("Shortest path search aborted (time limit reached)")
                 break
         d = self.subpath_move_distance(zero, original)
