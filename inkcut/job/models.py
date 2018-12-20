@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2017, Jairus Martin.
+Copyright (c) 2015-2018, Jairus Martin.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -22,6 +22,9 @@ from contextlib import contextmanager
 from enaml.qt import QtCore, QtGui
 from inkcut.core.api import Model, AreaBase
 from inkcut.core.svg import QtSvgDoc
+from inkcut.core.utils import split_painter_path
+
+from . import ordering
 
 
 class Material(AreaBase):
@@ -169,7 +172,10 @@ class Job(Model):
     plot_weedline_padding = ContainerList(
         Float(), default=[10, 10, 10, 10]).tag(config=True)
 
-    order = Enum('Normal', 'Reversed').tag(config=True)
+    order = Enum(*sorted(ordering.REGISTRY.keys())).tag(config=True)
+    
+    def _default_order(self):
+        return 'Normal'
 
     feed_to_end = Bool(False).tag(config=True)
     feed_after = Float(0).tag(config=True)
@@ -216,13 +222,17 @@ class Job(Model):
 
         # Apply transform
         path = self.path * t
-
-        if self.order == 'Reversed':
-            path = path.toReversed()
-
+        
         # Add weedline to copy
         if self.copy_weedline:
             self._add_weedline(path, self.copy_weedline_padding)
+            
+        # Apply ordering to path
+        # this delegates to objects in the ordering module
+        # TODO: Should this be done via plugins? 
+        OrderingHandler = ordering.REGISTRY.get(self.order)
+        if OrderingHandler:
+            path = OrderingHandler().order(self, path)
 
         # If it's too big we have to scale it
         w, h = path.boundingRect().width(), path.boundingRect().height()
