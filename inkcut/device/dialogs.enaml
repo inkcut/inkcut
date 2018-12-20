@@ -9,7 +9,7 @@ Created on Jul 14, 2015
 
 @author: jrm
 """
-from enaml.core.api import Conditional, Include
+from enaml.core.api import Conditional, Include, Looper
 from enaml.layout.api import align, hbox, spacer
 from enaml.stdlib.mapped_view import MappedView
 from enaml.stdlib.task_dialog import (
@@ -163,11 +163,41 @@ enamldef DeviceDialog(Dialog): dialog:
                                 type(protocol.config): protocol.declaration.config_view(),
                                 Model: ConfigView
                             } if protocol else {Model: ConfigView}
-                    #MappedView:
-                    #    model << device.connection.protocol.config
-            # Label:
-            #     style_class = 'task-dialog-content'
-            #     text = 'Enter the new file name'
+                Page:
+                    title = 'Filters'
+                    closable = False
+                    Container:
+                        padding = 0
+                        Notebook:
+                            tab_style = 'document'
+                            tab_position = 'left'
+                            Looper:
+                                iterable << plugin.filters
+                                Page:
+                                    title = loop_item.name
+                                    closable = False
+                                    attr matching_filters << [f for f in device.filters if f.declaration and f.declaration.id == loop_item.id]
+                                    attr current_filter << matching_filters[0] if matching_filters else None
+                                    Container:
+                                        padding = 0
+                                        Form:
+                                            CheckBox:
+                                                text = 'Enabled'
+                                                checked << bool(matching_filters)
+                                                checked ::
+                                                    if change['value']:
+                                                        filters = device.filters[:]
+                                                        f = loop_item.factory()
+                                                        f.declaration = loop_item
+                                                        filters.append(f)
+                                                        device.filters = filters
+                                                    else:
+                                                        device.filters = [f for f in device.filters if f.declaration.id != loop_item.id]
+                                        Conditional:
+                                            condition << bool(current_filter and current_filter.config)
+                                            MappedView:
+                                                model << current_filter.config
+                                                typemap << {type(current_filter.config): loop_item.config_view()}                                        
 
         TaskDialogCommandArea:
             constraints = [

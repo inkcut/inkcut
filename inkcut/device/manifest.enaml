@@ -11,10 +11,12 @@ from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
 from inkcut.core.utils import menu_icon, log
 from .extensions import (
-    DEVICE_DRIVER_POINT, DEVICE_PROTOCOL_POINT, DEVICE_TRANSPORT_POINT
+    DEVICE_DRIVER_POINT, DEVICE_PROTOCOL_POINT, DEVICE_TRANSPORT_POINT,
+    DEVICE_FILTER_POINT
 )
 from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
 from twisted.internet import defer
+
 
 def device_setup(event):
     with enaml.imports():
@@ -23,6 +25,7 @@ def device_setup(event):
     ui = workbench.get_plugin('enaml.workbench.ui')
     plugin = workbench.get_plugin('inkcut.device')
     DeviceDialog(ui.window, plugin=plugin).exec_()
+
 
 @defer.inlineCallbacks
 def job_start(event):
@@ -62,7 +65,6 @@ def device_progress_dock_item_factory():
     return DeviceProgressDockItem
 
 
-
 def plugin_factory():
     from .plugin import DevicePlugin
     return DevicePlugin()
@@ -97,6 +99,14 @@ enamldef DeviceManifest(PluginManifest):
         id = DEVICE_TRANSPORT_POINT
         description = """ Provides an extension point where plugins can
         register a communication interface for transporting data.  
+        
+        """
+    
+    ExtensionPoint:
+        id = DEVICE_FILTER_POINT
+        description = """ Provides an extension point where plugins can
+        register filters to manipulate path data before or after it is 
+        processed by the device.  
         
         """
 

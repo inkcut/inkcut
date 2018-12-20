@@ -17,6 +17,7 @@ from inkcut.core.declarative import Declarative, d_
 DEVICE_DRIVER_POINT = 'inkcut.device.driver'
 DEVICE_PROTOCOL_POINT = 'inkcut.device.protocols'
 DEVICE_TRANSPORT_POINT = 'inkcut.device.transport'
+DEVICE_FILTER_POINT = 'inkcut.device.filters'
 
 
 def default_device_factory(driver, transports, protocols):
@@ -144,4 +145,19 @@ class DeviceTransport(Declarative):
     factory = d_(Callable())
 
     #: Config view for editing the config of this device
+    config_view = d_(Callable(default=default_config_view_factory))
+    
+    
+class DeviceFilter(Declarative):
+    #: Id of the filter
+    id = d_(Unicode())
+
+    #: Name of the filter (optional)
+    name = d_(Unicode())
+    
+    #: Factory to construct the filter. It receives the DeviceDriver
+    #: as the first argument and the DeviceProtocol declaration as the second
+    factory = d_(Callable())
+
+    #: Config view for editing the config of this filter
     config_view = d_(Callable(default=default_config_view_factory))

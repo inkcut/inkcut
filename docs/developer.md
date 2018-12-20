@@ -132,7 +132,7 @@ is sent to the device. The actual connecting, sending, and processing can all be
 overridden as is needed by the driver.
 
 
-##### Device protocols
+##### Protocols
 
 If the builtin driver is sufficient for processing the job but uses a custom
 communication protocol. The custom protocol can be added as an external plugins or to the
@@ -143,21 +143,41 @@ The protocol must implement the basic [DeviceProtocol](../inkcut/device/plugin.p
 The protocol may have it's own configuration options and UI for editing the options 
 without needing to modify any core functionality.
 
-##### Device connections
+##### Connections
 
 Connections (such as Serial port, Printer, etc.. ) are added in the 
-[inkcut.device.transports](../inkcut/device/transports) packages. Serial and printer
-connections are included by default. More can be added by external plugins. The plugin 
-must implement the basic [DeviceTransport](../inkcut/device/plugin.py) interface.
+[inkcut.device.transports](../inkcut/device/transports) packages. Connections
+are simply an interface used to communicate with "some device". 
 
-Again, the connection may have it's own configuration and UI for editing the configuration 
+Serial and printer connections are included by default. More can be added by external plugins. 
+The plugin must implement the basic [DeviceTransport](../inkcut/device/plugin.py) interface.
+
+Each connection may have it's own configuration and UI for editing the configuration 
+without needing to modify any core functionality.
+
+
+##### Filters
+
+Filters are used to do preprocessing of the job before it is converted to commands 
+to be sent to the device. Examples of filters are `blade offset` and `overcut` 
+compensation. 
+
+New filters should be added to the [inkcut.device.filters](../inkcut/device/filters) packages. 
+Or they can be added by external plugins. The plugin must implement the basic 
+[DeviceFilter](../inkcut/device/plugin.py) interface. 
+
+Filters are applied to the "path model" (QPainterPath) either before or after
+it is converted to a polygon for sending to the device.
+
+Each filter may have it's own configuration and UI for editing the configuration 
 without needing to modify any core functionality.
 
 ### Jobs
 
 Inkcut now uses the concept of a "Job" to represent an SVG graphic and the configuration
 settings required to create the final output. The core piece of this is the svg parser
-that generates a QPainterPath 
+that generates a QPainterPath. The QPainterPath is used to internally represent
+the paths that must eventually be sent to the device.
 
 ### Contributing
 
