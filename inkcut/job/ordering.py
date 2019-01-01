@@ -106,7 +106,7 @@ class OrderShortestPath(OrderHandler):
         result = []
         p = zero
         while subpaths:
-            best = sys.maxint
+            best = sys.maxsize
             shortest = None
             for sp in subpaths:
                 d = distance(p, sp.start_point)
@@ -129,7 +129,7 @@ class OrderShortestPath(OrderHandler):
             to_unit(d, 'in')))
         return join_painter_paths(result)
     
-    def subpath_move_distance(self, p, subpaths, limit=sys.maxint):
+    def subpath_move_distance(self, p, subpaths, limit=sys.maxsize):
         # Collect start and end points
         d = 0
         
