@@ -46,7 +46,13 @@ enamldef DriversManifest(PluginManifest):
             manufacturer = 'Roland'
             model = 'PNC-900'
             width = '12in'
-            protocols = ['camm-gl3']
+            protocols = ['camm-gl1']
+            
+        DeviceDriver:
+            manufacturer = 'Roland'
+            model = 'PNC-1000'
+            width = '46.8cm'
+            protocols = ['camm-gl1']
 
         DeviceDriver:
             manufacturer = 'ANAgraph'
