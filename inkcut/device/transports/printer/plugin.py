@@ -81,7 +81,7 @@ class Win32PrinterConfig(PrinterConfig):
     def _default_printers(self):
         if not PRINTER_AVAILABLE:
             return []
-        return [p.Name for p in win32print.EnumPrinters()]
+        return [p[2] for p in win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL)]
 
 
 class Win32PrinterConnection(PrinterConnection):
@@ -100,7 +100,7 @@ class Win32PrinterConnection(PrinterConnection):
 
     def write(self, data):
         super(Win32PrinterConnection, self).write(data)
-        win32print.WritePrinter(self.printer, data)
+        win32print.WritePrinter(self.printer, bytearray(data,'ascii'))
 
     def close(self):
         p = self.printer
