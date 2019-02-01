@@ -7,7 +7,7 @@ Thanks to Lex Wernars
 @author: jrm
 @author: lwernars
 """
-from atom.api import Enum, Instance
+from atom.api import Enum, Instance, Float
 from inkcut.device.plugin import DeviceProtocol, Model
 
 
@@ -21,6 +21,9 @@ class DMPLProtocol(DeviceProtocol):
     #: Different modes
     config = Instance(DMPLConfig, ()).tag(config=True)
 
+    #: Output scaling
+    scale = Float(1021/90.0)
+
     def connection_made(self):
         v = self.config.mode
         if v == 1:
@@ -33,18 +36,19 @@ class DMPLProtocol(DeviceProtocol):
             self.write("IN;PA;")
 
     def move(self, x, y, z, absolute=True):
+        x, y = int(x*self.scale), int(y*self.scale)
         v = self.config.mode
         if v in [1, 2, 3, 4]:
             self.write(" {z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))
         else:
             self.write("{z}{x},{y};".format(x=x, y=y, z=z and "PD" or "PU"))
-        
+
     def set_pen(self, p):
         self.write("EC{p} ".format(p=p))
-        
+
     def set_velocity(self, v):
         self.write("V{v} ".format(v=v))
-        
+
     def set_force(self, f):
         self.write("BP{f} ".format(f=f))
 
