@@ -1,5 +1,5 @@
 """
-Copyright (c) 2017, Jairus Martin.
+Copyright (c) 2017-2019, Jairus Martin.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -64,9 +64,9 @@ class InkcutPlugin(Plugin):
     dock_style = Enum(*reversed(ALL_STYLES)).tag(config=True)
 
     def start(self):
-        """ Load all plugins, refresh the dock area and then 
+        """ Load all plugins, refresh the dock area and then
         restore state from the disk (if any).
-        
+
         """
         self.load_plugins()
         self._refresh_dock_items()
@@ -84,11 +84,13 @@ class InkcutPlugin(Plugin):
             from inkcut.device.manifest import DeviceManifest
             from inkcut.joystick.manifest import JoystickManifest
             from inkcut.console.manifest import ConsoleManifest
+            from inkcut.monitor.manifest import MonitorManifest
             plugins.append(PreviewManifest)
             plugins.append(JobManifest)
             plugins.append(DeviceManifest)
             plugins.append(JoystickManifest)
             plugins.append(ConsoleManifest)
+            plugins.append(MonitorManifest)
 
             #: Load any plugins defined as extension points
             for entry_point in pkg_resources.iter_entry_points(
@@ -116,7 +118,7 @@ class InkcutPlugin(Plugin):
         point.unobserve('extensions', self._refresh_dock_items)
 
     def create_new_area(self):
-        """ Create the dock area 
+        """ Create the dock area
         """
         with enaml.imports():
             from .dock import DockView
@@ -127,11 +129,11 @@ class InkcutPlugin(Plugin):
         return area
 
     def _refresh_dock_items(self, change=None):
-        """ Reload all DockItems registered by any Plugins 
-        
-        Any plugin can add to this list by providing a DockItem 
+        """ Reload all DockItems registered by any Plugins
+
+        Any plugin can add to this list by providing a DockItem
         extension in their PluginManifest.
-        
+
         """
         workbench = self.workbench
         point = workbench.get_extension_point(extensions.DOCK_ITEM_POINT)
@@ -168,7 +170,7 @@ class InkcutPlugin(Plugin):
 
     def _refresh_layout(self, layout):
         """ Create the layout for all the plugins
-        
+
 
         """
         items = layout.pop('main')

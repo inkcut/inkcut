@@ -1,0 +1,29 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2019, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Feb 2, 2019
+
+@author: jrm
+"""
+from inkcut.core.utils import load_icon
+from enaml.widgets.api import Container, Form, Label, Field, ObjectCombo
+
+
+enamldef RawFdSettingsView(Container):
+    attr model
+    padding = 0
+    Form:
+        Label:
+            text = "Device path"
+        Field:
+            text := model.device_path
+        Label:
+            text = "Open mode"
+        ObjectCombo:
+            items << list(model.get_member('mode').items)
+            selected := model.mode

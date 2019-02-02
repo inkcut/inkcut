@@ -14,7 +14,7 @@ import enaml
 import traceback
 from atom.api import (
     Typed, List, Instance, ForwardInstance, ContainerList, Bool, Unicode,
-    Int, Float, Enum, observe
+    Int, Float, Enum, Bytes, observe
 )
 from contextlib import contextmanager
 from datetime import datetime
@@ -49,39 +49,44 @@ class DeviceTransport(Model):
     #: or are dependent on the 'spooling' configuration option (e.g. Serial)
     always_spools = Bool()
 
+    #: Most recent input/output. These can be observed to update the UI
+    last_read = Bytes()
+    last_write = Bytes()
+
     def __init__(self, *args, **kwargs):
         super(DeviceTransport, self).__init__(*args, **kwargs)
         if self.protocol:
             self.protocol.transport = self
 
     def _observe_protocol(self, change):
-        """ Whenever the protocol changes update the transport reference 
-        
+        """ Whenever the protocol changes update the transport reference
+
         """
         if change['type'] == 'update' and change['value']:
             self.protocol.transport = self
 
     def connect(self):
         """ Connect using whatever implementation necessary
-        
+
         """
         raise NotImplementedError
 
     def write(self, data):
         """ Write using whatever implementation necessary
-        
+
         """
         raise NotImplementedError
 
     def read(self, size=None):
-        """ Read using whatever implementation necessary.
-        
+        """ Read using whatever implementation necessary and
+        invoke `protocol.data_received` with the output.
+
         """
         raise NotImplementedError
 
     def disconnect(self):
         """ Disconnect using whatever implementation necessary
-        
+
         """
         raise NotImplementedError
 
@@ -127,26 +132,26 @@ class DeviceProtocol(Model):
     config = Instance(Model, ()).tag(config=True)
 
     def connection_made(self):
-        """ This is called when a connection is made to the device. 
-         
+        """ This is called when a connection is made to the device.
+
         Use this to send any initialization commands before the job starts.
-        
+
         """
         raise NotImplementedError
 
     def set_pen(self, p):
         """ Set the pen or tool that should be used.
-         
+
          Parameters
         ----------
         p: int
             The pen or tool number to use.
-        
+
         """
 
     def set_force(self, f):
         """ Set the force the device should use.
-        
+
         Parameters
         ----------
         f: int
@@ -161,20 +166,20 @@ class DeviceProtocol(Model):
         ----------
         v: int
             The force setting value to send to the device
-        
+
         """
 
     def move(self, x, y, z, absolute=True):
         """ Called when the device position is updated.
-        
+
         """
         raise NotImplementedError
 
     def write(self, data):
         """ Call this to write data using the underlying transport.
-        
-        This should typically not be overridden. 
-        
+
+        This should typically not be overridden.
+
         """
         if self.transport is not None:
             self.transport.write(data)
@@ -182,8 +187,8 @@ class DeviceProtocol(Model):
     def data_received(self, data):
         """ Called when the device replies back with data. This can occur
         at any time as communication is asynchronous. The protocol should
-        handle as needed.s
-        
+        handle as needed.
+
         Parameters
         ----------
         data
@@ -194,16 +199,16 @@ class DeviceProtocol(Model):
 
     def finish(self):
         """ Called when processing all of the paths of the job are complete.
-        
+
         Use this to send any finalization commands.
-        
+
         """
         pass
 
     def connection_lost(self):
         """ Called the connection to the device is dropped or
         failed to connect.  No more data can be written when this is called.
-        
+
         """
         pass
 
@@ -212,52 +217,52 @@ class DeviceFilter(Model):
     """ A device filter is applied to apply either the QPainterPath or to the
     list of polygons generated when the path is converted to simple move
     and line segments.
-    
+
     """
-    
+
     #: The declaration that defined this filter
     declaration = Typed(extensions.DeviceFilter).tag(config=True)
-    
+
     #: The protocol specific config
     config = Instance(Model, ()).tag(config=True)
-    
+
     def apply_to_model(self, model):
         """ Apply the filter to the model
-        
+
         Parameters
         ----------
         model: QPainterPath
             The path model to process
-        
+
         Returns
         -------
         model: QPainterPath
             The path model with the filter applied
-        
+
         """
         return model
-    
+
     def apply_to_polypath(self, polypath):
         """ Apply the filter to the model
-        
+
         Parameters
         ----------
         polypath: List of QPolygon
             List of polygons to process
-        
+
         Returns
         -------
         polypath: List of QPolygon
             List of polygons with the filter applied
-        
+
         """
         return polypath
-    
+
 
 class DeviceConfig(Model):
-    """ The default device configuration. Custom devices may want to subclass 
-    this. 
-    
+    """ The default device configuration. Custom devices may want to subclass
+    this.
+
     """
     #: Time between each path command
     #: Time to wait between each step so we don't get
@@ -311,9 +316,9 @@ class DeviceConfig(Model):
     commands_disconnect = Unicode().tag(config=True)
 
     def _default_step_time(self):
-        """ Determine the step time based on the device speed setting 
-        
-        
+        """ Determine the step time based on the device speed setting
+
+
         """
         #: Convert speed to px/s then to mm/s
         units = self.speed_units.split("/")[0]
@@ -333,12 +338,12 @@ class DeviceConfig(Model):
 
 class Device(Model):
     """ The standard device. This is a standard model used throughout the
-    application. An instance of this is configured by specifying a 
-    'DeviceDriver' in a plugin manifest. 
-    
+    application. An instance of this is configured by specifying a
+    'DeviceDriver' in a plugin manifest.
+
     It simply delegates connection and handling to the selected transport
     and protocol respectively.
-    
+
     """
 
     #: Internal model for drawing the preview on screen
@@ -352,7 +357,7 @@ class Device(Model):
 
     #: Transports supported by this device (ex the SerialPort
     transports = List(extensions.DeviceTransport)
-    
+
     #: Filters that this device applies to the output
     filters = List(DeviceFilter).tag(config=True)
 
@@ -386,8 +391,8 @@ class Device(Model):
     status = Unicode()
 
     def _default_connection(self):
-        """ If no connection is set when the device is created, 
-        create one using the first "connection" type the driver supports. 
+        """ If no connection is set when the device is created,
+        create one using the first "connection" type the driver supports.
         """
         if not self.transports:
             return TestTransport()
@@ -406,7 +411,7 @@ class Device(Model):
 
     def _default_area(self):
         """ Create the area based on the size specified by the Device Driver
-        
+
         """
         d = self.declaration
         area = AreaBase()
@@ -452,8 +457,8 @@ class Device(Model):
     @defer.inlineCallbacks
     def test(self):
         """ Execute a test job on the device. This creates
-        and submits new job that is simply a small square. 
-        
+        and submits new job that is simply a small square.
+
         """
         raise NotImplementedError
 
@@ -461,16 +466,16 @@ class Device(Model):
         """ Apply the device output transform to the given path. This
         is used by other plugins that may need to display or work with
         tranformed output.
-        
+
         Parameters
         ----------
             path: QPainterPath
                 Path to transform
-        
+
         Returns
         -------
-            path: QPainterPath 
-                
+            path: QPainterPath
+
         """
         config = self.config
 
@@ -494,20 +499,20 @@ class Device(Model):
         """ Initialize the job. This should do any final path manipulation
         required by the device (or as specified by the config) and any filters
         should be applied here (overcut, blade offset compensation, etc..).
-        
+
         The connection is not active at this stage.
-        
+
         Parameters
         -----------
             job: inkcut.job.models.Job instance
-                The job to handle. 
-        
+                The job to handle.
+
         Returns
         --------
             model: QtGui.QPainterPath instance or Deferred that resolves
                 to a QPainterPath if heavy processing is needed. This path
-                is then interpolated and sent to the device. 
-        
+                is then interpolated and sent to the device.
+
         """
         log.debug("device | init {}".format(job))
         config = self.config
@@ -535,14 +540,14 @@ class Device(Model):
     @defer.inlineCallbacks
     def connect(self):
         """ Connect to the device. By default this delegates handling
-        to the active transport or connection handler. 
-         
+        to the active transport or connection handler.
+
         Returns
         -------
             result: Deferred or None
                 May return a Deferred object that the process will wait for
                 completion before continuing.
-        
+
         """
         log.debug("device | connect")
         yield defer.maybeDeferred(self.connection.connect)
@@ -553,11 +558,11 @@ class Device(Model):
     def move(self, position, absolute=True):
         """ Move to the given position. By default this delegates handling
         to the active protocol.
-        
+
         Parameters
         ----------
-            position: List of coordinates to move to. 
-                Desired position to move or move to (if using absolute 
+            position: List of coordinates to move to.
+                Desired position to move or move to (if using absolute
                 coordinates).
             absolute: bool
                 Position is in absolute coordinates
@@ -566,7 +571,7 @@ class Device(Model):
             result: Deferred or None
                 May return a deferred object that the process will wait for
                 completion before continuing.
-        
+
         """
         if absolute:
             #: Clip everything to never go below zero in absolute mode
@@ -584,8 +589,8 @@ class Device(Model):
             return result
 
     def finish(self):
-        """ Finish the job applying any cleanup necessary.  
-        
+        """ Finish the job applying any cleanup necessary.
+
         """
         log.debug("device | finish")
         return self.connection.protocol.finish()
@@ -593,8 +598,8 @@ class Device(Model):
     @defer.inlineCallbacks
     def disconnect(self):
         """ Disconnect from the device. By default this delegates handling
-        to the active transport or connection handler. 
-        
+        to the active transport or connection handler.
+
         """
         log.debug("device | disconnect")
         cmd = self.config.commands_disconnect
@@ -606,38 +611,38 @@ class Device(Model):
     def submit(self, job, test=False):
         """ Submit the job to the device. If the device is currently running
         a job it will be queued and run when this is finished.
-        
-        This handles iteration over the path model defined by the job and 
-        sending commands to the actual device using roughly the procedure is 
+
+        This handles iteration over the path model defined by the job and
+        sending commands to the actual device using roughly the procedure is
         as follows:
-                
+
                 device.connect()
-                
+
                 model = device.init(job)
                 for cmd in device.process(model):
                     device.handle(cmd)
                 device.finish()
-                
+
                 device.disconnect()
-        
+
         Subclasses provided by your own DeviceDriver may reimplement this
         to handle path interpolation however needed. The return value is
         ignored.
-        
+
         The live plot view will update whenever the device.position object
         is updated. On devices with lower cpu/gpu capabilities this should
         be updated sparingly (ie the raspberry pi).
-        
+
         Parameters
         -----------
             job: Instance of `inkcut.job.models.Job`
                 The job to execute on the device
             test: bool
-                Do a test run. This specifies whether the commands should be 
-                sent to the actual device or not. If True, the connection will 
-                be replaced with a virtual connection that captures all the 
+                Do a test run. This specifies whether the commands should be
+                sent to the actual device or not. If True, the connection will
+                be replaced with a virtual connection that captures all the
                 command output.
-                
+
         """
         log.debug("device | submit {}".format(job))
         try:
@@ -823,18 +828,18 @@ class Device(Model):
     def process(self, model):
         """  Process the path model of a job and return each command
         within the job.
-        
+
         Parameters
         ----------
             model: QPainterPath
                 The path to process
-        
+
         Returns
         -------
             generator: A list or generator object that yields each command
              to invoke on the device and the distance moved. In the format
              (distance, cmd, args, kwargs)
-        
+
         """
         config = self.config
 
@@ -859,16 +864,16 @@ class Device(Model):
             for f in self.filters:
                 log.debug(" filter | Running {} on model".format(f))
                 model = f.apply_to_model(model)
-            
+
             # Some versions of Qt seem to require a value in toSubpathPolygons
             m = QtGui.QTransform.fromScale(1, 1)
             polypath = model.toSubpathPolygons(m)
-            
+
             # Apply device filters to polypath
             for f in self.filters:
                 log.debug(" filter | Running {} on polypath".format(f))
                 polypath = f.apply_to_polypath(polypath)
-            
+
             for path in polypath:
 
                 #: And then each point within the path
@@ -951,12 +956,12 @@ class Device(Model):
                 jobs = self.jobs[:]
                 jobs.append(job)
                 self.jobs = jobs
-            
+
 
 class DevicePlugin(Plugin):
-    """ Plugin for configuring, using, and communicating with 
+    """ Plugin for configuring, using, and communicating with
     a device.
-    
+
     """
 
     #: Protocols registered in the system
@@ -967,7 +972,7 @@ class DevicePlugin(Plugin):
 
     #: Drivers registered in the system
     drivers = List(extensions.DeviceDriver)
-    
+
     #: Filters registered in the system
     filters = List(extensions.DeviceFilter)
 
@@ -985,6 +990,7 @@ class DevicePlugin(Plugin):
         w = self.workbench
         plugins = []
         with enaml.imports():
+            from .transports.raw.manifest import RawFdManifest
             from .transports.serialport.manifest import SerialManifest
             from .transports.printer.manifest import PrinterManifest
             from .transports.disk.manifest import FileManifest
@@ -992,7 +998,7 @@ class DevicePlugin(Plugin):
             from inkcut.device.drivers.manifest import DriversManifest
             from inkcut.device.filters.manifest import FiltersManifest
             from inkcut.device.pi.manifest import PiManifest
-
+            plugins.append(RawFdManifest)
             plugins.append(SerialManifest)
             plugins.append(PrinterManifest)
             plugins.append(FileManifest)
@@ -1011,8 +1017,8 @@ class DevicePlugin(Plugin):
         super(DevicePlugin, self).start()
 
     def submit(self, job):
-        """ Send the given job to the device and restart all stats 
-        
+        """ Send the given job to the device and restart all stats
+
         """
         job.info.reset()
         job.info.started = datetime.now()
@@ -1021,7 +1027,7 @@ class DevicePlugin(Plugin):
     def _default_device(self):
         """ If no device is loaded from the previous state, get the device
         from the first driver loaded.
-        
+
         """
         self._refresh_extensions()
 
@@ -1050,7 +1056,7 @@ class DevicePlugin(Plugin):
         the factory function the DeviceDriver specifies and assigns
         the protocols and transports based on the filters given by
         the driver.
-        
+
         Parameters
         ----------
             driver: inkcut.device.extensions.DeviceDriver
@@ -1060,7 +1066,7 @@ class DevicePlugin(Plugin):
             device: inkcut.device.plugin.Device
                 The actual device object that will be used for communication
                 and processing the jobs.
-        
+
         """
         # Set the protocols based on the declaration
         transports = [t for t in self.transports
@@ -1085,11 +1091,11 @@ class DevicePlugin(Plugin):
         self._refresh_filters()
 
     def _refresh_protocols(self):
-        """ Reload all DeviceProtocols registered by any Plugins 
-        
-        Any plugin can add to this list by providing a DeviceProtocol 
+        """ Reload all DeviceProtocols registered by any Plugins
+
+        Any plugin can add to this list by providing a DeviceProtocol
         extension in the PluginManifest.
-        
+
         """
         workbench = self.workbench
         point = workbench.get_extension_point(extensions.DEVICE_PROTOCOL_POINT)
@@ -1103,11 +1109,11 @@ class DevicePlugin(Plugin):
         self.protocols = protocols
 
     def _refresh_transports(self):
-        """ Reload all DeviceTransports registered by any Plugins 
-        
-        Any plugin can add to this list by providing a DeviceTransport 
+        """ Reload all DeviceTransports registered by any Plugins
+
+        Any plugin can add to this list by providing a DeviceTransport
         extension in the PluginManifest.
-        
+
         """
         workbench = self.workbench
         point = workbench.get_extension_point(
@@ -1122,11 +1128,11 @@ class DevicePlugin(Plugin):
         self.transports = transports
 
     def _refresh_drivers(self):
-        """ Reload all DeviceDrivers registered by any Plugins 
-        
-        Any plugin can add to this list by providing a DeviceDriver 
+        """ Reload all DeviceDrivers registered by any Plugins
+
+        Any plugin can add to this list by providing a DeviceDriver
         extension in the PluginManifest.
-        
+
         """
         workbench = self.workbench
         point = workbench.get_extension_point(extensions.DEVICE_DRIVER_POINT)
@@ -1141,13 +1147,13 @@ class DevicePlugin(Plugin):
 
         # Update
         self.drivers = drivers
-        
+
     def _refresh_filters(self):
-        """ Reload all DeviceFilters registered by any Plugins 
-        
-        Any plugin can add to this list by providing a DeviceFilter 
+        """ Reload all DeviceFilters registered by any Plugins
+
+        Any plugin can add to this list by providing a DeviceFilter
         extension in the PluginManifest.
-        
+
         """
         workbench = self.workbench
         point = workbench.get_extension_point(extensions.DEVICE_FILTER_POINT)
@@ -1166,8 +1172,8 @@ class DevicePlugin(Plugin):
 
     @observe('device', 'device.job')
     def _reset_preview(self, change):
-        """ Redraw the preview on the screen 
-        
+        """ Redraw the preview on the screen
+
         """
         view_items = []
 

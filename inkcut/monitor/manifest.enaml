@@ -1,0 +1,43 @@
+"""
+Copyright (c) 2019, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Feb 2, 2019
+
+@author: jrm
+"""
+import enaml
+from enaml.workbench.api import Extension, PluginManifest
+from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
+
+
+def plugin_factory():
+    from .plugin import MonitorPlugin
+    return MonitorPlugin()
+
+def monitor_factory():
+    with enaml.imports():
+        from .view import MonitorDockItem
+    return MonitorDockItem
+
+
+enamldef MonitorManifest(PluginManifest):
+    """ The manifest which is registered when the view is loaded.
+
+    This manifest adds a device monitor / tty terminal.
+
+    """
+    id = 'inkcut.monitor'
+    factory = plugin_factory
+
+    Extension:
+        id = 'items'
+        point = DOCK_ITEM_POINT
+        DockItem:
+            plugin_id = 'inkcut.monitor'
+            factory = monitor_factory
+            layout = 'bottom'
+

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2017, Jairus Martin.
+Copyright (c) 2017-2019, Jairus Martin.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -20,6 +20,8 @@ from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, connectionDone
 from twisted.internet.serialport import SerialPort
 from serial.tools.list_ports import comports
+
+from inkcut.device.transports.raw.plugin import RawFdTransport, RawFdProtocol
 
 
 #: Reverse key values
@@ -59,32 +61,7 @@ class SerialConfig(Model):
         self.ports = self._default_ports()
 
 
-class InkcutProtocol(Protocol):
-    """Make a twisted protocol that delegates to the inkcut protocol
-    implementation to have a consistent api (and use proper pep 8 formatting!).
-    
-    """
-    def __init__(self, parent, protocol):
-        self.parent = parent
-        self.delegate = protocol
-
-    def connectionMade(self):
-        self.parent.connected = True
-        self.parent.connection = self.transport
-        self.delegate.connection_made()
-
-    def dataReceived(self, data):
-        log.debug("<- {} | {}".format(self.parent.config.port, data))
-        self.delegate.data_received(data)
-
-    def connectionLost(self, reason=connectionDone):
-        self.parent.connected = False
-        log.debug("-- {} | dropped: {}".format(self.parent.config.port,
-                                               reason))
-        self.delegate.connection_lost()
-
-
-class SerialTransport(DeviceTransport):
+class SerialTransport(RawFdTransport):
 
     #: Default config
     config = Instance(SerialConfig, ()).tag(config=True)
@@ -95,18 +72,15 @@ class SerialTransport(DeviceTransport):
     #: Whether a serial connection spools depends on the device (configuration)
     always_spools = set_default(False)
 
-    #: Wrapper
-    _protocol = Instance(InkcutProtocol)
-
     def connect(self):
+        config = self.config
+        self.device_path = config.port
         try:
-            config = self.config
-
             #: Save a reference
             self.protocol.transport = self
 
             #: Make the wrapper
-            self._protocol = InkcutProtocol(self, self.protocol)
+            self._protocol = RawFdProtocol(self, self.protocol)
 
             self.connection = SerialPort(
                 self._protocol,
@@ -119,36 +93,17 @@ class SerialTransport(DeviceTransport):
                 xonxoff=config.xonxoff,
                 rtscts=config.rtscts
             )
-            log.debug("{} | opened".format(self.config.port))
+            log.debug("{} | opened".format(config.port))
         except Exception as e:
             #: Make sure to log any issues as these tracebacks can get
             #: squashed by twisted
-            log.error("{} | {}".format(
-                self.config.port, traceback.format_exc()
-            ))
+            log.error("{} | {}".format(config.port, traceback.format_exc()))
             raise
-
-    def write(self, data):
-        if not self.connection:
-            raise IOError("Port is not opened")
-        log.debug("-> {} | {}".format(self.config.port, data))
-        if hasattr(data, 'encode'):
-            data = data.encode()
-        self._protocol.transport.write(data)
-
-    def disconnect(self):
-        if self.connection:
-            log.debug("{} | closed".format(self.config.port))
-            self.connection.loseConnection()
-            self.connection = None
-
-    def __repr__(self):
-        return self.config.port
 
 
 class SerialPlugin(Plugin):
     """ Plugin for handling serial port communication
-    
+
     """
 
     # -------------------------------------------------------------------------

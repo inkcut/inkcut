@@ -13,7 +13,7 @@ import enaml
 from enaml.core.include import Include
 from enaml.layout.api import AreaLayout, TabLayout, DockBarLayout, HSplitLayout
 from enaml.stdlib.dock_area_styles import (
-    register_styles, available_styles, CommonStyles, AreaStyle, ItemStyle, 
+    register_styles, available_styles, CommonStyles, AreaStyle, ItemStyle,
     TitleBarStyle
 )
 from enaml.qt import QT_API
