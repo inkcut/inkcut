@@ -11,3 +11,4 @@ inkcut-*.tar.gz
 /.idea
 /.coverage
 /release
+.directory

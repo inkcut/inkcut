@@ -9,6 +9,7 @@ Created on Feb 2, 2019
 
 @author: jrm
 """
+from enaml.qt.QtCore import Qt
 from enaml.widgets.api import  (
     Container, MultilineField, Field, PushButton, ObjectCombo
 )
@@ -18,7 +19,7 @@ from inkcut.core.api import DockItem
 from inkcut.core.utils import load_icon
 
 
-enamldef MonitorDockItem(DockItem):
+enamldef MonitorDockItem(DockItem): view:
     title = 'Monitor'
     name = 'monitor-item'
     icon = load_icon('keyboard')
@@ -26,6 +27,8 @@ enamldef MonitorDockItem(DockItem):
     attr device_plugin << plugin.workbench.get_plugin('inkcut.device')
     attr device << device_plugin.device
     attr connection << device.connection if device else None
+    attr history_index: int = -1
+    attr history_limit: int = 40
     initialized ::
         # On startup observe the device connection's last output
         if connection:
@@ -75,10 +78,24 @@ enamldef MonitorDockItem(DockItem):
 
     func send_text():
         if connection and connection.connected:
-            #comm_log.proxy.widget.append("\r\n"+to_send.text)
-            msg = to_send.text+"\r\n" if plugin.add_newline else to_send.text
-            connection.write(msg)
+            text = to_send.text
+            # Add to history
+            add_to_history(text)
+            connection.write(text+"\r\n" if plugin.add_newline else text)
             to_send.text = ""
+
+    func add_to_history(text):
+        if text:
+            # Retain order (most recent first)
+            if text in plugin.history:
+                plugin.history.remove(text)
+            plugin.history.append(text)
+
+            # Keep the size limited
+            if len(plugin.history) > history_limit:
+                plugin.history.pop(0)
+        # Reset
+        view.history_index = 0
 
     Container:
         padding = 0
@@ -125,10 +142,25 @@ enamldef MonitorDockItem(DockItem):
         Field: to_send:
             enabled << bool(connection and connection.connected)
             placeholder << "Enter a command.." if enabled else "Disconnected... reconnect first."
-            tool_tip = "Press Shift+Return to send"
+            tool_tip = "Press enter to send"
             KeyEvent:
-                keys = ['shift+return']
+                keys = ['return']
                 released :: send_text()
+            KeyEvent:
+                released ::
+                    code = change['value']['code']
+                    if len(plugin.history):
+                        if code == Qt.Key_Up:
+                            n = len(plugin.history)
+                            view.history_index = max(-n, history_index-1)
+                            to_send.text = plugin.history[view.history_index]
+                        elif code == Qt.Key_Down:
+                            view.history_index = min(0, history_index+1)
+                            if view.history_index == 0:
+                                to_send.text = ""
+                            else:
+                                to_send.text = plugin.history[view.history_index]
+
         PushButton: btn_send:
             text = "Send"
             enabled << bool(connection and connection.connected)

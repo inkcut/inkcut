@@ -11,7 +11,7 @@ Created on Feb 2, 2019
 @author: jrm
 """
 import logging
-from atom.api import Bool
+from atom.api import Bool, ContainerList, Unicode
 from inkcut.core.api import Plugin
 
 
@@ -21,3 +21,6 @@ class MonitorPlugin(Plugin):
     input_enabled = Bool(True).tag(config=True)
     output_enabled = Bool(True).tag(config=True)
     autoscroll = Bool(True).tag(config=True)
+
+    #: Command history
+    history = ContainerList(Unicode()).tag(config=True)
