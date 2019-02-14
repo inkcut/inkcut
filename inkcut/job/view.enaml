@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2017, Jairus Martin.
+Copyright (c) 2017-2019, Jairus Martin.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -8,9 +8,10 @@ The full license is in the file LICENSE, distributed with this software.
 
 Created on Jul 14, 2015
 
-@author: jrm 
+@author: jrm
 """
 import os
+from datetime import datetime
 from inkcut.core.api import DockItem
 from enaml.widgets.api import (
     Container, Label, ImageView, SpinBox, CheckBox, PushButton, RadioButton,
@@ -454,27 +455,21 @@ enamldef JobHistoryDockItem(DockItem):
     Container:
         padding = 0
         TableView: table:
-            horizontal_headers = ['Document', 'Count', 'Started', 'Finished', 'Duration', 'Status',
-                                    'Autostart']
+            horizontal_headers = ['Date', 'Document', 'Count', 'Duration', 'Status', 'Copies', 'Rotation', 'Size', 'Material' ]
             horizontal_stretch = True
-            show_vertical_header = False
+            resize_mode = 'resize_to_contents'
             items << plugin.jobs
             Looper:
-                iterable << plugin.jobs
+                iterable << reversed(sorted(plugin.jobs, key=lambda j: j.info.created or datetime(1970, 1, 1)))
                 TableViewRow:
-                    attr job << table.items[loop_index] if loop_index < len(table.items) else None
+                    attr job << loop_item
+                    TableViewItem:
+                        text << str(job.info.created.strftime('%c')) if job and job.info.created else ""
                     TableViewItem:
                         text << str(os.path.split(job.document)[-1]) if job else ""
                         tool_tip = str(job.document) if job else ""
                     TableViewItem:
                         text << str(job.info.count) if job else "0"
-                    TableViewItem:
-                        text << str(job.info.started.strftime('%c')) if job and job.info.started else ""
-                    TableViewItem:
-                        #icon << load_icon('accept'  if (job and job.info.done) else 'cancel')
-                        text << "{} ({})".format(
-                            job.info.ended.strftime('%c'), job.info.ended-job.info.started
-                            ) if (job and job.info.ended and job.info.ended > job.info.started) else ""
                     TableViewItem:
                          attr duration << job.info.duration.total_seconds() if job and job.info.duration else 0
                          text << "{} min {} sec".format(
@@ -484,12 +479,22 @@ enamldef JobHistoryDockItem(DockItem):
                     TableViewItem:
                         text << str(job.info.status) if job  else ""
                     TableViewItem:
-                        checkable = True
-                        checked << job.info.auto_approve if job  else False
-                        checked :: job.info.auto_approve = change['value']
+                        text << str(job.copies) if job  else ""
+                    TableViewItem:
+                        text << "{} °".format(job.rotation) if job else ""
+                    TableViewItem:
+                        text << "{} {} x {} {}".format(
+                                round(to_unit(job.size[0], plugin.units), 2), plugin.units,
+                                round(to_unit(job.size[1], plugin.units), 2), plugin.units,
+                            ) if job and job.model else ""
+                    TableViewItem:
+                        text << "{} {} x {} {}".format(
+                                round(to_unit(job.material.size[0], plugin.units), 2), plugin.units,
+                                round(to_unit(job.material.size[1], plugin.units), 2), plugin.units,
+                            ) if job and job.model else ""
                     Menu:
                         Action:
-                            text = "Open job in preview"
+                            text = "Open job"
                             icon = load_icon("control_equalizer_blue")
                             triggered :: plugin.job = job
                         Action:
@@ -500,5 +505,15 @@ enamldef JobHistoryDockItem(DockItem):
                             triggered ::
                                 core = plugin.workbench.get_plugin("enaml.workbench.core")
                                 core.invoke_command('inkcut.device.submit', parameters={'job': job})
+                        Action:
+                            separator = True
+                        Action:
+                            text = "Remove from list"
+                            icon = load_icon("bin")
+                            triggered ::
+                                jobs = plugin.jobs[:]
+                                if job in jobs:
+                                    jobs.remove(job)
+                                    plugin.jobs = jobs
 
 

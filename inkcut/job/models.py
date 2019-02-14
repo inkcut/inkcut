@@ -28,7 +28,7 @@ from . import ordering
 
 
 class Material(AreaBase):
-    """ Model representing the plot media 
+    """ Model representing the plot media
     """
     name = Unicode().tag(config=True)
     color = Unicode('#000000').tag(config=True)
@@ -74,6 +74,7 @@ class JobInfo(Model):
                   'approved', 'cancelled', 'complete').tag(config=True)
 
     #: Stats
+    created = Instance(datetime, ()).tag(config=True)
     started = Instance(datetime).tag(config=True)
     ended = Instance(datetime).tag(config=True)
     progress = Range(0, 100, 0).tag(config=True)
@@ -94,6 +95,10 @@ class JobInfo(Model):
     #: Callback to open the approval dialog
     auto_approve = Bool().tag(config=True)
     request_approval = Callable()
+
+    def __init__(self, *args, **kwargs):
+        super(JobInfo, self).__init__(*args, **kwargs)
+        self.created = datetime.now()
 
     def _default_request_approval(self):
         """ Request approval using the current job """
@@ -127,12 +132,12 @@ class JobInfo(Model):
 
 
 class Job(Model):
-    """ Create a plot depending on the properties set. Any property that is a 
+    """ Create a plot depending on the properties set. Any property that is a
     traitlet will cause an update when the value is changed.
-     
+
     """
     #: Material this job will be run on
-    material = Instance(Material, ()).tag(config=True)
+    material = Instance((Material, JobInfo), ()).tag(config=True)
 
     #: Path to svg document this job parses
     document = Unicode().tag(config=True)
@@ -160,8 +165,8 @@ class Job(Model):
         config=True, help="automatically rotate if it saves space")
 
     copies = Int(1).tag(config=True)
-    auto_copies = Bool(False).tag(config=True,
-                                 help="always use a full stack")
+    auto_copies = Bool(False).tag(
+        config=True, help="always use a full stack")
     copy_spacing = ContainerList(Float(),
                                  default=[10, 10]).tag(config=True)
     copy_weedline = Bool(False).tag(config=True)
@@ -173,7 +178,7 @@ class Job(Model):
         Float(), default=[10, 10, 10, 10]).tag(config=True)
 
     order = Enum(*sorted(ordering.REGISTRY.keys())).tag(config=True)
-    
+
     def _default_order(self):
         return 'Normal'
 
@@ -199,9 +204,9 @@ class Job(Model):
             self.path = QtSvgDoc(self.document, **self.document_kwargs)
 
     def _create_copy(self):
-        """ Creates a copy of the original graphic applying the given 
-        transforms 
-        
+        """ Creates a copy of the original graphic applying the given
+        transforms
+
         """
         bbox = self.path.boundingRect()
 
@@ -222,14 +227,14 @@ class Job(Model):
 
         # Apply transform
         path = self.path * t
-        
+
         # Add weedline to copy
         if self.copy_weedline:
             self._add_weedline(path, self.copy_weedline_padding)
-            
+
         # Apply ordering to path
         # this delegates to objects in the ordering module
-        # TODO: Should this be done via plugins? 
+        # TODO: Should this be done via plugins?
         OrderingHandler = ordering.REGISTRY.get(self.order)
         if OrderingHandler:
             path = OrderingHandler().order(self, path)
@@ -261,8 +266,8 @@ class Job(Model):
 
     @contextmanager
     def events_suppressed(self):
-        """ Block change events to prevent feedback loops 
-        
+        """ Block change events to prevent feedback loops
+
         """
         self._blocked = True
         try:
@@ -277,8 +282,8 @@ class Job(Model):
              'feed_after', 'material', 'material.size', 'material.padding',
              'auto_copies')
     def _job_changed(self, change):
-        """ Recreate an instance of of the plot using the current settings 
-        
+        """ Recreate an instance of of the plot using the current settings
+
         """
         if self._blocked:
             return
@@ -356,15 +361,15 @@ class Job(Model):
         #       "or decrease the scale or decrease number of copies!")
 
     def _check_bounds(self, plot, area):
-        """ Checks that the width and height of plot are less than the width 
-        and height of area 
-        
+        """ Checks that the width and height of plot are less than the width
+        and height of area
+
         """
         return plot.width() > area.width() or plot.height() > area.height()
 
     def _copy_positions_iter(self, path, axis=0):
         """ Generator that creates positions of points
-        
+
         """
         other_axis = axis +1 % 2
         p = [0, 0]
@@ -407,9 +412,9 @@ class Job(Model):
         return stack_size
 
     def _add_weedline(self, path, padding):
-        """ Adds a weedline to the path 
+        """ Adds a weedline to the path
         by creating a box around the path with the given padding
-        
+
         """
         bbox = path.boundingRect()
         w, h = bbox.width(), bbox.height()
@@ -430,8 +435,8 @@ class Job(Model):
 
     @property
     def move_path(self):
-        """ Returns the path the head moves when not cutting 
-        
+        """ Returns the path the head moves when not cutting
+
         """
         # Compute the negative
         path = QtGui.QPainterPath()
@@ -445,8 +450,8 @@ class Job(Model):
 
     @property
     def cut_path(self):
-        """ Returns path where it is cutting 
-        
+        """ Returns path where it is cutting
+
         """
         return self.model
 
@@ -475,8 +480,8 @@ class Job(Model):
     #         return path
 
     def add_stack(self):
-        """ Add a complete stack or fill the row 
-        
+        """ Add a complete stack or fill the row
+
         """
         copies_left = self.stack_size[0]-(self.copies % self.stack_size[0])
         if copies_left == 0: # Add full stack
@@ -485,8 +490,8 @@ class Job(Model):
             self.copies = self.copies+copies_left
 
     def remove_stack(self):
-        """ Remove a complete stack or the rest of the row 
-        
+        """ Remove a complete stack or the rest of the row
+
         """
         if self.copies <= self.stack_size[0]:
             self.copies = 1
@@ -499,8 +504,12 @@ class Job(Model):
             self.copies = self.copies - copies_left
 
     def clone(self):
-        """ Return a cloned instance of this object 
-        
+        """ Return a cloned instance of this object
+
         """
-        clone = Job(**self.members())
-        return clone
+        state = self.__getstate__()
+        state.update({
+            'material': Material(**self.material.__getstate__()),
+            'info': JobInfo(**self.info.__getstate__()),
+        })
+        return Job(**state)

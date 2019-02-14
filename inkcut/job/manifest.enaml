@@ -20,6 +20,7 @@ from inkcut.core.utils import menu_icon
 from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
 from inkcut.cli.extensions import CLI_COMMAND_POINT, CliCommand, StopSystemExit
 
+
 def open_document(event):
     workbench = event.workbench
     ui = workbench.get_plugin('enaml.workbench.ui')
@@ -72,6 +73,11 @@ def cli_open_document(cmd):
 def close_document(event):
     plugin = event.workbench.get_plugin('inkcut.job')
     plugin.close_document()
+
+
+def save_document(event):
+    plugin = event.workbench.get_plugin('inkcut.job')
+    plugin.save_document()
 
 
 def media_setup(event):
@@ -141,6 +147,9 @@ enamldef JobManifest(PluginManifest):
             id = 'inkcut.job.close'
             handler = close_document
         Command:
+            id = 'inkcut.job.save'
+            handler = save_document
+        Command:
             id = 'inkcut.job.material_setup'
             handler = media_setup
     Extension:
@@ -193,11 +202,20 @@ enamldef JobManifest(PluginManifest):
         #         command = 'inkcut.workbench.ui.open'
         #         parameters = {'path':loop_item}
         ActionItem:
+            path = '/file/save'
+            label = 'Save'
+            group = 'document'
+            after = 'open'
+            before = 'close'
+            shortcut = 'Ctrl+S'
+            command = 'inkcut.job.save'
+        ActionItem:
             path = '/file/close'
             label = 'Close'
             group = 'document'
             shortcut = 'Ctrl+W'
             command = 'inkcut.job.close'
+
 #        MenuItem:
 #            path = '/material'
 #            label = 'Material'

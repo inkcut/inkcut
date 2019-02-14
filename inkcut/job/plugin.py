@@ -12,7 +12,7 @@ Created on Jul 12, 2015
 import os
 import sys
 import enaml
-from atom.api import Instance, Enum, List, observe
+from atom.api import Instance, Enum, List, Unicode, Int, observe
 from inkcut.core.api import Plugin, unit_conversions, log
 
 from .models import Job, JobError, Material
@@ -34,6 +34,13 @@ class JobPlugin(Plugin):
 
     #: Current job
     job = Instance(Job).tag(config=True)
+
+    #: Recently open paths
+    recent_documents = List(Unicode()).tag(config=True)
+
+    #: Number of recent documents
+    recent_document_limit = Int(10).tag(config=True)
+    saved_jobs_limit = Int(100).tag(config=True)
 
     def _default_job(self):
         return Job(material=self.material)
@@ -61,7 +68,7 @@ class JobPlugin(Plugin):
     def request_approval(self, job):
         """ Request approval to start a job. This will set the job.info.status
         to either 'approved' or 'cancelled'.
-        
+
         """
         ui = self.workbench.get_plugin('enaml.workbench.ui')
         with enaml.imports():
@@ -75,7 +82,7 @@ class JobPlugin(Plugin):
     def open_document(self, path, nodes=None):
         """ Set the job.document if it is empty, otherwise close and create
         a  new Job instance.
-        
+
         """
         if path == '-':
             log.debug("Opening document from stdin...")
@@ -95,27 +102,51 @@ class JobPlugin(Plugin):
             #: Wrap in a JobError
             raise JobError(e)
 
-        #: Copy so the ui's update
+        # Update recent documents
+        if path != '-':
+            docs = self.recent_documents[:]
+            # Remove and re-ad to make it most recent
+            if path in docs:
+                docs.remove(path)
+            docs.append(path)
+
+            # Keep limit to 10
+            if len(docs) > 10:
+                docs.pop(0)
+
+            self.recent_documents = docs
+
+    def save_document(self):
+        # Copy so the ui's update
+        job = self.job
         jobs = self.jobs[:]
-        jobs.append(self.job)
+        if job in jobs:
+            # Save a copy or any changes will update the copy as well
+            job = job.clone()
+        jobs.append(job)
+
+        # Limit size
+        if len(jobs) > self.saved_jobs_limit:
+            jobs.pop(0)
+
         self.jobs = jobs
 
     def close_document(self):
         """ If the job currently has a "document" add this to the jobs list
         and create a new Job instance. Otherwise no job is open so do nothing.
-        
+
         """
         if not self.job.document:
             return
 
         log.info("Closing {doc}".format(doc=self.job.document))
-        #: Create a new default job
+        # Create a new default job
         self.job = self._default_job()
 
     @observe('job.material')
     def _observe_material(self, change):
         """ Keep the job material and plugin material in sync.
-        
+
         """
         m = self.material
         job = self.job
@@ -125,8 +156,8 @@ class JobPlugin(Plugin):
     @observe('job', 'job.model', 'job.material',
              'material.size', 'material.padding')
     def _refresh_preview(self, change):
-        """ Redraw the preview on the screen 
-        
+        """ Redraw the preview on the screen
+
         """
         log.info(change)
         view_items = []
@@ -174,6 +205,6 @@ class JobPlugin(Plugin):
 
         #: Update the plot
         preview_plugin.set_preview(*view_items)
-        
+
         #: Save config
         self.save()
