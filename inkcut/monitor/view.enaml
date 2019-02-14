@@ -138,7 +138,10 @@ enamldef MonitorDockItem(DockItem): view:
             checkable = True
             checked := plugin.autoscroll
         MultilineField: comm_log:
-            activated :: self.proxy.widget.setReadOnly(True)
+            activated ::
+                widget = self.proxy.widget
+                widget.setReadOnly(True)
+                widget.document().setMaximumBlockCount(5000)
         Field: to_send:
             enabled << bool(connection and connection.connected)
             placeholder << "Enter a command.." if enabled else "Disconnected... reconnect first."
