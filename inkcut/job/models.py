@@ -149,7 +149,7 @@ class Job(Model):
     info = Instance(JobInfo, ()).tag(config=True)
 
     # Job properties used for generating the plot
-    size = ContainerList(Float(), default=[1, 1]) # TODO: hooookk
+    size = ContainerList(Float(), default=[1, 1])
     scale = ContainerList(Float(), default=[1, 1]).tag(config=True)
     auto_scale = Bool(False).tag(
         config=True, help="automatically scale if it's too big for the area")

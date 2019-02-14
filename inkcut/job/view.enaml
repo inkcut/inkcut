@@ -477,9 +477,9 @@ enamldef JobHistoryDockItem(DockItem):
                                 int(duration%60)
                                 ) if (duration) else ""
                     TableViewItem:
-                        text << str(job.info.status) if job  else ""
+                        text << str(job.info.status) if job else ""
                     TableViewItem:
-                        text << str(job.copies) if job  else ""
+                        text << str(job.copies) if job else ""
                     TableViewItem:
                         text << "{} °".format(job.rotation) if job else ""
                     TableViewItem:
@@ -511,8 +511,8 @@ enamldef JobHistoryDockItem(DockItem):
                             text = "Remove from list"
                             icon = load_icon("bin")
                             triggered ::
-                                jobs = plugin.jobs[:]
-                                if job in jobs:
+                                if job in plugin.jobs:
+                                    jobs = plugin.jobs[:]
                                     jobs.remove(job)
                                     plugin.jobs = jobs
 
