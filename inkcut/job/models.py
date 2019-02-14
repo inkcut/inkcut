@@ -137,7 +137,7 @@ class Job(Model):
 
     """
     #: Material this job will be run on
-    material = Instance((Material, JobInfo), ()).tag(config=True)
+    material = Instance(Material, ()).tag(config=True)
 
     #: Path to svg document this job parses
     document = Unicode().tag(config=True)
