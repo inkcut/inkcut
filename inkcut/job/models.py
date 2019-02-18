@@ -74,7 +74,7 @@ class JobInfo(Model):
                   'approved', 'cancelled', 'complete').tag(config=True)
 
     #: Stats
-    created = Instance(datetime, ()).tag(config=True)
+    created = Instance(datetime).tag(config=True)
     started = Instance(datetime).tag(config=True)
     ended = Instance(datetime).tag(config=True)
     progress = Range(0, 100, 0).tag(config=True)
@@ -98,7 +98,10 @@ class JobInfo(Model):
 
     def __init__(self, *args, **kwargs):
         super(JobInfo, self).__init__(*args, **kwargs)
-        self.created = datetime.now()
+        self.created = self._default_created()
+
+    def _default_created(self):
+        return datetime.now()
 
     def _default_request_approval(self):
         """ Request approval using the current job """
@@ -192,6 +195,17 @@ class Job(Model):
 
     _blocked = Bool(False)  # block change events
     _desired_copies = Int(1)  # required for auto copies
+
+    def __setstate__(self, *args, **kwargs):
+        """ Ensure that when restoring from disk the material and info
+        are not set to None. Ideally these would be defined as Typed but
+        the material may be made extendable at some point.
+        """
+        super(Job, self).__setstate__(*args, **kwargs)
+        if not self.info:
+            self.info = JobInfo()
+        if not self.material:
+            self.material = Material()
 
     def _observe_document(self, change):
         """ Read the document from stdin """
