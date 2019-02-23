@@ -11,7 +11,7 @@ PySide2; python_version < '3.0'
 PyQt5; python_version >= '3.0'
 qt-reactor
 pytest
-pytest-cov
+pytest-coverage
 # for pytest-qt:
 pytest-qt
 codecov
