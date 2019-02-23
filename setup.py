@@ -50,6 +50,7 @@ setup(
     description="An application for controlling 2D plotters, cutters, "
                 "engravers, and CNC machines.",
     long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     entry_points={
         'console_scripts': ['inkcut = inkcut.app:main'],
     },
