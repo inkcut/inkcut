@@ -6,7 +6,6 @@ qtconsole
 pyserial>=3.4
 jsonpickle
 lxml
-future; python_version < '3.0'
 faulthandler; python_version < '3.0'
 PySide2; python_version < '3.0'
 PyQt5; python_version >= '3.0'

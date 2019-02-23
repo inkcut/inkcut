@@ -20,6 +20,23 @@ pip3 install inkcut
 
 ```
 
+To upgrade to the latest release
+
+```bash
+
+pip3 install --upgrade inkcut
+
+```
+
+To install the latest dev version from github use
+
+```bash
+
+pip3 install git+https://github.com/codelv/inkcut.git
+
+```
+
+
 ##### OSX
 
 This documentation is still pending.

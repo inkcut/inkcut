@@ -14,36 +14,36 @@ from setuptools import setup, find_packages
 
 #: Common requirements
 install_requires = [
-     'enaml>=0.10',  # must install pyqt or pyside
-     'twisted',
-     'enamlx',
-     'pyqtgraph',
-     'qtconsole',
-     'pyserial>=3.4',
-     'jsonpickle',
-     'lxml',  # use sudo apt install libxml2-dev libxslt-dev
-     #'PyQt5', # Let users install whatever Qt they want
-     'qt-reactor',
-     
-     # Python 2:
-     'future; python_version < \'3.0\'',
-     'faulthandler; python_version < \'3.0\'',
+    'enaml>=0.10',  # must install pyqt or pyside
+    'twisted',
+    'enamlx',
+    'pyqtgraph',
+    'qtconsole',
+    'pyserial>=3.4',
+    'jsonpickle',
+    'lxml',  # use sudo apt install libxml2-dev libxslt-dev
 
-     # Linux:
+    #'PyQt5', # Let users install whatever Qt they want
+    'qt-reactor',
+
+    # Python 2:
+    'faulthandler; python_version < \'3.0\'',
+
+    # Linux:
     'pycups; sys_platform == \'linux2\'',
     'pycups; sys_platform == \'linux\'',
 
-     # Windows:
+    # Windows:
     'pywin32; sys_platform == \'win32\''
-];
+]
 
 
 setup(
     name='inkcut',
     packages=find_packages(),
     include_package_data=True,
-    version="2.0.7dev",
-    author="CodeLV",
+    version="2.0.7",
+    author="Inkcut team",
     author_email="frmdstryr@gmail.com",
     license='GPLv3',
     url='https://github.com/codelv/inkcut/',
