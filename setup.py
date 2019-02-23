@@ -42,7 +42,7 @@ setup(
     name='inkcut',
     packages=find_packages(),
     include_package_data=True,
-    version="2.0.7",
+    version="2.0.8dev",
     author="Inkcut team",
     author_email="frmdstryr@gmail.com",
     license='GPLv3',
