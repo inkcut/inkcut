@@ -11,12 +11,14 @@ Created on Dec 11, 2017
 @author: jrm
 """
 from enaml.widgets.api import Container, Label, ObjectCombo
+from enaml.qt.QtWidgets import QApplication
+
 
 
 enamldef DMPLConfigView(Container):
     attr model
     Label:
-        text = "Mode"
+        text = QApplication.translate("protocols", "Mode")
     ObjectCombo:
         items  = list(model.get_member('mode').items)
         selected := model.mode
@@ -25,7 +27,7 @@ enamldef DMPLConfigView(Container):
 enamldef CAMMConfigView(Container):
     attr model
     Label:
-        text = "Mode"
+        text = QApplication.translate("protocols", "Mode")
     ObjectCombo:
         items  = list(model.get_member('mode').items)
         selected := model.mode

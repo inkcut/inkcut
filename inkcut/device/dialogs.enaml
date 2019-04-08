@@ -21,6 +21,7 @@ from enaml.widgets.api import (
     CheckBox, Container, Dialog, Field, Label, PushButton, Form, Notebook,
     Page, ObjectCombo
 )
+from enaml.qt.QtWidgets import QApplication
 from .plugin import Device, DeviceConfig
 from .view import ConfigView, DeviceConfigView
 from inkcut.core.api import Model
@@ -43,18 +44,18 @@ enamldef DeviceDialog(Dialog): dialog:
         TaskDialogInstructionArea:
             Label:
                 style_class = 'task-dialog-instructions'
-                text = 'Configure device'
+                text = QApplication.translate("device", "Configure device")
         TaskDialogContentArea:
             Notebook: notebook:
                 tab_style = 'document'
                 Page:
-                    title = 'General'
+                    title = QApplication.translate("device", "General")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = "Driver"
+                                text = QApplication.translate("device", "Driver")
                             ObjectCombo:
                                 items << plugin.drivers
                                 attr selected_driver << [d for d in plugin.drivers if d.id==driver.id]
@@ -63,32 +64,32 @@ enamldef DeviceDialog(Dialog): dialog:
                                 selected ::
                                     dialog.device = plugin.get_device_from_driver(change['value'])
                             Label:
-                                text = "Manufacturer"
+                                text = QApplication.translate("device", "Manufacturer")
                             Field:
                                 enabled << cb.checked
                                 text := driver.manufacturer
                             Label:
-                                text = "Model"
+                                text = QApplication.translate("device", "Model")
                             Field:
                                 enabled << cb.checked
                                 text := driver.model
                             Label:
-                                text = "Width"
+                                text = QApplication.translate("device", "Width")
                             Field:
                                 enabled << cb.checked
                                 text := driver.width
                             Label:
-                                text = "Length"
+                                text = QApplication.translate("device", "Length")
                             Field:
                                 enabled << cb.checked
                                 text := driver.length
                             CheckBox: cb:
-                                text = "Customize"
+                                text = QApplication.translate("device", "Customize")
 
                     #Include:
                     #    objects << device.config
                 Page:
-                    title = 'Device'
+                    title = QApplication.translate("device", "Device")
                     closable = False
                     MappedView:
                         model << device.config if device else Model()
@@ -97,13 +98,13 @@ enamldef DeviceDialog(Dialog): dialog:
                             Model: ConfigView
                         } if device else {Model:ConfigView}
                 Page:
-                    title = 'Connection'
+                    title = QApplication.translate("device", "Connection")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = "Type"
+                                text = QApplication.translate("device", "Type")
                             ObjectCombo:
                                 items << device.transports if device and device.transports else plugin.transports
                                 to_string = lambda t: t.name
@@ -135,13 +136,13 @@ enamldef DeviceDialog(Dialog): dialog:
                             } if connection else {Model: ConfigView}
 
                 Page:
-                    title = 'Protocol'
+                    title = QApplication.translate("device", "Protocol")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = "Language"
+                                text = QApplication.translate("device", "Language")
                             ObjectCombo:
                                 items << [p for p in plugin.protocols
                                             if p.id in device.declaration.protocols
@@ -164,7 +165,7 @@ enamldef DeviceDialog(Dialog): dialog:
                                 Model: ConfigView
                             } if protocol else {Model: ConfigView}
                 Page:
-                    title = 'Filters'
+                    title = QApplication.translate("device", "Filters")
                     closable = False
                     Container:
                         padding = 0
@@ -205,10 +206,10 @@ enamldef DeviceDialog(Dialog): dialog:
                 align('v_center', btn_yes, btn_no),
             ]
             PushButton: btn_no:
-                text = "Cancel"
+                text = QApplication.translate("device", "Cancel")
                 clicked :: dialog.close()
             PushButton: btn_yes:
-                text = "OK"
+                text = QApplication.translate("device", "OK")
                 enabled << dialog.device is not None
                 clicked ::
                     dev = dialog.device

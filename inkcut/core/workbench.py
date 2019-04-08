@@ -155,6 +155,11 @@ class InkcutWorkbench(UIWorkbench):
         # Make sure ^C keeps working
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+        locale = QtCore.QLocale.system().name()
+        qtTranslator = QtCore.QTranslator()
+        if qtTranslator.load("translations/"+locale):
+            InkcutWorkbench._instance.application._qapp.installTranslator(qtTranslator)
+
         #: Start the core plugin
         plugin = self.get_plugin('inkcut.core')
         ui.start_application()

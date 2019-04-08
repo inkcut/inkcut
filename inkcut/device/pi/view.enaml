@@ -14,6 +14,7 @@ from enaml.core.api import Looper
 from enaml.widgets.api import (
     Container, Form, Label, ObjectCombo, SpinBox, CheckBox, Notebook, Page
 )
+from enaml.qt.QtWidgets import QApplication
 from enamlx.widgets.api import DoubleSpinBox
 from .driver import PiConfig
 
@@ -24,19 +25,19 @@ enamldef StepperMotorForm(Form):
     attr label << 'x-axis' if axis == 0 else 'y-axis'
     attr rpi_pins = list(range(32))  # Python 3 is crap
     Label:
-        text = "Enable pin"
+        text = QApplication.translate("pi", "Enable pin")
     ObjectCombo:
         items = rpi_pins
         selected << model.motor_enable_pins[axis]
         selected :: model.motor_enable_pins[axis] = change['value']
     Label:
-        text = "Direction pin"
+        text = QApplication.translate("pi", "Direction pin")
     ObjectCombo:
         items = rpi_pins
         selected << model.motor_driver_pins[axis][0]
         selected :: model.motor_driver_pins[axis][0] = change['value']
     Label:
-        text = "Step pulse pin"
+        text = QApplication.translate("pi", "Step pulse pin")
     ObjectCombo:
         items = rpi_pins
         selected << model.motor_driver_pins[axis][1]
@@ -56,10 +57,10 @@ enamldef ConfigView(Container): view:
         tab_position = 'left'
         Page:
             closable = False
-            title = "Config"
+            title = QApplication.translate("pi", "Config")
             Form:
                 Label:
-                    text = "Step delay"
+                    text = QApplication.translate("pi", "Step delay")
                 Form:
                     DoubleSpinBox:
                         suffix = " (us)"
@@ -68,7 +69,7 @@ enamldef ConfigView(Container): view:
                         single_step = 0.001
                         maximum = 1000000.0
                 Label:
-                    text = "Scale"
+                    QApplication.translate("pi", text = "Scale")
                 Form:
                     Label:
                         text = "x"
@@ -81,17 +82,17 @@ enamldef ConfigView(Container): view:
                         value << model.scale[1]
                         value :: model.scale[1] = change['value']
                 Label:
-                    text = "Registration"
+                    QApplication.translate("pi", text = "Registration")
                 Form:
                     CheckBox:
-                        text = "Crop mark registration"
+                        QApplication.translate("pi", text = "Crop mark registration")
                         checked := model.crop_mark_registration
         Page:
             closable = False
-            title = "Pinouts"
+            title = QApplication.translate("pi", "Pinouts")
             Container:
                 Label:
-                    text = "Stepper motor pinout"
+                    text = QApplication.translate("pi", "Stepper motor pinout")
                 Form:
                     Label:
                         text = "x"
@@ -104,7 +105,7 @@ enamldef ConfigView(Container): view:
                         model << view.model
                         axis = 1
                 Label:
-                    text = "Servo pinout"
+                    text = QApplication.translate("pi", "Servo pinout")
                 Form:
                     Label:
                         text = "z"
@@ -137,7 +138,7 @@ enamldef ConfigView(Container): view:
                             selected << model.boundary_gpio_pins[loop_index][1]
                             selected :: model.boundary_gpio_pins[loop_index][1] = change['value']
                     Label:
-                        text = "De-bounce timeout"
+                        text = QApplication.translate("pi", "De-bounce timeout")
                     SpinBox:
                         suffix = " (ms)"
                         value := model.boundary_bounce_timeout

@@ -11,6 +11,7 @@ Created on Dec 6, 2015
 """
 import enaml
 from os.path import dirname, expanduser
+from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import FileDialogEx
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.core.api import Command
@@ -19,7 +20,6 @@ from inkcut.job.models import JobError
 from inkcut.core.utils import menu_icon
 from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
 from inkcut.cli.extensions import CLI_COMMAND_POINT, CliCommand, StopSystemExit
-
 
 def open_document(event):
     workbench = event.workbench
@@ -188,7 +188,7 @@ enamldef JobManifest(PluginManifest):
         point = 'enaml.workbench.ui.actions'
         ActionItem:
             path = '/file/open'
-            label = 'Open...'
+            label = QApplication.translate("File", "Open")
             shortcut = 'Ctrl+O'
             group = 'document'
             command = 'inkcut.job.open'
@@ -203,7 +203,7 @@ enamldef JobManifest(PluginManifest):
         #         parameters = {'path':loop_item}
         ActionItem:
             path = '/file/save'
-            label = 'Save'
+            label = QApplication.translate("File", "Save")
             group = 'document'
             after = 'open'
             before = 'close'
@@ -211,7 +211,7 @@ enamldef JobManifest(PluginManifest):
             command = 'inkcut.job.save'
         ActionItem:
             path = '/file/close'
-            label = 'Close'
+            label = QApplication.translate("File","Close")
             group = 'document'
             shortcut = 'Ctrl+W'
             command = 'inkcut.job.close'
