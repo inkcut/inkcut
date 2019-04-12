@@ -39,20 +39,13 @@ pip3 install git+https://github.com/codelv/inkcut.git
 
 ##### OSX
 
-This documentation is still pending.
+Install brew if you don't already have it from https://brew.sh/ 
 
-First install pyp3
+Next install python 3 and pyqt with
 
 ```bash
 
 brew install python3
-
-```
-
-then install pyqt
-
-```bash
-
 brew install pyqt
 
 ```
