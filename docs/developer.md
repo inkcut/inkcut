@@ -21,7 +21,10 @@ sudo apt install libxml2-dev libxslt-dev libcups2-dev
 # Install python dependencies
 pip install PyQt5
 
-#: Install inkcut
+# Run inkcut from sources
+python main.py
+
+# Install inkcut
 pip install .
 
 ```
