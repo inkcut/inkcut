@@ -192,9 +192,9 @@ class QtSvgItem(QtGui.QPainterPath):
             else:
                 cx, cy = map(float, args[1:])
             
-            t.translate(-cx, -cy)
-            t.rotate(float(args[0]))
             t.translate(cx, cy)
+            t.rotate(float(args[0]))
+            t.translate(-cx, -cy)
             
         elif name == "skewX":
             t.shear(math.tan(float(args[0])*math.pi/180.0), 0)
