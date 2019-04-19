@@ -45,12 +45,12 @@ enamldef GraphicDockItem(DockItem):
     attr job: Job << plugin.job
     icon = load_icon('vector')
     name = 'graphic-item'
-    title = "Graphic"
+    title = QApplication.translate("job", "Graphic")
     Container:
         Container:
             padding = 0
             Label:
-                text = "Graphic Size"
+                text = QApplication.translate("job", "Graphic Size")
             Form:
                 padding = 0
                 ImageView:
@@ -140,7 +140,7 @@ enamldef GraphicDockItem(DockItem):
                     minimum = 0.00001
                     maximum = 99999.9
             CheckBox:
-                text = 'Lock aspect ratio'
+                text = QApplication.translate("job", "Lock aspect ratio")
                 checked := job.lock_scale
             #CheckBox:
             #    text = 'Scale to fit'
@@ -154,7 +154,7 @@ enamldef GraphicDockItem(DockItem):
             ]
             padding = 0
             Label: hdr:
-                text = "Graphic Copies"
+                text = QApplication.translate("job", "Graphic Copies")
             Form: form:
                 padding = 0
                 ImageView:
@@ -186,7 +186,7 @@ enamldef GraphicDockItem(DockItem):
                 icon = load_icon('shape_square_delete')
                 clicked :: job.remove_stack()
             CheckBox: cb1:
-                text = 'Fill to save space'
+                text = QApplication.translate("job", "Fill to save space")
                 checked := job.auto_copies
 
         Container:

@@ -32,7 +32,7 @@
     </message>
     <message>
         <source>Set the virtual origin</source>
-        <translation type="unfinished"></translation>
+        <translation>Définir l&apos;origine vrtuelle</translation>
     </message>
     <message>
         <source>move up</source>
@@ -40,7 +40,7 @@
     </message>
     <message>
         <source>Return to virtual origin</source>
-        <translation type="unfinished"></translation>
+        <translation>Retourner à l&apos;origine virtuelle</translation>
     </message>
     <message>
         <source>move left</source>
@@ -56,7 +56,7 @@
     </message>
     <message>
         <source>Return to the system origin (0,0)</source>
-        <translation type="unfinished"></translation>
+        <translation>Retourner à l&apos;origine système (0,0)</translation>
     </message>
 </context>
 <context>
@@ -86,7 +86,7 @@
     </message>
     <message>
         <source>Configure device</source>
-        <translation type="unfinished"></translation>
+        <translation>Configurer la machine</translation>
     </message>
     <message>
         <source>General</source>
@@ -130,7 +130,7 @@
     </message>
     <message>
         <source>Language</source>
-        <translation type="unfinished"></translation>
+        <translation>langague machine</translation>
     </message>
     <message>
         <source>Filters</source>
@@ -148,76 +148,223 @@
         <source>Send to device</source>
         <translation>Envoyer à la machine</translation>
     </message>
+    <message>
+        <source>Settings</source>
+        <translation>Réglages</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>VItesse</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Activé</translation>
+    </message>
+    <message>
+        <source>Force</source>
+        <translation>Force</translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation>Sortie</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>Rotation</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>Echelle</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Avancé</translation>
+    </message>
+    <message>
+        <source>Uses spooling service</source>
+        <translation>Utiliser la file d&apos;attente</translation>
+    </message>
+    <message>
+        <source>Interpolate paths</source>
+        <translation>interpoler les chemins</translation>
+    </message>
+    <message>
+        <source>Step size</source>
+        <translation>taille du pas</translation>
+    </message>
+    <message>
+        <source>Step time</source>
+        <translation>temps de pause</translation>
+    </message>
+    <message>
+        <source>Test mode</source>
+        <translation>Mode test</translation>
+    </message>
+    <message>
+        <source>Job commands</source>
+        <translation>Commandes de la tâche</translation>
+    </message>
+    <message>
+        <source>Before job</source>
+        <translation>Avant la tâche</translation>
+    </message>
+    <message>
+        <source>Commands here will get sent before starting a job</source>
+        <translation>Les commandes seront envoyés avant le début de la tâche</translation>
+    </message>
+    <message>
+        <source>After job</source>
+        <translation>Après la tâche</translation>
+    </message>
+    <message>
+        <source>Commands here will get sent after finishing a job</source>
+        <translation>Les commandes sont envoyés après la fin de la tâche</translation>
+    </message>
+    <message>
+        <source>Connection commands</source>
+        <translation>Commandes de connexion</translation>
+    </message>
+    <message>
+        <source>After connect</source>
+        <translation>Après la connexion</translation>
+    </message>
+    <message>
+        <source>Commands here will get sent right after a connection is opened</source>
+        <translation>Les commandes seront envoyés après l&apos;ouverture de la connexion</translation>
+    </message>
+    <message>
+        <source>Before disconnect</source>
+        <translation>Avant la déconnexion</translation>
+    </message>
+    <message>
+        <source>Commands here will get sent right before a connection is closed</source>
+        <translation>Les commandes seront envoyés avant la fermeture de la connexion</translation>
+    </message>
+    <message>
+        <source>Live</source>
+        <translation>Direct</translation>
+    </message>
+    <message>
+        <source>Abort job</source>
+        <translation>Arréter la tâche</translation>
+    </message>
+    <message>
+        <source>View all</source>
+        <translation>Tout afficher</translation>
+    </message>
+    <message>
+        <source>Clear plot</source>
+        <translation>Effacer le graphique</translation>
+    </message>
+    <message>
+        <source>Abort the current job</source>
+        <translation>Arréter la tâche en cours</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Reprendre</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>Pause</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Démarrer</translation>
+    </message>
+</context>
+<context>
+    <name>filters</name>
+    <message>
+        <source>Blade Offset</source>
+        <translation>Décalage lame</translation>
+    </message>
+    <message>
+        <source>Set to 0 to disable</source>
+        <translation>0 pour désactiver</translation>
+    </message>
+    <message>
+        <source>Cutoff angle</source>
+        <translation>Angle de découpe</translation>
+    </message>
+    <message>
+        <source>Angle at minimum angle that must be met to apply compensation</source>
+        <translation>Angle minimal pour appliquer la compensation</translation>
+    </message>
+    <message>
+        <source>Overcut</source>
+        <translation>Surcoupe</translation>
+    </message>
 </context>
 <context>
     <name>job</name>
     <message>
         <source>Graphic Rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>Rotation</translation>
     </message>
     <message>
         <source>Rotate to save space</source>
-        <translation type="unfinished"></translation>
+        <translation>Tourner pour gagner de l&apos;espace</translation>
     </message>
     <message>
         <source>Graphic Mirroring</source>
-        <translation type="unfinished"></translation>
+        <translation>Mode mirroir</translation>
     </message>
     <message>
         <source>Mirror about x-axis</source>
-        <translation type="unfinished"></translation>
+        <translation>mirroir selon l&apos;axe x</translation>
     </message>
     <message>
         <source>Mirror about y-axis</source>
-        <translation type="unfinished"></translation>
+        <translation>mirroir selon l&apos;axe y</translation>
     </message>
     <message>
         <source>Graphic Spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Espacement</translation>
     </message>
     <message>
         <source>Plotting Order</source>
-        <translation type="unfinished"></translation>
+        <translation>Ordre de découpe</translation>
     </message>
     <message>
         <source>Plot Weedlines</source>
-        <translation type="unfinished"></translation>
+        <translation>lignes de contour</translation>
     </message>
     <message>
         <source>Add weedline to plot</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajouter un coutour sur l&apos;ensemble</translation>
     </message>
     <message>
         <source>Add weedline to copies</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajouter un contour sur chaque copie</translation>
     </message>
     <message>
         <source>Weedline Padding</source>
-        <translation type="unfinished"></translation>
+        <translation>Marge du contour</translation>
     </message>
     <message>
         <source>Plot Area</source>
-        <translation type="unfinished"></translation>
+        <translation>Zone de découpe</translation>
     </message>
     <message>
         <source>Plot Margins</source>
-        <translation type="unfinished"></translation>
+        <translation>Marge de la zone</translation>
     </message>
     <message>
         <source>Plot Alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>Alignement</translation>
     </message>
     <message>
         <source>Plot Feeding</source>
-        <translation type="unfinished"></translation>
+        <translation>Chargement</translation>
     </message>
     <message>
         <source>Return to origin</source>
-        <translation type="unfinished"></translation>
+        <translation>Retourner à l&apos;origine</translation>
     </message>
     <message>
         <source>Feed after</source>
-        <translation type="unfinished"></translation>
+        <translation>Dérouler après</translation>
     </message>
     <message>
         <source>Jobs</source>
@@ -235,6 +382,65 @@
         <source>Remove from list</source>
         <translation>Supprimer de la liste</translation>
     </message>
+    <message>
+        <source>Graphic Size</source>
+        <translation>Taille du dessin</translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation>Vérouiller les proportions</translation>
+    </message>
+    <message>
+        <source>Fill to save space</source>
+        <translation>Remplir</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>Dessin</translation>
+    </message>
+    <message>
+        <source>Graphic Copies</source>
+        <translation>Copie du dessin</translation>
+    </message>
+</context>
+<context>
+    <name>pi</name>
+    <message>
+        <source>Enable pin</source>
+        <translation>Activer pin</translation>
+    </message>
+    <message>
+        <source>Direction pin</source>
+        <translation>Pin direction</translation>
+    </message>
+    <message>
+        <source>Step pulse pin</source>
+        <translation>Step pulse pin</translation>
+    </message>
+    <message>
+        <source>Config</source>
+        <translation>Réglages</translation>
+    </message>
+    <message>
+        <source>Step delay</source>
+        <translation>Temps de pause</translation>
+    </message>
+    <message>
+        <source>Pinouts</source>
+        <translation>Pin de sortie</translation>
+    </message>
+    <message>
+        <source>Stepper motor pinout</source>
+        <translation>Stepper motor pinout</translation>
+    </message>
+    <message>
+        <source>Servo pinout</source>
+        <translation>Servo pinout</translation>
+    </message>
+    <message>
+        <source>De-bounce timeout</source>
+        <translation>De-bounce timeout</translation>
+    </message>
 </context>
 <context>
     <name>preview</name>
@@ -248,122 +454,41 @@
     </message>
 </context>
 <context>
-    <name>transports</name>
+    <name>protocols</name>
+    <message>
+        <source>Mode</source>
+        <translation>Mode</translation>
+    </message>
+</context>
+<context>
+    <name>settings</name>
     <message>
         <source>Settings</source>
         <translation>Réglages</translation>
     </message>
     <message>
-        <source>Speed</source>
-        <translation>VItesse</translation>
+        <source>About</source>
+        <translation>A propos</translation>
     </message>
     <message>
-        <source>Enabled</source>
-        <translation>Activé</translation>
+        <source>Documentation</source>
+        <translation>Documentation</translation>
     </message>
     <message>
-        <source>Force</source>
-        <translation type="unfinished"></translation>
+        <source>Report issue</source>
+        <translation>Rapporter un problème</translation>
     </message>
     <message>
-        <source>Output</source>
-        <translation type="unfinished"></translation>
+        <source>Donate</source>
+        <translation>Faire une donation</translation>
     </message>
     <message>
-        <source>Rotation</source>
-        <translation type="unfinished"></translation>
+        <source>Logs</source>
+        <translation>Fichiers journaux</translation>
     </message>
     <message>
-        <source>Scale</source>
-        <translation>Echelle</translation>
-    </message>
-    <message>
-        <source>Advanced</source>
-        <translation>Avancé</translation>
-    </message>
-    <message>
-        <source>Uses spooling service</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Interpolate paths</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Step size</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Step time</source>
-        <translation>temps de pause</translation>
-    </message>
-    <message>
-        <source>Test mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Job commands</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Before job</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>After job</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Connection commands</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>After connect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Commands here will get sent right after a connection is opened</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Before disconnect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Commands here will get sent right before a connection is closed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Live</source>
-        <translation>Direct</translation>
-    </message>
-    <message>
-        <source>Abort job</source>
-        <translation>Arréter la tâche</translation>
-    </message>
-    <message>
-        <source>View all</source>
-        <translation>Tout afficher</translation>
-    </message>
-    <message>
-        <source>Clear plot</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Abort the current job</source>
-        <translation>Arréter la tâche en cours</translation>
-    </message>
-    <message>
-        <source>Resume</source>
-        <translation>Reprendre</translation>
-    </message>
-    <message>
-        <source>Pause</source>
-        <translation>Pause</translation>
-    </message>
-    <message>
-        <source>Start</source>
-        <translation>Démarrer</translation>
+        <source>Theme</source>
+        <translation>Thème</translation>
     </message>
 </context>
 </TS>
