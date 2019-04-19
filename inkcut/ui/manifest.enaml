@@ -169,23 +169,23 @@ enamldef UIManifest(PluginManifest):
         MenuItem:
             path = '/settings/theme'
             label = QApplication.translate("settings", "Theme")
-        Looper:
-            iterable << available_styles()+['system']
-            ActionItem:
-                path = '/settings/theme/{}'.format(loop_item)
-                label = loop_item.replace("-", " ").title()
-                command = 'inkcut.ui.set_theme'
-                parameters = {'theme':loop_item}
-#        MenuItem:
-#            path = '/settings/language'
-#            label = QApplication.translate("settings", "Language")
 #        Looper:
-#            iterable << available_languages()
+#            iterable = available_styles()+['system']
 #            ActionItem:
-#                path = '/settings/language/{}'.format(loop_item)
+#                path = '/settings/theme/{}'.format(loop_item)
 #                label = loop_item.replace("-", " ").title()
-#                command = 'inkcut.ui.set_language'
-#                parameters = {'language':loop_item}
+#                command = 'inkcut.ui.set_theme'
+#                parameters = {'theme':loop_item}
+        MenuItem:
+            path = '/settings/language'
+            label = QApplication.translate("settings", "Language")
+        Looper:
+            iterable = available_languages()
+            ActionItem:
+                path = '/settings/language/{}'.format(loop_item)
+                label = loop_item.replace("-", " ").title()
+                command = 'inkcut.ui.set_language'
+                parameters = {'language':loop_item}
 
 
 #         ActionItem:

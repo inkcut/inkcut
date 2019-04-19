@@ -14,6 +14,7 @@ import pkg_resources
 from datetime import datetime
 from atom.api import Atom, Int, List, Unicode, Instance, Bool, Enum
 from inkcut.core.api import Plugin, DockItem, log
+from inkcut.ui.dock import available_languages
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
 from enaml.application import timed_call
 from . import extensions
@@ -21,8 +22,8 @@ from . import extensions
 with enaml.imports():
     from enaml.stdlib.dock_area_styles import available_styles
 
-
 ALL_STYLES = sorted(['system']+available_styles())
+ALL_LANGUAGES = sorted(['system']+available_languages())
 
 class Clock(Atom):
     """ A clock so widgets can observe each field as required. """
@@ -61,6 +62,7 @@ class InkcutPlugin(Plugin):
     dock_items = List(DockItem)
     dock_layout = Instance(AreaLayout)
     dock_style = Enum(*reversed(ALL_STYLES)).tag(config=True)
+    language = Enum(*reversed(ALL_LANGUAGES)).tag(config=True)
 
     def start(self):
         """ Load all plugins, refresh the dock area and then
