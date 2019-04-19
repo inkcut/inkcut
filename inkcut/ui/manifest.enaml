@@ -15,7 +15,7 @@ import enaml
 from enaml.core.api import Looper
 from enaml.qt.QtWidgets import QApplication
 from enaml.stdlib.dock_area_styles import available_styles
-#from inkcut.ui.dock import availables_languages
+from inkcut.ui.dock import available_languages
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import (
@@ -75,8 +75,8 @@ def set_theme(event):
     plugin.dock_style = event.parameters.get('theme', 'system')
 
 def set_language(event):
-    #plugin = event.workbench.get_plugin('inkcut.ui')
-    #plugin.language = event.parameters.get('language', "English")
+    plugin = event.workbench.get_plugin('inkcut.ui')
+    plugin.language = event.parameters.get('language', "English")
 
 
 enamldef UIManifest(PluginManifest):
@@ -180,7 +180,7 @@ enamldef UIManifest(PluginManifest):
 #            path = '/settings/language'
 #            label = QApplication.translate("settings", "Language")
 #        Looper:
-#            iterable << get_availables_languages()
+#            iterable << available_languages()
 #            ActionItem:
 #                path = '/settings/language/{}'.format(loop_item)
 #                label = loop_item.replace("-", " ").title()

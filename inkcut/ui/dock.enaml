@@ -32,7 +32,7 @@ def get_system_color(name='window'):
     else:
         return qcolor.name(qcolor.HexArgb)
 
-def availables_languages():
+def available_languages():
     return ["English", "Francais"]
 
 template SystemStyle():
