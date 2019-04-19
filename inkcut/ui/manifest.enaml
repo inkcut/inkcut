@@ -15,6 +15,7 @@ import enaml
 from enaml.core.api import Looper
 from enaml.qt.QtWidgets import QApplication
 from enaml.stdlib.dock_area_styles import available_styles
+#from inkcut.ui.dock import availables_languages
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import (
@@ -73,6 +74,10 @@ def set_theme(event):
     plugin = event.workbench.get_plugin('inkcut.ui')
     plugin.dock_style = event.parameters.get('theme', 'system')
 
+def set_language(event):
+    #plugin = event.workbench.get_plugin('inkcut.ui')
+    #plugin.language = event.parameters.get('language', "English")
+
 
 enamldef UIManifest(PluginManifest):
     """ The plugin manifest for the primary example plugin.
@@ -107,6 +112,9 @@ enamldef UIManifest(PluginManifest):
             id = 'inkcut.ui.set_theme'
             handler = set_theme
         Command:
+            id = 'inkcut.ui.set_language'
+            handler = set_language
+        Command:
             id = 'inkcut.ui.open_webpage'
             handler = lambda e:open_webpage(e.parameters['url'])
 
@@ -130,37 +138,37 @@ enamldef UIManifest(PluginManifest):
 #            command = 'inkcut.ui.open_preferences'
         MenuItem:
             path = '/settings'
-            label = QApplication.translate('settings', 'Settings')
+            label = QApplication.translate("settings", "Settings")
             before = 'help'
             after = 'file'
         ActionItem:
             path = '/help/about'
-            label = QApplication.translate('settings', 'About')
+            label = QApplication.translate("settings", "About")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://www.codelv.com/projects/inkcut/'}
         ActionItem:
             path = '/help/project'
-            label = QApplication.translate('settings', 'Documentation')
+            label = QApplication.translate("settings", "Documentation")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://www.codelv.com/projects/inkcut/docs/'}
         ActionItem:
             path = '/help/report'
-            label = QApplication.translate('settings', 'Report issue')
+            label = QApplication.translate("settings", "Report issue")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://github.com/codelv/inkcut/issues'}
         ActionItem:
             path = '/help/donate'
-            label = QApplication.translate('settings', 'Donate')
+            label = QApplication.translate("settings", "Donate")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://www.codelv.com/projects/inkcut/support/'}
         ActionItem:
             path = '/help/logs'
-            label = QApplication.translate('settings', 'Logs')
+            label = QApplication.translate("settings", "Logs")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':os.path.expanduser('~/.config/inkcut/logs/')}
         MenuItem:
             path = '/settings/theme'
-            label = QApplication.translate('settings', 'Theme')
+            label = QApplication.translate("settings", "Theme")
         Looper:
             iterable << available_styles()+['system']
             ActionItem:
@@ -168,10 +176,17 @@ enamldef UIManifest(PluginManifest):
                 label = loop_item.replace("-", " ").title()
                 command = 'inkcut.ui.set_theme'
                 parameters = {'theme':loop_item}
-#        ActionItem:
-#            path = '/help/about'
-#            label = 'About'
-#            command = 'inkcut.ui.about_inkcut'
+#        MenuItem:
+#            path = '/settings/language'
+#            label = QApplication.translate("settings", "Language")
+#        Looper:
+#            iterable << get_availables_languages()
+#            ActionItem:
+#                path = '/settings/language/{}'.format(loop_item)
+#                label = loop_item.replace("-", " ").title()
+#                command = 'inkcut.ui.set_language'
+#                parameters = {'language':loop_item}
+
 
 #         ActionItem:
 #             path = '/edit/undo'

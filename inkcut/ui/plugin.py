@@ -24,7 +24,6 @@ with enaml.imports():
 
 ALL_STYLES = sorted(['system']+available_styles())
 
-
 class Clock(Atom):
     """ A clock so widgets can observe each field as required. """
     year = Int()
