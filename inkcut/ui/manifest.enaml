@@ -15,7 +15,6 @@ import enaml
 from enaml.core.api import Looper
 from enaml.qt.QtWidgets import QApplication
 from enaml.stdlib.dock_area_styles import available_styles
-from inkcut.ui.dock import available_languages
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import (
@@ -74,10 +73,6 @@ def set_theme(event):
     plugin = event.workbench.get_plugin('inkcut.ui')
     plugin.dock_style = event.parameters.get('theme', 'system')
 
-def set_language(event):
-    plugin = event.workbench.get_plugin('inkcut.ui')
-    plugin.language = event.parameters.get('language', "English")
-
 
 enamldef UIManifest(PluginManifest):
     """ The plugin manifest for the primary example plugin.
@@ -111,9 +106,6 @@ enamldef UIManifest(PluginManifest):
         Command:
             id = 'inkcut.ui.set_theme'
             handler = set_theme
-        Command:
-            id = 'inkcut.ui.set_language'
-            handler = set_language
         Command:
             id = 'inkcut.ui.open_webpage'
             handler = lambda e:open_webpage(e.parameters['url'])
@@ -169,23 +161,13 @@ enamldef UIManifest(PluginManifest):
         MenuItem:
             path = '/settings/theme'
             label = QApplication.translate("settings", "Theme")
-#        Looper:
-#            iterable = available_styles()+['system']
-#            ActionItem:
-#                path = '/settings/theme/{}'.format(loop_item)
-#                label = loop_item.replace("-", " ").title()
-#                command = 'inkcut.ui.set_theme'
-#                parameters = {'theme':loop_item}
-        MenuItem:
-            path = '/settings/language'
-            label = QApplication.translate("settings", "Language")
         Looper:
-            iterable = available_languages()
+            iterable = available_styles()
             ActionItem:
-                path = '/settings/language/{}'.format(loop_item)
+                path = '/settings/theme/{}'.format(loop_item)
                 label = loop_item.replace("-", " ").title()
-                command = 'inkcut.ui.set_language'
-                parameters = {'language':loop_item}
+                command = 'inkcut.ui.set_theme'
+                parameters = {'theme':loop_item}
 
 
 #         ActionItem:
