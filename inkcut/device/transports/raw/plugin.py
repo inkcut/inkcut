@@ -26,7 +26,7 @@ class RawFdConfig(Model):
     mode = Enum('r+b', 'wb', 'r+', 'w').tag(config=True)
 
 
-class RawFdProtocol(Protocol):
+class RawFdProtocol(Protocol, object):
     """Make a twisted protocol that delegates to the inkcut protocol
     implementation to have a consistent api (and use proper pep 8 formatting!).
 
