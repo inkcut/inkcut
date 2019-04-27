@@ -130,8 +130,8 @@ enamldef UIManifest(PluginManifest):
         MenuItem:
             path = '/settings'
             label = 'Settings'
-            before = 'help'
             after = 'file'
+            before = 'help'
         ActionItem:
             path = '/help/about'
             label = 'About...'

@@ -37,14 +37,14 @@ def job_start(event):
     if not job:
         job = workbench.get_plugin('inkcut.job').job
     if not job.document or not job.model:
-        workbench.message_warning("Error starting job", 
+        workbench.message_warning("Error starting job",
                                   "No file is open! Please open a file first.")
         return
 
     plugin = workbench.get_plugin('inkcut.device')
     device = plugin.device
     if not device:
-        workbench.message_warning("Error starting job", 
+        workbench.message_warning("Error starting job",
                                   "No device is setup! "
                                   "Please select Device->Setup from the menu.")
         return
@@ -72,10 +72,10 @@ def plugin_factory():
 
 enamldef DeviceManifest(PluginManifest):
     """ Add new protocols here or within any other plugin.
-    
+
     All protocols should implement the IDeviceProtocol and then
     register as an extension to the point 'inkcut.device.protocols'
-    
+
     """
     id = 'inkcut.device'
 
@@ -85,29 +85,29 @@ enamldef DeviceManifest(PluginManifest):
         id = DEVICE_DRIVER_POINT
         description = """ Provides an extension point where plugins can
         register a device that the application may use.
-        
+
         """
 
     ExtensionPoint:
         id = DEVICE_PROTOCOL_POINT
         description = """ Provides an extension point where plugins can
-        register protocols that any device may use. 
-        
+        register protocols that any device may use.
+
         """
 
     ExtensionPoint:
         id = DEVICE_TRANSPORT_POINT
         description = """ Provides an extension point where plugins can
-        register a communication interface for transporting data.  
-        
+        register a communication interface for transporting data.
+
         """
-    
+
     ExtensionPoint:
         id = DEVICE_FILTER_POINT
         description = """ Provides an extension point where plugins can
-        register filters to manipulate path data before or after it is 
-        processed by the device.  
-        
+        register filters to manipulate path data before or after it is
+        processed by the device.
+
         """
 
     Extension:
@@ -135,7 +135,7 @@ enamldef DeviceManifest(PluginManifest):
             path = '/device'
             label = 'Device'
             after = 'file'
-            before = 'help'
+            before = 'settings'
             ItemGroup:
                 id = 'device'
         ActionItem:
