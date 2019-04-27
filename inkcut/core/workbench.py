@@ -160,7 +160,7 @@ class InkcutWorkbench(UIWorkbench):
 
         locale = QtCore.QLocale.system().name()
         qtTranslator = QtCore.QTranslator()
-        if qtTranslator.load("translations/" + locale):
+        if qtTranslator.load("inkcut/res/translations/" + locale):
             self.application._qapp.installTranslator(qtTranslator)
 
         ui.start_application()
