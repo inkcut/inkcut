@@ -11,6 +11,7 @@ Created on Mar 14, 2018
 """
 import pytest
 from threading import Timer
+from enaml.application import deferred_call
 
 try:
     import pyqtgraph
@@ -26,11 +27,11 @@ def close():
     core.invoke_command('enaml.workbench.ui.close_window')
 
 
-@pytest.mark.skipif(not is_pyqtgraph_available, 
+@pytest.mark.skipif(not is_pyqtgraph_available,
                     reason='pyqtgraph is not available')
 def test_app():
     # Must close programatically
-    Timer(10, close).start()
+    Timer(10, lambda: deferred_call(close)).start()
     from inkcut.app import main
     main()
 
