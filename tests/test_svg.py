@@ -11,13 +11,15 @@ Created on Mar 14, 2018
 """
 import os
 import pytest
+from glob import glob
 
 from inkcut.core.svg import QtSvgDoc
 
 
-@pytest.mark.parametrize('path', [
-    'arc.svg'
-])
+@pytest.mark.parametrize('path', glob('tests/data/*.svg'))
 def test_svg(path):
-    f = os.path.join('tests', 'data', path)
-    doc = QtSvgDoc(f)
+    """ Make sure the document can be parsed """
+    try:
+        doc = QtSvgDoc(path)
+    except NotImplementedError as e:
+         pytest.skip(str(e))

@@ -130,7 +130,7 @@ class CupsPrinterConfig(PrinterConfig):
 # -----------------------------------------------------------------------------
 # LPR API
 # -----------------------------------------------------------------------------
-class LPRProtocol(ProcessProtocol):
+class LPRProtocol(ProcessProtocol, object):
     def __init__(self, parent, protocol):
         self.parent = parent
         self.parent.connected = True

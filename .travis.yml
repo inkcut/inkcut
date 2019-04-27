@@ -21,3 +21,6 @@ script:
 
 after_success:
   - codecov
+
+after_script:
+  - cat ~/.config/inkcut/logs/*.txt
