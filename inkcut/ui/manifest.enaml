@@ -66,7 +66,7 @@ def open_webpage(page):
         import subprocess
         cmd = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.call([cmd, page])
-        
+
 
 def set_theme(event):
     plugin = event.workbench.get_plugin('inkcut.ui')
@@ -136,12 +136,17 @@ enamldef UIManifest(PluginManifest):
             path = '/help/about'
             label = 'About...'
             command = 'inkcut.ui.open_webpage'
-            parameters = {'url':'https://www.codelv.com/projects/inkcut/'}
+            parameters = {'url':'https://codelv.com/projects/inkcut/'}
         ActionItem:
             path = '/help/project'
             label = 'Docs...'
             command = 'inkcut.ui.open_webpage'
-            parameters = {'url':'https://www.codelv.com/projects/inkcut/docs/'}
+            parameters = {'url':'https://codelv.com/projects/inkcut/docs/'}
+        ActionItem:
+            path = '/help/forum'
+            label = 'Forums...'
+            command = 'inkcut.ui.open_webpage'
+            parameters = {'url':'https://inkcut.org/'}
         ActionItem:
             path = '/help/report'
             label = 'Report issue...'
@@ -151,7 +156,7 @@ enamldef UIManifest(PluginManifest):
             path = '/help/donate'
             label = 'Donate...'
             command = 'inkcut.ui.open_webpage'
-            parameters = {'url':'https://www.codelv.com/projects/inkcut/support/'}
+            parameters = {'url':'https://codelv.com/projects/inkcut/support/'}
         ActionItem:
             path = '/help/logs'
             label = 'Logs...'
@@ -166,7 +171,7 @@ enamldef UIManifest(PluginManifest):
                 path = '/settings/theme/{}'.format(loop_item)
                 label = loop_item.replace("-", " ").title()
                 command = 'inkcut.ui.set_theme'
-                parameters = {'theme':loop_item}
+                parameters = {'theme': loop_item}
 #        ActionItem:
 #            path = '/help/about'
 #            label = 'About'

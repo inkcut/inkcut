@@ -14,6 +14,8 @@ import pkg_resources
 from datetime import datetime
 from atom.api import Atom, Int, List, Unicode, Instance, Bool, Enum
 from inkcut.core.api import Plugin, DockItem, log
+from inkcut.core.utils import load_icon
+from enaml.qt.q_resource_helpers import get_cached_qicon
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
 from enaml.application import timed_call
 from . import extensions
@@ -68,9 +70,9 @@ class InkcutPlugin(Plugin):
         restore state from the disk (if any).
 
         """
+        self.set_window_icon()
         self.load_plugins()
         self._refresh_dock_items()
-
         super(InkcutPlugin, self).start()
 
     def load_plugins(self):
@@ -184,3 +186,14 @@ class InkcutPlugin(Plugin):
             main,
             dock_bars=dockbars
         )
+
+    def set_window_icon(self):
+        """ Set the main application window icon
+
+        """
+        ui = self.workbench.get_plugin('enaml.workbench.ui')
+        try:
+            icon = get_cached_qicon(load_icon('logo'))
+            ui.window.proxy.widget.setWindowIcon(icon)
+        except Exception as e:
+            log.error('Failed to set window icon: {}'.format(e))
