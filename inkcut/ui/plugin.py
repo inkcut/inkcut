@@ -18,14 +18,13 @@ from inkcut.core.utils import load_icon
 from enaml.qt.q_resource_helpers import get_cached_qicon
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
 from enaml.application import timed_call
+
 from . import extensions
 
 with enaml.imports():
     from enaml.stdlib.dock_area_styles import available_styles
 
-
 ALL_STYLES = sorted(['system']+available_styles())
-
 
 class Clock(Atom):
     """ A clock so widgets can observe each field as required. """

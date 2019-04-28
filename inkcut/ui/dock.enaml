@@ -32,6 +32,8 @@ def get_system_color(name='window'):
     else:
         return qcolor.name(qcolor.HexArgb)
 
+def available_languages():
+    return ["English", "Francais"]
 
 template SystemStyle():
     """ DockArea style sheet styles that uses the system colors

@@ -13,6 +13,7 @@ import os
 import sys
 import enaml
 from enaml.core.api import Looper
+from enaml.qt.QtWidgets import QApplication
 from enaml.stdlib.dock_area_styles import available_styles
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
@@ -129,17 +130,17 @@ enamldef UIManifest(PluginManifest):
 #            command = 'inkcut.ui.open_preferences'
         MenuItem:
             path = '/settings'
-            label = 'Settings'
+            label = QApplication.translate("settings", "Settings")
+            before 'help'
             after = 'file'
-            before = 'help'
         ActionItem:
             path = '/help/about'
-            label = 'About...'
+            label = QApplication.translate("settings", "About")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/'}
         ActionItem:
             path = '/help/project'
-            label = 'Docs...'
+            label = QApplication.translate("settings", "Documentation")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/docs/'}
         ActionItem:
@@ -149,24 +150,24 @@ enamldef UIManifest(PluginManifest):
             parameters = {'url':'https://inkcut.org/'}
         ActionItem:
             path = '/help/report'
-            label = 'Report issue...'
+            label = QApplication.translate("settings", "Report issue")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://github.com/codelv/inkcut/issues'}
         ActionItem:
             path = '/help/donate'
-            label = 'Donate...'
+            label = QApplication.translate("settings", "Donate")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/support/'}
         ActionItem:
             path = '/help/logs'
-            label = 'Logs...'
+            label = QApplication.translate("settings", "Logs")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':os.path.expanduser('~/.config/inkcut/logs/')}
         MenuItem:
             path = '/settings/theme'
-            label = 'Theme'
+            label = QApplication.translate("settings", "Theme")
         Looper:
-            iterable << available_styles()+['system']
+            iterable = available_styles()
             ActionItem:
                 path = '/settings/theme/{}'.format(loop_item)
                 label = loop_item.replace("-", " ").title()

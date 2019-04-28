@@ -157,5 +157,11 @@ class InkcutWorkbench(UIWorkbench):
 
         #: Start the core plugin
         plugin = self.get_plugin('inkcut.core')
+
+        locale = QtCore.QLocale.system().name()
+        qtTranslator = QtCore.QTranslator()
+        if qtTranslator.load("inkcut/res/translations/" + locale):
+            self.application._qapp.installTranslator(qtTranslator)
+
         ui.start_application()
         #self.unregister('enaml.workbench.ui')

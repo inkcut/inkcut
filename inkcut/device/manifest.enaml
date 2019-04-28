@@ -6,6 +6,7 @@ Created on Jul 25, 2015
 """
 import enaml
 import traceback
+from enaml.qt.QtWidgets import QApplication
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
@@ -133,21 +134,21 @@ enamldef DeviceManifest(PluginManifest):
         point = 'enaml.workbench.ui.actions'
         MenuItem:
             path = '/device'
-            label = 'Device'
+            label = QApplication.translate("device", "Device")
             after = 'file'
             before = 'settings'
             ItemGroup:
                 id = 'device'
         ActionItem:
             path = '/device/setup'
-            label = 'Setup...'
+            label = QApplication.translate("device", "Setup...")
             shortcut = 'Ctrl+Alt+P'
             command = 'inkcut.device.setup'
             icon = menu_icon('printer')
 
         ActionItem:
             path = '/device/send'
-            label = 'Send to device'
+            label = QApplication.translate("device", "Send to device")
             shortcut = 'Ctrl+P'
             after = 'setup'
             command = 'inkcut.device.submit'

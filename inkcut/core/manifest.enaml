@@ -12,6 +12,8 @@ Created on Dec 6, 2015
 import sys
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
+from enaml.qt.QtWidgets import QApplication
+
 
 
 def application_factory():
@@ -72,7 +74,7 @@ enamldef InkcutManifest(PluginManifest):
         point = 'enaml.workbench.ui.actions'
         MenuItem:
             path = '/file'
-            label = 'File'
+            label = QApplication.translate("core", "File")
             ItemGroup:
                 id = 'user'
             ItemGroup:
@@ -80,7 +82,7 @@ enamldef InkcutManifest(PluginManifest):
 
         ActionItem:
             path = '/file/quit'
-            label = 'Quit'
+            label = QApplication.translate("core", "Quit")
             shortcut = 'Ctrl+Q'
             command = 'enaml.workbench.ui.close_window'
 
@@ -93,7 +95,7 @@ enamldef InkcutManifest(PluginManifest):
 #                id = 'settings'
         MenuItem:
             path = '/help'
-            label = 'Help'
+            label = QApplication.translate("core", "Help")
             after = 'file'
             ItemGroup:
                 id = 'help'

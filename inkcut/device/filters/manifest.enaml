@@ -9,11 +9,13 @@ Created on Dec 14, 2018
 
 @author: jrm
 """
+from inkcut.device.extensions import DEVICE_FILTER_POINT, DeviceFilter
 import enaml
 from enaml.core.api import Include
 from enaml.workbench.plugin_manifest import PluginManifest
 from enaml.workbench.api import Extension
-from inkcut.device.extensions import DEVICE_FILTER_POINT, DeviceFilter
+from enaml.qt.QtWidgets import QApplication
+
 
 
 def blade_offset_factory():
@@ -54,12 +56,12 @@ enamldef FiltersManifest(PluginManifest):
 
         DeviceFilter:
             id = 'overcut'
-            name = 'Overcut'
+            name = QApplication.translate("filters", "Overcut")
             factory = overcut_factory
             config_view = overcut_config_view
             
         DeviceFilter:
             id = 'blade-offset'
-            name = 'Blade Offset'
+            name = QApplication.translate("filters", "Blade Offset")
             factory = blade_offset_factory
             config_view = blade_offset_config_view
