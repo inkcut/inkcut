@@ -1,28 +1,41 @@
 language: python
 cache: pip
+dist: xenial
 os:
   - linux
   - osx
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
-  - "3.7"
-addons:
-  apt:
-    packages:
-    - libcups2-dev
+
+matrix:
+  fast_finish: true
+  include:
+    - os: linux
+      dist: trusty
+      env:
+        - PYTHON=2.7
+    - os: linux
+      dist: xenial
+      env:
+        - PYTHON=3.6
+    - os: osx
+      env:
+        - PYTHON=2.7
+    - os: osx
+      env:
+        - PYTHON=3.7
 
 before_script:
   # We need a (fake) display on Travis so I need to start a X server.
   - export DISPLAY=:99.0
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 
+  # Install cups on linux
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt update -qq && sudo apt -qq install libcups-dev; fi
+
   # Install miniconda
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-       wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+       travis_retry wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
      else
-       wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
+       travis_retry wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -32,6 +45,8 @@ before_script:
   - conda info -a
   # Install conda build and anaconda-client
   - conda install anaconda-client conda-build constructor -q
+
+  - conda install python==$PYTHON -q
 
 
 script:

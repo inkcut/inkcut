@@ -1,0 +1,91 @@
+# This file is used to configure the AppVeyor CI system, for testing on Windows machines.
+#
+# Code based on https://github.com/nucleic/enaml/
+#
+# To test with AppVeyor:
+#    Register on appveyor.com with your GitHub account.
+#    Create a new appveyor project, using the GitHub details.
+#    Ideally, configure notifications to post back to GitHub. (Untested)
+
+branches:
+  only:
+    - master
+
+environment:
+    matrix:
+        - NAME: "Py 3.7"
+          PYTHON: "C:\\Python3.7-x64"
+          PYTHON_VERSION: "3.7"
+          PYTHON_ARCH: "64"
+
+        - NAME: "Py 2.7"
+          PYTHON: "C:\\Python2.7-x64"
+          PYTHON_VERSION: "2.7"
+          PYTHON_ARCH: "64"
+
+
+install:
+  # If there is a newer build queued for the same PR, cancel this one.
+  # The AppVeyor 'rollout builds' option is supposed to serve the same
+  # purpose but it is problematic because it tends to cancel builds pushed
+  # directly to master instead of just PR builds (or the converse).
+  # credits: JuliaLang developers.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
+        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+          throw "There are newer queued builds for this pull request, failing early." }
+
+  # this installs the appropriate Miniconda (Py2/Py3, 32/64 bit),
+  # as well as pip, conda-build, and the binstar CLI
+  - powershell .\\ci\\installconda.ps
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+  # Dump some debugging information about the machine.
+  - ECHO "Filesystem root:"
+  - ps: "ls \"C:/\""
+
+  - ECHO "Build Folder:"
+  - ps: ls $env:APPVEYOR_BUILD_FOLDER
+
+  - ECHO "Environment Variables"
+  - set
+
+  # Prepare Miniconda
+  # - Avoid warning from conda info.
+  # - Dump the setup for debugging.
+  # - Upgrade to the latest version of pip to avoid it displaying warnings
+  #   about it being out of date.
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda install -q -n root _license
+  - conda info -a
+  - conda upgrade -q pip setuptools wheel
+
+  # We need a library for Qt.
+  - conda install -q pyqt
+
+  # We should be able to install the test dependencies via setup.py, but in the meantime, do it manually:
+  - pip install pytest pytest-cov pytest-qt
+
+build_script:
+
+  - cd %APPVEYOR_BUILD_DIR%
+  - pip install -r requirements.txt
+
+  # Build the conda package
+  - conda build recipe
+
+test_script:
+
+  # Run the project tests
+  - cd %APPVEYOR_BUILD_DIR%
+  - pytest tests --cov inkcut --cov-report xml
+
+after_test:
+  - ps: |
+      $env:PATH = 'C:\msys64\usr\bin;' + $env:PATH
+      Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
+      bash codecov.sh
+
+  # Build installer
+  - construct recipe
