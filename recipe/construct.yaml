@@ -1,0 +1,13 @@
+name: Inkcut
+version: 2.0.8
+
+install_in_dependency_order: True
+license_file: ../LICENSE
+welcome_image: ../inkcut/res/media/splash.jpg
+icon_image: ../inkcut/res/icons/logo.png
+channels:
+  - https://repo.anaconda.com/pkgs/main/
+  - https://conda.anaconda.org/codelv/
+
+specs:
+  - inkcut

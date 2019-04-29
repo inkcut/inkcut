@@ -1,10 +1,13 @@
-dist: xenial
-sudo: required
 language: python
 cache: pip
+os:
+  - linux
+  - osx
 python:
   - "2.7"
+  - "3.5"
   - "3.6"
+  - "3.7"
 addons:
   apt:
     packages:
@@ -15,12 +18,33 @@ before_script:
   - export DISPLAY=:99.0
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 
+  # Install miniconda
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+       wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+     else
+       wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  # Install conda build and anaconda-client
+  - conda install anaconda-client conda-build constructor -q
+
+
 script:
   - python setup.py develop
   - py.test tests --cov inkcut --cov-report xml -v
 
+after_script:
+  - cat ~/.config/inkcut/logs/*.txt
+
 after_success:
   - codecov
 
-after_script:
-  - cat ~/.config/inkcut/logs/*.txt
+  # Build install package
+  - constructor recipe
+
+
