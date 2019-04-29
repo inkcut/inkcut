@@ -29,7 +29,7 @@ before_script:
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 
   # Install cups on linux
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt update -qq && sudo apt -qq install libcups-dev; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt update -qq && sudo apt -qq install libcups2-dev; fi
 
   # Install miniconda
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
