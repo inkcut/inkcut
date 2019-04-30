@@ -2,7 +2,7 @@ enaml>=0.10.2
 twisted
 enamlx
 pyqtgraph
-ipykernel<=5; python_version < '3.0'
+ipykernel<5; python_version < '3.0'
 qtconsole
 pyserial>=3.4
 jsonpickle
