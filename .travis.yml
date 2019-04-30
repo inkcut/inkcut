@@ -1,10 +1,3 @@
-language: python
-cache: pip
-dist: xenial
-os:
-  - linux
-  - osx
-
 matrix:
   fast_finish: true
   include:
@@ -46,7 +39,7 @@ before_script:
   # Install conda build and anaconda-client
   - conda install anaconda-client conda-build constructor -q
 
-  - conda install python==$PYTHON -q
+  - conda install python=$PYTHON -q
 
 
 script:
