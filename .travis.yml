@@ -40,7 +40,9 @@ before_script:
   - conda install anaconda-client conda-build constructor -q
 
   # Install python
-  - conda install python=$PYTHON -q
+  - conda install python=$PYTHON pyqt -q
+
+  - if [[ "$PYTHON" == "2.7" ]]; then pip install qtconsole; fi
 
   # Install testing utils
   - pip install pytest pytest-coverage pytest-qt codecov
