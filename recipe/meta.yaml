@@ -37,7 +37,6 @@ build:
   number: 0
   noarch: python
   script:
-    - cd $RECIPE_DIR/../
     - python setup.py install --single-version-externally-managed --record=record.txt --no-compile
   entry_points:
     - inkcut = inkcut.app:main
