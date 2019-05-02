@@ -18,10 +18,10 @@ environment:
           PYTHON_VERSION: "3.7"
           PYTHON_ARCH: "64"
 
-        - NAME: "Py 2.7"
-          PYTHON: "C:\\Python2.7-x64"
-          PYTHON_VERSION: "2.7"
-          PYTHON_ARCH: "64"
+        #- NAME: "Py 2.7"
+        #  PYTHON: "C:\\Python2.7-x64"
+        #  PYTHON_VERSION: "2.7"
+        #  PYTHON_ARCH: "64"
 
 
 install:
@@ -80,7 +80,7 @@ build_script:
   - python setup.py develop
 
   # Build the conda package
-  - ps: if ($PYTHON_VERSION -ne "2.7") {conda build recipe}
+  - conda build recipe
 
 test_script:
 
@@ -95,7 +95,7 @@ after_test:
       bash codecov.sh
 
   # Build installer
-  - ps: if ($PYTHON_VERSION -ne "2.7") {constructor recipe}
+  - constructor recipe
 
 artifacts:
     - path: Inkcut-*.exe
