@@ -96,3 +96,6 @@ after_test:
 
   # Build installer
   - ps: if ($PYTHON_VERSION -ne "2.7") {constructor recipe}
+
+artifacts:
+    - path: Inkcut-*.exe
