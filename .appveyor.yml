@@ -75,6 +75,9 @@ build_script:
 
   - cd %APPVEYOR_BUILD_DIR%
   - pip install -r requirements.txt
+  
+  # Run setup script
+  - python setup.py develop
 
   # Build the conda package
   - conda build recipe

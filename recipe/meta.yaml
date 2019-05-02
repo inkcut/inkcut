@@ -5,6 +5,9 @@ package:
 channels:
   - codelv
 
+source:
+  file: '../'
+  
 requirements:
   build:
   - python
