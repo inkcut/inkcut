@@ -37,7 +37,8 @@ install:
 
   # this installs the appropriate Miniconda (Py2/Py3, 32/64 bit),
   # as well as pip, conda-build, and the binstar CLI
-  - powershell .\\ci\\installconda.ps
+  - ECHO "Installing minconda:"
+  - ps: .\\ci\\installconda.ps
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
   # Dump some debugging information about the machine.
