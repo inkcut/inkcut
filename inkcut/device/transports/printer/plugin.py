@@ -81,7 +81,13 @@ class Win32PrinterConfig(PrinterConfig):
     def _default_printers(self):
         if not PRINTER_AVAILABLE:
             return []
-        return [p[2] for p in win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL)]
+        try:
+            return [p[2] for p in win32print.EnumPrinters(
+                    win32print.PRINTER_ENUM_LOCAL)]
+        except Exception as e:
+            if 'RPC server is unavailable' in str(e):
+                return []  # Ignore this error
+            raise
 
 
 class Win32PrinterConnection(PrinterConnection):
