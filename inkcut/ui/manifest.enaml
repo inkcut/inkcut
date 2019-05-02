@@ -131,7 +131,7 @@ enamldef UIManifest(PluginManifest):
         MenuItem:
             path = '/settings'
             label = QApplication.translate("settings", "Settings")
-            before 'help'
+            before = 'help'
             after = 'file'
         ActionItem:
             path = '/help/about'
