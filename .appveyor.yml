@@ -67,6 +67,9 @@ install:
   # We should be able to install the test dependencies via setup.py, but in the meantime, do it manually:
   - pip install pytest pytest-cov pytest-qt
 
+# Use the script
+build: off
+
 build_script:
 
   - cd %APPVEYOR_BUILD_DIR%
