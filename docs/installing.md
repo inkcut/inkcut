@@ -15,7 +15,7 @@ For example on ubuntu or the raspberry pi:
 
 ```bash
 
-apt-get install python3-pip python3-pyqt5 libcups2-dev
+apt-get install python3-pip python3-pyqt5 libcups2-dev python3-pyqt5.qtsvg
 pip3 install inkcut
 
 ```
