@@ -12,10 +12,11 @@ Created on Jul 19, 2015
 """
 import functools
 from atom.api import Instance, Int, observe
+from enaml.qt import QtCore, QtGui
+from twisted.internet import defer
+
 from inkcut.core.api import Plugin
 from inkcut.device.plugin import Device
-from twisted.internet import defer
-from enaml.qt import QtCore, QtGui
 
 
 def with_connection(f):
@@ -34,7 +35,7 @@ def with_connection(f):
         #if not connected:
         #    yield defer.maybeDeferred(self.device.disconnect)
 
-    return wrapped 
+    return wrapped
 
 
 class JoystickPlugin(Plugin):
@@ -79,7 +80,7 @@ class JoystickPlugin(Plugin):
     def reconnect(self):
         yield self.device.connection.disconnect()
         yield self.device.connection.connect()
-    
+
     @with_connection
     def move_to_origin(self, system=False):
         x, y, z = [0, 0, 0] if system else self.device.origin
