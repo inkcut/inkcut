@@ -46,6 +46,19 @@ You can change final output scaling and rotation that Inkcut uses for your devic
 
 ![Inkcut - device final output](https://user-images.githubusercontent.com/380158/34272631-f86af5b4-e65e-11e7-82f0-1e3527f25213.gif)
 
+### Quality factor
+
+When cutting small jobs some intricate details may be lost in the conversion from curves to polygon segments. 
+
+![inkcut-quality-factor-1](https://user-images.githubusercontent.com/380158/57777513-1bac0e00-76f0-11e9-83d8-5ba2f5777829.png)
+
+The default `Quality factor` of `1` can be adjusted in the `Advanced` tab to increase the number of points used. Increasing this to `5` for instance gives a noticable improvement for this example.
+
+![inkcut-quality-factor-2](https://user-images.githubusercontent.com/380158/57777503-18b11d80-76f0-11e9-8378-7cc89bfe2264.png)
+
+Be careful however as this can signifcantly increase the number of points sent to the device.
+
+
 ### Add missing device
 
 The list of supported devices from the old website was moved to a google spreadsheet [here](https://docs.google.com/spreadsheets/d/1KYNZMkNy0qYcpnXaNHgXKvdEhnUYKfGqZOH0Dw6siAg/). These must also be added into Inkcut
