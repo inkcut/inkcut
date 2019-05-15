@@ -22,6 +22,8 @@ import enaml
 with enaml.imports():
     from inkcut.ui.manifest import UIManifest
 
+from inkcut.core.utils import log
+
 
 class InkcutWorkspace(Workspace):
     """ A custom Workspace class for the crash course example.
@@ -58,13 +60,13 @@ class InkcutWorkspace(Workspace):
         """ Save the dock area for the workspace.
 
         """
-        print("Saving dock area")
+        log.debug("Saving dock area")
         area = self.content.find('dock_area')
         try:
             with open('inkcut.workspace.db', 'w') as f:
                 f.write(pickle.dumps(area))
         except Exception as e:
-            print("Error saving dock area: {}".format(e))
+            log.warning("Error saving dock area: {}".format(e))
             return e
 
     def load_area(self):
