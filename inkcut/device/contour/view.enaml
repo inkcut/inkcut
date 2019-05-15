@@ -1,0 +1,28 @@
+"""
+Copyright (c) 2017, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on Dec 10, 2015
+
+@author: jrm
+"""
+from enaml.widgets.api import  Container
+from enaml.widgets.api import IPythonConsole
+from inkcut.core.api import DockItem
+from inkcut.core.utils import load_icon
+
+
+enamldef ContourDockItem(DockItem):
+    title = 'Contour Cut'
+    name = 'contour-cut-item'
+    attr plugin
+    icon = load_icon('shape_move_front')
+    Container:
+        padding = 0
+        Form:
+            pass
+
+

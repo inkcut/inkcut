@@ -289,6 +289,9 @@ class DeviceConfig(Model):
     #: Final out scaling
     scale = ContainerList(Float(strict=False), default=[1, 1]).tag(config=True)
 
+    #: Defines prescaling before conversion to a polygon
+    quality_factor = Float(1, strict=False).tag(config=True)
+
     #: In cm/s
     speed = Float(4, strict=False).tag(config=True)
     speed_units = Enum('in/s', 'cm/s').tag(config=True)
@@ -309,7 +312,7 @@ class DeviceConfig(Model):
     #: Use a virtual connection
     test_mode = Bool().tag(config=True)
 
-    #: Initi commands
+    #: Init commands
     commands_before = Unicode().tag(config=True)
     commands_after = Unicode().tag(config=True)
     commands_connect = Unicode().tag(config=True)
@@ -865,9 +868,22 @@ class Device(Model):
                 log.debug(" filter | Running {} on model".format(f))
                 model = f.apply_to_model(model)
 
+            # Since Qt's toSubpathPolygons converts curves without accepting
+            # a parameter to set the minimum distance between points on the
+            # curve, we need to prescale by a "quality factor" before
+            # converting then undo the scaling to effectively adjust the
+            # number of points on a curve.
+            m = QtGui.QTransform.fromScale(
+                config.quality_factor, config.quality_factor)
             # Some versions of Qt seem to require a value in toSubpathPolygons
-            m = QtGui.QTransform.fromScale(1, 1)
             polypath = model.toSubpathPolygons(m)
+
+            if config.quality_factor != 1:
+                # Undo the prescaling, if the quality_factor > 1 the curve
+                # quality will be improved.
+                m_inv = QtGui.QTransform.fromScale(
+                    1/config.quality_factor, 1/config.quality_factor)
+                polypath = list(map(m_inv.map, polypath))
 
             # Apply device filters to polypath
             for f in self.filters:

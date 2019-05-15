@@ -155,6 +155,20 @@ enamldef DeviceConfigView(Container):
                     suffix << " ms"
                     minimum = 0
                     maximum = 1000
+                Label:
+                    text = QApplication.translate("device", "Quality factor")
+                    tool_tip = textwrap.dedent("""
+                        Adjusts the quality of conversion from curves to polygons. Increasing
+                        this number will improve quality (more points on each curve) at the
+                        cost of more points needing to be processed by the device and stored
+                        in memory.
+                        """).strip()
+                DoubleSpinBox:
+                    value := model.quality_factor
+                    single_step = 0.01
+                    minimum = 0.001
+                    maximum = 1000.00
+
         Page:
             closable = False
             title = "Developer"
@@ -173,12 +187,12 @@ enamldef DeviceConfigView(Container):
                Label:
                   text = QApplication.translate("device", "Before job")
                MultilineField:
-                  text := model.commands_before    
+                  text := model.commands_before
                   tool_tip = QApplication.translate("device", "Commands here will get sent before starting a job")
                Label:
                   text = QApplication.translate("device", "After job")
                MultilineField:
-                  text := model.commands_after    
+                  text := model.commands_after
                   tool_tip = QApplication.translate("device", "Commands here will get sent after finishing a job")
         Page:
            title = QApplication.translate("device", "Connection commands")
