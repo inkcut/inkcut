@@ -10,6 +10,8 @@
       "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/device-setup.md"},
     {"title":"Supported Devices",
         "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/supported-devices.md"},
+    {"title":"Translating",
+        "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/translating.md"},
     {"title":"Debugging",
         "source": "https://raw.githubusercontent.com/codelv/inkcut/master/docs/debugging.md"},
     {"title":"Developer",
