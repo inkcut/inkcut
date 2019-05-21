@@ -286,6 +286,9 @@ class DeviceConfig(Model):
     #: Final output rotation
     rotation = Enum(0, 90, -90).tag(config=True)
 
+    #: Swap x and y axis
+    swap_xy = Bool().tag(config=True)
+
     #: Final out scaling
     scale = ContainerList(Float(strict=False), default=[1, 1]).tag(config=True)
 
@@ -857,6 +860,8 @@ class Device(Model):
         skip_interpolation = (self.connection.always_spools or config.spooled
                               or not config.interpolate)
 
+        swap_xy = config.swap_xy
+
         # speed = distance/seconds
         # So distance/speed = seconds to wait
         step_size = config.step_size
@@ -915,6 +920,8 @@ class Device(Model):
                     #: the path interpolation is skipped entirely
                     if skip_interpolation:
                         x, y = p.x(), p.y()
+                        if swap_xy:
+                            x, y = y, x
                         yield (l, self.move, ([x, y, z],), {})
                         continue
 
@@ -940,6 +947,8 @@ class Device(Model):
                         #: -y because Qt's axis is from top to bottom not bottom
                         #: to top
                         x, y = sp.x(), sp.y()
+                        if swap_xy:
+                            x, y = y, x
                         yield (dl, self.move, ([x, y, z],), {})
 
                         #: When we reached the end but instead of breaking above
@@ -954,7 +963,10 @@ class Device(Model):
 
             #: Make sure we get the endpoint
             ep = model.currentPosition()
-            yield (0, self.move, ([ep.x(), ep.y(), 0],), {})
+            x, y = ep.x(), ep.y()
+            if swap_xy:
+                x, y = y, x
+            yield (0, self.move, ([x, y, 0],), {})
         except Exception as e:
             log.error("device | processing error: {}".format(
                 traceback.format_exc()))

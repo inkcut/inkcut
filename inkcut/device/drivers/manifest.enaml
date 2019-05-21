@@ -47,7 +47,7 @@ enamldef DriversManifest(PluginManifest):
             model = 'PNC-900'
             width = '12in'
             protocols = ['camm-gl1']
-            
+
         DeviceDriver:
             manufacturer = 'Roland'
             model = 'PNC-1000'
@@ -55,12 +55,39 @@ enamldef DriversManifest(PluginManifest):
             protocols = ['camm-gl1']
 
         DeviceDriver:
+            manufacturer = 'Roland'
+            model = 'Stika SV-15'
+            width = '15in'
+            protocols = ['hpgl']
+            default_config = {
+              'swap_xy': True
+            }
+
+        DeviceDriver:
+            manufacturer = 'Roland'
+            model = 'Stika SV-12'
+            width = '12in'
+            protocols = ['hpgl']
+            default_config = {
+              'swap_xy': True
+            }
+
+        DeviceDriver:
+            manufacturer = 'Roland'
+            model = 'Stika SV-8'
+            width = '8in'
+            protocols = ['hpgl']
+            default_config = {
+              'swap_xy': True
+            }
+
+        DeviceDriver:
             manufacturer = 'ANAgraph'
             model = 'AE-70e'
             width = '76cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial', 'printer']
-        
+
         DeviceDriver:
             manufacturer = 'KNK'
             model = 'ACS Eagle/KNK Maxx'
@@ -169,13 +196,13 @@ enamldef DriversManifest(PluginManifest):
             length = '50cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial','printer']
-        
+
         DeviceDriver:
             manufacturer = 'Secabo'
             model = 'C60ii'
             width = '60cm'
             protocols = ['hpgl']
-            
+
         DeviceDriver:
             manufacturer = 'SeikiTech'
             model = 'SK-870T'
@@ -196,7 +223,7 @@ enamldef DriversManifest(PluginManifest):
             width = '720cm'
             protocols = ['hpgl', 'dmpl']
             connections = ['serial']
-            
+
         DeviceDriver:
             manufacturer = 'Vision'
             model = ' VE-810 (XD) Engraver'
@@ -204,7 +231,7 @@ enamldef DriversManifest(PluginManifest):
             length = '8in'
             protocols = ['hpgl']
             connections = ['serial']
-        
+
 #        DeviceDriver:
 #            manufacturer = 'Vision'
 #            model = ' VE-810 (XD) Engraver (configured)'

@@ -69,6 +69,11 @@ enamldef DeviceConfigView(Container):
             title = QApplication.translate("device", "Output")
             Form:
                 Label:
+                    text = ""
+                CheckBox:
+                    text = QApplication.translate("device", "Swap X/Y")
+                    checked := model.swap_xy
+                Label:
                     text = QApplication.translate("device", "Rotation")
                 ObjectCombo:
                     items = list(model.get_member('rotation').items)
