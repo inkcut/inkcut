@@ -146,6 +146,12 @@ class Plugin(EnamlPlugin):
     # -------------------------------------------------------------------------
     # Plugin API
     # -------------------------------------------------------------------------
+    def is_supported(self):
+        """ If this plugin is optional, return whether the plugin can be
+        used.  Plugins that are not required can be ignored.
+        """
+        return True
+
     def start(self):
         """ Load the state when the plugin starts """
         log.debug("Starting plugin '{}'".format(self.manifest.id))

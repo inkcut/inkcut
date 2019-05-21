@@ -11,10 +11,18 @@ Created on Dec 10, 2015
 @author: jrm
 """
 import logging
-from inkcut.core.api import Plugin
+from inkcut.core.api import Plugin, log
 
 
 class ConsolePlugin(Plugin):
+    def is_supported(self):
+        try:
+            from enaml.qt import qt_ipython_console
+            return True
+        except ImportError as e:
+            log.warning("IPython console plugin is missing dependencies")
+            log.exception(e)
+            return False
 
     def start(self):
         """ Set the log level for IPython stuff to warn """

@@ -69,6 +69,7 @@ class InkcutPlugin(Plugin):
         restore state from the disk (if any).
 
         """
+        self.set_app_name()
         self.set_window_icon()
         self.load_plugins()
         self._refresh_dock_items()
@@ -151,17 +152,29 @@ class InkcutPlugin(Plugin):
         dock_items = []
         for extension in sorted(point.extensions, key=lambda ext: ext.rank):
             for declaration in extension.get_children(extensions.DockItem):
-                #: Create the item
+
+                # Load the plugin
+                plugin_id = declaration.plugin_id
+                log.info("Loading plugin {}".format(plugin_id))
+                plugin = workbench.get_plugin(plugin_id)
+
+                # Check if it's known dependencies are met
+                if not plugin.is_supported():
+                    log.warning("Plugin {} reported unsupported".format(
+                        plugin_id))
+                    continue
+
+                # Create the item
                 DockItem = declaration.factory()
                 item = DockItem(
-                    plugin=workbench.get_plugin(declaration.plugin_id),
+                    plugin=plugin,
                     closable=False
                 )
 
-                #: Add to our layout
+                # Add to our layout
                 layout[declaration.layout].append(item.name)
 
-                #: Save it
+                # Save it
                 dock_items.append(item)
 
         #: Update items
@@ -185,6 +198,19 @@ class InkcutPlugin(Plugin):
             main,
             dock_bars=dockbars
         )
+
+    def set_app_name(self):
+        """ Set the application name
+
+        """
+        ui = self.workbench.get_plugin('enaml.workbench.ui')
+        try:
+            qt_app = ui._application
+            qt_app.setApplicationName('inkcut')
+            if hasattr(qt_app, 'setApplicationDisplayName'):
+                qt_app.setApplicationDisplayName('Inkcut')
+        except Exception as e:
+            log.error('Failed to set app name: {}'.format(e))
 
     def set_window_icon(self):
         """ Set the main application window icon
