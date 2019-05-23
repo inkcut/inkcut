@@ -205,7 +205,7 @@ class InkcutPlugin(Plugin):
         """
         ui = self.workbench.get_plugin('enaml.workbench.ui')
         try:
-            qt_app = ui._application
+            qt_app = ui._application._qapp
             qt_app.setApplicationName('inkcut')
             if hasattr(qt_app, 'setApplicationDisplayName'):
                 qt_app.setApplicationDisplayName('Inkcut')
