@@ -27,10 +27,10 @@ def pyside_dialog_patch():
     from atom.api import atomref
     from enaml.qt.qt_dialog import QWindowDialog
     from enaml.qt.q_window_base import QWindowLayout
-    
+
     def __init__(self, proxy, parent, flags=QtCore.Qt.Widget):
         """ Initialize a QWindowDialog.
- 
+
          Parameters
          ----------
          parent : QWidget, optional
@@ -44,7 +44,7 @@ def pyside_dialog_patch():
         layout = QWindowLayout()
         layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
         self.setLayout(layout)
-    
+
     QWindowDialog.__init__ = __init__
     pyside_dialog_patch.applied = True
 pyside_dialog_patch.applied = False
@@ -72,9 +72,9 @@ class InkcutWorkbench(UIWorkbench):
 
     @property
     def window(self):
-        """ Return the main UI window or a dialog if it wasn't made yet 
-        (during loading) 
-        
+        """ Return the main UI window or a dialog if it wasn't made yet
+        (during loading)
+
         """
         try:
             ui = self.get_plugin('enaml.workbench.ui')
@@ -87,7 +87,7 @@ class InkcutWorkbench(UIWorkbench):
     # -------------------------------------------------------------------------
     def message_critical(self, title, message, *args, **kwargs):
         """ Shortcut to display a critical popup dialog.
-        
+
         """
         log.critical(message)
         return QtWidgets.QMessageBox.critical(self.window, "{0} - {1}".format(
@@ -95,7 +95,7 @@ class InkcutWorkbench(UIWorkbench):
 
     def message_warning(self, title, message, *args, **kwargs):
         """ Shortcut to display a warning popup dialog.
-        
+
         """
         log.warning(message)
         return QtWidgets.QMessageBox.warning(self.window, "{0} - {1}".format(
@@ -103,7 +103,7 @@ class InkcutWorkbench(UIWorkbench):
 
     def message_information(self, title, message, *args, **kwargs):
         """ Shortcut to display an info popup dialog.
-        
+
         """
         log.info(message)
         return QtWidgets.QMessageBox.information(self.window, "{0} - {1}".format(
@@ -111,7 +111,7 @@ class InkcutWorkbench(UIWorkbench):
 
     def message_about(self, title, message, *args, **kwargs):
         """ Shortcut to display an about popup dialog.
-        
+
         """
         log.info(message)
         return QtWidgets.QMessageBox.about(self.window, "{0} - {1}".format(
@@ -119,7 +119,7 @@ class InkcutWorkbench(UIWorkbench):
 
     def message_question(self, title, message, *args, **kwargs):
         """ Shortcut to display a question popup dialog.
-        
+
         """
         log.info(message)
         return QtWidgets.QMessageBox.question(self.window, "{0} - {1}".format(
@@ -130,11 +130,11 @@ class InkcutWorkbench(UIWorkbench):
     # -------------------------------------------------------------------------
     def run(self):
         """ Run the UI workbench application.
-    
+
         This method will load the core and ui plugins and start the
         main application event loop. This is a blocking call which
         will return when the application event loop exits.
-    
+
         """
         InkcutWorkbench._instance = self
 
