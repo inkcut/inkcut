@@ -24,5 +24,6 @@ enamldef ConsoleDockItem(DockItem):
         padding = 0
         IPythonConsole:
             minimum_size = (150, 150)
+            initial_ns = {'workbench': workbench}
 
 
