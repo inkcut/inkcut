@@ -42,6 +42,7 @@ class SerialConfig(Model):
                     serial.STOPBITS_TWO).tag(config=True)
     xonxoff = Bool().tag(config=True)
     rtscts = Bool().tag(config=True)
+    dsrdtr = Bool().tag(config=True)
 
     # -------------------------------------------------------------------------
     # Defaults
@@ -93,6 +94,15 @@ class SerialTransport(RawFdTransport):
                 xonxoff=config.xonxoff,
                 rtscts=config.rtscts
             )
+
+            # Twisted is missing this
+            if config.dsrdtr:
+                try:
+                    self.connection._serial.dsrdtr = True
+                except AttributeError as e:
+                    log.warning("{} | dsrdtr is not supported {}".format(
+                        config.port, e))
+
             log.debug("{} | opened".format(config.port))
         except Exception as e:
             #: Make sure to log any issues as these tracebacks can get

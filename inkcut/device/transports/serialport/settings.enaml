@@ -12,7 +12,7 @@ Created on Jul 12, 2015
 """
 import textwrap
 from inkcut.core.utils import load_icon
-from enaml.layout.api import hbox, align
+from enaml.layout.api import hbox, align, spacer
 from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
 
 
@@ -70,9 +70,22 @@ enamldef SerialPortSettingsView(Container):
         ObjectCombo:
             items = list(model.get_member('stopbits').items)
             selected := model.stopbits
-        CheckBox:
-            text = "RTS/CTS"
-            checked := model.rtscts
-        CheckBox:
-            text = "XON/XOFF"
-            checked := model.xonxoff
+        Label:
+            text = "Flow control"
+        Container:
+            constraints = [
+                hbox(rtscts, dsrdtr, xonxoff, spacer),
+                align('v_center', rtscts, dsrdtr, xonxoff)
+            ]
+            CheckBox: rtscts:
+                text = "RTS/CTS"
+                checked := model.rtscts
+                tool_tip = "Enable hardware (RTS/CTS) flow control"
+            CheckBox: dsrdtr:
+                text = "DSR/DTR"
+                checked := model.dsrdtr
+                tool_tip = "Enable hardware (DSR/DTR) flow control"
+            CheckBox: xonxoff:
+                text = "XON/XOFF"
+                checked := model.xonxoff
+                tool_tip = "Enable software flow control"
