@@ -127,7 +127,7 @@ class CupsPrinterConfig(PrinterConfig):
         if not PRINTER_AVAILABLE:
             return []
         try:
-            return list(cups.Connection().getPrinters().keys())
+            return list(sorted(cups.Connection().getPrinters().keys()))
         except Exception as e:
             log.warning("Failed to get printer list: {}".format(e))
             return []
@@ -239,7 +239,7 @@ class PrinterTransport(DeviceTransport):
 
 class PrinterPlugin(Plugin):
     """ Plugin for handling printer communication
-    
+
     """
 
     # -------------------------------------------------------------------------
