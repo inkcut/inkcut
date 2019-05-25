@@ -39,14 +39,11 @@ install_requires = [
 ]
 
 # Read version
-version = None
 with open('inkcut/__init__.py') as f:
-    for line in f:
-        m = re.search(r'version = ["\'](.+)["\']', line)
-        if m:
-            version = m.group(1)
-            break
-    assert version is not None, 'Failed to read version'
+    m = re.search(r'version = ["\'](.+)["\']', f.read(), re.MULTILINE)
+    assert m is not None, 'Failed to read version'
+    version = m.group(1)
+
 
 setup(
     name='inkcut',
