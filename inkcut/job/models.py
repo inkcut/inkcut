@@ -261,15 +261,14 @@ class Job(Model):
         if w > available_area.width() or h > available_area.height():
 
             # If it's too big an auto scale is enabled, resize it to fit
-            if not self.auto_scale:
-                raise JobError("Image is too large to fit on the material")
-            sx, sy = 1, 1
-            if w > available_area.width():
-                sx = available_area.width() / w
-            if h > available_area.height():
-                sy = available_area.height() / h
-            s = min(sx, sy) # Fit to the smaller of the two
-            path = self.path * QtGui.QTransform.fromScale(s, s)
+            if self.auto_scale:
+                sx, sy = 1, 1
+                if w > available_area.width():
+                    sx = available_area.width() / w
+                if h > available_area.height():
+                    sy = available_area.height() / h
+                s = min(sx, sy) # Fit to the smaller of the two
+                path = self.path * QtGui.QTransform.fromScale(s, s)
 
         # Move to bottom left
         p = path.boundingRect().bottomRight()
