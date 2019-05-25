@@ -13,7 +13,6 @@ import os
 import sys
 import enaml
 from enaml.core.api import Looper
-from enaml.qt.QtWidgets import QApplication
 from enaml.stdlib.dock_area_styles import available_styles
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
@@ -21,8 +20,10 @@ from enaml.workbench.ui.api import (
     ActionItem, Branding, MenuItem, ItemGroup, Autostart
 )
 
-from .extensions import DOCK_ITEM_POINT
-from inkcut.core.utils import menu_icon
+from inkcut.ui.extensions import (
+    DOCK_ITEM_POINT, SETTINGS_PAGE_POINT, SettingsPage
+)
+from inkcut.core.utils import menu_icon, tr
 
 
 def plugin_factory():
@@ -40,14 +41,19 @@ def redo(event):
     plugin.redo()
 
 
-def open_preferences(event):
+def open_settings(event):
     with enaml.imports():
-        from inkcut.ui.dialogs import PreferencesDialog
+        from inkcut.ui.settings import SettingsDialog
     plugin = event.workbench.get_plugin('inkcut.ui')
     ui = event.workbench.get_plugin('enaml.workbench.ui')
-    PreferencesDialog(ui.window,
+    SettingsDialog(ui.window,
                       plugin=event.workbench.get_plugin(
-                          'inkcut.workbench.core')).exec_()
+                          'inkcut.ui')).exec_()
+
+def settings_page_factory():
+    with enaml.imports():
+        from .settings import SystemSettingsPage
+    return SystemSettingsPage
 
 
 def about_inkcut(event):
@@ -57,7 +63,7 @@ def about_inkcut(event):
     ui = event.workbench.get_plugin('enaml.workbench.ui')
     AboutDialog(ui.window,
                 plugin=event.workbench.get_plugin(
-                    'inkcut.workbench.core')).exec_()
+                    'inkcut.ui')).exec_()
 
 
 def open_webpage(page):
@@ -72,6 +78,7 @@ def open_webpage(page):
 def set_theme(event):
     plugin = event.workbench.get_plugin('inkcut.ui')
     plugin.dock_style = event.parameters.get('theme', 'system')
+
 
 
 enamldef UIManifest(PluginManifest):
@@ -95,8 +102,8 @@ enamldef UIManifest(PluginManifest):
         id = 'commands'
         point = 'enaml.workbench.core.commands'
         Command:
-            id = 'inkcut.ui.open_preferences'
-            handler = open_preferences
+            id = 'inkcut.ui.open_settings'
+            handler = open_settings
 #         Command:
 #             id = 'inkcut.ui.undo'
 #             handler = undo
@@ -116,31 +123,42 @@ enamldef UIManifest(PluginManifest):
         Autostart:
             plugin_id = 'inkcut.ui'
 
-
     ExtensionPoint:
        id = DOCK_ITEM_POINT
-       description = "Add items to the dock!"#DOCK_ITEM_DESCRIPTION
+       description = "Add items to the dock!"
+
+    ExtensionPoint:
+        id = SETTINGS_PAGE_POINT
+        description = "Add pages to the settings dialog"
+
+    Extension:
+        id = 'settings'
+        point = SETTINGS_PAGE_POINT
+        SettingsPage:
+            name = tr("settings", "System")
+            plugin_id = 'inkcut.ui'
+            factory = settings_page_factory
 
     Extension:
         id = 'actions'
         point = 'enaml.workbench.ui.actions'
-#        ActionItem:
-#            path = '/settings/prefs'
-#            label = 'Preferences'
-#            command = 'inkcut.ui.open_preferences'
         MenuItem:
             path = '/settings'
-            label = QApplication.translate("settings", "Settings")
+            label = tr("settings", "Settings")
             before = 'help'
             after = 'file'
         ActionItem:
+           path = '/settings/prefs'
+           label = tr("settings", "Settings...")
+           command = 'inkcut.ui.open_settings'
+        ActionItem:
             path = '/help/about'
-            label = QApplication.translate("settings", "About")
+            label = tr("settings", "About")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/'}
         ActionItem:
             path = '/help/project'
-            label = QApplication.translate("settings", "Documentation")
+            label = tr("settings", "Documentation")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/docs/'}
         ActionItem:
@@ -150,29 +168,19 @@ enamldef UIManifest(PluginManifest):
             parameters = {'url':'https://inkcut.org/'}
         ActionItem:
             path = '/help/report'
-            label = QApplication.translate("settings", "Report issue")
+            label = tr("settings", "Report issue")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://github.com/codelv/inkcut/issues'}
         ActionItem:
             path = '/help/donate'
-            label = QApplication.translate("settings", "Donate")
+            label = tr("settings", "Donate")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/support/'}
         ActionItem:
             path = '/help/logs'
-            label = QApplication.translate("settings", "Logs")
+            label = tr("settings", "Logs")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':os.path.expanduser('~/.config/inkcut/logs/')}
-        MenuItem:
-            path = '/settings/theme'
-            label = QApplication.translate("settings", "Theme")
-        Looper:
-            iterable = available_styles()
-            ActionItem:
-                path = '/settings/theme/{}'.format(loop_item)
-                label = loop_item.replace("-", " ").title()
-                command = 'inkcut.ui.set_theme'
-                parameters = {'theme': loop_item}
 #        ActionItem:
 #            path = '/help/about'
 #            label = 'About'

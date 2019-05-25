@@ -42,9 +42,9 @@ _IMAGE_CACHE = {}
 
 
 def icon_path(name):
-    """ Load an icon from the res/icons folder using the name 
+    """ Load an icon from the res/icons folder using the name
     without the .png
-    
+
     """
     path = os.path.dirname(os.path.dirname(__file__))
     return os.path.join(path, 'res', 'icons', '%s.png' % name)
@@ -52,7 +52,7 @@ def icon_path(name):
 
 def load_image(name):
     """ Get and cache an enaml Image for the given icon name.
-    
+
     """
     path = icon_path(name)
     global _IMAGE_CACHE
@@ -140,7 +140,7 @@ def split_painter_path(path):
             finish_curve(p, params)
             params = []
 
-        # Reconstruct the path 
+        # Reconstruct the path
         if e.type == MoveToElement:
             p = QPainterPath()
             p.moveTo(e.x, e.y)
@@ -164,3 +164,9 @@ def join_painter_paths(paths):
     for p in paths:
         result.addPath(p)
     return result
+
+
+def tr(*args, **kwargs):
+    """ Alias to translate """
+    from enaml.qt.QtWidgets import QApplication
+    return QApplication.translate(*args, **kwargs)

@@ -1,0 +1,40 @@
+"""
+Copyright (c) 2019, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on May 25, 2019
+
+@author: jrm
+"""
+from enaml.layout.api import hbox, align, spacer
+from enaml.widgets.api import Container, Form, Label, CheckBox, SpinBox
+from inkcut.core.utils import tr
+
+
+enamldef PreviewSettingsPage(Container):
+    padding = 0
+    attr model
+    Form:
+        Label:
+            text = tr("settings", "Grid")
+        Container:
+            constraints = [
+                hbox(gx, gy, lb, ga),
+                align('v_center', gx, gy, lb, ga)
+            ]
+
+            CheckBox: gx:
+                text = tr("settings", "X")
+                checked := model.show_grid_x
+            CheckBox: gy:
+                text = tr("settings", "Y")
+                checked := model.show_grid_y
+            Label: lb:
+                text = tr("settings", "Alpha")
+            SpinBox: ga:
+                value := model.grid_alpha
+
+

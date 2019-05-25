@@ -1,0 +1,24 @@
+"""
+Copyright (c) 2019, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on May 25, 2019
+
+@author: jrm
+"""
+from enaml.widgets.api import Container, Form, Label, ObjectCombo
+from inkcut.core.utils import tr
+
+
+enamldef JobSettingsPage(Container):
+    padding = 0
+    attr model
+    Form:
+        Label:
+            text = tr("settings", "Default Units")
+        ObjectCombo:
+            items = list(sorted(model.get_member('units').items))
+            selected := model.units

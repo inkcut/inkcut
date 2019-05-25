@@ -9,6 +9,7 @@ Created on Dec 15, 2017
 
 @author: jrm
 """
+import re
 import sys
 from setuptools import setup, find_packages
 
@@ -18,7 +19,7 @@ install_requires = [
     'twisted',
     'enamlx',
     'pyqtgraph',
-    'qtconsole',
+    'qtconsole',  # now optional
     'pyserial>=3.4',
     'jsonpickle',
     'lxml',  # use sudo apt install libxml2-dev libxslt-dev
@@ -37,12 +38,21 @@ install_requires = [
     'pywin32; sys_platform == \'win32\''
 ]
 
+# Read version
+version = None
+with open('inkcut/__init__.py') as f:
+    for line in f:
+        m = re.search(r'version = ["\'](.+)["\']', line)
+        if m:
+            version = m.group(1)
+            break
+    assert version is not None, 'Failed to read version'
 
 setup(
     name='inkcut',
     packages=find_packages(),
     include_package_data=True,
-    version="2.0.8dev",
+    version=version,
     author="Inkcut team",
     author_email="frmdstryr@gmail.com",
     license='GPLv3',
@@ -55,5 +65,9 @@ setup(
         'console_scripts': ['inkcut = inkcut.app:main'],
     },
     install_requires=install_requires,
+    #extras_require={
+    #    # IPython console plugin
+    #    'console':  ["qtconsole"],
+    #}
 
 )

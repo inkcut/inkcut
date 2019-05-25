@@ -12,19 +12,21 @@ Created on Jul 12, 2015
 import enaml
 import pkg_resources
 from datetime import datetime
-from atom.api import Atom, Int, List, Unicode, Instance, Bool, Enum
-from inkcut.core.api import Plugin, DockItem, log
-from inkcut.core.utils import load_icon
+from atom.api import Atom, Int, List, Unicode, Instance, Bool, Enum, Dict
 from enaml.qt.q_resource_helpers import get_cached_qicon
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
 from enaml.application import timed_call
 
+from inkcut.core.api import Plugin, DockItem, log
+from inkcut.core.utils import load_icon
 from . import extensions
 
 with enaml.imports():
     from enaml.stdlib.dock_area_styles import available_styles
 
+
 ALL_STYLES = sorted(['system']+available_styles())
+
 
 class Clock(Atom):
     """ A clock so widgets can observe each field as required. """
@@ -64,6 +66,16 @@ class InkcutPlugin(Plugin):
     dock_layout = Instance(AreaLayout)
     dock_style = Enum(*reversed(ALL_STYLES)).tag(config=True)
 
+    #: Settings pages to add
+    settings_pages = List(extensions.SettingsPage)
+
+    #: Current settings page
+    settings_page = Instance(extensions.SettingsPage)
+
+    #: Internal settings models
+    settings_typemap = Dict()
+    settings_model = Instance(Atom)
+
     def start(self):
         """ Load all plugins, refresh the dock area and then
         restore state from the disk (if any).
@@ -73,6 +85,7 @@ class InkcutPlugin(Plugin):
         self.set_window_icon()
         self.load_plugins()
         self._refresh_dock_items()
+        self._refresh_settings_pages()
         super(InkcutPlugin, self).start()
 
     def load_plugins(self):
@@ -111,6 +124,9 @@ class InkcutPlugin(Plugin):
         point = workbench.get_extension_point(extensions.DOCK_ITEM_POINT)
         point.observe('extensions', self._refresh_dock_items)
 
+        point = workbench.get_extension_point(extensions.SETTINGS_PAGE_POINT)
+        point.observe('extensions', self._refresh_settings_pages)
+
     def _unbind_observers(self):
         """ Remove the observers for the plugin.
         """
@@ -119,6 +135,12 @@ class InkcutPlugin(Plugin):
         point = workbench.get_extension_point(extensions.DOCK_ITEM_POINT)
         point.unobserve('extensions', self._refresh_dock_items)
 
+        point = workbench.get_extension_point(extensions.SETTINGS_PAGE_POINT)
+        point.unobserve('extensions', self._refresh_settings_pages)
+
+    # -------------------------------------------------------------------------
+    # Dock item extension API
+    # -------------------------------------------------------------------------
     def create_new_area(self):
         """ Create the dock area
         """
@@ -199,6 +221,46 @@ class InkcutPlugin(Plugin):
             dock_bars=dockbars
         )
 
+    # -------------------------------------------------------------------------
+    # Settings page extension API
+    # -------------------------------------------------------------------------
+    def _default_settings_page(self):
+        return self.settings_pages[0]
+
+    def _observe_settings_page(self, change):
+        log.debug("Settings page: {}".format(change))
+
+    def _refresh_settings_pages(self, change=None):
+        """ Reload all SettingsPages registered by any Plugins
+
+        Any plugin can add to this list by providing a SettingsPage
+        extension in their PluginManifest.
+
+        """
+        workbench = self.workbench
+        point = workbench.get_extension_point(extensions.SETTINGS_PAGE_POINT)
+
+        settings_pages = []
+        typemap = {}
+        for extension in sorted(point.extensions, key=lambda ext: ext.rank):
+            for d in extension.get_children(extensions.SettingsPage):
+                #: Save it
+                settings_pages.append(d)
+
+                #: Update the type map
+                plugin = self.workbench.get_plugin(d.plugin_id)
+                t = type(getattr(plugin, d.model) if d.model else plugin)
+                typemap[t] = d.factory()
+
+        #: Update items
+        log.debug("Updating settings pages: {}".format(settings_pages))
+
+        self.settings_typemap = typemap
+        self.settings_pages = sorted(settings_pages, key=lambda p: p.name)
+
+    # -------------------------------------------------------------------------
+    # Utility methods
+    # -------------------------------------------------------------------------
     def set_app_name(self):
         """ Set the application name
 

@@ -10,7 +10,6 @@ Created on Jul 19, 2015
 @author: jrm
 """
 from enaml.layout.api import align, hbox, vbox,spacer
-from enaml.qt.QtWidgets import QApplication
 from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
     TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
     TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet)
@@ -20,10 +19,11 @@ from enaml.widgets.api import (CheckBox, Container, Dialog, Field, Label,
 from enaml.widgets.spin_box import SpinBox
 from enamlx.widgets.api import KeyEvent
 from inkcut.core.api import DockItem, to_unit
-from inkcut.core.utils import load_icon
+from inkcut.core.utils import load_icon, tr
+
 
 enamldef JoystickDockItem(DockItem):
-    title = QApplication.translate('control', 'Control')
+    title = tr('control', 'Control')
     name = 'joystick-item'
     attr plugin
     attr device << plugin.device
@@ -88,47 +88,47 @@ enamldef JoystickDockItem(DockItem):
                      hbox(pb10, pb2, pb3, pb4, pb7))
             ]
             Label: lblpos:
-                text = QApplication.translate("control", "Control")
+                text = tr("control", "Control")
             PushButton: pb9:
                 icon = load_icon("bullet_toggle_plus")
                 enabled << not device.busy
                 clicked :: plugin.move_head_up()
-                tool_tip = QApplication.translate("control", "Lift head up")
+                tool_tip = tr("control", "Lift head up")
             PushButton: pb10:
                 icon = load_icon("bullet_toggle_minus")
                 enabled << not device.busy
                 clicked :: plugin.move_head_down()
-                tool_tip = QApplication.translate("control", "Put head down")
+                tool_tip = tr("control", "Put head down")
             PushButton: pb5:
                 enabled << not device.busy
                 clicked :: plugin.set_origin()
                 icon = load_icon('arrow_in')
-                tool_tip = QApplication.translate("control", "Set the virtual origin")
+                tool_tip = tr("control", "Set the virtual origin")
             PushButton: pb1:
                 enabled << not device.busy
                 clicked :: plugin.move_up()
                 icon = load_icon('arrow_up')
-                tool_tip = QApplication.translate("control", "move up")
+                tool_tip = tr("control", "move up")
             PushButton: pb6:
                 enabled << not device.busy
                 clicked :: plugin.move_to_origin()
                 icon = load_icon('arrow_undo')
-                tool_tip = QApplication.translate("control", "Return to virtual origin")
+                tool_tip = tr("control", "Return to virtual origin")
             PushButton: pb2:
                 enabled << not device.busy
                 clicked :: plugin.move_left()
                 icon = load_icon('arrow_left')
-                tool_tip = QApplication.translate("control", "move left")
+                tool_tip = tr("control", "move left")
             PushButton: pb3:
                 enabled << not device.busy
                 clicked :: plugin.move_down()
                 icon = load_icon('arrow_down')
-                tool_tip = QApplication.translate("control", "move down")
+                tool_tip = tr("control", "move down")
             PushButton: pb4:
                 enabled << not device.busy
                 clicked :: plugin.move_right()
                 icon = load_icon('arrow_right')
-                tool_tip = QApplication.translate("control", "move right")
+                tool_tip = tr("control", "move right")
 
             PushButton: pb7:
                 enabled << not device.busy
@@ -144,5 +144,5 @@ enamldef JoystickDockItem(DockItem):
             PushButton: pb8:
                 enabled << not device.busy
                 icon << load_icon('arrow_out')
-                tool_tip = QApplication.translate("control", "Return to the system origin (0,0)")
+                tool_tip = tr("control", "Return to the system origin (0,0)")
                 clicked :: plugin.move_to_origin(system=True)

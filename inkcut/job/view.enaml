@@ -19,11 +19,10 @@ from enaml.widgets.api import (
 )
 from enaml.core.api import Looper
 from enaml.layout.api import hbox,vbox,spacer,align
-from enaml.qt.QtWidgets import QApplication
 from enamlx.widgets.api import (
     DoubleSpinBox, TableView, TableViewRow, TableViewItem
 )
-from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
+from inkcut.core.utils import load_icon, load_image, from_unit, to_unit, tr
 from inkcut.job.plugin import Job
 
 
@@ -45,12 +44,12 @@ enamldef GraphicDockItem(DockItem):
     attr job: Job << plugin.job
     icon = load_icon('vector')
     name = 'graphic-item'
-    title = QApplication.translate("job", "Graphic")
+    title = tr("job", "Graphic")
     Container:
         Container:
             padding = 0
             Label:
-                text = QApplication.translate("job", "Graphic Size")
+                text = tr("job", "Graphic Size")
             Form:
                 padding = 0
                 ImageView:
@@ -140,7 +139,7 @@ enamldef GraphicDockItem(DockItem):
                     minimum = 0.00001
                     maximum = 99999.9
             CheckBox:
-                text = QApplication.translate("job", "Lock aspect ratio")
+                text = tr("job", "Lock aspect ratio")
                 checked := job.lock_scale
             #CheckBox:
             #    text = 'Scale to fit'
@@ -154,7 +153,7 @@ enamldef GraphicDockItem(DockItem):
             ]
             padding = 0
             Label: hdr:
-                text = QApplication.translate("job", "Graphic Copies")
+                text = tr("job", "Graphic Copies")
             Form: form:
                 padding = 0
                 ImageView:
@@ -186,13 +185,13 @@ enamldef GraphicDockItem(DockItem):
                 icon = load_icon('shape_square_delete')
                 clicked :: job.remove_stack()
             CheckBox: cb1:
-                text = QApplication.translate("job", "Fill to save space")
+                text = tr("job", "Fill to save space")
                 checked := job.auto_copies
 
         Container:
             padding = 0
             Label:
-                text = QApplication.translate("job", "Graphic Rotation")
+                text = tr("job", "Graphic Rotation")
             Form:
                 padding = 0
                 ImageView:
@@ -213,19 +212,19 @@ enamldef GraphicDockItem(DockItem):
                     wrapping = True
                     single_step = 15
             CheckBox:
-                text = QApplication.translate("job", "Rotate to save space")
+                text = tr("job", "Rotate to save space")
                 checked := job.auto_rotate
         Container:
             padding = 0
 
             Label:
-                text = QApplication.translate("job", "Graphic Mirroring")
+                text = tr("job", "Graphic Mirroring")
             CheckBox:
-                text = QApplication.translate("job", "Mirror about x-axis")
+                text = tr("job", "Mirror about x-axis")
                 icon = load_icon('shape_flip_vertical')
                 checked := job.mirror[0]
             CheckBox:
-                text = QApplication.translate("job", "Mirror about y-axis")
+                text = tr("job", "Mirror about y-axis")
                 icon = load_icon('shape_flip_horizontal')
                 checked := job.mirror[1]
 
@@ -240,7 +239,7 @@ enamldef WeedlinesDockItem(DockItem):
         Container:
             padding = 0
             Label:
-                text = QApplication.translate("job", "Graphic Spacing")
+                text = tr("job", "Graphic Spacing")
             Form:
                 padding = 0
                 Label:
@@ -264,7 +263,7 @@ enamldef WeedlinesDockItem(DockItem):
             padding = 0
 
             Label:
-                text = QApplication.translate("job", "Plotting Order")
+                text = tr("job", "Plotting Order")
             Form:
                 padding = 0
                 ImageView:
@@ -278,20 +277,20 @@ enamldef WeedlinesDockItem(DockItem):
             padding = 0
 
             Label:
-                text = QApplication.translate("job", "Plot Weedlines")
+                text = tr("job", "Plot Weedlines")
             CheckBox:
-                text = QApplication.translate("job", "Add weedline to plot")
+                text = tr("job", "Add weedline to plot")
                 icon = load_icon('shape_group')
                 checked := job.plot_weedline
             CheckBox:
-                text = QApplication.translate("job", "Add weedline to copies")
+                text = tr("job", "Add weedline to copies")
                 icon = load_icon('shape_ungroup')
                 checked := job.copy_weedline
         Container:
             padding = 0
 
             Label:
-                text = QApplication.translate("job", "Weedline Padding")
+                text = tr("job", "Weedline Padding")
             Form:
                 padding = 0
                 ImageView:
@@ -339,7 +338,7 @@ enamldef MaterialDockItem(DockItem):
             padding = 0
 
             Label:
-                text = QApplication.translate("job", "Plot Area")
+                text = tr("job", "Plot Area")
             Form:
                 padding = 0
                 ImageView:
@@ -375,7 +374,7 @@ enamldef MaterialDockItem(DockItem):
             padding = 0
 
             Label:
-                text = QApplication.translate("job", "Plot Margins")
+                text = tr("job", "Plot Margins")
             Form:
                 padding = 0
                 ImageView:
@@ -414,7 +413,7 @@ enamldef MaterialDockItem(DockItem):
             padding = 0
 
             Label:
-                text = QApplication.translate("job", "Plot Alignment")
+                text = tr("job", "Plot Alignment")
             CheckBox:
                 text = 'Align center horizontally'
                 icon = load_icon('shape_align_center')
@@ -433,12 +432,12 @@ enamldef MaterialDockItem(DockItem):
                 align('v_center',rb2,dsb)
             ]
             Label: lbl:
-                text = QApplication.translate("job", "Plot Feeding")
+                text = tr("job", "Plot Feeding")
             RadioButton: rb1:
-                text = QApplication.translate("job", "Return to origin")
+                text = tr("job", "Return to origin")
                 checked << not job.feed_to_end
             RadioButton: rb2:
-                text = QApplication.translate("job", "Feed after")
+                text = tr("job", "Feed after")
                 checked := job.feed_to_end
             DoubleSpinBox: dsb:
                 value << to_unit(job.feed_after, plugin.units)
@@ -450,7 +449,7 @@ enamldef MaterialDockItem(DockItem):
 
 enamldef JobHistoryDockItem(DockItem):
     attr plugin
-    title = QApplication.translate("job", "Jobs")
+    title = tr("job", "Jobs")
     name = 'job-history-item'
     icon = load_icon('application_view_list')
     Container:
@@ -495,13 +494,13 @@ enamldef JobHistoryDockItem(DockItem):
                             ) if job and job.model else ""
                     Menu:
                         Action:
-                            text = QApplication.translate("job", "Open job")
+                            text = tr("job", "Open job")
                             icon = load_icon("control_equalizer_blue")
                             triggered :: plugin.job = job
                         Action:
                             separator = True
                         Action:
-                            text = QApplication.translate("job", "Send job to device")
+                            text = tr("job", "Send job to device")
                             icon = load_icon("control_repeat_blue")
                             triggered ::
                                 core = plugin.workbench.get_plugin("enaml.workbench.core")
@@ -509,7 +508,7 @@ enamldef JobHistoryDockItem(DockItem):
                         Action:
                             separator = True
                         Action:
-                            text = QApplication.translate("job", "Remove from list")
+                            text = tr("job", "Remove from list")
                             icon = load_icon("bin")
                             triggered ::
                                 if job in plugin.jobs:

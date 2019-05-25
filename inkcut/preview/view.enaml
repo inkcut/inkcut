@@ -10,54 +10,39 @@ Created on Dec 6, 2015
 @author: jrm
 """
 import textwrap
-from inkcut.core.api import DockItem, to_unit, from_unit
-from inkcut.core.utils import load_icon
-from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import Container, Menu, Action
+
+from inkcut.core.api import DockItem, to_unit, from_unit
+from inkcut.core.utils import load_icon, tr
 from .plot_view import PlotView
 
 
 enamldef PreviewDockItem(DockItem):
     #: A dock item for
-    title = QApplication.translate("preview", "Preview")
+    title = tr("preview", "Preview")
     name = 'preview-item'
     closable = False
     stretch = 3
     attr plugin #: PreviewPlugin
     attr preview << plugin.preview
+    attr job_plugin << plugin.workbench.get_plugin('inkcut.job')
     icon = load_icon('page_white_swoosh')
     Container:
         padding = 0
         PlotView: plot_view:
-            tool_tip = textwrap.dedent(""" 
+            tool_tip = textwrap.dedent("""
             The red dashed border is the device's x-y plane.
             The solid black border is the material. The dashed black border is
             the available area for use. The blue lines is the movement path.
             """).strip()
             minimum_size = (360,None)
             data := preview.plot
-            axis_scales << {'left':to_unit(1, preview.units),
-                            'bottom':to_unit(1, preview.units)}
+            grid << (plugin.show_grid_x, plugin.show_grid_y)
+            grid_alpha << plugin.grid_alpha/100.0
+            axis_scales << {'left':to_unit(1, job_plugin.units),
+                            'bottom':to_unit(1, job_plugin.units)}
             Menu:
                 context_menu = True
                 Action:
-                    text = QApplication.translate("preview", "View all")
+                    text = tr("preview", "View all")
                     triggered :: plot_view.proxy.widget.autoRange()
-
-# enamldef LiveDockItem(DockItem):
-#     #: A dock item for
-#     title = "Preview"
-#     closable = False
-#     attr model #: PlotBase
-#     Container:
-#         padding = 0
-#         PlotView: plot:
-#             minimum_size = (360,None)
-#             data := model.plot
-#             axis_scales << {'left':to_unit(1, model.units),
-#                             'bottom':to_unit(1, model.units)}
-#             Menu:
-#                 context_menu = True
-#                 Action:
-#                     text = 'View all'
-#                     triggered :: plot.proxy.widget.autoRange()

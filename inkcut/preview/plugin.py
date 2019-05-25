@@ -10,10 +10,12 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import pyqtgraph as pg
-from atom.api import List, Instance, Enum
+from atom.api import List, Instance, Enum, Bool, Range
 from enaml.qt import QtCore, QtGui
 from inkcut.core.api import Plugin, Model, unit_conversions, log
 from .plot_view import PainterPathPlotItem
+
+
 QPen = QtGui.QPen
 
 
@@ -31,11 +33,6 @@ class PreviewModel(Model):
     pen_offset = Instance(QPen)
     pen_down = Instance(QPen)
     pen_device = Instance(QPen)
-
-    units = Enum(*unit_conversions.keys())
-
-    def _default_units(self):
-        return 'in'
 
     def _default_pen_media(self):
         return pg.mkPen((128, 128, 128))
@@ -59,11 +56,11 @@ class PreviewModel(Model):
         default_items = []
         self.paths = [QtGui.QPainterPath(), QtGui.QPainterPath()]
 
-        default_items.append(PainterPathPlotItem(self.paths[0],
-                                              pen=self.pen_down))
-        default_items.append(PainterPathPlotItem(self.paths[1],
-                                              pen=self.pen_up))
-        self.plot = default_items+view_items
+        default_items.append(PainterPathPlotItem(
+            self.paths[0], pen=self.pen_down))
+        default_items.append(PainterPathPlotItem(
+            self.paths[1], pen=self.pen_up))
+        self.plot = default_items + view_items
 
     def update(self, position):
         """ Watch the position of the device as it changes. """
@@ -91,19 +88,24 @@ class PreviewPlugin(Plugin):
     #: Transform applied to all view items
     transform = Instance(QtGui.QTransform)
 
+    show_grid_x = Bool().tag(config=True)
+    show_grid_y = Bool().tag(config=True)
+    grid_alpha = Range(value=30, low=1, high=100).tag(config=True)
+
+
     def _default_transform(self):
-        """ Qt displays top to bottom so this can be used to flip it. 
-        
+        """ Qt displays top to bottom so this can be used to flip it.
+
         """
         return QtGui.QTransform.fromScale(1, -1)
 
     def set_preview(self, *items):
         """ Sets the items that will be displayed in the plot
-        
+
         Parameters
         ----------
         items: list of kwargs
-            A list of kwargs to to pass to each plot item 
+            A list of kwargs to to pass to each plot item
 
         """
         t = self.transform
@@ -116,13 +118,13 @@ class PreviewPlugin(Plugin):
     def set_live_preview(self, *items):
         """ Set the items that will be displayed in the live plot preview.
         After set, use live_preview.update(position) to update it.
-        
+
         Parameters
         ----------
         items: list of kwargs
-            A list of kwargs to to pass to each plot item 
+            A list of kwargs to to pass to each plot item
 
-        
+
         """
         view_items = [
             PainterPathPlotItem(kwargs.pop('path'), **kwargs)

@@ -17,10 +17,9 @@ from enaml.widgets.api import (
     Form, CheckBox, Container, Label, ProgressBar, PushButton, Notebook, Page, ObjectCombo,
     Action, Menu, MultilineField
 )
-from enaml.qt.QtWidgets import QApplication
 from enamlx.widgets.api import DoubleSpinBox
 from inkcut.core.api import Model, DockItem
-from inkcut.core.utils import to_unit, load_icon
+from inkcut.core.utils import to_unit, load_icon, tr
 from inkcut.preview.plot_view import PlotView
 from .plugin import DeviceConfig
 
@@ -38,10 +37,10 @@ enamldef DeviceConfigView(Container):
         tab_position = 'left'
         Page:
             closable = False
-            title = QApplication.translate("device", "Settings")
+            title = tr("device", "Settings")
             Form:
                 Label:
-                    text = QApplication.translate("device", "Speed")
+                    text = tr("device", "Speed")
                 DoubleSpinBox:
                     minimum = 0
                     value:= model.speed
@@ -50,10 +49,10 @@ enamldef DeviceConfigView(Container):
                 Label:
                     text = ""
                 CheckBox:
-                    text = QApplication.translate("device", "Enabled")
+                    text = tr("device", "Enabled")
                     checked := model.speed_enabled
                 Label:
-                    text = QApplication.translate("device", "Force")
+                    text = tr("device", "Force")
                 DoubleSpinBox:
                     minimum = 0
                     value:= model.force
@@ -62,19 +61,19 @@ enamldef DeviceConfigView(Container):
                 Label:
                     text = ""
                 CheckBox:
-                    text = QApplication.translate("device", "Enabled")
+                    text = tr("device", "Enabled")
                     checked := model.force_enabled
         Page:
             closable = False
-            title = QApplication.translate("device", "Output")
+            title = tr("device", "Output")
             Form:
                 Label:
                     text = ""
                 CheckBox:
-                    text = QApplication.translate("device", "Swap X/Y")
+                    text = tr("device", "Swap X/Y")
                     checked := model.swap_xy
                 Label:
-                    text = QApplication.translate("device", "Rotation")
+                    text = tr("device", "Rotation")
                 ObjectCombo:
                     items = list(model.get_member('rotation').items)
                     selected := model.rotation
@@ -82,7 +81,7 @@ enamldef DeviceConfigView(Container):
                     Final output rotation.
                     """).strip()
                 Label:
-                    text = QApplication.translate("device", "Scale")
+                    text = tr("device", "Scale")
                 Form:
                     Label:
                         text = "x"
@@ -111,12 +110,12 @@ enamldef DeviceConfigView(Container):
 
         Page:
             closable = False
-            title = QApplication.translate("device", "Advanced")
+            title = tr("device", "Advanced")
             Form:
                 Label:
                     pass
                 CheckBox:
-                    text = QApplication.translate("device", "Uses spooling service")
+                    text = tr("device", "Uses spooling service")
                     checked := model.spooled
                     tool_tip = textwrap.dedent("""
                     If checked this will ignore interpolation settings and speed/delay settings.
@@ -129,7 +128,7 @@ enamldef DeviceConfigView(Container):
                 CheckBox:
                     enabled << not model.spooled
                     checked := model.interpolate
-                    text = QApplication.translate("device", "Interpolate paths")
+                    text = tr("device", "Interpolate paths")
                     tool_tip = textwrap.dedent("""
                     If enabled this will break down the commands into
                     smaller steps. This enables you to pause mid job for devices using streamed
@@ -137,7 +136,7 @@ enamldef DeviceConfigView(Container):
                     devices.
                     """).strip()
                 Label:
-                    text = QApplication.translate("device", "Step size")
+                    text = tr("device", "Step size")
                     tool_tip = textwrap.dedent("""
                     Sets the step size to use when interpolation is enabled.
                     """).strip()
@@ -149,7 +148,7 @@ enamldef DeviceConfigView(Container):
                     minimum = 0.00001
                     maximum = 99999.9
                 Label:
-                    text = QApplication.translate("device", "Step time")
+                    text = tr("device", "Step time")
                     tool_tip = textwrap.dedent("""
                     Sets the time to wait before sending the next command when interpolation
                     is used.
@@ -161,7 +160,7 @@ enamldef DeviceConfigView(Container):
                     minimum = 0
                     maximum = 1000
                 Label:
-                    text = QApplication.translate("device", "Quality factor")
+                    text = tr("device", "Quality factor")
                     tool_tip = textwrap.dedent("""
                         Adjusts the quality of conversion from curves to polygons. Increasing
                         this number will improve quality (more points on each curve) at the
@@ -180,47 +179,48 @@ enamldef DeviceConfigView(Container):
             Form:
                 CheckBox:
                     checked := model.test_mode
-                    text = QApplication.translate("device", "Test mode")
+                    text = tr("device", "Test mode")
                     tool_tip = textwrap.dedent("""
                     When enabled, instead of sending data to the device this will just be printed
                     to the log. It is for debugging purposes and should not normally be used.
                     """).strip()
         Page:
-           title = QApplication.translate("device", "Job commands")
+           title = tr("device", "Job commands")
            closable = False
            Form:
                Label:
-                  text = QApplication.translate("device", "Before job")
+                  text = tr("device", "Before job")
                MultilineField:
                   text := model.commands_before
-                  tool_tip = QApplication.translate("device", "Commands here will get sent before starting a job")
+                  tool_tip = tr("device", "Commands here will get sent before starting a job")
                Label:
-                  text = QApplication.translate("device", "After job")
+                  text = tr("device", "After job")
                MultilineField:
                   text := model.commands_after
-                  tool_tip = QApplication.translate("device", "Commands here will get sent after finishing a job")
+                  tool_tip = tr("device", "Commands here will get sent after finishing a job")
         Page:
-           title = QApplication.translate("device", "Connection commands")
+           title = tr("device", "Connection commands")
            closable = False
            Form:
                Label:
-                   text = QApplication.translate("device", "After connect")
+                   text = tr("device", "After connect")
                MultilineField:
                    text := model.commands_connect
-                   tool_tip = QApplication.translate("device", "Commands here will get sent right after a connection is opened")
+                   tool_tip = tr("device", "Commands here will get sent right after a connection is opened")
                Label:
-                   text = QApplication.translate("device", "Before disconnect")
+                   text = tr("device", "Before disconnect")
                MultilineField:
                    text := model.commands_disconnect
-                   tool_tip = QApplication.translate("device", "Commands here will get sent right before a connection is closed")
+                   tool_tip = tr("device", "Commands here will get sent right before a connection is closed")
 
 
 enamldef DeviceProgressDockItem(DockItem):
-    title = QApplication.translate("device", "Live")
+    title = tr("device", "Live")
     name = "device-progress-item"
     icon = load_icon('printer')
     attr plugin
-    attr preview << plugin.workbench.get_plugin('inkcut.preview').live_preview
+    attr preview_plugin << plugin.workbench.get_plugin('inkcut.preview')
+    attr preview << preview_plugin.live_preview
     attr job_plugin << plugin.workbench.get_plugin('inkcut.job')
     attr device << plugin.device
     attr job << device.job
@@ -228,25 +228,27 @@ enamldef DeviceProgressDockItem(DockItem):
     Container:
         padding = 0
         PlotView: plot:
-            minimum_size = (540,320)
+            minimum_size = (540, 320)
             data := preview.plot
+            grid << (preview_plugin.show_grid_x, preview_plugin.show_grid_y)
+            grid_alpha << preview_plugin.grid_alpha/100.0
             axis_scales << {
-                'left': to_unit(1, preview.units),
-                'bottom': to_unit(1, preview.units)
+                'left': to_unit(1, job_plugin.units),
+                'bottom': to_unit(1, job_plugin.units)
             }
 
             Menu:
                 context_menu = True
                 Action:
-                    text = QApplication.translate("device", "Abort job")
+                    text = tr("device", "Abort job")
                     triggered :: job.info.cancelled = True
                 Action:
                     separator = True
                 Action:
-                    text = QApplication.translate("device", "View all")
+                    text = tr("device", "View all")
                     triggered :: plot.proxy.widget.autoRange()
                 Action:
-                    text = QApplication.translate("device", "Clear plot")
+                    text = tr("device", "Clear plot")
                     triggered :: plugin.reset_preview()
         Container:
             constraints = [
@@ -262,9 +264,9 @@ enamldef DeviceProgressDockItem(DockItem):
             Label: lbl2:
                 text << "Size: {}{} x {}{}".format(
                         round(to_unit(job.model.boundingRect().height(), job.info.units),2),
-                        preview.units,
+                        job_plugin.units,
                         round(to_unit(job.model.boundingRect().width(), job.info.units), 2),
-                        preview.units
+                        job_plugin.units
                     ) if job and job.model else ""
             Label: lbl3:
                 text << "Duration: {}".format(
@@ -290,12 +292,12 @@ enamldef DeviceProgressDockItem(DockItem):
             PushButton: pb1:
                 visible << device.busy
                 text = "Abort"
-                tool_tip = QApplication.translate("device", "Abort the current job")
+                tool_tip = tr("device", "Abort the current job")
                 icon = load_icon('control_stop')
                 clicked :: job.info.cancelled = True
             PushButton: pb2:
-                text << QApplication.translate("device", "Resume") if (job and job.info.paused and not job.info.cancelled) else (
-                    QApplication.translate("device", "Pause") if device.busy else QApplication.translate("device", "Start")
+                text << tr("device", "Resume") if (job and job.info.paused and not job.info.cancelled) else (
+                    tr("device", "Pause") if device.busy else tr("device", "Start")
                 )
                 icon << load_icon('control_play' if ((job and job.info.paused)
                                     or not device.busy)

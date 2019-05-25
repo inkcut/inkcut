@@ -9,12 +9,12 @@ Created on Dec 14, 2018
 
 @author: jrm
 """
-from inkcut.device.extensions import DEVICE_FILTER_POINT, DeviceFilter
 import enaml
 from enaml.core.api import Include
 from enaml.workbench.plugin_manifest import PluginManifest
 from enaml.workbench.api import Extension
-from enaml.qt.QtWidgets import QApplication
+from inkcut.core.utils import tr
+from inkcut.device.extensions import DEVICE_FILTER_POINT, DeviceFilter
 
 
 
@@ -43,25 +43,25 @@ def overcut_config_view():
 
 enamldef FiltersManifest(PluginManifest):
     """ Add new filters here or within any other plugin.
-    
+
     All filters should implement the IFilterProtocol and then
     register as an extension to the point 'inkcut.device.filters'
-    
+
     """
     id = 'inkcut.device.filters'
-    
+
     Extension:
         id = 'filters'
         point = DEVICE_FILTER_POINT
 
         DeviceFilter:
             id = 'overcut'
-            name = QApplication.translate("filters", "Overcut")
+            name = tr("filters", "Overcut")
             factory = overcut_factory
             config_view = overcut_config_view
-            
+
         DeviceFilter:
             id = 'blade-offset'
-            name = QApplication.translate("filters", "Blade Offset")
+            name = tr("filters", "Blade Offset")
             factory = blade_offset_factory
             config_view = blade_offset_config_view

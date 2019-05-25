@@ -21,10 +21,10 @@ from enaml.widgets.api import (
     CheckBox, Container, Dialog, Field, Label, PushButton, Form, Notebook,
     Page, ObjectCombo
 )
-from enaml.qt.QtWidgets import QApplication
 from .plugin import Device, DeviceConfig
 from .view import ConfigView, DeviceConfigView
 from inkcut.core.api import Model
+from inkcut.core.utils import tr
 
 
 enamldef DeviceDialog(Dialog): dialog:
@@ -44,18 +44,18 @@ enamldef DeviceDialog(Dialog): dialog:
         TaskDialogInstructionArea:
             Label:
                 style_class = 'task-dialog-instructions'
-                text = QApplication.translate("device", "Configure device")
+                text = tr("device", "Configure device")
         TaskDialogContentArea:
             Notebook: notebook:
                 tab_style = 'document'
                 Page:
-                    title = QApplication.translate("device", "General")
+                    title = tr("device", "General")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = QApplication.translate("device", "Driver")
+                                text = tr("device", "Driver")
                             ObjectCombo:
                                 items << plugin.drivers
                                 attr selected_driver << [d for d in plugin.drivers if d.id==driver.id]
@@ -64,32 +64,32 @@ enamldef DeviceDialog(Dialog): dialog:
                                 selected ::
                                     dialog.device = plugin.get_device_from_driver(change['value'])
                             Label:
-                                text = QApplication.translate("device", "Manufacturer")
+                                text = tr("device", "Manufacturer")
                             Field:
                                 enabled << cb.checked
                                 text := driver.manufacturer
                             Label:
-                                text = QApplication.translate("device", "Model")
+                                text = tr("device", "Model")
                             Field:
                                 enabled << cb.checked
                                 text := driver.model
                             Label:
-                                text = QApplication.translate("device", "Width")
+                                text = tr("device", "Width")
                             Field:
                                 enabled << cb.checked
                                 text := driver.width
                             Label:
-                                text = QApplication.translate("device", "Length")
+                                text = tr("device", "Length")
                             Field:
                                 enabled << cb.checked
                                 text := driver.length
                             CheckBox: cb:
-                                text = QApplication.translate("device", "Customize")
+                                text = tr("device", "Customize")
 
                     #Include:
                     #    objects << device.config
                 Page:
-                    title = QApplication.translate("device", "Device")
+                    title = tr("device", "Device")
                     closable = False
                     MappedView:
                         model << device.config if device else Model()
@@ -98,13 +98,13 @@ enamldef DeviceDialog(Dialog): dialog:
                             Model: ConfigView
                         } if device else {Model:ConfigView}
                 Page:
-                    title = QApplication.translate("device", "Connection")
+                    title = tr("device", "Connection")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = QApplication.translate("device", "Type")
+                                text = tr("device", "Type")
                             ObjectCombo:
                                 items << device.transports if device and device.transports else plugin.transports
                                 to_string = lambda t: t.name
@@ -136,13 +136,13 @@ enamldef DeviceDialog(Dialog): dialog:
                             } if connection else {Model: ConfigView}
 
                 Page:
-                    title = QApplication.translate("device", "Protocol")
+                    title = tr("device", "Protocol")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = QApplication.translate("device", "Language")
+                                text = tr("device", "Language")
                             ObjectCombo:
                                 items << [p for p in plugin.protocols
                                             if p.id in device.declaration.protocols
@@ -165,7 +165,7 @@ enamldef DeviceDialog(Dialog): dialog:
                                 Model: ConfigView
                             } if protocol else {Model: ConfigView}
                 Page:
-                    title = QApplication.translate("device", "Filters")
+                    title = tr("device", "Filters")
                     closable = False
                     Container:
                         padding = 0
@@ -198,7 +198,7 @@ enamldef DeviceDialog(Dialog): dialog:
                                             condition << bool(current_filter and current_filter.config)
                                             MappedView:
                                                 model << current_filter.config
-                                                typemap << {type(current_filter.config): loop_item.config_view()}                                        
+                                                typemap << {type(current_filter.config): loop_item.config_view()}
 
         TaskDialogCommandArea:
             constraints = [
@@ -206,10 +206,10 @@ enamldef DeviceDialog(Dialog): dialog:
                 align('v_center', btn_yes, btn_no),
             ]
             PushButton: btn_no:
-                text = QApplication.translate("device", "Cancel")
+                text = tr("device", "Cancel")
                 clicked :: dialog.close()
             PushButton: btn_yes:
-                text = QApplication.translate("device", "OK")
+                text = tr("device", "OK")
                 enabled << dialog.device is not None
                 clicked ::
                     dev = dialog.device

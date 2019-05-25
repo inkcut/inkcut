@@ -13,7 +13,9 @@ Created on Jul 12, 2015
 import os
 import sys
 import logging
+import platform
 import traceback
+
 
 from logging.handlers import RotatingFileHandler
 
@@ -65,6 +67,20 @@ def init_logging():
     print("Logging to {}".format(log_filename))
 
 
+def log_debug_info(log):
+    try:
+        from inkcut import version
+        log.info('Version: {}'.format(version))
+        log.info('Python: {}'.format(sys.version))
+        log.info('System: {}'.format(platform.uname()))
+        log.info('Executable: {}'.format(sys.executable))
+        log.info('Args: {}'.format(sys.argv))
+        from qtpy import QT_VERSION
+        log.info('Qt: {} Api:'.format(QT_VERSION))
+    except Exception as e:
+        log.exception(e)
+
+
 def main():
     """ Setup logging then load and run the Inkcut application. If any errors
     occur that aren't handled by the application ensure they get logged.
@@ -74,7 +90,9 @@ def main():
     log = logging.getLogger('inkcut')
     log.info('='*40)
     log.info('Inkcut launched')
+    log_debug_info(log)
     log.info('='*40)
+
     try:
         from inkcut.core.workbench import InkcutWorkbench
         workbench = InkcutWorkbench()

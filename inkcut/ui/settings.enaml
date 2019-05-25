@@ -1,0 +1,106 @@
+"""
+Copyright (c) 2019, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on May 25, 2019
+
+@author: jrm
+"""
+import re
+import sys
+if sys.platform == 'win32':
+    from enaml import winutil
+from enaml.core.api import Looper
+from enaml.layout.api import align, hbox, spacer
+from enaml.core.api import Conditional
+from enaml.stdlib.mapped_view import MappedView
+from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
+from enaml.stdlib.task_dialog import (
+    TaskDialogBody, TaskDialogCommandArea,
+    TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
+    TaskDialogIconArea, TaskDialogInstructionArea, TaskDialogStyleSheet
+)
+from enaml.widgets.api import (
+    Dialog, Label, PushButton, Form, ObjectCombo, SplitItem, Splitter,
+    Container
+)
+from enamlx.widgets.api import TreeView, TreeViewItem
+from inkcut.core.utils import tr
+
+
+enamldef SystemSettingsPage(Container):
+    padding = 0
+    attr model
+    Form:
+        Label:
+            text = tr("settings", "Theme")
+        ObjectCombo:
+            items = list(sorted(model.get_member('dock_style').items))
+            to_string = lambda it: it.replace("-", " ").title()
+            selected := model.dock_style
+
+
+enamldef SettingsDialog(Dialog): dialog:
+    title = tr("settings", "Settings")
+    initial_size = (720, 480)
+    attr plugin
+    attr event
+
+    func open_settings_page(page):
+        d = page
+        plugin.settings_page = d
+
+        # Not sure why but it needs repeated here to force an update
+        p = plugin.workbench.get_plugin(d.plugin_id)
+        settings.model = getattr(p, d.model) if p and d.model else p
+
+    TaskDialogStyleSheet:
+            pass
+    TaskDialogBody:
+        TaskDialogInstructionArea:
+            Label:
+                style_class = 'task-dialog-instructions'
+                text = tr("settings", "Settings")
+        TaskDialogDetailsArea: details:
+            visible = True
+            Splitter:
+                SplitItem:
+                    Container:
+                        padding = 0
+                        TreeView: tree:
+                            horizontal_headers = ['']
+                            horizontal_stretch = True
+                            show_root = False
+                            show_horizontal_header = False
+                            show_vertical_header = False
+                            items << plugin.settings_pages
+                            Looper:
+                                iterable << tree.items
+                                TreeViewItem:
+                                    text = loop_item.name
+                                    clicked :: open_settings_page(loop_item)
+                SplitItem:
+                    stretch = 4
+                    MappedView: settings:
+                        attr d << plugin.settings_page
+                        attr p << plugin.workbench.get_plugin(d.plugin_id)
+                        model << getattr(p, d.model) if p and d.model else p
+                        typemap << plugin.settings_typemap
+
+        TaskDialogCommandArea:
+            constraints = [
+                hbox(spacer, btn_ok, btn_no),
+                align('v_center', btn_ok, btn_no),
+            ]
+            PushButton: btn_ok:
+                text = "Ok"
+                clicked :: dialog.close()
+            PushButton: btn_no:
+                text = "Cancel"
+                clicked :: dialog.close()
+
+
+
