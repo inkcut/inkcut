@@ -21,12 +21,23 @@ from inkcut.core.utils import (
 
 class OrderHandler(object):
     name = ''
-    
+
     def order_by_func(self, job, path, sort_func):
         subpaths = sorted(split_painter_path(path), key=sort_func)
         return join_painter_paths(subpaths)
-    
+
     def order(self, job, path):
+        """ Adjust the cutting order of the job's paths.
+
+        Parameters
+        ----------
+        job: inkcut.models.Job
+            The job that is being processed. This should only be used to
+            reference settings.
+        path: QPainterPath
+            The path model to re-order.
+
+        """
         raise NotImplementedError()
 
 
@@ -75,22 +86,22 @@ class OrderMaxY(OrderHandler):
         return self.order_by_func(
             job, path, lambda p: p.boundingRect().top())
 
-    
+
 class OrderShortestPath(OrderHandler):
     """  This uses Dijkstra's algorithm to find the shortest path.
-    
+
     """
     name = 'Shortest Path'
     time_limit = 0.2  # This is in the UI thread
-    
+
     def order(self, job, path):
         """ Sort subpaths by minimizing the distances between all start
         and end points.
-        
+
         """
         subpaths = split_painter_path(path)
         log.debug("Subpath count: {}".format(len(subpaths)))
-        
+
         # Cache all start and end points
         time_limit = time()+self.time_limit
         zero = QVector2D(0, 0)
@@ -100,7 +111,7 @@ class OrderShortestPath(OrderHandler):
             end = sp.elementAt(sp.elementCount()-1)
             sp.start_point = QVector2D(start.x, start.y)
             sp.end_point = QVector2D(end.x, end.y)
-            
+
         distance = QVector2D.distanceToPoint
         original = subpaths[:]
         result = []
@@ -113,11 +124,11 @@ class OrderShortestPath(OrderHandler):
                 if d < best:
                     best = d
                     shortest = sp
-                    
+
             p = shortest.end_point
             result.append(shortest)
             subpaths.remove(shortest)
-            
+
             # time.time() is slow so limit the calls
             if time() > time_limit:
                 result.extend(subpaths)  # At least part of it is optimized
@@ -128,21 +139,21 @@ class OrderShortestPath(OrderHandler):
         log.debug("Shortest path search: Saved {} in of movement ".format(
             to_unit(d, 'in')))
         return join_painter_paths(result)
-    
+
     def subpath_move_distance(self, p, subpaths, limit=sys.maxsize):
         # Collect start and end points
         d = 0
-        
+
         # Local ref saves a lookup per iter
-        distance = QVector2D.distanceToPoint  
+        distance = QVector2D.distanceToPoint
         for sp in subpaths:
             d += distance(p, sp.start_point)
             if d > limit:
                 break  # Over the limit already abort
             p = sp.end_point
         return d
-    
-    
+
+
 def find_sublcasses(cls):
     """ Finds all known (imported) subclasses of the given class """
     cmds = []
