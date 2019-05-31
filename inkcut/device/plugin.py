@@ -288,6 +288,8 @@ class DeviceConfig(Model):
 
     #: Swap x and y axis
     swap_xy = Bool().tag(config=True)
+    mirror_y = Bool().tag(config=True)
+    mirror_x = Bool().tag(config=True)
 
     #: Final out scaling
     scale = ContainerList(Float(strict=False), default=[1, 1]).tag(config=True)
@@ -849,18 +851,31 @@ class Device(Model):
         """
         config = self.config
 
-        #: Previous point
+        # Previous point
         _p = QtCore.QPointF(self.origin[0], self.origin[1])
 
-        #: Do a final translation since Qt's y axis is reversed
-        t = QtGui.QTransform.fromScale(1, -1)
-        model = model*t
+        # Do a final translation since Qt's y axis is reversed from svg's
+        # It should now be a bbox of (x=0, y=0, width, height)
+        # this creates a copy
+        model = model * QtGui.QTransform.fromScale(1, -1)
 
-        #: Determine if interpolation should be used
+        if config.swap_xy:
+            t = QtGui.QTransform()
+            t.rotate(90)
+            model *= t
+
+        # Mirror about the center as to not disturb the start points
+        if config.mirror_x or config.mirror_y:
+            model *= QtGui.QTransform.fromScale(
+                -1 if config.mirror_x else 1, -1 if config.mirror_y else 1)
+
+        # Make sure we're always at 0, 0
+        anchor = model.boundingRect().topLeft()
+        model.translate(-anchor.x(), -anchor.y())
+
+        # Determine if interpolation should be used
         skip_interpolation = (self.connection.always_spools or config.spooled
                               or not config.interpolate)
-
-        swap_xy = config.swap_xy
 
         # speed = distance/seconds
         # So distance/speed = seconds to wait
@@ -920,8 +935,6 @@ class Device(Model):
                     #: the path interpolation is skipped entirely
                     if skip_interpolation:
                         x, y = p.x(), p.y()
-                        if swap_xy:
-                            x, y = y, x
                         yield (l, self.move, ([x, y, z],), {})
                         continue
 
@@ -944,11 +957,7 @@ class Device(Model):
                         #if d == l:
                         #    break  #: Um don't we want to send the last point??
 
-                        #: -y because Qt's axis is from top to bottom not bottom
-                        #: to top
                         x, y = sp.x(), sp.y()
-                        if swap_xy:
-                            x, y = y, x
                         yield (dl, self.move, ([x, y, z],), {})
 
                         #: When we reached the end but instead of breaking above
@@ -964,8 +973,6 @@ class Device(Model):
             #: Make sure we get the endpoint
             ep = model.currentPosition()
             x, y = ep.x(), ep.y()
-            if swap_xy:
-                x, y = y, x
             yield (0, self.move, ([x, y, 0],), {})
         except Exception as e:
             log.error("device | processing error: {}".format(
@@ -1213,10 +1220,17 @@ class DevicePlugin(Plugin):
         #: Draw the device
         device = self.device
         job = device.job
+
+        r = QtGui.QTransform()
+        if device.config.swap_xy:
+            # Rotate area to match swapped axis
+            r.rotate(90)
+            r.scale(-1, 1)
+
         if device and device.area:
             area = device.area
             view_items.append(
-                dict(path=device.transform(device.area.path*t),
+                dict(path=device.transform(device.area.path*t*r),
                      pen=plot.pen_device,
                      skip_autorange=True)
             )
@@ -1224,10 +1238,10 @@ class DevicePlugin(Plugin):
         if job and job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([
-                dict(path=device.transform(job.material.path*t),
+                dict(path=device.transform(job.material.path*t*r),
                      pen=plot.pen_media,
                      skip_autorange=True),
-                dict(path=device.transform(job.material.padding_path*t),
+                dict(path=device.transform(job.material.padding_path*t*r),
                      pen=plot.pen_media_padding, skip_autorange=True)
             ])
 

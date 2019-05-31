@@ -68,18 +68,29 @@ enamldef DeviceConfigView(Container):
             title = tr("device", "Output")
             Form:
                 Label:
-                    text = ""
-                CheckBox:
-                    text = tr("device", "Swap X/Y")
-                    checked := model.swap_xy
-                Label:
-                    text = tr("device", "Rotation")
-                ObjectCombo:
-                    items = list(model.get_member('rotation').items)
-                    selected := model.rotation
-                    tool_tip = textwrap.dedent("""
-                    Final output rotation.
-                    """).strip()
+                    text = tr("device", "Orientation")
+                Container:
+                    constraints = [
+                        hbox(cbsxy, cbmx, cbmy, spacer),
+                        align('v_center', cbsxy, cbmx, cbmy)
+                    ]
+                    CheckBox: cbsxy:
+                        text = tr("device", "Swap X/Y")
+                        checked := model.swap_xy
+                    CheckBox: cbmx:
+                        text = tr("device", "Mirror X")
+                        checked := model.mirror_x
+                    CheckBox: cbmy:
+                        text = tr("device", "Mirror Y")
+                        checked := model.mirror_y
+                #Label:
+                    #text = tr("device", "Rotation")
+                #ObjectCombo:
+                    #items = list(model.get_member('rotation').items)
+                    #selected := model.rotation
+                    #tool_tip = textwrap.dedent("""
+                    #Final output rotation.
+                    #""").strip()
                 Label:
                     text = tr("device", "Scale")
                 Form:
