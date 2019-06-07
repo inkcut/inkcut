@@ -1,0 +1,50 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2019, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on June 7, 2019
+
+@author: jrm
+"""
+import textwrap
+from inkcut.core.utils import load_icon
+from enaml.layout.api import hbox, align, spacer
+from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
+
+
+enamldef ParallelPortSettingsView(Container):
+    attr model
+    padding = 0
+
+    func selected_port(port, ports):
+        matches = [p for p in ports if p.device == port]
+        return matches[0] if matches else None
+
+    Form:
+        Label:
+            text = "Port"
+        Container:
+            padding = 0
+            constraints = [
+                hbox(cb, pb),
+                align('v_center', cb, pb)
+            ]
+            ObjectCombo: cb:
+                items << model.ports
+                selected << selected_port(model.device_path, model.ports)
+                selected ::
+                    port = change['value']
+                    if port:
+                        model.port = port.device
+                tool_tip = textwrap.dedent("""
+                List of parallel ports detected by the system. If nothing is here you
+                must install the device driver for your machine.
+                """).strip()
+            PushButton: pb:
+                text = "Refresh"
+                icon = load_icon("arrow_refresh")
+                clicked :: model.refresh()

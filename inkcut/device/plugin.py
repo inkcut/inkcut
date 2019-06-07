@@ -1029,6 +1029,7 @@ class DevicePlugin(Plugin):
             from .transports.serialport.manifest import SerialManifest
             from .transports.printer.manifest import PrinterManifest
             from .transports.disk.manifest import FileManifest
+            from .transports.parallelport.manifest import ParallelManifest
             from inkcut.device.protocols.manifest import ProtocolManifest
             from inkcut.device.drivers.manifest import DriversManifest
             from inkcut.device.filters.manifest import FiltersManifest
@@ -1037,6 +1038,7 @@ class DevicePlugin(Plugin):
             plugins.append(SerialManifest)
             plugins.append(PrinterManifest)
             plugins.append(FileManifest)
+            plugins.append(ParallelManifest)
             plugins.append(ProtocolManifest)
             plugins.append(DriversManifest)
             plugins.append(FiltersManifest)

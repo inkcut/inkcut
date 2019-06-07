@@ -1,0 +1,47 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2019, Jairus Martin.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on June 7, 2019
+
+@author: jrm
+"""
+import enaml
+from enaml.workbench.api import Extension
+from enaml.workbench.plugin_manifest import PluginManifest
+from inkcut.device.extensions import DeviceTransport, DEVICE_TRANSPORT_POINT
+
+def transport_factory(driver, declaration, protocol):
+    from .plugin import ParallelTransport, ParallelConfig
+    config = ParallelConfig(**driver.get_connection_config('parallel'))
+    return ParallelTransport(
+        declaration=declaration, protocol=protocol, config=config)
+
+
+def config_view_factory():
+    with enaml.imports():
+        from .settings import ParallelPortSettingsView
+    return ParallelPortSettingsView
+
+
+def plugin_factory():
+    from .plugin import ParallelPlugin
+    return ParallelPlugin()
+
+
+enamldef ParallelManifest(PluginManifest):
+    id = 'inkcut.device.transport.parallelport'
+    factory = plugin_factory
+    Extension:
+        id = 'transports'
+        point = DEVICE_TRANSPORT_POINT
+
+        DeviceTransport:
+            id = 'parallel'
+            name = 'Parallel Port'
+            factory = transport_factory
+            config_view = config_view_factory
