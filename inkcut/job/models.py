@@ -304,7 +304,14 @@ class Job(Model):
         if change['name'] == 'copies':
             self._desired_copies = self.copies
 
-        #try:
+        model = self.create()
+        if model:
+            self.model = model
+
+    def create(self, swap_xy=False, scale=None):
+        """ Create a path model that is rotated and scaled
+
+        """
         model = QtGui.QPainterPath()
 
         if not self.path:
@@ -338,40 +345,47 @@ class Job(Model):
         if self.plot_weedline:
             self._add_weedline(model, self.plot_weedline_padding)
 
+        # Determine padding
+        bbox = model.boundingRect()
+        if self.align_center[0]:
+            px = (self.material.width() - bbox.width())/2.0
+        else:
+            px = self.material.padding_left
+
+        if self.align_center[1]:
+            py = -(self.material.height() - bbox.height())/2.0
+        else:
+            py = -self.material.padding_bottom
+
+        # Scale and rotate
+        if scale:
+            model *= QtGui.QTransform.fromScale(*scale)
+            px, py = px*abs(scale[0]), py*abs(scale[1])
+
+        if swap_xy:
+            t = QtGui.QTransform()
+            t.rotate(90)
+            model *= t
+
         # Move to 0,0
         bbox = model.boundingRect()
         p = bbox.bottomLeft()
         tx, ty = -p.x(), -p.y()
 
-        # Center or set to padding
-        tx += ((self.material.width() -bbox.width())/2.0
-               if self.align_center[0] else self.material.padding_left)
-        ty += (-(self.material.height()-bbox.height())/2.0
-               if self.align_center[1] else -self.material.padding_bottom)
+        # If swapped, make sure padding is still correct
+        if swap_xy:
+            px, py = -py, -px
+        tx += px
+        ty += py
 
-        t = QtGui.QTransform.fromTranslate(tx, ty)
-
-        model = model * t
+        model = model * QtGui.QTransform.fromTranslate(tx, ty)
 
         end_point = (QtCore.QPointF(
             0, -self.feed_after + model.boundingRect().top())
                      if self.feed_to_end else QtCore.QPointF(0, 0))
         model.moveTo(end_point)
 
-        # Set new model
-        self.model = model#.simplified()
-
-        # Set device model
-        #self.device_model = self.device.driver.prepare_job(self)
-        #except:
-        #    # Undo the change
-        #    if 'oldvalue' in change:
-        #        setattr(change['object'],change['name'],change['oldvalue'])
-        #    raise
-        #if not self.check_bounds(self.boundingRect(),self.available_area):
-        #    raise JobError(
-        #       "Plot outside of plotting area, increase the area"
-        #       "or decrease the scale or decrease number of copies!")
+        return model
 
     def _check_bounds(self, plot, area):
         """ Checks that the width and height of plot are less than the width

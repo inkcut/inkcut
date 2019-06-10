@@ -226,13 +226,15 @@ class DeviceFilter(Model):
     #: The protocol specific config
     config = Instance(Model, ()).tag(config=True)
 
-    def apply_to_model(self, model):
+    def apply_to_model(self, model, job):
         """ Apply the filter to the model
 
         Parameters
         ----------
         model: QPainterPath
             The path model to process
+        job: inkcut.device.Job
+            The job this is coming from
 
         Returns
         -------
@@ -525,15 +527,19 @@ class Device(Model):
         log.debug("device | init {}".format(job))
         config = self.config
 
-        #: Set the speed of this device for tracking purposes
+        # Set the speed of this device for tracking purposes
         units = config.speed_units.split("/")[0]
         job.info.speed = from_unit(config.speed, units)
 
-        #: Get the internal QPainterPath "model"
-        model = job.model
+        scale = config.scale[:]
+        if config.mirror_x:
+            scale[0] *= -1 if config.mirror_x else 1
+        if config.mirror_y:
+            scale[1] *= -1 if config.mirror_y else 1
 
-        #: Transform the path to the device coordinates
-        model = self.transform(model)
+        # Get the internal QPainterPath "model" transformed to how this
+        # device outputs
+        model = job.create(swap_xy=config.swap_xy, scale=scale)
 
         if job.feed_to_end:
             #: Move the job to the new origin
@@ -859,20 +865,6 @@ class Device(Model):
         # this creates a copy
         model = model * QtGui.QTransform.fromScale(1, -1)
 
-        if config.swap_xy:
-            t = QtGui.QTransform()
-            t.rotate(90)
-            model *= t
-
-        # Mirror about the center as to not disturb the start points
-        if config.mirror_x or config.mirror_y:
-            model *= QtGui.QTransform.fromScale(
-                -1 if config.mirror_x else 1, -1 if config.mirror_y else 1)
-
-        # Make sure we're always at 0, 0
-        anchor = model.boundingRect().topLeft()
-        model.translate(-anchor.x(), -anchor.y())
-
         # Determine if interpolation should be used
         skip_interpolation = (self.connection.always_spools or config.spooled
                               or not config.interpolate)
@@ -886,7 +878,7 @@ class Device(Model):
             # Apply device filters
             for f in self.filters:
                 log.debug(" filter | Running {} on model".format(f))
-                model = f.apply_to_model(model)
+                model = f.apply_to_model(model, job=self)
 
             # Since Qt's toSubpathPolygons converts curves without accepting
             # a parameter to set the minimum distance between points on the
