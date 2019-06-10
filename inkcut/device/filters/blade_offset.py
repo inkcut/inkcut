@@ -1,34 +1,48 @@
 """
-Copyright (c) 2018, Jairus Martin.
+Copyright (c) 2018-2019, Jairus Martin.
 
 Distributed under the terms of the GPL v3 License.
 
 The full license is in the file LICENSE, distributed with this software.
 
 Created on Dec 14, 2018
+Rewrote on June 8, 2019
 
 @author: jrm
 """
-from math import sqrt, cos, radians, isinf
+from math import sqrt, cos, sin, radians, isinf, pi, isnan
 from atom.api import Float, Enum, Instance
-from inkcut.device.plugin import DeviceFilter, Model
-from inkcut.core.utils import unit_conversions
+from enaml.qt.QtCore import QPointF
 from enaml.qt.QtGui import QPainterPath, QTransform, QVector2D
+
+from inkcut.device.plugin import DeviceFilter, Model
+from inkcut.core.utils import unit_conversions, log
+
+
+# Element types
+MoveToElement = QPainterPath.MoveToElement
+LineToElement = QPainterPath.LineToElement
+CurveToElement = QPainterPath.CurveToElement
+CurveToDataElement = QPainterPath.CurveToDataElement
 
 
 IDENITY_MATRIX = QTransform.fromScale(1, 1)
 
 
+def fp(point):
+    return "({}, {})".format(round(point.x(), 3), round(point.y(), 3))
+
+
 class BladeOffsetConfig(Model):
     #: BladeOffset in user units
     offset = Float(strict=False).tag(config=True)
-    
-    #: Units for display 
+
+    #: Units for display
     offset_units = Enum(*unit_conversions.keys()).tag(config=True)
-    
-    #: Cutoff angle
-    cutoff = Float(20.0, strict=False).tag(config=True)
-    
+
+    #: If the angle is less than this, consider it continuous
+    cutoff = Float(5.0, strict=False).tag(config=True)
+
     def _default_offset_units(self):
         return 'mm'
 
@@ -36,89 +50,210 @@ class BladeOffsetConfig(Model):
 class BladeOffsetFilter(DeviceFilter):
     #: Change config
     config = Instance(BladeOffsetConfig, ()).tag(config=True)
-    
-    def apply_to_polypath(self, polypath):
-        """ Apply the filter to the polypath. It's much easier doing this
-        after conversion to polypaths.
-        
+
+    def apply_to_model(self, model, job):
+        """ Apply the filter to the path model.
+
         Parameters
         ----------
-        polypath: List of QPolygon
-            List of polygons to process
-        
+        model: QPainterPath
+            The path to process
+        job: inkcut.device.Job
+            The job this is coming from
+
         Returns
         -------
-        polypath: List of QPolygon
-            List of polygons with the filter applied
-        
+        model: QPainterPath
+            The modified path
+
         """
         d = self.config.offset
         if d <= 0:
-            return polypath
-        
-        result = []
-        for poly in polypath:
-            result.extend(self.apply_blade_offset(poly, d))
-        
-        return result
-    
-    def apply_blade_offset(self, poly, offset):
-        """ Apply blade offset to the given polygon by appending a quadratic
-        bezier to each point .
-        
+            return model
+        return self.apply_blade_offset(model, job)
+
+    def apply_blade_offset(self, path, job):
+        """ Apply blade offset to the given path.
+
         """
-        # Use a QPainterPath to track the distance in c++
-        path = QPainterPath()
-        cutoff = cos(radians(self.config.cutoff)) # Forget 
-        last = None
-        n = len(poly)
-        for i, p in enumerate(poly):
-            if i == 0:
-                path.moveTo(p)
-                last_path = QPainterPath()
-                last_path.moveTo(p)
-                last = p
-                continue
-            
-            # Move to the point
-            path.lineTo(p)
-            
-            if i+1 == n:
-                # Done
-                break
-            
-            # Get next point
-            next = poly.at(i+1)
-            
-            # Make our paths
-            last_path.lineTo(p)
-            next_path = QPainterPath()
-            next_path.moveTo(p)
-            next_path.lineTo(next)
-            
-            # Get angle between the two components
-            u, v = QVector2D(last-p), QVector2D(next-p)
-            cos_theta = QVector2D.dotProduct(u.normalized(), v.normalized())
-            
-            # If the angle is large enough to need compensation
-            if (cos_theta < cutoff and
-                    last_path.length() > offset and
-                    next_path.length() > offset):
-                # Calculate the extended point
-                t = last_path.percentAtLength(offset)
-                c1 = p+(last_path.pointAtPercent(t)-last)
-                c2 = p
-                t = next_path.percentAtLength(offset)
-                ep = next_path.pointAtPercent(t)
-                if offset > 2:
-                    # Can smooth it for larger offsets
-                    path.cubicTo(c1, c2, ep)
+        params = []
+        e = None
+        cmd = None
+        qf = getattr(job.config, 'quality_factor', 1)
+
+        # Holds the blade path
+        blade_path = QPainterPath()
+        offset_path = QPainterPath()
+
+        for i in range(path.elementCount()):
+            e = path.elementAt(i)
+
+            # Finish the previous curve (if there was one)
+            if cmd == CurveToElement and e.type != CurveToDataElement:
+                n = len(params)
+                if n == 2:
+                    self.process_quad(offset_path, blade_path, params, qf)
+                elif n == 3:
+                    self.process_cubic(offset_path, blade_path, params, qf)
                 else:
-                    # This works for small offsets < 0.5 mm 
-                    path.lineTo(c1)
-                    path.lineTo(ep)
-            
-            # Update last
-            last_path = next_path
-            last = p
-        return path.toSubpathPolygons(IDENITY_MATRIX)
+                    raise ValueError("Unexpected curve data length %s" % n)
+                params = []
+
+            # Reconstruct the path
+            if e.type == MoveToElement:
+                cmd = MoveToElement
+                self.process_move(offset_path, blade_path, [QPointF(e.x, e.y)])
+            elif e.type == LineToElement:
+                cmd = LineToElement
+                self.process_line(offset_path, blade_path, [QPointF(e.x, e.y)])
+            elif e.type == CurveToElement:
+                cmd = CurveToElement
+                params = [QPointF(e.x, e.y)]
+            elif e.type == CurveToDataElement:
+                params.append(QPointF(e.x, e.y))
+
+        # Finish the previous curve (if there was one)
+        if params and e.type != CurveToDataElement:
+            n = len(params)
+            if n == 2:
+                self.process_quad(offset_path, blade_path, params, qf)
+            elif n == 3:
+                self.process_cubic(offset_path, blade_path, params, qf)
+        return offset_path
+
+    def add_continuity_correction(self, offset_path, blade_path, point):
+        """ Adds if the upcoming angle and previous angle are not the same
+        we need to correct for that difference by "arcing back" about the
+        current blade point with a radius equal to the offset.
+
+        """
+        # Current blade position
+        cur = blade_path.currentPosition()
+
+        # Determine direction of next move
+        sp = QPainterPath()
+        sp.moveTo(cur)
+        sp.lineTo(point)
+        next_angle = sp.angleAtPercent(1)
+
+        # Direction of last move
+        angle = blade_path.angleAtPercent(1)
+
+        # If not continuous it needs corrected with an arc
+        if isnan(angle) or isnan(next_angle):
+            return
+        if abs(angle - next_angle) > self.config.cutoff:
+            r = self.config.offset
+            a = radians(next_angle)
+            dx, dy = r*cos(a), -r*sin(a)
+            po = QPointF(cur.x()+dx, cur.y()+dy)
+
+            c = offset_path.currentPosition()
+            dx, dy = po.x()-cur.x()+c.x()-cur.x(), po.y()-cur.y()+c.y()-cur.y()
+            c1 = QPointF(cur.x()+dx, cur.y()+dy)
+            offset_path.quadTo(c1, po)
+            # This works for small offsets < 0.5 mm
+            #offset_path.lineTo(po)
+
+
+    def process_move(self, offset_path, blade_path, params):
+        """ Adjust the start point of a move by the blade offset. When just
+        starting we don't know the blade angle so no correction is done.
+
+        """
+        r = self.config.offset
+        p0 = params[0]
+
+        # Get direction of last move
+        blade_path.moveTo(p0)
+        angle = blade_path.angleAtPercent(1)
+
+        if isnan(angle):
+            dx, dy = 0, r
+        else:
+            a = radians(angle)
+            dx, dy = r*cos(a), -r*sin(a)
+
+        po = QPointF(p0.x()+dx, p0.y()+dy)
+        offset_path.moveTo(po)
+
+    def process_line(self, offset_path, blade_path, params):
+        """ Correct continuity and adjust the end point of the line to end
+        at the correct spot.
+        """
+        r = self.config.offset
+        p0 = params[0]
+        self.add_continuity_correction(offset_path, blade_path, p0)
+        blade_path.lineTo(p0)  # Must be done after continuity correction!
+        angle = blade_path.angleAtPercent(1)
+
+        if isnan(angle):
+            dx, dy = 0, r
+        else:
+            a = radians(angle)
+            dx, dy = r*cos(a), -r*sin(a)
+
+        po = QPointF(p0.x()+dx, p0.y()+dy)
+        offset_path.lineTo(po)
+
+    def process_quad(self, offset_path, blade_path, params, quality):
+        """ Add offset correction to a quadratic bezier.
+        """
+        r = self.config.offset
+        p0 = blade_path.currentPosition()
+        p1, p2 = params
+        self.add_continuity_correction(offset_path, blade_path, p1)
+
+        curve = QPainterPath()
+        curve.moveTo(p0)
+        curve.quadTo(*params)
+        p = QPainterPath()
+        p.moveTo(p0)
+
+        if quality == 1:
+            polygon = curve.toSubpathPolygons(IDENITY_MATRIX)[0]
+        else:
+            m = QTransform.fromScale(quality, quality)
+            m_inv = QTransform.fromScale(1/quality, 1/quality)
+            polygon = m_inv.map(curve.toSubpathPolygons(m)[0])
+
+        for point in polygon:
+            p.lineTo(point)
+            t = curve.percentAtLength(p.length())
+            angle = curve.angleAtPercent(t)
+            a = radians(angle)
+            dx, dy = r*cos(a), -r*sin(a)
+            offset_path.lineTo(point.x()+dx, point.y()+dy)
+
+        blade_path.quadTo(*params)
+
+    def process_cubic(self, offset_path, blade_path, params, quality):
+        """ Add offset correction to a cubic bezier.
+        """
+        r = self.config.offset
+        p0 = blade_path.currentPosition()
+        p1, p2, p3 = params
+        self.add_continuity_correction(offset_path, blade_path, p1)
+
+        curve = QPainterPath()
+        curve.moveTo(p0)
+        curve.cubicTo(*params)
+        p = QPainterPath()
+        p.moveTo(p0)
+
+        if quality == 1:
+            polygon = curve.toSubpathPolygons(IDENITY_MATRIX)[0]
+        else:
+            m = QTransform.fromScale(quality, quality)
+            m_inv = QTransform.fromScale(1/quality, 1/quality)
+            polygon = m_inv.map(curve.toSubpathPolygons(m)[0])
+
+        for point in polygon:
+            p.lineTo(point)
+            t = curve.percentAtLength(p.length())
+            angle = curve.angleAtPercent(t)
+            a = radians(angle)
+            dx, dy = r*cos(a), -r*sin(a)
+            offset_path.lineTo(point.x()+dx, point.y()+dy)
+
+        blade_path.cubicTo(*params)
