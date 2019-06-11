@@ -739,12 +739,21 @@ class Device(Model):
                     try:
                         yield defer.maybeDeferred(self.connect)
 
+                        protocol = connection.protocol
+
                         #: Write startup command
                         if config.commands_before:
                             yield defer.maybeDeferred(connection.write,
                                                       config.commands_before)
 
                         self.status = "Working..."
+
+                        if config.force_enabled:
+                            yield defer.maybeDeferred(
+                                protocol.set_force, config.force)
+                        if config.speed_enabled:
+                            yield defer.maybeDeferred(
+                                protocol.set_velocity, config.speed)
 
                         #: For point in the path
                         for (d, cmd, args, kwargs) in self.process(model):
