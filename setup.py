@@ -17,7 +17,7 @@ from setuptools import setup, find_packages
 install_requires = [
     'enaml>=0.10',  # must install pyqt or pyside
     'twisted',
-    'enamlx',
+    'enamlx>=0.4.1',
     'pyqtgraph',
     'qtconsole',  # now optional
     'pyserial>=3.4',
