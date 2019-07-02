@@ -98,6 +98,7 @@ enamldef DeviceConfigView(Container):
                         text = "x"
                     DoubleSpinBox:
                         value := model.scale[0]
+                        decimals = 6
                         minimum = -9999.9
                         maximum = 9999.9
                         tool_tip = textwrap.dedent("""
@@ -110,6 +111,7 @@ enamldef DeviceConfigView(Container):
                         text = "y"
                     DoubleSpinBox:
                         value := model.scale[1]
+                        decimals = 6
                         minimum = -9999.9
                         maximum = 9999.9
                         tool_tip = textwrap.dedent("""
