@@ -212,9 +212,8 @@ enamldef DeviceDialog(Dialog): dialog:
                 clicked :: dialog.close()
             PushButton: btn_yes:
                 text = tr("device", "OK")
-                enabled << dialog.device is not None
                 clicked ::
-                    dev = dialog.device
+                    dev = dialog.device or plugin.device
                     if not dev.connection:
                         dev.connection = dev._default_connection()
                     if not dev.connection.protocol:
