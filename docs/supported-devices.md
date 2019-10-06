@@ -188,6 +188,7 @@
 |Vinyl Express       |lynx                          |Serial    |24        |Unlimited           |Yes    |
 |Vinyl Express       |lynx                          |Serial    |24        |Unlimited           |No     |
 |Vinyl Express       |pii-60                        |Serial    |24        |Unlimited           |Yes    |
+|Vinyl Express       |pii-60                        |Printer   |24        |Unlimited           |Yes    |
 |Vinyl Express       |QE60+                         |Printer   |24        |Unlimited           |Yes    |
 |Vinyl Express       |qe600                         |Serial    |24        |24                  |Yes    |
 |Vinyl Express       |R 31                          |Printer   |79        |Unlimited           |Yes    |
