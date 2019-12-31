@@ -15,7 +15,6 @@ from setuptools import setup, find_packages
 
 #: Common requirements
 install_requires = [
-    'enaml>=0.10',  # must install pyqt or pyside
     'twisted',
     'enamlx>=0.4.1',
     'pyqtgraph',
@@ -29,6 +28,10 @@ install_requires = [
 
     # Python 2:
     'faulthandler; python_version < \'3.0\'',
+    'enaml==0.10; python_version < \'3.0\'',
+
+    # Python 3
+    'enaml>=0.10; python_version > \'3.0\'',
 
     # Linux:
     'pycups; sys_platform == \'linux2\'',
