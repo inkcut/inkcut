@@ -16,7 +16,7 @@ Created on Jan 5, 2015
 """
 import re
 import math
-from math import sqrt, tan, atan, atan2, cos, acos, sin, pi
+from math import sqrt, tan, atan, atan2, cos, acos, sin, pi, radians
 from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
@@ -290,14 +290,22 @@ class QtSvgPath(QtSvgItem):
     def parsePathData(self, e):
         return e.attrib.get('d', '')
 
-    def arc(self, x1, y1, rx, ry, phi, large_arc_flag, sweep_flag, x2, y2):
+    def arc(self, x1, y1, rx, ry, phi, large_arc_flag, sweep_flag, x2o, y2o):
+
+        # handle rotated arcs as normal arcs that are transformed as a rotation
+        if phi != 0:
+            x2 = x1 + (x2o - x1)*cos(radians(phi)) + (y2o - y1)*sin(radians(phi))
+            y2 = y1 - (x2o - x1)*sin(radians(phi)) + (y2o - y1)*cos(radians(phi))
+        else:
+            x2, y2 = x2o, y2o
+
         # https://www.w3.org/TR/SVG/implnote.html F.6.6
         rx = abs(rx)
         ry = abs(ry)
 
         # https://www.w3.org/TR/SVG/implnote.html F.6.5
-        x1prime = cos(phi)*(x1 - x2)/2 + sin(phi)*(y1 - y2)/2
-        y1prime = -sin(phi)*(x1 - x2)/2 + cos(phi)*(y1 - y2)/2
+        x1prime = (x1 - x2)/2
+        y1prime = (y1 - y2)/2
 
         # https://www.w3.org/TR/SVG/implnote.html F.6.6
         lamb = (x1prime*x1prime)/(rx*rx) + (y1prime*y1prime)/(ry*ry)
@@ -309,9 +317,6 @@ class QtSvgPath(QtSvgItem):
         radicand = (rx*rx*ry*ry - rx*rx*y1prime*y1prime - ry*ry*x1prime*x1prime)
         radicand /= (rx*rx*y1prime*y1prime + ry*ry*x1prime*x1prime)
 
-        cxprime = 0
-        cyprime = 0
-
         if radicand < 0:
             radicand = 0
 
@@ -320,32 +325,40 @@ class QtSvgPath(QtSvgItem):
         cxprime = factor*rx*y1prime/ry
         cyprime = -factor*ry*x1prime/rx
 
-        cx = cxprime*cos(phi) - cyprime*sin(phi) + (x1 + x2)/2
-        cy = cxprime*sin(phi) + cyprime*cos(phi) + (y1 + y2)/2
+        cx = cxprime + (x1 + x2)/2
+        cy = cyprime + (y1 + y2)/2
 
-        if phi == 0:
-            start_theta = -atan2((y1 - cy) * rx, (x1 - cx) * ry)
+        start_theta = -atan2((y1 - cy) * rx, (x1 - cx) * ry)
 
-            start_phi = -atan2(y1 - cy, x1 - cx)
-            end_phi = -atan2(y2 - cy, x2 - cx)
+        start_phi = -atan2(y1 - cy, x1 - cx)
+        end_phi = -atan2(y2 - cy, x2 - cx)
 
-            sweep_length = end_phi - start_phi
+        sweep_length = end_phi - start_phi
 
-            if sweep_length < 0 and not sweep_flag:
-                sweep_length += 2 * pi
-            elif sweep_length > 0 and sweep_flag:
-                sweep_length -= 2 * pi
+        if sweep_length < 0 and not sweep_flag:
+            sweep_length += 2 * pi
+        elif sweep_length > 0 and sweep_flag:
+            sweep_length -= 2 * pi
 
+        if phi != 0:
+            rotarc = QtGui.QPainterPath()
+            rotarc.moveTo(x1, y1)
+            rotarc.arcTo(cx - rx, cy - ry, rx * 2, ry * 2,
+                start_theta * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
+
+            t = QtGui.QTransform()
+            t.translate(x1, y1)
+            t.rotate(phi)
+            t.translate(-x1, -y1)
+            tmp = rotarc*t
+            rotarc -= rotarc
+            rotarc += tmp
+            self.addPath(rotarc)
+
+        else:
             self.arcTo(cx - rx, cy - ry, rx * 2, ry * 2,
                        start_theta * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
-            return
 
-        # TODO rotated arcs cannot be expressed as QPainterPath arcs, so we
-        # have to approximate them. For now just skip.
-        raise NotImplementedError(
-            "This file contains paths with rotated arc "
-            "segments, which is not currently supported. "
-            "See https://github.com/codelv/inkcut/issues/45")
 
     def parse(self, e):
         d = self.parsePathData(e)
@@ -355,6 +368,7 @@ class QtSvgPath(QtSvgItem):
         for cmd, params in self.parsePath(d):
             if cmd == 'M':
                 self.moveTo(*params)
+                mx, my = params[0], params[1]
             elif cmd == 'C':
                 self.cubicTo(*params)
             elif cmd in ['L', 'H', 'V']:
@@ -364,13 +378,11 @@ class QtSvgPath(QtSvgItem):
             elif cmd == 'A':
                 x1 = self.currentPosition().x()
                 y1 = self.currentPosition().y()
-                (rx, ry, x_axis_rotation, large_arc_flag, sweep_flag,
-                 x2, y2) = params
+                (rx, ry, x_axis_rotation, large_arc_flag, sweep_flag, x2, y2) = params
+                self.arc(x1, y1, rx, ry, x_axis_rotation, large_arc_flag, sweep_flag, x2, y2)
 
-                self.arc(x1, y1, rx, ry, x_axis_rotation, large_arc_flag,
-                         sweep_flag, x2, y2)
             elif cmd == 'Z':
-                self.closeSubpath()
+                self.lineTo(mx, my)  # not self.closeSubpath() as arc() may have internal moveTo calls
 
     def pathLexer(self, d):
         """
