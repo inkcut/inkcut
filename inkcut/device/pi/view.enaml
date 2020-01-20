@@ -69,7 +69,7 @@ enamldef ConfigView(Container): view:
                         single_step = 0.001
                         maximum = 1000000.0
                 Label:
-                    tr("pi", text = "Scale")
+                    text = tr("pi", "Scale")
                 Form:
                     Label:
                         text = "x"
@@ -82,10 +82,10 @@ enamldef ConfigView(Container): view:
                         value << model.scale[1]
                         value :: model.scale[1] = change['value']
                 Label:
-                    tr("pi", text = "Registration")
+                    text = tr("pi", "Registration")
                 Form:
                     CheckBox:
-                        tr("pi", text = "Crop mark registration")
+                        text = tr("pi", "Crop mark registration")
                         checked := model.crop_mark_registration
         Page:
             closable = False
