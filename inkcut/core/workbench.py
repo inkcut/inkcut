@@ -9,6 +9,7 @@ Created on Jul 12, 2015
 
 @author: jrm
 """
+import os
 import signal
 
 #: Must be installed before enaml is imported
@@ -16,10 +17,11 @@ import enamlx
 enamlx.install()
 
 import enaml
-from atom.api import Unicode
+from atom.api import Unicode, Instance
 from enaml.qt import QT_API, QtCore, QtWidgets, QtGui
 from enaml.workbench.ui.api import UIWorkbench
 from inkcut.core.utils import log
+
 
 
 def pyside_dialog_patch():
@@ -60,6 +62,9 @@ class InkcutWorkbench(UIWorkbench):
 
     #: For error messages
     app_name = Unicode('Inkcut')
+
+    #: Save reference to the translator
+    translator = Instance(QtCore.QTranslator, ())
 
     @classmethod
     def instance(cls):
@@ -148,20 +153,35 @@ class InkcutWorkbench(UIWorkbench):
         self.register(UIManifest())
         self.register(InkcutManifest())
         #self.register(SettingsManifest())
-        #: Init the ui
+
         ui = self.get_plugin('enaml.workbench.ui')
-        ui.show_window()
 
         # Make sure ^C keeps working
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
         #: Start the core plugin
         plugin = self.get_plugin('inkcut.core')
+        self.set_language(plugin.language)
 
-        locale = QtCore.QLocale.system().name()
-        qtTranslator = QtCore.QTranslator()
-        if qtTranslator.load("inkcut/res/translations/" + locale):
-            self.application._qapp.installTranslator(qtTranslator)
-
+        ui.show_window()
         ui.start_application()
         #self.unregister('enaml.workbench.ui')
+
+    def set_language(self, language):
+        try:
+            language = getattr(QtCore.QLocale, language, 'system')
+            if isinstance(language, int):
+                locale = QtCore.QLocale(language).name()
+            elif callable(language):
+                locale = language().name()
+            else:
+                locale = QtCore.QLocale.system().name()
+            root_dir = os.path.dirname(os.path.dirname(__file__))
+            path = os.path.join(root_dir, "res", "translations", locale)
+            if self.translator.load(path):
+                log.warning("Setting locale: %s" % locale)
+                self.application._qapp.installTranslator(self.translator)
+            else:
+                log.warning("Translations not found at %s" % path)
+        except Exception as e:
+            log.exception(e)
