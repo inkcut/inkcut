@@ -163,7 +163,7 @@ enamldef UIManifest(PluginManifest):
             parameters = {'url':'https://codelv.com/projects/inkcut/docs/'}
         ActionItem:
             path = '/help/forum'
-            label = 'Forums...'
+            label = tr("settings", "Forums...")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://inkcut.org/'}
         ActionItem:

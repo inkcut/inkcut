@@ -12,7 +12,9 @@ Created on Jul 12, 2015
 import os
 import enaml
 import traceback
+from atom.api import Enum
 from inkcut.core.api import Plugin, log
+
 
 ERROR_TEMPLATE = """
 <html>
@@ -42,10 +44,22 @@ with the following error:
 </html>
 """
 
+
+ALL_TRANSLATIONS = (
+    'English',
+    'French',
+    'German',
+)
+
+
 class CorePlugin(Plugin):
+    #: Language
+    #: These should match members of the QtCore.QLocale language
+    language = Enum('system', *sorted(ALL_TRANSLATIONS)).tag(config=True)
 
     def start(self):
         self.init_logging()
+        super(CorePlugin, self).start()
         log.debug("Inkcut loaded.")
 
         #: Load the cli plugin
@@ -85,4 +99,3 @@ class CorePlugin(Plugin):
         from twisted.python.log import PythonLoggingObserver
         observer = PythonLoggingObserver()
         observer.start()
-

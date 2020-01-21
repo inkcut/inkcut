@@ -133,8 +133,8 @@ enamldef JoystickDockItem(DockItem):
             PushButton: pb7:
                 enabled << not device.busy
                 icon << load_icon('disconnect' if device.connection.connected else 'connect')
-                tool_tip << "{} the device".format('Disconnect from' if device.connection.connected
-                                                   else 'Connect to')
+                tool_tip << "{} the device".format(tr('control','Disconnect from') if device.connection.connected
+                                                   else tr('control','Connect to'))
                 clicked ::
                         if device.connection.connected:
                             device.disconnect()
