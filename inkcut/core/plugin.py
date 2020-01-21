@@ -45,14 +45,17 @@ with the following error:
 """
 
 
+ALL_TRANSLATIONS = (
+    'English',
+    'French',
+    'German',
+)
+
+
 class CorePlugin(Plugin):
     #: Language
     #: These should match members of the QtCore.QLocale language
-    language = Enum(
-        'system',
-        'English',
-        'French'
-    ).tag(config=True)
+    language = Enum('system', *sorted(ALL_TRANSLATIONS)).tag(config=True)
 
     def start(self):
         self.init_logging()
