@@ -15,7 +15,7 @@ For example on ubuntu or the raspberry pi:
 
 ```bash
 
-apt-get install python3-pip python3-pyqt5 libcups2-dev python3-pyqt5.qtsvg
+apt-get install python3-pip python3-pyqt5 python3-setuptools libcups2-dev python3-pyqt5.qtsvg
 pip3 install inkcut
 
 ```
@@ -39,7 +39,7 @@ pip3 install git+https://github.com/codelv/inkcut.git
 
 ##### OSX
 
-Install brew if you don't already have it from https://brew.sh/ 
+Install brew if you don't already have it from https://brew.sh/
 
 Next install python 3 and pyqt with
 
