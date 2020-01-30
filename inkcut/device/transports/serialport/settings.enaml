@@ -13,6 +13,7 @@ Created on Jul 12, 2015
 import textwrap
 from inkcut.core.utils import load_icon
 from enaml.layout.api import hbox, align, spacer
+from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
 
 
@@ -26,7 +27,7 @@ enamldef SerialPortSettingsView(Container):
 
     Form:
         Label:
-            text = "Port"
+            text = QApplication.translate("serialport", "Port")
         Container:
             padding = 0
             constraints = [
@@ -45,47 +46,47 @@ enamldef SerialPortSettingsView(Container):
                 must install the device driver for your machine.
                 """).strip()
             PushButton: pb:
-                text = "Refresh"
+                text = QApplication.translate("serialport", "Refresh")
                 icon = load_icon("arrow_refresh")
                 clicked :: model.refresh()
         Label:
-            text = "Baudrate"
+            text = QApplication.translate("serialport", "Baudrate")
         SpinBox:
             value := model.baudrate
             maximum = 999999999
             #step_size = 4800
             minimum = 1
         Label:
-            text = "Bytesize"
+            text = QApplication.translate("serialport", "Bytesize")
         ObjectCombo:
             items = list(model.get_member('bytesize').items)
             selected := model.bytesize
         Label:
-            text = "Parity"
+            text = QApplication.translate("serialport", "Parity")
         ObjectCombo:
             items = list(model.get_member('parity').items)
             selected := model.parity
         Label:
-            text = "Stopbits"
+            text = QApplication.translate("serialport", "Stopbits")
         ObjectCombo:
             items = list(model.get_member('stopbits').items)
             selected := model.stopbits
         Label:
-            text = "Flow control"
+            text = QApplication.translate("serialport", "Flow control")
         Container:
             constraints = [
                 hbox(rtscts, dsrdtr, xonxoff, spacer),
                 align('v_center', rtscts, dsrdtr, xonxoff)
             ]
             CheckBox: rtscts:
-                text = "RTS/CTS"
+                text = QApplication.translate("serialport", "RTS/CTS")
                 checked := model.rtscts
-                tool_tip = "Enable hardware (RTS/CTS) flow control"
+                tool_tip = QApplication.translate("serialport", "Enable hardware (RTS/CTS) flow control")
             CheckBox: dsrdtr:
-                text = "DSR/DTR"
+                text = QApplication.translate("serialport", "DSR/DTR")
                 checked := model.dsrdtr
-                tool_tip = "Enable hardware (DSR/DTR) flow control"
+                tool_tip = QApplication.translate("serialport", "Enable hardware (DSR/DTR) flow control")
             CheckBox: xonxoff:
-                text = "XON/XOFF"
+                text = QApplication.translate("serialport", "XON/XOFF")
                 checked := model.xonxoff
-                tool_tip = "Enable software flow control"
+                tool_tip = QApplication.translate("serialport", "Enable software flow control")

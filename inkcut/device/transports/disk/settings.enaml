@@ -13,6 +13,8 @@ Created on Mar 14, 2018
 from os.path import exists
 from inkcut.core.utils import load_icon
 from enaml.layout.api import hbox, align
+from enaml.qt.QtWidgets import QApplication
+
 from enaml.widgets.api import Container, Form, Label, Field, PushButton, FileDialogEx
 
 enamldef FileSettingsView(Container):
@@ -21,17 +23,17 @@ enamldef FileSettingsView(Container):
 
     Form:
         Label:
-            text = "Format"
+            text =  QApplication.translate("disk", "Format")
         Field:
             text := model.format
         Label:
-            text = "Directory"
+            text = QApplication.translate("disk", "Directory")
         Container:
             constraints = [hbox(field, browse)]
             Field: field:
                 text := model.directory
             PushButton: browse:
-                text = "Browse"
+                text = QApplication.translate("disk", "Browse")
                 clicked ::
                      #: Get the file to open
                      path = FileDialogEx.get_existing_directory(

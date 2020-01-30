@@ -6,10 +6,11 @@ Created on Jul 25, 2015
 """
 import enaml
 import traceback
+from enaml.qt.QtWidgets import QApplication
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
-from inkcut.core.utils import menu_icon, log, tr
+from inkcut.core.utils import menu_icon, log
 from .extensions import (
     DEVICE_DRIVER_POINT, DEVICE_PROTOCOL_POINT, DEVICE_TRANSPORT_POINT,
     DEVICE_FILTER_POINT
@@ -37,16 +38,16 @@ def job_start(event):
     if not job:
         job = workbench.get_plugin('inkcut.job').job
     if not job.document or not job.model:
-        workbench.message_warning("Error starting job",
-                                  "No file is open! Please open a file first.")
+        workbench.message_warning(QApplication.translate("device", "Error starting job"),
+                                  QApplication.translate("device", "No file is open! Please open a file first."))
         return
 
     plugin = workbench.get_plugin('inkcut.device')
     device = plugin.device
     if not device:
-        workbench.message_warning("Error starting job",
-                                  "No device is setup! "
-                                  "Please select Device->Setup from the menu.")
+        workbench.message_warning(QApplication.translate("device", "Error starting job"),
+                                  QApplication.translate("device","No device is setup! "
+                                  "Please select Device->Setup from the menu."))
         return
 
     try:
@@ -133,21 +134,21 @@ enamldef DeviceManifest(PluginManifest):
         point = 'enaml.workbench.ui.actions'
         MenuItem:
             path = '/device'
-            label = tr("device", "Device")
+            label = QApplication.translate("device", "Device")
             after = 'file'
             before = 'settings'
             ItemGroup:
                 id = 'device'
         ActionItem:
             path = '/device/setup'
-            label = tr("device", "Setup...")
+            label = QApplication.translate("device", "Setup...")
             shortcut = 'Ctrl+Alt+P'
             command = 'inkcut.device.setup'
             icon = menu_icon('printer')
 
         ActionItem:
             path = '/device/send'
-            label = tr("device", "Send to device")
+            label = QApplication.translate("device", "Send to device")
             shortcut = 'Ctrl+P'
             after = 'setup'
             command = 'inkcut.device.submit'

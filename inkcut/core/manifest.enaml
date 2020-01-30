@@ -12,7 +12,7 @@ Created on Dec 6, 2015
 import sys
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
-from inkcut.core.utils import tr
+from enaml.qt.QtWidgets import QApplication
 
 
 
@@ -74,7 +74,7 @@ enamldef InkcutManifest(PluginManifest):
         point = 'enaml.workbench.ui.actions'
         MenuItem:
             path = '/file'
-            label = tr("core", "File")
+            label = QApplication.translate("core", "File")
             ItemGroup:
                 id = 'user'
             ItemGroup:
@@ -82,7 +82,7 @@ enamldef InkcutManifest(PluginManifest):
 
         ActionItem:
             path = '/file/quit'
-            label = tr("core", "Quit")
+            label = QApplication.translate("core", "Quit")
             shortcut = 'Ctrl+Q'
             command = 'enaml.workbench.ui.close_window'
 
@@ -95,7 +95,7 @@ enamldef InkcutManifest(PluginManifest):
 #                id = 'settings'
         MenuItem:
             path = '/help'
-            label = tr("core", "Help")
+            label = QApplication.translate("core", "Help")
             after = 'file'
             ItemGroup:
                 id = 'help'
