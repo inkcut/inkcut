@@ -10,17 +10,18 @@ Created on Feb 2, 2019
 @author: jrm
 """
 from enaml.qt.QtCore import Qt
+from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import  (
     Container, MultilineField, Field, PushButton, ObjectCombo
 )
 from enaml.layout.api import vbox, align, hbox
 from enamlx.widgets.api import KeyEvent
 from inkcut.core.api import DockItem
-from inkcut.core.utils import load_icon, tr
+from inkcut.core.utils import load_icon
 
 
 enamldef MonitorDockItem(DockItem): view:
-    title = tr('monitor', 'Monitor')
+    title = QApplication.translate('monitor', 'Monitor')
     name = 'monitor-item'
     icon = load_icon('keyboard')
     attr plugin
@@ -130,11 +131,11 @@ enamldef MonitorDockItem(DockItem): view:
                     device.connect()
         PushButton: btn_clear:
             icon = load_icon("bin")
-            tool_tip = tr('monitor', "Clear console")
+            tool_tip = QApplication.translate('monitor', "Clear console")
             clicked :: comm_log.proxy.widget.clear()
         PushButton: btn_autoscroll:
             icon << load_icon("lock_open") if plugin.autoscroll else load_icon("lock")
-            tool_tip = tr('monitor', "Auto scroll")
+            tool_tip = QApplication.translate('monitor', "Auto scroll")
             checkable = True
             checked := plugin.autoscroll
         MultilineField: comm_log:
@@ -145,7 +146,7 @@ enamldef MonitorDockItem(DockItem): view:
         Field: to_send:
             enabled << bool(connection and connection.connected)
             placeholder << "Enter a command.." if enabled else "Disconnected... reconnect first."
-            tool_tip = tr('monitor', "Press enter to send")
+            tool_tip = QApplication.translate('monitor', "Press enter to send")
             KeyEvent:
                 keys = ['return']
                 released :: send_text()
@@ -165,6 +166,6 @@ enamldef MonitorDockItem(DockItem): view:
                                 to_send.text = plugin.history[view.history_index]
 
         PushButton: btn_send:
-            text = tr('monitor', "Send")
+            text = QApplication.translate('monitor', "Send")
             enabled << bool(connection and connection.connected)
             clicked :: send_text()

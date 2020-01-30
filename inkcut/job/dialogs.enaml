@@ -11,6 +11,7 @@ Created on Dec 16, 2017
 """
 from enaml.core.api import Conditional, Include
 from enaml.layout.api import align, hbox, spacer
+from enaml.qt.QtWidgets import QApplication
 from enaml.stdlib.mapped_view import MappedView
 from enaml.stdlib.task_dialog import (
     TaskDialogBody, TaskDialogCommandArea,
@@ -26,7 +27,7 @@ from inkcut.core.api import to_unit
 
 
 enamldef JobApprovalDialog(Dialog): dialog:
-    title = 'Approve Job'
+    title = QApplication.translate("job", "Approve Job")
     initial_size = (640, 320)
     attr plugin
     attr job: Job
@@ -39,28 +40,28 @@ enamldef JobApprovalDialog(Dialog): dialog:
         TaskDialogInstructionArea:
             Label:
                 style_class = 'task-dialog-instructions'
-                text = 'Approve job'
+                text = QApplication.translate("job", "Approve Job")
         TaskDialogContentArea:
             Label:
                 style_class = 'task-dialog-content'
-                text = "Are you sure you want to start?"
+                text = QApplication.translate("job", "Are you sure you want to start?")
             Form:
                 Label:
-                    text = "Job"
-                    tool_tip = "Name of the document"
+                    text = QApplication.translate("job", "Job")
+                    tool_tip = QApplication.translate("job", "Name of the document")
                 Label:
                     text << job.document
                 Label:
-                    text = "Duration"
-                    tool_tip = "Estimated job duration based on given speed and the job size."
+                    text = QApplication.translate("job", "Duration")
+                    tool_tip = QApplication.translate("job", "Estimated job duration based on given speed and the job size.")
                 Label:
                     text << "{} min {} sec".format(
                             int(job.info.duration.total_seconds() / 60),
                             int(job.info.duration.total_seconds() % 60),
                         )
                 Label:
-                    text = "Material"
-                    tool_tip = "Estimated material usage"
+                    text = QApplication.translate("job", "Material")
+                    tool_tip = QApplication.translate("job", "Estimated material usage")
                 Label:
                     text << "Size: {}{} x {}{}".format(
                             round(to_unit(job.model.boundingRect().height(), job.info.units),2),
@@ -69,8 +70,8 @@ enamldef JobApprovalDialog(Dialog): dialog:
                             job.info.units
                         )
 #                Label:
-#                    text = "Cost"
-#                    tool_tip = "Estimated material cost"
+#                    text = QApplication.translate("job", "Cost")
+#                    tool_tip = QApplication.translate("job", "Estimated material cost")
 #                Label:
 #                    text << "${}".format(job.model.boundingRect())
         TaskDialogCommandArea:
@@ -79,15 +80,15 @@ enamldef JobApprovalDialog(Dialog): dialog:
                 align('v_center', cbx, btn_yes, btn_no),
             ]
             CheckBox: cbx:
-                text = "Don't ask again"
+                text = QApplication.translate("job", "Don't ask again")
                 checked := job.info.auto_approve
             PushButton: btn_no:
-                text = "Cancel"
+                text = QApplication.translate("job", "Cancel")
                 clicked ::
                     job.info.status = 'cancelled'
                     dialog.close()
             PushButton: btn_yes:
-                text = "Start"
+                text = QApplication.translate("job", "Start")
                 clicked ::
                     job.info.status = 'approved'
                     dialog.close()

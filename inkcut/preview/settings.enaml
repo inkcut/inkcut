@@ -11,7 +11,7 @@ Created on May 25, 2019
 """
 from enaml.layout.api import hbox, align, spacer
 from enaml.widgets.api import Container, Form, Label, CheckBox, SpinBox
-from inkcut.core.utils import tr
+from enaml.qt.QtWidgets import QApplication
 
 
 enamldef PreviewSettingsPage(Container):
@@ -19,7 +19,7 @@ enamldef PreviewSettingsPage(Container):
     attr model
     Form:
         Label:
-            text = tr("settings", "Grid")
+            text = QApplication.translate("settings", "Grid")
         Container:
             constraints = [
                 hbox(gx, gy, lb, ga),
@@ -27,13 +27,13 @@ enamldef PreviewSettingsPage(Container):
             ]
 
             CheckBox: gx:
-                text = tr("settings", "X")
+                text = QApplication.translate("settings", "X")
                 checked := model.show_grid_x
             CheckBox: gy:
-                text = tr("settings", "Y")
+                text = QApplication.translate("settings", "Y")
                 checked := model.show_grid_y
             Label: lb:
-                text = tr("settings", "Alpha")
+                text = QApplication.translate("settings", "Alpha")
             SpinBox: ga:
                 value := model.grid_alpha
 

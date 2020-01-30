@@ -10,10 +10,11 @@ Created on Dec 14, 2018
 
 @author: jrm
 """
+from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import Form, Container, Label, CheckBox
 from enamlx.widgets.api import DoubleSpinBox
 
-from inkcut.core.utils import from_unit, to_unit, tr
+from inkcut.core.utils import from_unit, to_unit
 
 
 enamldef OvercutConfigView(Container):
@@ -21,9 +22,9 @@ enamldef OvercutConfigView(Container):
     padding = 0
     Form:
         Label:
-            text = tr("filters", "Overcut")
+            text = QApplication.translate("filters", "Overcut")
         DoubleSpinBox:
-            tool_tip = tr("filters", "Set to 0 to disable")
+            tool_tip = QApplication.translate("filters", "Set to 0 to disable")
             suffix << " "+model.overcut_units
             value << to_unit(model.overcut, model.overcut_units)
             value ::
@@ -35,18 +36,18 @@ enamldef BladeOffsetConfigView(Container):
     padding = 0
     Form:
         Label:
-            text = tr("filters", "Blade Offset")
+            text = QApplication.translate("filters", "Blade Offset")
         DoubleSpinBox:
-            tool_tip = tr("filters", "Set to 0 to disable")
+            tool_tip = QApplication.translate("filters", "Set to 0 to disable")
             minimum = 0.0
             suffix << " "+model.offset_units
             value << to_unit(model.offset, model.offset_units)
             value ::
                 model.offset = from_unit(change['value'], model.offset_units)
         Label:
-            text = tr("filters", "Cutoff angle")
+            text = QApplication.translate("filters", "Cutoff angle")
         DoubleSpinBox:
-            tool_tip = tr("filters", "Angle at minimum angle that must be met to apply compensation")
+            tool_tip = QApplication.translate("filters", "Angle at minimum angle that must be met to apply compensation")
             minimum = 0.0
             maximum = 90.0
             value := model.cutoff

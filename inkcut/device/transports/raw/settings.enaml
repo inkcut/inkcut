@@ -11,6 +11,7 @@ Created on Feb 2, 2019
 @author: jrm
 """
 from inkcut.core.utils import load_icon
+from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import Container, Form, Label, Field, ObjectCombo
 
 
@@ -19,11 +20,11 @@ enamldef RawFdSettingsView(Container):
     padding = 0
     Form:
         Label:
-            text = "Device path"
+            text =  QApplication.translate("raw", "Device path")
         Field:
             text := model.device_path
         Label:
-            text = "Open mode"
+            text = QApplication.translate("raw", "Open mode")
         ObjectCombo:
             items << list(model.get_member('mode').items)
             selected := model.mode

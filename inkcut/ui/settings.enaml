@@ -28,7 +28,7 @@ from enaml.widgets.api import (
     Container
 )
 from enamlx.widgets.api import TreeView, TreeViewItem
-from inkcut.core.utils import tr
+from enaml.qt.QtWidgets import QApplication
 
 
 enamldef SystemSettingsPage(Container):
@@ -37,13 +37,13 @@ enamldef SystemSettingsPage(Container):
     attr core = model.workbench.get_plugin('inkcut.core')
     Form:
         Label:
-            text = tr("settings", "Theme")
+            text = QApplication.translate("settings", "Theme")
         ObjectCombo:
             items = list(sorted(model.get_member('dock_style').items))
             to_string = lambda it: it.replace("-", " ").title()
             selected := model.dock_style
         Label:
-            text = tr("settings", "Language")
+            text = QApplication.translate("settings", "Language")
         ObjectCombo:
             items = list(sorted(core.get_member('language').items))
             to_string = lambda it: it.replace("-", " ").title()
@@ -51,11 +51,11 @@ enamldef SystemSettingsPage(Container):
         Label:
             text = ""
         Label:
-            text = tr("settings", "You must restart for this to apply!")
+            text = QApplication.translate("settings", "You must restart for this to apply!")
 
 
 enamldef SettingsDialog(Dialog): dialog:
-    title = tr("settings", "Settings")
+    title = QApplication.translate("settings", "Settings")
     initial_size = (720, 480)
     attr plugin
     attr event
@@ -74,7 +74,7 @@ enamldef SettingsDialog(Dialog): dialog:
         TaskDialogInstructionArea:
             Label:
                 style_class = 'task-dialog-instructions'
-                text = tr("settings", "Settings")
+                text = QApplication.translate("settings", "Settings")
         TaskDialogDetailsArea: details:
             visible = True
             Splitter:
