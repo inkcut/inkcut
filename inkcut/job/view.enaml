@@ -223,11 +223,11 @@ enamldef GraphicDockItem(DockItem):
             CheckBox:
                 text = QApplication.translate("job", "Mirror about x-axis")
                 icon = load_icon('shape_flip_vertical')
-                checked := job.mirror[0]
+                checked := job.mirror[1]
             CheckBox:
                 text = QApplication.translate("job", "Mirror about y-axis")
                 icon = load_icon('shape_flip_horizontal')
-                checked := job.mirror[1]
+                checked := job.mirror[0]
 
 
 enamldef WeedlinesDockItem(DockItem):
