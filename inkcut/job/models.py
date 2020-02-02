@@ -510,25 +510,29 @@ class Job(Model):
         """ Add a complete stack or fill the row
 
         """
-        copies_left = self.stack_size[0]-(self.copies % self.stack_size[0])
+        stack_size = self.stack_size[0]
+        if stack_size == 0:
+            self.copies += 1
+            return # Don't divide by 0
+        copies_left = stack_size - (self.copies % stack_size)
         if copies_left == 0: # Add full stack
-            self.copies = self.copies + self.stack_size[0]
+            self.copies += stack_size
         else: # Fill stack
-            self.copies = self.copies+copies_left
+            self.copies += copies_left
 
     def remove_stack(self):
         """ Remove a complete stack or the rest of the row
 
         """
-        if self.copies <= self.stack_size[0]:
+        stack_size = self.stack_size[0]
+        if stack_size == 0 or self.copies <= stack_size:
             self.copies = 1
             return
-
-        copies_left = self.copies % self.stack_size[0]
+        copies_left = self.copies % stack_size
         if copies_left == 0: # Add full stack
-            self.copies = self.copies - self.stack_size[0]
+            self.copies -= stack_size
         else:  # Fill stack
-            self.copies = self.copies - copies_left
+            self.copies -= copies_left
 
     def clone(self):
         """ Return a cloned instance of this object
