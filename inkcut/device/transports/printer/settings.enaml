@@ -14,7 +14,6 @@ import textwrap
 from inkcut.core.utils import load_icon
 from enaml.layout.api import hbox, align
 from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
-from inkcut.core.utils import tr
 
 enamldef PrinterSettingsView(Container):
     attr model
@@ -41,6 +40,6 @@ enamldef PrinterSettingsView(Container):
                 must install the device driver for your machine.
                 """).strip()
             PushButton: pb:
-                text = tr("settings", "Refresh")
+                text = "Refresh"
                 icon = load_icon("arrow_refresh")
                 clicked :: model.refresh()

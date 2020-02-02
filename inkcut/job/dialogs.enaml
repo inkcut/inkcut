@@ -23,10 +23,10 @@ from enaml.widgets.api import (
 )
 from .plugin import Job
 from inkcut.core.api import to_unit
-from inkcut.core.utils import tr
+
 
 enamldef JobApprovalDialog(Dialog): dialog:
-    title = tr('job','Approve Job')
+    title = 'Approve Job'
     initial_size = (640, 320)
     attr plugin
     attr job: Job
@@ -39,28 +39,28 @@ enamldef JobApprovalDialog(Dialog): dialog:
         TaskDialogInstructionArea:
             Label:
                 style_class = 'task-dialog-instructions'
-                text = tr('job','Approve Job')
+                text = 'Approve job'
         TaskDialogContentArea:
             Label:
                 style_class = 'task-dialog-content'
-                text = tr('job',"Are you sure you want to start?")
+                text = "Are you sure you want to start?"
             Form:
                 Label:
-                    text = tr('job','Job')
+                    text = "Job"
                     tool_tip = "Name of the document"
                 Label:
                     text << job.document
                 Label:
-                    text = tr('job','Duration')
-                    tool_tip = tr('job',"Estimated job duration based on given speed and the job size.")
+                    text = "Duration"
+                    tool_tip = "Estimated job duration based on given speed and the job size."
                 Label:
                     text << "{} min {} sec".format(
                             int(job.info.duration.total_seconds() / 60),
                             int(job.info.duration.total_seconds() % 60),
                         )
                 Label:
-                    text = tr('job','Material')
-                    tool_tip = tr('job',"Estimated material usage")
+                    text = "Material"
+                    tool_tip = "Estimated material usage"
                 Label:
                     text << "Size: {}{} x {}{}".format(
                             round(to_unit(job.model.boundingRect().height(), job.info.units),2),
@@ -69,8 +69,8 @@ enamldef JobApprovalDialog(Dialog): dialog:
                             job.info.units
                         )
 #                Label:
-#                    text = tr('job',"Cost")
-#                    tool_tip = tr('job',"Estimated material cost")
+#                    text = "Cost"
+#                    tool_tip = "Estimated material cost"
 #                Label:
 #                    text << "${}".format(job.model.boundingRect())
         TaskDialogCommandArea:
@@ -79,15 +79,15 @@ enamldef JobApprovalDialog(Dialog): dialog:
                 align('v_center', cbx, btn_yes, btn_no),
             ]
             CheckBox: cbx:
-                text = tr('job',"Don't ask again")
+                text = "Don't ask again"
                 checked := job.info.auto_approve
             PushButton: btn_no:
-                text = tr('job',"Cancel")
+                text = "Cancel"
                 clicked ::
                     job.info.status = 'cancelled'
                     dialog.close()
             PushButton: btn_yes:
-                text = tr('job',"Start")
+                text = "Start"
                 clicked ::
                     job.info.status = 'approved'
                     dialog.close()

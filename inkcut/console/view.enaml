@@ -12,10 +12,11 @@ Created on Dec 10, 2015
 from enaml.widgets.api import  Container
 from enaml.widgets.api import IPythonConsole
 from inkcut.core.api import DockItem
-from inkcut.core.utils import load_icon, tr
+from inkcut.core.utils import load_icon
+
 
 enamldef ConsoleDockItem(DockItem):
-    title = tr("job", "Console")
+    title = 'Console'
     name = 'console-item'
     attr plugin
     icon = load_icon('application_xp_terminal')
