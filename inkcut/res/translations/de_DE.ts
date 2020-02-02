@@ -214,7 +214,7 @@
     </message>
     <message>
         <source>After job</source>
-        <translation>Nach JobAprès la tâche</translation>
+        <translation>Nach Job</translation>
     </message>
     <message>
         <source>Commands here will get sent after finishing a job</source>
@@ -517,51 +517,51 @@
     <name>pi</name>
     <message>
         <source>Enable pin</source>
-        <translation>Activer pin</translation>
+        <translation>Enable Pin</translation>
     </message>
     <message>
         <source>Direction pin</source>
-        <translation>Pin direction</translation>
+        <translation>Direction Pin</translation>
     </message>
     <message>
         <source>Step pulse pin</source>
-        <translation>Step pulse pin</translation>
+        <translation>Step Pulse Pin</translation>
     </message>
     <message>
         <source>Config</source>
-        <translation>Réglages</translation>
+        <translation>Konfiguration</translation>
     </message>
     <message>
         <source>Step delay</source>
-        <translation>Temps de pause</translation>
+        <translation>Step Delay</translation>
     </message>
     <message>
         <source>Pinouts</source>
-        <translation>Pin de sortie</translation>
+        <translation>Pinouts</translation>
     </message>
     <message>
         <source>Stepper motor pinout</source>
-        <translation>Stepper motor pinout</translation>
+        <translation>Schrittmotor Pinout</translation>
     </message>
     <message>
         <source>Servo pinout</source>
-        <translation>Servo pinout</translation>
+        <translation>Servomotor Pinout</translation>
     </message>
     <message>
         <source>De-bounce timeout</source>
-        <translation>De-bounce timeout</translation>
+        <translation>De-bounce timDämpfung Zeitüberschreibungeout</translation>
     </message>
     <message>
         <source>Scale</source>
-        <translation>Echelle</translation>
+        <translation>Skalierung</translation>
     </message>
     <message>
         <source>Registration</source>
-        <translation></translation>
+        <translation>Registrierung</translation>
     </message>
     <message>
         <source>Crop mark registration</source>
-        <translation></translation>
+        <translation>Schnittmarkenregistrierung</translation>
     </message>
 </context>
 <context>
