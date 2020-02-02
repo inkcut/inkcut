@@ -21,7 +21,7 @@ Inkcut, Plot HPGL directly from Inkscape.
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
    MA 02110-1301, USA.
 """
-
+import os
 import inkex
 from subprocess import Popen, PIPE
 from shutil import copy2
@@ -35,7 +35,7 @@ def contains_text(nodes):
     return False
 
 def convert_objects_to_paths(file, document):
-    tempfile = inkex.os.path.splitext(file)[0] + "-prepare.svg"
+    tempfile = os.path.splitext(file)[0] + "-prepare.svg"
     # tempfile is needed here only because we want to force the extension to be .svg
     # so that we can open and close it silently
     copy2(file, tempfile)

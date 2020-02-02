@@ -12,6 +12,7 @@ Created on June 7, 2019
 """
 import textwrap
 from inkcut.core.utils import load_icon
+from enaml.qt.QtWidgets import QApplication
 from enaml.layout.api import hbox, align, spacer
 from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
 
@@ -26,7 +27,7 @@ enamldef ParallelPortSettingsView(Container):
 
     Form:
         Label:
-            text = "Port"
+            text = QApplication.translate("parallelport", "Port")
         Container:
             padding = 0
             constraints = [
@@ -39,12 +40,12 @@ enamldef ParallelPortSettingsView(Container):
                 selected ::
                     port = change['value']
                     if port:
-                        model.port = port.device
+                        model.device_path = port.device
                 tool_tip = textwrap.dedent("""
                 List of parallel ports detected by the system. If nothing is here you
                 must install the device driver for your machine.
                 """).strip()
             PushButton: pb:
-                text = "Refresh"
+                text = QApplication.translate("parallelport", "Refresh")
                 icon = load_icon("arrow_refresh")
                 clicked :: model.refresh()

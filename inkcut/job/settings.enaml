@@ -10,7 +10,7 @@ Created on May 25, 2019
 @author: jrm
 """
 from enaml.widgets.api import Container, Form, Label, ObjectCombo
-from inkcut.core.utils import tr
+from enaml.qt.QtWidgets import QApplication
 
 
 enamldef JobSettingsPage(Container):
@@ -18,7 +18,7 @@ enamldef JobSettingsPage(Container):
     attr model
     Form:
         Label:
-            text = tr("settings", "Default Units")
+            text = QApplication.translate("settings", "Default Units")
         ObjectCombo:
             items = list(sorted(model.get_member('units').items))
             selected := model.units

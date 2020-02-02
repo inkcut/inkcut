@@ -23,8 +23,8 @@ from enaml.workbench.ui.api import (
 from inkcut.ui.extensions import (
     DOCK_ITEM_POINT, SETTINGS_PAGE_POINT, SettingsPage
 )
-from inkcut.core.utils import menu_icon, tr
-
+from inkcut.core.utils import menu_icon
+from enaml.qt.QtWidgets import QApplication
 
 def plugin_factory():
     from inkcut.ui.plugin import InkcutPlugin
@@ -135,7 +135,7 @@ enamldef UIManifest(PluginManifest):
         id = 'settings'
         point = SETTINGS_PAGE_POINT
         SettingsPage:
-            name = tr("settings", "System")
+            name = QApplication.translate("settings", "System")
             plugin_id = 'inkcut.ui'
             factory = settings_page_factory
 
@@ -144,57 +144,56 @@ enamldef UIManifest(PluginManifest):
         point = 'enaml.workbench.ui.actions'
         MenuItem:
             path = '/settings'
-            label = tr("settings", "Settings")
+            label = QApplication.translate("settings", "Settings")
             before = 'help'
             after = 'file'
         ActionItem:
            path = '/settings/prefs'
-           label = tr("settings", "Settings...")
+           label = QApplication.translate("settings", "Settings...")
            command = 'inkcut.ui.open_settings'
         ActionItem:
             path = '/help/about'
-            label = tr("settings", "About")
+            label = QApplication.translate("settings", "About")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/'}
         ActionItem:
             path = '/help/project'
-            label = tr("settings", "Documentation")
+            label = QApplication.translate("settings", "Documentation")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/docs/'}
         ActionItem:
             path = '/help/forum'
-            label = tr("settings", "Forums...")
+            label = QApplication.translate("settings", "Forums")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://inkcut.org/'}
         ActionItem:
             path = '/help/report'
-            label = tr("settings", "Report issue")
+            label = QApplication.translate("settings", "Report issue")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://github.com/codelv/inkcut/issues'}
         ActionItem:
             path = '/help/donate'
-            label = tr("settings", "Donate")
+            label = QApplication.translate("settings", "Donate")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':'https://codelv.com/projects/inkcut/support/'}
         ActionItem:
             path = '/help/logs'
-            label = tr("settings", "Logs")
+            label = QApplication.translate("settings", "Logs")
             command = 'inkcut.ui.open_webpage'
             parameters = {'url':os.path.expanduser('~/.config/inkcut/logs/')}
 #        ActionItem:
 #            path = '/help/about'
-#            label = 'About'
+#            label = QApplication.translate("settings", "About")
 #            command = 'inkcut.ui.about_inkcut'
-
 #         ActionItem:
 #             path = '/edit/undo'
-#             label = 'Undo'
+#             label = QApplication.translate("settings", "Undo")
 #             shortcut = 'Ctrl+Z'
 #             icon = menu_icon('arrow_undo')
 #             command = 'inkcut.ui.undo'
 #         ActionItem:
 #             path = '/edit/redo'
-#             label = 'Redo'
+#             label = QApplication.translate("settings", "Redo")
 #             shortcut = 'Ctrl+Y'
 #             icon = menu_icon('arrow_redo')
 #             command = 'inkcut.ui.redo'

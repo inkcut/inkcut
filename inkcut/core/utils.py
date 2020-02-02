@@ -164,9 +164,3 @@ def join_painter_paths(paths):
     for p in paths:
         result.addPath(p)
     return result
-
-
-def tr(*args, **kwargs):
-    """ Alias to translate """
-    from enaml.qt.QtWidgets import QApplication
-    return QApplication.translate(*args, **kwargs)

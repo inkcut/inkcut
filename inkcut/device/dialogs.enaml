@@ -24,7 +24,7 @@ from enaml.widgets.api import (
 from .plugin import Device, DeviceConfig
 from .view import ConfigView, DeviceConfigView
 from inkcut.core.api import Model
-from inkcut.core.utils import tr
+from enaml.qt.QtWidgets import QApplication
 
 
 enamldef DeviceDialog(Dialog): dialog:
@@ -44,18 +44,18 @@ enamldef DeviceDialog(Dialog): dialog:
         TaskDialogInstructionArea:
             Label:
                 style_class = 'task-dialog-instructions'
-                text = tr("device", "Configure device")
+                text = QApplication.translate("device", "Configure device")
         TaskDialogContentArea:
             Notebook: notebook:
                 tab_style = 'document'
                 Page:
-                    title = tr("device", "General")
+                    title = QApplication.translate("device", "General")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = tr("device", "Driver")
+                                text = QApplication.translate("device", "Driver")
                             ObjectCombo:
                                 items << plugin.drivers
                                 attr selected_driver << [d for d in plugin.drivers if d.id==driver.id]
@@ -64,32 +64,32 @@ enamldef DeviceDialog(Dialog): dialog:
                                 selected ::
                                     dialog.device = plugin.get_device_from_driver(change['value'])
                             Label:
-                                text = tr("device", "Manufacturer")
+                                text = QApplication.translate("device", "Manufacturer")
                             Field:
                                 enabled << cb.checked
                                 text := driver.manufacturer
                             Label:
-                                text = tr("device", "Model")
+                                text = QApplication.translate("device", "Model")
                             Field:
                                 enabled << cb.checked
                                 text := driver.model
                             Label:
-                                text = tr("device", "Width")
+                                text = QApplication.translate("device", "Width")
                             Field:
                                 enabled << cb.checked
                                 text := driver.width
                             Label:
-                                text = tr("device", "Length")
+                                text = QApplication.translate("device", "Length")
                             Field:
                                 enabled << cb.checked
                                 text := driver.length
                             CheckBox: cb:
-                                text = tr("device", "Customize")
+                                text = QApplication.translate("device", "Customize")
 
                     #Include:
                     #    objects << device.config
                 Page:
-                    title = tr("device", "Device")
+                    title = QApplication.translate("device", "Device")
                     closable = False
                     MappedView:
                         model << device.config if device else Model()
@@ -98,13 +98,13 @@ enamldef DeviceDialog(Dialog): dialog:
                             Model: ConfigView
                         } if device else {Model:ConfigView}
                 Page:
-                    title = tr("device", "Connection")
+                    title = QApplication.translate("device", "Connection")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = tr("device", "Type")
+                                text = QApplication.translate("device", "Type")
                             ObjectCombo:
                                 items << sorted(
                                     device.transports if device and device.transports else plugin.transports,
@@ -138,13 +138,13 @@ enamldef DeviceDialog(Dialog): dialog:
                             } if connection else {Model: ConfigView}
 
                 Page:
-                    title = tr("device", "Protocol")
+                    title = QApplication.translate("device", "Protocol")
                     closable = False
                     Container:
                         padding = 0
                         Form:
                             Label:
-                                text = tr("device", "Language")
+                                text = QApplication.translate("device", "Language")
                             ObjectCombo:
                                 items << [p for p in plugin.protocols
                                             if p.id in device.declaration.protocols
@@ -167,7 +167,7 @@ enamldef DeviceDialog(Dialog): dialog:
                                 Model: ConfigView
                             } if protocol else {Model: ConfigView}
                 Page:
-                    title = tr("device", "Filters")
+                    title = QApplication.translate("device", "Filters")
                     closable = False
                     Container:
                         padding = 0
@@ -208,10 +208,10 @@ enamldef DeviceDialog(Dialog): dialog:
                 align('v_center', btn_yes, btn_no),
             ]
             PushButton: btn_no:
-                text = tr("device", "Cancel")
+                text = QApplication.translate("device", "Cancel")
                 clicked :: dialog.close()
             PushButton: btn_yes:
-                text = tr("device", "OK")
+                text = QApplication.translate("device", "OK")
                 clicked ::
                     dev = dialog.device or plugin.device
                     if not dev.connection:

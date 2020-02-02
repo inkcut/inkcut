@@ -13,7 +13,8 @@ import enaml
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
-from inkcut.core.utils import menu_icon, tr
+from inkcut.core.utils import menu_icon
+from enaml.qt.QtWidgets import QApplication
 from inkcut.ui.extensions import (
     DockItem, DOCK_ITEM_POINT, SettingsPage, SETTINGS_PAGE_POINT
 )
@@ -65,6 +66,6 @@ enamldef PreviewManifest(PluginManifest):
         id = 'settings'
         point = SETTINGS_PAGE_POINT
         SettingsPage:
-            name = tr("settings", "Preview")
+            name = QApplication.translate("settings", "Preview")
             plugin_id = 'inkcut.preview'
             factory = settings_page_factory

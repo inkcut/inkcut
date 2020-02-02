@@ -11,15 +11,17 @@ Created on Dec 6, 2015
 """
 import textwrap
 from enaml.widgets.api import Container, Menu, Action
+from enaml.qt.QtWidgets import QApplication
 
 from inkcut.core.api import DockItem, to_unit, from_unit
-from inkcut.core.utils import load_icon, tr
+from inkcut.core.utils import load_icon
+
 from .plot_view import PlotView
 
 
 enamldef PreviewDockItem(DockItem):
     #: A dock item for
-    title = tr("preview", "Preview")
+    title = QApplication.translate("preview", "Preview")
     name = 'preview-item'
     closable = False
     stretch = 3
@@ -44,5 +46,5 @@ enamldef PreviewDockItem(DockItem):
             Menu:
                 context_menu = True
                 Action:
-                    text = tr("preview", "View all")
+                    text = QApplication.translate("preview", "View all")
                     triggered :: plot_view.proxy.widget.autoRange()

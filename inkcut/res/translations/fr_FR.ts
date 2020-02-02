@@ -82,7 +82,7 @@
     </message>
     <message>
         <source>Setup...</source>
-        <translation>Réglages</translation>
+        <translation>Réglages...</translation>
     </message>
     <message>
         <source>Configure device</source>
@@ -170,7 +170,7 @@
     </message>
     <message>
         <source>Rotation</source>
-        <translation>Rotation</translation>
+        <translation type="vanished">Rotation</translation>
     </message>
     <message>
         <source>Scale</source>
@@ -271,6 +271,42 @@
     <message>
         <source>Start</source>
         <translation>Démarrer</translation>
+    </message>
+    <message>
+        <source>Error starting job</source>
+        <translation>Impossible de lancer la tâche</translation>
+    </message>
+    <message>
+        <source>No file is open! Please open a file first.</source>
+        <translation>Aucun fichier ouvert ! Ouvrez un fichier.</translation>
+    </message>
+    <message>
+        <source>No device is setup! Please select Device-&gt;Setup from the menu.</source>
+        <translation>Aucun périphérique configuré ! Sélectionnez en un depuis le menu Machines &gt; Réglages.</translation>
+    </message>
+    <message>
+        <source>No configuration available.</source>
+        <translation>Pas de configuration disponible.</translation>
+    </message>
+    <message>
+        <source>Orientation</source>
+        <translation>Orientation</translation>
+    </message>
+    <message>
+        <source>Swap X/Y</source>
+        <translation>Inverser X/Y</translation>
+    </message>
+    <message>
+        <source>Mirror X</source>
+        <translation>Mirroir selon X</translation>
+    </message>
+    <message>
+        <source>Mirror Y</source>
+        <translation>Mirroir selin Y</translation>
+    </message>
+    <message>
+        <source>Quality factor</source>
+        <translation>Facteur de qualité</translation>
     </message>
 </context>
 <context>
@@ -402,6 +438,54 @@
         <source>Graphic Copies</source>
         <translation>Copie du dessin</translation>
     </message>
+    <message>
+        <source>Approve Job</source>
+        <translation>Accepter la tâche</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to start?</source>
+        <translation>Etes vous sûr de vouloir démarrer ?</translation>
+    </message>
+    <message>
+        <source>Job</source>
+        <translation>Taĉhe</translation>
+    </message>
+    <message>
+        <source>Name of the document</source>
+        <translation>Nom du document</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation>Durée</translation>
+    </message>
+    <message>
+        <source>Estimated job duration based on given speed and the job size.</source>
+        <translation>Durée du document d&apos;après la vitesse et la taille du document.</translation>
+    </message>
+    <message>
+        <source>Material</source>
+        <translation>Matière</translation>
+    </message>
+    <message>
+        <source>Estimated material usage</source>
+        <translation>Utilisation estimée de la matière</translation>
+    </message>
+    <message>
+        <source>Don&apos;t ask again</source>
+        <translation>Ne pas demander à nouveau</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Annuler</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Démarrer</translation>
+    </message>
+    <message>
+        <source>Weedlines</source>
+        <translation>Lignes de découpe</translation>
+    </message>
 </context>
 <context>
     <name>pi</name>
@@ -440,6 +524,18 @@
     <message>
         <source>De-bounce timeout</source>
         <translation>De-bounce timeout</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>Echelle</translation>
+    </message>
+    <message>
+        <source>Registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop mark registration</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -489,6 +585,54 @@
     <message>
         <source>Theme</source>
         <translation>Thème</translation>
+    </message>
+    <message>
+        <source>Job</source>
+        <translation>Tâche</translation>
+    </message>
+    <message>
+        <source>Default Units</source>
+        <translation>Unité par défaut</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>Prévisualisation</translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation>Grille</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation>X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation>Y</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>Alpha</translation>
+    </message>
+    <message>
+        <source>System</source>
+        <translation>Système</translation>
+    </message>
+    <message>
+        <source>Settings...</source>
+        <translation>Réglages...</translation>
+    </message>
+    <message>
+        <source>Forums</source>
+        <translation>Forum</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Langue</translation>
+    </message>
+    <message>
+        <source>You must restart for this to apply!</source>
+        <translation>Vous devez redémarrer pour appliquer ce changement !</translation>
     </message>
 </context>
 </TS>
