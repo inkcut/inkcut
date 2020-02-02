@@ -310,6 +310,21 @@
     </message>
 </context>
 <context>
+    <name>disk</name>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>Verzeichnis</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Durchsuchen</translation>
+    </message>
+</context>
+<context>
     <name>filters</name>
     <message>
         <source>Blade Offset</source>
@@ -488,6 +503,17 @@
     </message>
 </context>
 <context>
+    <name>parallelport</name>
+    <message>
+        <source>Port</source>
+        <translation>Port</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Aktualisieren</translation>
+    </message>
+</context>
+<context>
     <name>pi</name>
     <message>
         <source>Enable pin</source>
@@ -554,6 +580,72 @@
     <message>
         <source>Mode</source>
         <translation>Modus</translation>
+    </message>
+</context>
+<context>
+    <name>raw</name>
+    <message>
+        <source>Device path</source>
+        <translation>Gerätepfad</translation>
+    </message>
+    <message>
+        <source>Open mode</source>
+        <translation>Zugriffsmodus</translation>
+    </message>
+</context>
+<context>
+    <name>serialport</name>
+    <message>
+        <source>Port</source>
+        <translation>Port</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Aktualisieren</translation>
+    </message>
+    <message>
+        <source>Baudrate</source>
+        <translation>Baudrate</translation>
+    </message>
+    <message>
+        <source>Bytesize</source>
+        <translation>Byte Größe</translation>
+    </message>
+    <message>
+        <source>Parity</source>
+        <translation>Parität</translation>
+    </message>
+    <message>
+        <source>Stopbits</source>
+        <translation>Stop Bits</translation>
+    </message>
+    <message>
+        <source>Flow control</source>
+        <translation>Flusssteuerung</translation>
+    </message>
+    <message>
+        <source>RTS/CTS</source>
+        <translation>RTS/CTS</translation>
+    </message>
+    <message>
+        <source>Enable hardware (RTS/CTS) flow control</source>
+        <translation>Aktiviere Flusssteuerung durch Hardware (RTS/CTS)</translation>
+    </message>
+    <message>
+        <source>DSR/DTR</source>
+        <translation>DSR/DTR</translation>
+    </message>
+    <message>
+        <source>Enable hardware (DSR/DTR) flow control</source>
+        <translation>Aktiviere Flusssteuerung durch Hardware (DSR/DTR)</translation>
+    </message>
+    <message>
+        <source>XON/XOFF</source>
+        <translation>XON/XOFF</translation>
+    </message>
+    <message>
+        <source>Enable software flow control</source>
+        <translation>Aktiviere Flusssteuerung durch Software</translation>
     </message>
 </context>
 <context>
