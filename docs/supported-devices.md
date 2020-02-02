@@ -132,6 +132,8 @@
 |Roland              |pnc960                        |Serial    |61        |Unlimited           |Yes    |
 |Roland              |R series 2                    |Serial    |31        |Unlimited           |Yes    |
 |Roland              |Roland DXY 980A               |Serial    |40        |30                  |No     |
+|Roland              |SV-12                         |Printer   |31        |Unlimited           |Yes    |
+|Roland              |SV-15                         |Printer   |34        |Unlimited           |Yes    |
 |Roland              |SX-12                         |Printer   |31        |Unlimited           |No     |
 |Roland              |SX-15                         |Serial    |34        |100                 |No     |
 |Roland              |Versacamm SP-300              |Printer   |76        |Unlimited           |No     |
