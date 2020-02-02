@@ -16,7 +16,7 @@ from inkcut.core.api import DockItem
 from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import (
     Container, Label, ImageView, SpinBox, CheckBox, PushButton, RadioButton,
-    Form, ComboBox, Menu, Action
+    Form, ObjectCombo, Menu, Action
 )
 from enaml.core.api import Looper
 from enaml.layout.api import hbox,vbox,spacer,align
@@ -244,7 +244,7 @@ enamldef WeedlinesDockItem(DockItem):
             Form:
                 padding = 0
                 Label:
-                    text = "Row"
+                    text = QApplication.translate("job", "Row")
                 DoubleSpinBox:
                     value << to_unit(job.copy_spacing[0], plugin.units)
                     value :: try_update_setting(plugin, self, job.copy_spacing, 0, change)
@@ -252,7 +252,7 @@ enamldef WeedlinesDockItem(DockItem):
                     maximum = 99999.9
                     single_step = 0.1
                 Label:
-                    text = "Col"
+                    text = QApplication.translate("job", "Col")
                 DoubleSpinBox:
                     value << to_unit(job.copy_spacing[1], plugin.units)
                     value :: try_update_setting(plugin, self, job.copy_spacing, 1, change)
@@ -269,10 +269,10 @@ enamldef WeedlinesDockItem(DockItem):
                 padding = 0
                 ImageView:
                     image = load_image('chart_line')
-                ComboBox:
+                ObjectCombo:
                     items = list(job.__class__.order.items)
-                    index << job.__class__.order.items.index(job.order)
-                    index :: job.order = job.__class__.order.items[change['value']]
+                    to_string = lambda it: QApplication.translate("job", it)
+                    selected := job.order
                     hug_width = 'ignore' # Expanding
         Container:
             padding = 0
@@ -416,11 +416,11 @@ enamldef MaterialDockItem(DockItem):
             Label:
                 text = QApplication.translate("job", "Plot Alignment")
             CheckBox:
-                text = 'Align center horizontally'
+                text = QApplication.translate("job", 'Align center horizontally')
                 icon = load_icon('shape_align_center')
                 checked := job.align_center[0]
             CheckBox:
-                text = 'Align center vertically'
+                text = QApplication.translate("job", 'Align center vertically')
                 icon = load_icon('shape_align_middle')
                 checked := job.align_center[1]
 

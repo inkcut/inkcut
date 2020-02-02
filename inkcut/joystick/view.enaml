@@ -49,7 +49,7 @@ enamldef JoystickDockItem(DockItem):
             padding = 0
             Form:
                 Label:
-                    text = 'Device'
+                    text = QApplication.translate('control', 'Device')
                 ObjectCombo:
                     items << device_plugin.devices or [device] if device else []
                     to_string << lambda d: "{} @ {} ({})".format(
@@ -64,22 +64,24 @@ enamldef JoystickDockItem(DockItem):
                             device_plugin.device = dev
 
                 Label:
-                    text = 'Step'
+                    text = QApplication.translate('control', 'Step')
                 SpinBox:
                     maximum = 1000000000
                     single_step = 10
                     value := plugin.rate
                 Label:
-                    text = "Status"
+                    text = QApplication.translate('control', "Status")
                 Label:
-                    text << 'Position: (x=%0.3f x y=%0.3f z=%s) Origin: (x=%0.3f, y=%0.3f)  %s' % (
+                    text << '%s: (x=%0.3f x y=%0.3f z=%s) %s: (x=%0.3f, y=%0.3f)  %s' % (
+                        QApplication.translate('control', 'Position'),
                         device.position[0],
                         device.position[1],
                         device.position[2],
+                        QApplication.translate('control', 'Origin'),
                         device.origin[0],
                         device.origin[1],
-                        'busy' if device.busy else 'idle'
-                        )
+                        QApplication.translate('control', 'busy' if device.busy else 'idle')
+                    )
 #
 
         Container: directions:
