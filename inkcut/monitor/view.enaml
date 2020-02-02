@@ -123,7 +123,7 @@ enamldef MonitorDockItem(DockItem): view:
         PushButton: btn_open:
             #text << "Close" if opened else "Open"
             icon << load_icon("disconnect" if connection and connection.connected else "connect")
-            tool_tip << "Connected. Click to disconnect" if connection and connection.connected else "Disconnected. Click to Connect"
+            tool_tip << tr('monitor',"Connected. Click to disconnect") if connection and connection.connected else tr('monitor',"Disconnected. Click to Connect")
             clicked ::
                 if connection and connection.connected:
                     device.disconnect()
@@ -145,7 +145,7 @@ enamldef MonitorDockItem(DockItem): view:
                 widget.document().setMaximumBlockCount(5000)
         Field: to_send:
             enabled << bool(connection and connection.connected)
-            placeholder << "Enter a command.." if enabled else "Disconnected... reconnect first."
+            placeholder << QApplication.translate('monitor',"Enter a command..") if enabled else QApplication.translate('monitor',"Disconnected... reconnect first.")
             tool_tip = QApplication.translate('monitor', "Press enter to send")
             KeyEvent:
                 keys = ['return']

@@ -244,7 +244,7 @@ enamldef WeedlinesDockItem(DockItem):
             Form:
                 padding = 0
                 Label:
-                    text = "Row"
+                    text = tr("job", "Row")
                 DoubleSpinBox:
                     value << to_unit(job.copy_spacing[0], plugin.units)
                     value :: try_update_setting(plugin, self, job.copy_spacing, 0, change)
@@ -252,7 +252,7 @@ enamldef WeedlinesDockItem(DockItem):
                     maximum = 99999.9
                     single_step = 0.1
                 Label:
-                    text = "Col"
+                    text = tr("job", "Col")
                 DoubleSpinBox:
                     value << to_unit(job.copy_spacing[1], plugin.units)
                     value :: try_update_setting(plugin, self, job.copy_spacing, 1, change)
@@ -331,7 +331,7 @@ enamldef WeedlinesDockItem(DockItem):
 enamldef MaterialDockItem(DockItem):
     attr plugin
     attr job: Job << plugin.job
-    title = "Material"
+    title = tr("job", "Material")
     name = "material-item"
     icon = load_icon('layers')
     Container:
@@ -416,11 +416,11 @@ enamldef MaterialDockItem(DockItem):
             Label:
                 text = QApplication.translate("job", "Plot Alignment")
             CheckBox:
-                text = 'Align center horizontally'
+                text = tr("job", 'Align center horizontally')
                 icon = load_icon('shape_align_center')
                 checked := job.align_center[0]
             CheckBox:
-                text = 'Align center vertically'
+                text =  tr("job", 'Align center vertically')
                 icon = load_icon('shape_align_middle')
                 checked := job.align_center[1]
 
@@ -456,7 +456,7 @@ enamldef JobHistoryDockItem(DockItem):
     Container:
         padding = 0
         TableView: table:
-            horizontal_headers = ['Date', 'Document', 'Count', 'Duration', 'Status', 'Copies', 'Rotation', 'Size', 'Material' ]
+            horizontal_headers = [tr('job','Date'), tr('job','Document'), tr('job','Count'), tr('job','Duration'), tr('job','Status'), tr('job','Copies'), tr('job','Rotation'), tr('job','Size'), tr('job','Material') ]
             horizontal_stretch = True
             resize_mode = 'resize_to_contents'
             items << plugin.jobs

@@ -24,9 +24,10 @@ from enaml.widgets.api import (
 )
 from .plugin import Job
 from inkcut.core.api import to_unit
-
+from inkcut.core.utils import tr
 
 enamldef JobApprovalDialog(Dialog): dialog:
+
     title = QApplication.translate("job", "Approve Job")
     initial_size = (640, 320)
     attr plugin
@@ -40,6 +41,7 @@ enamldef JobApprovalDialog(Dialog): dialog:
         TaskDialogInstructionArea:
             Label:
                 style_class = 'task-dialog-instructions'
+
                 text = QApplication.translate("job", "Approve Job")
         TaskDialogContentArea:
             Label:
@@ -54,14 +56,17 @@ enamldef JobApprovalDialog(Dialog): dialog:
                 Label:
                     text = QApplication.translate("job", "Duration")
                     tool_tip = QApplication.translate("job", "Estimated job duration based on given speed and the job size.")
+
                 Label:
                     text << "{} min {} sec".format(
                             int(job.info.duration.total_seconds() / 60),
                             int(job.info.duration.total_seconds() % 60),
                         )
                 Label:
+
                     text = QApplication.translate("job", "Material")
                     tool_tip = QApplication.translate("job", "Estimated material usage")
+
                 Label:
                     text << "Size: {}{} x {}{}".format(
                             round(to_unit(job.model.boundingRect().height(), job.info.units),2),
@@ -70,6 +75,7 @@ enamldef JobApprovalDialog(Dialog): dialog:
                             job.info.units
                         )
 #                Label:
+
 #                    text = QApplication.translate("job", "Cost")
 #                    tool_tip = QApplication.translate("job", "Estimated material cost")
 #                Label:
@@ -80,14 +86,17 @@ enamldef JobApprovalDialog(Dialog): dialog:
                 align('v_center', cbx, btn_yes, btn_no),
             ]
             CheckBox: cbx:
+
                 text = QApplication.translate("job", "Don't ask again")
                 checked := job.info.auto_approve
             PushButton: btn_no:
                 text = QApplication.translate("job", "Cancel")
+
                 clicked ::
                     job.info.status = 'cancelled'
                     dialog.close()
             PushButton: btn_yes:
+
                 text = QApplication.translate("job", "Start")
                 clicked ::
                     job.info.status = 'approved'

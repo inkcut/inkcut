@@ -185,7 +185,7 @@ enamldef DeviceDialog(Dialog): dialog:
                                         padding = 0
                                         Form:
                                             CheckBox:
-                                                text = 'Enabled'
+                                                text = tr("device", "Enabled")
                                                 checked << bool(matching_filters)
                                                 checked ::
                                                     if change['value']:
