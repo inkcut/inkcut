@@ -24,7 +24,7 @@ Inkcut, Plot HPGL directly from Inkscape.
 import os
 import sys
 import inkex
-inkex.localize()
+inkex.localization.localize()
 import subprocess
 from inkcut import contains_text, convert_objects_to_paths
 
@@ -41,13 +41,13 @@ class InkscapeInkcutPlugin(inkex.Effect):
         """ Like cut but requires no selection and does no validation for
         text nodes.
         """
-        nodes = self.selected
+        nodes = self.svg.selected
         if not len(nodes):
             inkex.errormsg("There were no paths were selected.")
             return
 
         document = self.document
-        if contains_text(self.selected.values()):
+        if contains_text(self.svg.selected.values()):
             document = convert_objects_to_paths(self.args[-1], self.document)
 
         #: If running from source
@@ -68,6 +68,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
         p.stdin.write(inkex.etree.tostring(document))
         p.stdin.close()
 
-# Create effect instance and apply it.
-effect = InkscapeInkcutPlugin()
-effect.affect()
+
+if __name__ == '__main__':
+    InkscapeInkcutPlugin().run()
+

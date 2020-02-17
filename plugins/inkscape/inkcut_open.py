@@ -24,7 +24,7 @@ Inkcut, Plot HPGL directly from Inkscape.
 import os
 import sys
 import inkex
-inkex.localize()
+inkex.localization.localize()
 import subprocess
 
 from inkcut import convert_objects_to_paths
@@ -50,7 +50,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
         else:
             cmd = ['inkcut']
 
-        document = convert_objects_to_paths(self.args[-1], self.document)
+        document = convert_objects_to_paths(self.options.input_file, self.document)
 
         cmd += ['open', '-']
         p = subprocess.Popen(cmd,
@@ -61,6 +61,6 @@ class InkscapeInkcutPlugin(inkex.Effect):
         p.stdin.write(inkex.etree.tostring(document))
         p.stdin.close()
 
-# Create effect instance and apply it.
-effect = InkscapeInkcutPlugin()
-effect.affect()
+
+if __name__ == '__main__':
+    InkscapeInkcutPlugin().run()

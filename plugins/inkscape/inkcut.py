@@ -23,6 +23,7 @@ Inkcut, Plot HPGL directly from Inkscape.
 """
 import os
 import inkex
+from lxml import etree
 from subprocess import Popen, PIPE
 from shutil import copy2
 from distutils.spawn import find_executable
@@ -54,6 +55,6 @@ def convert_objects_to_paths(file, document):
         inkex.errormsg(err)
         return document.getroot()
     else:
-        return inkex.etree.parse(tempfile).getroot()
+        return etree.parse(tempfile).getroot()
 
 
