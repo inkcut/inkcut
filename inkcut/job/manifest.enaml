@@ -48,6 +48,9 @@ def open_document(event):
     if path:
         try:
             plugin.open_document(path, nodes=event.parameters.get('nodes'))
+            #nuclear call because I have no clue to do only refresh for my layers DockItem
+            workbench.get_plugin("inkcut.ui")._refresh_dock_items()
+
         except JobError as e:
             workbench.message_critical(
                 title="Error opening document",
@@ -122,6 +125,12 @@ def job_history_dock_item_factory():
     return JobHistoryDockItem
 
 
+def layers_dock_item_factory():
+    with enaml.imports():
+        from .view import LayersDockItem
+    return LayersDockItem
+
+
 def settings_page_factory():
     with enaml.imports():
         from .settings import JobSettingsPage
@@ -186,6 +195,10 @@ enamldef JobManifest(PluginManifest):
         DockItem:
             plugin_id = 'inkcut.job'
             factory = weedlines_dock_item_factory
+            layout = 'left'
+        DockItem:
+            plugin_id = 'inkcut.job'
+            factory = layers_dock_item_factory
             layout = 'left'
         DockItem:
             plugin_id = 'inkcut.job'

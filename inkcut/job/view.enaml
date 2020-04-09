@@ -16,15 +16,16 @@ from inkcut.core.api import DockItem
 from enaml.qt.QtWidgets import QApplication
 from enaml.widgets.api import (
     Container, Label, ImageView, SpinBox, CheckBox, PushButton, RadioButton,
-    Form, ObjectCombo, Menu, Action
+    Form, ObjectCombo, Menu, Action, GroupBox
 )
-from enaml.core.api import Looper
+from enaml.core.api import Looper,Conditional
 from enaml.layout.api import hbox,vbox,spacer,align
 from enamlx.widgets.api import (
     DoubleSpinBox, TableView, TableViewRow, TableViewItem
 )
 from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
 from inkcut.job.plugin import Job
+from inkcut.core.layers import layers
 
 
 def try_update_setting(plugin, view, field, index, change, title="Does not fit"):
@@ -327,6 +328,42 @@ enamldef WeedlinesDockItem(DockItem):
                     maximum = 99999.9
                     single_step = 0.1
 
+enamldef LayersDockItem(DockItem):
+    attr plugin
+    attr job: Job << plugin.job
+    title = QApplication.translate("job", "Layers")
+    name = 'layers-item'
+    icon = load_icon('layers')
+    Container:
+        Label:
+            text = "Liste des layers"
+        Looper:
+            iterable << layers
+            Conditional:
+                condition = loop.item.loaded
+                GroupBox:
+                    padding = 0
+                    CheckBox: cb:
+                        text = loop.item.name
+                        checked = loop.item.enabled
+                        checked >> loop.item.enabled
+                        toggled :: job.update_document()
+                    Form:
+                        visible := cb.checked
+                        Label:
+                            text= "dX"
+                        DoubleSpinBox:
+                            value := loop.item.offsetX
+                            minimum = -9999
+                            maximum = 9999
+                            single_step = 10
+                        Label:
+                            text = "dY"
+                        DoubleSpinBox:
+                            value := loop.item.offsetY
+                            minimum = -9999
+                            maximum = 9999
+                            single_step = 10
 
 enamldef MaterialDockItem(DockItem):
     attr plugin
