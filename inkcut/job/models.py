@@ -21,7 +21,7 @@ from atom.api import (
 from contextlib import contextmanager
 from enaml.qt import QtCore, QtGui
 from inkcut.core.api import Model, AreaBase
-from inkcut.core.svg import QtSvgDoc
+from inkcut.core.svg import QtSvgDoc, QtSvgScanLayers
 from inkcut.core.utils import split_painter_path
 
 from . import ordering
@@ -215,6 +215,12 @@ class Job(Model):
             #: startup
             self.path = QtSvgDoc(sys.stdin, **self.document_kwargs)
         elif self.document and os.path.exists(self.document):
+            QtSvgScanLayers(self.document)
+            self.path = QtSvgDoc(self.document, **self.document_kwargs)
+
+    def update_document(self):
+        """ for now, not working for reading from command stdin """
+        if self.document != '-':
             self.path = QtSvgDoc(self.document, **self.document_kwargs)
 
     def _create_copy(self):
