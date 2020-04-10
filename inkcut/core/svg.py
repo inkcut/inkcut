@@ -20,6 +20,7 @@ from math import sqrt, tan, atan, atan2, cos, acos, sin, pi, radians
 from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
+from atom.api import Atom, Unicode, Range, Bool, Float
 
 ElementType = QtGui.QPainterPath.ElementType
 EtreeElement = etree._Element
@@ -61,13 +62,13 @@ EtreeElement = etree._Element
             -use mouse to move layers
 """
 Layers = []             # list of layers discovered
-class Layer:
-    name = ''           # displayed name
-    loaded = False      # the xml for this layer is loaded or not
-    enabled = True      # when loaded, use it or not
-    ofssetX = 0
-    offsetY = 0
-    #rotate  = 0
+class Layer(Atom):
+    name = Unicode()           # displayed name
+    loaded = Bool(False)      # the xml for this layer is loaded or not
+    enabled = Bool(True)      # when loaded, use it or not
+    offsetX = Float().tag(config=True)
+    offsetY = Float()
+    #rotate  = Range()
 
 
 class QtSvgItem(QtGui.QPainterPath):
