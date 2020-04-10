@@ -25,7 +25,7 @@ from enamlx.widgets.api import (
 )
 from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
 from inkcut.job.plugin import Job
-from inkcut.core.layers import layers
+from inkcut.core.svg import Layers
 
 
 def try_update_setting(plugin, view, field, index, change, title="Does not fit"):
@@ -338,7 +338,7 @@ enamldef LayersDockItem(DockItem):
         Label:
             text = "Liste des layers"
         Looper:
-            iterable << layers
+            iterable << Layers
             Conditional:
                 condition = loop.item.loaded
                 GroupBox:

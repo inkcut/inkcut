@@ -20,10 +20,54 @@ from math import sqrt, tan, atan, atan2, cos, acos, sin, pi, radians
 from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
-from inkcut.core.layers import layers, Layer
 
 ElementType = QtGui.QPainterPath.ElementType
 EtreeElement = etree._Element
+
+# -----------------------------------------------------------------------------
+# SVG Layers filtering
+# -----------------------------------------------------------------------------
+
+"""   Inkscape
+
+    inkscape uses the group tag (G) for describing a layer
+
+    <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="coupe"
+     style="display:inline"
+     transform="translate(0,-87)"
+     sodipodi:insensitive="true">
+    >
+
+    attribute name "inkscape:" is translated to
+            if e.get ("{http://www.inkscape.org/namespaces/inkscape}groupmode") == "layer":
+
+
+    Loading a document is too step.
+    -find Layer definitions and mark them load=False when not "display:inline".
+     eg, Layers not visible in Inkscape are skipped
+    -load the actual data and ignore layers marked not enabled
+
+    A specific DockItem lists all the layer's definition
+    and reload the doc when necessary
+
+    TODO:
+            -rotate the layer to facilitate rearangements
+            by inserting/modifying the transform attached to the group
+            (usefull for painting mask layers)
+            -one color / layer
+            -use mouse to move layers
+"""
+Layers = []             # list of layers discovered
+class Layer:
+    name = ''           # displayed name
+    loaded = False      # the xml for this layer is loaded or not
+    enabled = True      # when loaded, use it or not
+    ofssetX = 0
+    offsetY = 0
+    #rotate  = 0
 
 
 class QtSvgItem(QtGui.QPainterPath):
@@ -646,7 +690,7 @@ class QtSvgG(QtSvgItem):
         # An inkscape Layer definition in this G group ?
         if e.get ("{http://www.inkscape.org/namespaces/inkscape}groupmode") == "layer":
             name = e.get ("{http://www.inkscape.org/namespaces/inkscape}label")
-            for l in layers:
+            for l in Layers:
                 #if layer is disabled or not loaded, do not add the branch
                 if name == l.name:
                     if not l.enabled or not l.loaded:
@@ -696,7 +740,7 @@ class QtSvgScanLayers(QtSvgG):
                 An lxml etree.Element or an argument to pass to etree.parse()
         """
         # clear previous Layers info
-        del layers [:]
+        del Layers [:]
         doc = etree.parse(e)
         svg = doc.getroot()
         for node in svg.iter("{http://www.w3.org/2000/svg}g"):
@@ -710,7 +754,7 @@ class QtSvgScanLayers(QtSvgG):
                     l.loaded = re.match ("display:.*inline", node.get ("style") ) is not None
                 #log.info("Accepted Layer :" + l.name +" enabled:"+str(l.enabled))
                 #TODO: append only Layers that have something displayable
-                layers.append(l)
+                Layers.append(l)
 
 class QtSvgDoc(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}svg"
