@@ -20,55 +20,9 @@ from math import sqrt, tan, atan, atan2, cos, acos, sin, pi, radians
 from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
-from atom.api import Atom, Unicode, Range, Bool, Float
 
 ElementType = QtGui.QPainterPath.ElementType
 EtreeElement = etree._Element
-
-# -----------------------------------------------------------------------------
-# SVG Layers filtering
-# -----------------------------------------------------------------------------
-
-"""   Inkscape
-
-    inkscape uses the group tag (G) for describing a layer
-
-    <g
-     inkscape:groupmode="layer"
-     id="layer2"
-     inkscape:label="coupe"
-     style="display:inline"
-     transform="translate(0,-87)"
-     sodipodi:insensitive="true">
-    >
-
-    attribute name "inkscape:" is translated to
-            if e.get ("{http://www.inkscape.org/namespaces/inkscape}groupmode") == "layer":
-
-
-    Loading a document is too step.
-    -find Layer definitions and mark them load=False when not "display:inline".
-     eg, Layers not visible in Inkscape are skipped
-    -load the actual data and ignore layers marked not enabled
-
-    A specific DockItem lists all the layer's definition
-    and reload the doc when necessary
-
-    TODO:
-            -rotate the layer to facilitate rearangements
-            by inserting/modifying the transform attached to the group
-            (usefull for painting mask layers)
-            -one color / layer
-            -use mouse to move layers
-"""
-Layers = []             # list of layers discovered
-class Layer(Atom):
-    name = Unicode()           # displayed name
-    loaded = Bool(False)      # the xml for this layer is loaded or not
-    enabled = Bool(True)      # when loaded, use it or not
-    offsetX = Float().tag(config=True)
-    offsetY = Float()
-    #rotate  = Range()
 
 
 class QtSvgItem(QtGui.QPainterPath):
@@ -696,19 +650,6 @@ class QtSvgG(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}g"
 
     def parse(self, e):
-
-        # An inkscape Layer definition in this G group ?
-        if e.get ("{http://www.inkscape.org/namespaces/inkscape}groupmode") == "layer":
-            name = e.get ("{http://www.inkscape.org/namespaces/inkscape}label")
-            for l in Layers:
-                #if layer is disabled or not loaded, do not add the branch
-                if name == l.name:
-                    if not l.enabled or not l.loaded:
-                        return
-                    #update the transform to offset the layer
-                    e.set ("transform", "translate(" + str(l.offsetX) + ","  + str(l.offsetY) +")" )
-                    break
-
         valid_nodes = self._nodes
         for node in e:
             if node.tag == QtSvgText.tag:
@@ -739,32 +680,6 @@ class QtSvgG(QtSvgItem):
 class QtSvgSymbol(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}symbol"
 
-class QtSvgScanLayers(QtSvgG):
-
-    def __init__(self, e):
-        """
-        Count and register G tags that are Inkscape Layers
-        Parameters
-        ----------
-            e: Element or string
-                An lxml etree.Element or an argument to pass to etree.parse()
-        """
-        # clear previous Layers info
-        del Layers [:]
-        doc = etree.parse(e)
-        svg = doc.getroot()
-        for node in svg.iter("{http://www.w3.org/2000/svg}g"):
-            if node.get ("{http://www.inkscape.org/namespaces/inkscape}groupmode") == "layer":
-                l = Layer()
-                l.name = node.get ("{http://www.inkscape.org/namespaces/inkscape}label")
-                l.offsetX = 0
-                l.offsetY = 0
-                l.enabled = True
-                if node.get ("style") is not None:
-                    l.loaded = re.match ("display:.*inline", node.get ("style") ) is not None
-                #log.info("Accepted Layer :" + l.name +" enabled:"+str(l.enabled))
-                #TODO: append only Layers that have something displayable
-                Layers.append(l)
 
 class QtSvgDoc(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}svg"

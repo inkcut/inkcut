@@ -48,9 +48,6 @@ def open_document(event):
     if path:
         try:
             plugin.open_document(path, nodes=event.parameters.get('nodes'))
-            #nuclear call because I have no clue to do only refresh for my layers DockItem
-            workbench.get_plugin("inkcut.ui")._refresh_dock_items()
-
         except JobError as e:
             workbench.message_critical(
                 title="Error opening document",

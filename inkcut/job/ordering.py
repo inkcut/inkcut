@@ -1,5 +1,5 @@
 """
-Copyright (c) 2018, Jairus Martin.
+Copyright (c) 2018-2020, the Inkcut team.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -12,15 +12,16 @@ Created on Dec 15, 2018
 import sys
 import itertools
 from time import time
+from atom.api import Atom
 from enaml.qt.QtCore import QPointF
 from enaml.qt.QtGui import QVector2D
 from inkcut.core.utils import (
-    log, split_painter_path, join_painter_paths, to_unit
+    log, split_painter_path, join_painter_paths, to_unit, find_subclasses
 )
 from enaml.qt.QtWidgets import QApplication
 
 
-class OrderHandler(object):
+class OrderHandler(Atom):
     name = ''
 
     def order_by_func(self, job, path, sort_func):
@@ -154,14 +155,6 @@ class OrderShortestPath(OrderHandler):
         return d
 
 
-def find_sublcasses(cls):
-    """ Finds all known (imported) subclasses of the given class """
-    cmds = []
-    for subclass in cls.__subclasses__():
-        cmds.append(subclass)
-        cmds.extend(find_sublcasses(subclass))
-    return cmds
-
 
 #: Register all subclasses
-REGISTRY = {c.name: c for c in find_sublcasses(OrderHandler)}
+REGISTRY = {c.name: c for c in find_subclasses(OrderHandler)}

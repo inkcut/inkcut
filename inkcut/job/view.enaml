@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2017-2019, Jairus Martin.
+Copyright (c) 2017-2020, the Inkcut team.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -18,14 +18,13 @@ from enaml.widgets.api import (
     Container, Label, ImageView, SpinBox, CheckBox, PushButton, RadioButton,
     Form, ObjectCombo, Menu, Action, GroupBox
 )
-from enaml.core.api import Looper,Conditional
+from enaml.core.api import Looper, Conditional
 from enaml.layout.api import hbox,vbox,spacer,align
 from enamlx.widgets.api import (
     DoubleSpinBox, TableView, TableViewRow, TableViewItem
 )
 from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
 from inkcut.job.plugin import Job
-from inkcut.core.svg import Layers
 
 
 def try_update_setting(plugin, view, field, index, change, title="Does not fit"):
@@ -328,49 +327,69 @@ enamldef WeedlinesDockItem(DockItem):
                     maximum = 99999.9
                     single_step = 0.1
 
+
 enamldef LayersDockItem(DockItem):
     attr plugin
     attr job: Job << plugin.job
+    attr filters << job.filters if job else []
+
     title = QApplication.translate("job", "Layers")
     name = 'layers-item'
     icon = load_icon('layers')
+
     Container:
-        Label:
-            text = "Liste des layers"
-        Looper:
-            iterable << Layers
-            Conditional:
-                condition = loop.item.loaded
-                GroupBox:
+        Container:
+            padding = 0
+            Label:
+                text = QApplication.translate("job", "Layers")
+            Looper:
+                iterable << [f for f in filters if f.type == 'layer']
+                Form:
+                    attr layer << loop.item
                     padding = 0
+                    Label:
+                        text = ""
                     CheckBox: cb:
-                        text = loop.item.name
-                        checked = loop.item.enabled
-                        checked >> loop.item.enabled
+                        text = layer.name
+                        checked := layer.enabled
                         toggled :: job.update_document()
-                    Form:
-                        visible := cb.checked
+                    Conditional:
+                        condition << cb.checked
                         Label:
                             text= "dX"
                         DoubleSpinBox:
-                            value := loop.item.offsetX
+                            value := layer.offset_x
                             minimum = -9999
                             maximum = 9999
                             single_step = 10
                         Label:
                             text = "dY"
                         DoubleSpinBox:
-                            value := loop.item.offsetY
+                            value := layer.offset_y
                             minimum = -9999
                             maximum = 9999
                             single_step = 10
+        Container:
+            padding = 0
+            Label:
+                text = QApplication.translate("job", "Colors")
+            Looper:
+                iterable << [f for f in filters if f.type == 'color']
+                Form:
+                    padding = 0
+                    CheckBox: cb:
+                        text = loop.item.name
+                        checked := loop.item.enabled
+                        toggled :: job.update_document()
+                    # TODO: Show color
+
 
 enamldef MaterialDockItem(DockItem):
     attr plugin
     attr job: Job << plugin.job
     title = "Material"
     name = "material-item"
-    icon = load_icon('layers')
+    icon = load_icon('note')
     Container:
         Container:
             padding = 0

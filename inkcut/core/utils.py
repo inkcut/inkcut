@@ -1,5 +1,5 @@
 """
-Copyright (c) 2017, Jairus Martin.
+Copyright (c) 2017-2020, the Inkcut team.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -164,3 +164,12 @@ def join_painter_paths(paths):
     for p in paths:
         result.addPath(p)
     return result
+
+
+def find_subclasses(cls):
+    """ Finds all known (imported) subclasses of the given class """
+    cmds = []
+    for subclass in cls.__subclasses__():
+        cmds.append(subclass)
+        cmds.extend(find_subclasses(subclass))
+    return cmds
