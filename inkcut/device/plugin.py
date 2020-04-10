@@ -62,7 +62,7 @@ class DeviceTransport(Model):
         """ Whenever the protocol changes update the transport reference
 
         """
-        if (change['type'] == 'update' or change['type'] == 'create') and change['value']:
+        if change['type'] in ('update', 'create') and change['value']:
             self.protocol.transport = self
 
     def connect(self):
