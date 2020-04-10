@@ -180,6 +180,12 @@ class Job(Model):
     plot_weedline_padding = ContainerList(
         Float(), default=[10, 10, 10, 10]).tag(config=True)
 
+
+    #  I don't understand how to declare an empty list of Layers (for the layers' settings)
+    layercbbb = ContainerList( Bool(),default=[True,True,True,True,True,True,True,True,True,True] ).tag(config=True)
+    dxxx = ContainerList( Float(),default=[0,0,0,0,0,0,0,0,0,0] ).tag(config=True)
+    dyyy = ContainerList( Float(),default=[0,0,0,0,0,0,0,0,0,0] ).tag(config=True)
+
     order = Enum(*sorted(ordering.REGISTRY.keys())).tag(config=True)
 
     def _default_order(self):
