@@ -25,7 +25,6 @@ from enamlx.widgets.api import (
 )
 from inkcut.core.utils import load_icon, load_image, from_unit, to_unit
 from inkcut.job.plugin import Job
-from inkcut.core.svg import Layers
 
 
 def try_update_setting(plugin, view, field, index, change, title="Does not fit"):
@@ -338,21 +337,23 @@ enamldef LayersDockItem(DockItem):
         Label:
             text = "Liste des layers"
         Looper:
-            iterable << Layers
+            iterable << job.layers
             Conditional:
                 condition = loop.item.loaded
                 GroupBox:
                     padding = 0
                     CheckBox: cb:
                         text = loop.item.name
-                        checked = loop.item.enabled
-                        checked >> loop.item.enabled
+                        checked := loop.item.enabled
                         toggled :: job.update_document()
                     Form:
                         visible := cb.checked
                         Label:
                             text= "dX"
                         DoubleSpinBox:
+                            #inserting a function.... not natural (and compiled)
+                            #value << to_unit(loop.item.offsetX, plugin.units)
+                            #loop.item.offsetX = from_unit(value, plugin.units)
                             value := loop.item.offsetX
                             minimum = -9999
                             maximum = 9999

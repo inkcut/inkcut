@@ -21,6 +21,11 @@ from lxml import etree
 from copy import deepcopy
 from enaml.qt import QtGui, QtCore
 from atom.api import Atom, Unicode, Range, Bool, Float
+# -----------------------------------------------------------------------------
+# Logger
+# -----------------------------------------------------------------------------
+import logging
+log = logging.getLogger("inkcut")
 
 ElementType = QtGui.QPainterPath.ElementType
 EtreeElement = etree._Element
@@ -61,7 +66,6 @@ EtreeElement = etree._Element
             -one color / layer
             -use mouse to move layers
 """
-Layers = []             # list of layers discovered
 class Layer(Atom):
     name = Unicode()           # displayed name
     loaded = Bool(False)      # the xml for this layer is loaded or not
@@ -70,9 +74,12 @@ class Layer(Atom):
     offsetY = Float()
     #rotate  = Range()
 
+#List of layers to load
+gLayers=[]    # not wise to pass it as parameter for each QtSvgItemXXXX when only QtSvgItemG requires it
 
 class QtSvgItem(QtGui.QPainterPath):
     tag = None
+    #xgLayers = []          #recursivity kills it
     _nodes = None
     _uuconv = {'in': 90.0, 'pt': 1.25, 'px': 1, 'mm': 3.5433070866,
                'cm': 35.433070866, 'm': 3543.3070866,
@@ -682,7 +689,6 @@ class QtSvgText(QtSvgItem):
         #    font.setLineHeight(self.parseUnit(styles['font-size']))
         return font
 
-
 class QtSvgG(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}g"
 
@@ -691,7 +697,7 @@ class QtSvgG(QtSvgItem):
         # An inkscape Layer definition in this G group ?
         if e.get ("{http://www.inkscape.org/namespaces/inkscape}groupmode") == "layer":
             name = e.get ("{http://www.inkscape.org/namespaces/inkscape}label")
-            for l in Layers:
+            for l in gLayers:
                 #if layer is disabled or not loaded, do not add the branch
                 if name == l.name:
                     if not l.enabled or not l.loaded:
@@ -730,9 +736,12 @@ class QtSvgG(QtSvgItem):
 class QtSvgSymbol(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}symbol"
 
-class QtSvgScanLayers(QtSvgG):
+class QtSvgLayers(QtSvgG):
 
     def __init__(self, e):
+        pass
+
+    def get(e):
         """
         Count and register G tags that are Inkscape Layers
         Parameters
@@ -740,8 +749,7 @@ class QtSvgScanLayers(QtSvgG):
             e: Element or string
                 An lxml etree.Element or an argument to pass to etree.parse()
         """
-        # clear previous Layers info
-        del Layers [:]
+        Layers = []             # list of layers discovered
         doc = etree.parse(e)
         svg = doc.getroot()
         for node in svg.iter("{http://www.w3.org/2000/svg}g"):
@@ -756,11 +764,12 @@ class QtSvgScanLayers(QtSvgG):
                 #log.info("Accepted Layer :" + l.name +" enabled:"+str(l.enabled))
                 #TODO: append only Layers that have something displayable
                 Layers.append(l)
+        return Layers
 
 class QtSvgDoc(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}svg"
 
-    def __init__(self, e, ids=None):
+    def __init__(self, e, Layers, ids=None):
         """
         Creates a QtPainterPath from an SVG document applying all transforms. 
         
@@ -773,6 +782,14 @@ class QtSvgDoc(QtSvgG):
             ids: List
                 List of node ids to include. If not given all will be used.
         """
+
+	#ok I don't know how to make gLayers available to all svgXXX classes
+	#tried to declare it inside the base class.-
+        global gLayers
+        gLayers  = Layers
+        #self.xgL = Layers        # not working because of recursitivy
+
+
         self.isParentSvg = not isinstance(e, EtreeElement)
         if self.isParentSvg:
             self._doc = etree.parse(e)
