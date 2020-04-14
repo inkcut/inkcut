@@ -24,7 +24,18 @@ Inkcut, Plot HPGL directly from Inkscape.
 import os
 import sys
 import inkex
-inkex.localization.localize()
+import importlib
+optparse_spec = importlib.util.find_spec("optparse")
+if optparse_spec:
+    VERSION="1.X"
+else:
+    VERSION= "0.9"
+
+if VERSION == "1.X":
+    inkex.localization.localize()
+    from lxml import etree
+else:
+    inkex.localize()
 import subprocess
 
 from inkcut import convert_objects_to_paths
@@ -50,7 +61,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
         else:
             cmd = ['inkcut']
 
-        document = convert_objects_to_paths(self.options.input_file, self.document)
+        document = convert_objects_to_paths(self.options.input_file if VERSION == "1.X" else self.args[-1], self.document)
 
         cmd += ['open', '-']
         p = subprocess.Popen(cmd,
@@ -58,9 +69,13 @@ class InkscapeInkcutPlugin(inkex.Effect):
                              stdout=DEVNULL,
                              stderr=subprocess.STDOUT,
                              close_fds=sys.platform != "win32")
-        p.stdin.write(inkex.etree.tostring(document))
+        p.stdin.write(etree.tostring(document) if VERSION == "1.X" else inkex.etree.tostring(document))
         p.stdin.close()
 
 
-if __name__ == '__main__':
-    InkscapeInkcutPlugin().run()
+if VERSION == "1.X":
+    if __name__ == '__main__':
+        InkscapeInkcutPlugin().run()
+else :
+    effect = InkscapeInkcutPlugin()
+    effect.affect()

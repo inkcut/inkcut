@@ -28,6 +28,14 @@ from subprocess import Popen, PIPE
 from shutil import copy2
 from distutils.spawn import find_executable
 
+# check inkscape version
+import importlib
+optparse_spec = importlib.util.find_spec("optparse")
+if optparse_spec:
+    VERSION="1.X"
+else:
+    VERSION= "0.9"
+
 def contains_text(nodes):
     for node in nodes:
         tag = node.tag[node.tag.rfind("}")+1:]
@@ -55,6 +63,9 @@ def convert_objects_to_paths(file, document):
         inkex.errormsg(err)
         return document.getroot()
     else:
-        return etree.parse(tempfile).getroot()
+        if VERSION == "1.X":
+            return etree.parse(tempfile).getroot()
+        else:
+            return inkex.etree.parse(tempfile).getroot()
 
 
