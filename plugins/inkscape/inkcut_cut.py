@@ -81,6 +81,12 @@ class InkscapeInkcutPlugin(inkex.Effect):
                              close_fds=sys.platform != "win32")
         p.stdin.write(etree.tostring(document) if VERSION == "1.X" else inkex.etree.tostring(document))
         p.stdin.close()
+        
+        # Set the returncode to avoid this warning when popen is garbage collected:
+        # "ResourceWarning: subprocess XXX is still running".
+        # See https://bugs.python.org/issue38890 and
+        # https://bugs.python.org/issue26741.
+        p.returncode = 0
 
 if VERSION == "1.X":
     if __name__ == '__main__':
