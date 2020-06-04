@@ -17,6 +17,7 @@ from enaml.qt.QtGui import QVector2D
 from inkcut.core.utils import (
     log, split_painter_path, join_painter_paths, to_unit
 )
+from enaml.qt.QtWidgets import QApplication
 
 
 class OrderHandler(object):
@@ -42,15 +43,14 @@ class OrderHandler(object):
 
 
 class OrderNormal(OrderHandler):
-    name = 'Normal'
+    name = QApplication.translate("job", "Normal")
 
     def order(self, job, path):
         return path
 
 
 class OrderReversed(OrderHandler):
-    name = 'Reversed'
-
+    name = QApplication.translate("job", "Reversed")
     def order(self, job, path):
         return path.toReversed()
 
@@ -91,7 +91,7 @@ class OrderShortestPath(OrderHandler):
     """  This uses Dijkstra's algorithm to find the shortest path.
 
     """
-    name = 'Shortest Path'
+    name = QApplication.translate("job", "Shortest Path")
     time_limit = 0.2  # This is in the UI thread
 
     def order(self, job, path):

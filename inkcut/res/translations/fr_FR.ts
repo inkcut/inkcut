@@ -363,6 +363,18 @@
         <translation>Ordre de découpe</translation>
     </message>
     <message>
+        <source>Reversed</source>
+        <translation>Inversé</translation>
+    </message>
+    <message>
+        <source>Normal</source>
+        <translation>Normal</translation>
+    </message>
+    <message>
+        <source>Shortest Path</source>
+        <translation>Chemin le plus cours</translation>
+    </message>
+    <message>
         <source>Plot Weedlines</source>
         <translation>Lignes de contour</translation>
     </message>
