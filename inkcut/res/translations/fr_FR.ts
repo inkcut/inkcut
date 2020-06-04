@@ -32,7 +32,7 @@
     </message>
     <message>
         <source>Set the virtual origin</source>
-        <translation>Définir l&apos;origine vrtuelle</translation>
+        <translation>Définir l&apos;origine virtuelle</translation>
     </message>
     <message>
         <source>move up</source>
@@ -94,7 +94,7 @@
     </message>
     <message>
         <source>Driver</source>
-        <translation>Driver</translation>
+        <translation>Pilote</translation>
     </message>
     <message>
         <source>Manufacturer</source>
@@ -106,15 +106,15 @@
     </message>
     <message>
         <source>Width</source>
-        <translation>largeur</translation>
+        <translation>Largeur</translation>
     </message>
     <message>
         <source>Length</source>
-        <translation>longueur</translation>
+        <translation>Longueur</translation>
     </message>
     <message>
         <source>Customize</source>
-        <translation>Personnalisé</translation>
+        <translation>Personnaliser</translation>
     </message>
     <message>
         <source>Connection</source>
@@ -130,7 +130,7 @@
     </message>
     <message>
         <source>Language</source>
-        <translation>langague machine</translation>
+        <translation>language machine</translation>
     </message>
     <message>
         <source>Filters</source>
@@ -154,7 +154,7 @@
     </message>
     <message>
         <source>Speed</source>
-        <translation>VItesse</translation>
+        <translation>Vitesse</translation>
     </message>
     <message>
         <source>Enabled</source>
@@ -174,7 +174,7 @@
     </message>
     <message>
         <source>Scale</source>
-        <translation>Echelle</translation>
+        <translation>Échelle</translation>
     </message>
     <message>
         <source>Advanced</source>
@@ -186,15 +186,15 @@
     </message>
     <message>
         <source>Interpolate paths</source>
-        <translation>interpoler les chemins</translation>
+        <translation>Interpoler les chemins</translation>
     </message>
     <message>
         <source>Step size</source>
-        <translation>taille du pas</translation>
+        <translation>Taille du pas</translation>
     </message>
     <message>
         <source>Step time</source>
-        <translation>temps de pause</translation>
+        <translation>Temps de pause</translation>
     </message>
     <message>
         <source>Test mode</source>
@@ -210,7 +210,7 @@
     </message>
     <message>
         <source>Commands here will get sent before starting a job</source>
-        <translation>Les commandes seront envoyés avant le début de la tâche</translation>
+        <translation>Les commandes seront envoyées avant le début de la tâche</translation>
     </message>
     <message>
         <source>After job</source>
@@ -218,7 +218,7 @@
     </message>
     <message>
         <source>Commands here will get sent after finishing a job</source>
-        <translation>Les commandes sont envoyés après la fin de la tâche</translation>
+        <translation>Les commandes sont envoyées après la fin de la tâche</translation>
     </message>
     <message>
         <source>Connection commands</source>
@@ -230,7 +230,7 @@
     </message>
     <message>
         <source>Commands here will get sent right after a connection is opened</source>
-        <translation>Les commandes seront envoyés après l&apos;ouverture de la connexion</translation>
+        <translation>Les commandes seront envoyées après l&apos;ouverture de la connexion</translation>
     </message>
     <message>
         <source>Before disconnect</source>
@@ -238,7 +238,7 @@
     </message>
     <message>
         <source>Commands here will get sent right before a connection is closed</source>
-        <translation>Les commandes seront envoyés avant la fermeture de la connexion</translation>
+        <translation>Les commandes seront envoyées avant la fermeture de la connexion</translation>
     </message>
     <message>
         <source>Live</source>
@@ -246,7 +246,7 @@
     </message>
     <message>
         <source>Abort job</source>
-        <translation>Arréter la tâche</translation>
+        <translation>Arrêter la tâche</translation>
     </message>
     <message>
         <source>View all</source>
@@ -258,7 +258,7 @@
     </message>
     <message>
         <source>Abort the current job</source>
-        <translation>Arréter la tâche en cours</translation>
+        <translation>Arrêter la tâche en cours</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -282,7 +282,7 @@
     </message>
     <message>
         <source>No device is setup! Please select Device-&gt;Setup from the menu.</source>
-        <translation>Aucun périphérique configuré ! Sélectionnez en un depuis le menu Machines &gt; Réglages.</translation>
+        <translation>Aucun périphérique configuré ! Sélectionnez-en un depuis le menu Machines &gt; Réglages.</translation>
     </message>
     <message>
         <source>No configuration available.</source>
@@ -298,11 +298,11 @@
     </message>
     <message>
         <source>Mirror X</source>
-        <translation>Mirroir selon X</translation>
+        <translation>Miroir selon X</translation>
     </message>
     <message>
         <source>Mirror Y</source>
-        <translation>Mirroir selin Y</translation>
+        <translation>Miroir selon Y</translation>
     </message>
     <message>
         <source>Quality factor</source>
@@ -344,15 +344,15 @@
     </message>
     <message>
         <source>Graphic Mirroring</source>
-        <translation>Mode mirroir</translation>
+        <translation>Mode miroir</translation>
     </message>
     <message>
         <source>Mirror about x-axis</source>
-        <translation>mirroir selon l&apos;axe x</translation>
+        <translation>Miroir selon l&apos;axe x</translation>
     </message>
     <message>
         <source>Mirror about y-axis</source>
-        <translation>mirroir selon l&apos;axe y</translation>
+        <translation>Miroir selon l&apos;axe y</translation>
     </message>
     <message>
         <source>Graphic Spacing</source>
@@ -364,11 +364,11 @@
     </message>
     <message>
         <source>Plot Weedlines</source>
-        <translation>lignes de contour</translation>
+        <translation>Lignes de contour</translation>
     </message>
     <message>
         <source>Add weedline to plot</source>
-        <translation>Ajouter un coutour sur l&apos;ensemble</translation>
+        <translation>Ajouter un contour sur l&apos;ensemble</translation>
     </message>
     <message>
         <source>Add weedline to copies</source>
@@ -424,7 +424,7 @@
     </message>
     <message>
         <source>Lock aspect ratio</source>
-        <translation>Vérouiller les proportions</translation>
+        <translation>Verrouiller les proportions</translation>
     </message>
     <message>
         <source>Fill to save space</source>
@@ -444,11 +444,11 @@
     </message>
     <message>
         <source>Are you sure you want to start?</source>
-        <translation>Etes vous sûr de vouloir démarrer ?</translation>
+        <translation>Êtes vous sûr de vouloir démarrer ?</translation>
     </message>
     <message>
         <source>Job</source>
-        <translation>Taĉhe</translation>
+        <translation>Tâche</translation>
     </message>
     <message>
         <source>Name of the document</source>
@@ -460,7 +460,7 @@
     </message>
     <message>
         <source>Estimated job duration based on given speed and the job size.</source>
-        <translation>Durée du document d&apos;après la vitesse et la taille du document.</translation>
+        <translation>Durée estimée d&apos;après la vitesse et la taille du document.</translation>
     </message>
     <message>
         <source>Material</source>
@@ -527,11 +527,11 @@
     </message>
     <message>
         <source>Scale</source>
-        <translation>Echelle</translation>
+        <translation>Échelle</translation>
     </message>
     <message>
         <source>Registration</source>
-        <translation type="unfinished"></translation>
+        <translation>Repère</translation>
     </message>
     <message>
         <source>Crop mark registration</source>
@@ -542,7 +542,7 @@
     <name>preview</name>
     <message>
         <source>Preview</source>
-        <translation>Prévisualisation</translation>
+        <translation>Aperçu</translation>
     </message>
     <message>
         <source>View all</source>
@@ -576,7 +576,7 @@
     </message>
     <message>
         <source>Donate</source>
-        <translation>Faire une donation</translation>
+        <translation>Faire un don</translation>
     </message>
     <message>
         <source>Logs</source>
@@ -596,7 +596,7 @@
     </message>
     <message>
         <source>Preview</source>
-        <translation>Prévisualisation</translation>
+        <translation>Aperçu</translation>
     </message>
     <message>
         <source>Grid</source>
@@ -624,7 +624,7 @@
     </message>
     <message>
         <source>Forums</source>
-        <translation>Forum</translation>
+        <translation>Forums</translation>
     </message>
     <message>
         <source>Language</source>
