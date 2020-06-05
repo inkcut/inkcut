@@ -137,6 +137,20 @@ enamldef DriversManifest(PluginManifest):
 
         DeviceDriver:
             manufacturer = 'Silhouette'
+            model = 'Cameo 4'
+            width = '300cm'
+            length = '30.5cm'
+            protocols = ['gpgl']
+            connections = ['printer']
+            default_config = {
+              'scale': [ 5.64, 5.64 ],
+              'swap_xy': True,
+              'mirror_x': True,
+              'mirror_y': True
+            }
+
+        DeviceDriver:
+            manufacturer = 'Silhouette'
             model = 'Portrait'
             width = '300cm'
             length = '20cm'
