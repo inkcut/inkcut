@@ -701,7 +701,7 @@ class QtSvgDoc(QtSvgG):
         self.isParentSvg = not isinstance(e, EtreeElement)
         if self.isParentSvg:
             self._doc = etree.parse(e)
-            e = self._svg = self._doc.getroot()
+            self._svg = self._doc.getroot()
             if ids:
                 nodes = set()
                 xpath = self._svg.xpath
@@ -719,8 +719,9 @@ class QtSvgDoc(QtSvgG):
                 self._nodes = valid_nodes
 
             self.viewBox = QRectF(0, 0, -1, -1)
-
-        super(QtSvgDoc, self).__init__(e, self._nodes)
+        else:
+            self._svg = e
+        super(QtSvgDoc, self).__init__(self._svg, self._nodes)
 
     def parseTransform(self, e):
         t = QTransform()

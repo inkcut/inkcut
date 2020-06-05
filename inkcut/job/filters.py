@@ -137,8 +137,9 @@ class LayerFilter(JobFilter):
         return QtSvgDoc(svg)
 
 
-class ColorFilter(JobFilter):
-    type = "color"
+class FillColorFilter(JobFilter):
+    type = "fill-color"
+    style_attr = 'fill'
 
     #: The color
     color = ColorMember()
@@ -152,12 +153,11 @@ class ColorFilter(JobFilter):
         colors = []
         for e in svg.xpath('//*[@style]'):
             style = get_node_style(e)
-            stroke = style.get('stroke')
-            if stroke is not None:
+            color = style.get(cls.style_attr)
+            if color is not None:
                 # Try to look up a common name
-                label = SVG_COLOR_NAMES.get(stroke.lower(), stroke)
-                colors.append(ColorFilter(
-                    name=label, color=stroke, data=stroke))
+                label = SVG_COLOR_NAMES.get(color.lower(), color)
+                colors.append(cls(name=label, color=color, data=color))
         return colors
 
     def apply_filter(self, job, doc):
@@ -170,10 +170,15 @@ class ColorFilter(JobFilter):
         # Remove all nodes with that stroke style
         for e in svg.xpath('//*[@style]'):
             style = get_node_style(e)
-            if style.get('stroke') == self.data:
+            if style.get(self.style_attr) == self.data:
                 e.getparent().remove(e)
 
         return QtSvgDoc(svg)
+
+
+class StrokeColorFilter(FillColorFilter):
+    type = 'stroke-color'
+    style_attr = 'stroke'
 
 
 #: Register all subclasses
