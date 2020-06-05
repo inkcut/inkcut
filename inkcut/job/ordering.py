@@ -92,7 +92,7 @@ class OrderShortestPath(OrderHandler):
 
     """
     name = 'Shortest Path'
-    time_limit = 0.2  # This is in the UI thread
+    time_limit = 30.0  # This is in the UI thread
 
     def order(self, job, path):
         """ Sort subpaths by minimizing the distances between all start
@@ -116,6 +116,7 @@ class OrderShortestPath(OrderHandler):
         original = subpaths[:]
         result = []
         p = zero
+        now=time()
         while subpaths:
             best = sys.maxsize
             shortest = None
@@ -132,8 +133,9 @@ class OrderShortestPath(OrderHandler):
             # time.time() is slow so limit the calls
             if time() > time_limit:
                 result.extend(subpaths)  # At least part of it is optimized
-                log.debug("Shortest path search aborted (time limit reached)")
+                log.warning("Shortest path search aborted (time limit reached)")
                 break
+        log.warning("=== SHORTEST PATH COMPUTE DURATION = %02f",time()-now)
         d = self.subpath_move_distance(zero, original)
         d = d-self.subpath_move_distance(zero, result)
         log.debug("Shortest path search: Saved {} in of movement ".format(
