@@ -117,7 +117,10 @@ class LayerFilter(JobFilter):
         for g in get_layers(svg):
             label = get_layer_label(g)
             if label is not None:
-                layers.append(LayerFilter(name=label, layer=g))
+                style = get_node_style(g)
+                # If the layer is hidden disable it by default
+                enabled = style.get('display') != "none"
+                layers.append(cls(name=label, layer=g, enabled=enabled))
         return layers
 
     def apply_filter(self, job, doc):

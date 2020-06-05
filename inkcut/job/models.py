@@ -254,6 +254,7 @@ class Job(Model):
         for f in self.filters:
             # If the color/layer is NOT enabled, then remove that color/layer
             if not f.enabled:
+                log.debug("Applying filter {}".format(f))
                 doc = f.apply_filter(self, doc)
 
         # Apply ordering to path
@@ -264,7 +265,7 @@ class Job(Model):
 
         return doc
 
-    @observe('path', 'order')
+    @observe('path', 'order', 'filters')
     def _update_optimized_path(self, change):
         """ Whenever the loaded file (and parsed SVG path) changes update
         it based on the filters from the job.
