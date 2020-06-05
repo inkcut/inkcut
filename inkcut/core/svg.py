@@ -685,7 +685,7 @@ class QtSvgSymbol(QtSvgG):
 class QtSvgDoc(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}svg"
 
-    def __init__(self, e, ids=None):
+    def __init__(self, e, ids=None, parent=False):
         """
         Creates a QtPainterPath from an SVG document applying all transforms.
 
@@ -698,10 +698,12 @@ class QtSvgDoc(QtSvgG):
             ids: List
                 List of node ids to include. If not given all will be used.
         """
-        self.isParentSvg = not isinstance(e, EtreeElement)
+        is_etree = isinstance(e, EtreeElement)
+        self.isParentSvg = parent or not is_etree
         if self.isParentSvg:
-            self._doc = etree.parse(e)
-            self._svg = self._doc.getroot()
+            if not is_etree:
+                self._doc = etree.parse(e)
+                e = self._svg = self._doc.getroot()
             if ids:
                 nodes = set()
                 xpath = self._svg.xpath
@@ -719,9 +721,7 @@ class QtSvgDoc(QtSvgG):
                 self._nodes = valid_nodes
 
             self.viewBox = QRectF(0, 0, -1, -1)
-        else:
-            self._svg = e
-        super(QtSvgDoc, self).__init__(self._svg, self._nodes)
+        super(QtSvgDoc, self).__init__(e, self._nodes)
 
     def parseTransform(self, e):
         t = QTransform()

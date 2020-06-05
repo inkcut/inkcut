@@ -112,7 +112,7 @@ class LayerFilter(JobFilter):
     @classmethod
     def get_filter_options(cls, job, doc):
         # TODO: Extract all layers in the document and return a list of them
-        svg = doc._svg
+        svg = doc._e
         layers = []
         for g in get_layers(svg):
             label = get_layer_label(g)
@@ -125,7 +125,7 @@ class LayerFilter(JobFilter):
         the xml.
         """
         # Copy it since we're modifying
-        svg = copy.deepcopy(doc._svg)
+        svg = copy.deepcopy(doc._e)
 
         # Find the layer in the cloned doc
         for g in get_layers(svg):
@@ -134,7 +134,7 @@ class LayerFilter(JobFilter):
                 g.getparent().remove(g)
                 break
 
-        return QtSvgDoc(svg)
+        return QtSvgDoc(svg, parent=True)
 
 
 class FillColorFilter(JobFilter):
@@ -149,7 +149,7 @@ class FillColorFilter(JobFilter):
 
     @classmethod
     def get_filter_options(cls, job, doc):
-        svg = doc._svg
+        svg = doc._e
         colors = []
         for e in svg.xpath('//*[@style]'):
             style = get_node_style(e)
@@ -165,7 +165,7 @@ class FillColorFilter(JobFilter):
         the xml.
         """
         # Copy it since we're modifying
-        svg = copy.deepcopy(doc._svg)
+        svg = copy.deepcopy(doc._e)
 
         # Remove all nodes with that stroke style
         for e in svg.xpath('//*[@style]'):
@@ -173,7 +173,7 @@ class FillColorFilter(JobFilter):
             if style.get(self.style_attr) == self.data:
                 e.getparent().remove(e)
 
-        return QtSvgDoc(svg)
+        return QtSvgDoc(svg, parent=True)
 
 
 class StrokeColorFilter(FillColorFilter):
