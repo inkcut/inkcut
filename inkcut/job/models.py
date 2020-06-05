@@ -231,6 +231,9 @@ class Job(Model):
         elif self.document and os.path.exists(self.document):
             self.path = QtSvgDoc(self.document, **self.document_kwargs)
 
+        # Recreate available filters when the document changes
+        self.filters = self._default_filters()
+
     def _default_filters(self):
         results = []
         if not self.path:
@@ -247,20 +250,19 @@ class Job(Model):
         """ Filter parts of the documen based on the selected layers and colors
 
         """
-        self.filters = self._default_filters()
-        path = self.path
+        doc = self.path
         for f in self.filters:
             # If the color/layer is NOT enabled, then remove that color/layer
             if not f.enabled:
-                path = f.apply_filter(self, path)
+                doc = f.apply_filter(self, doc)
 
         # Apply ordering to path
         # this delegates to objects in the ordering module
         OrderingHandler = ordering.REGISTRY.get(self.order)
         if OrderingHandler:
-            path = OrderingHandler().order(self, path)
+            doc = OrderingHandler().order(self, doc)
 
-        return path
+        return doc
 
     @observe('path', 'order')
     def _update_optimized_path(self, change):
@@ -348,8 +350,12 @@ class Job(Model):
         if self._blocked:
             return
 
-        if change and change['name'] == 'copies':
-            self._desired_copies = self.copies
+        if change:
+            name = change['name']
+            if name == 'copies':
+                self._desired_copies = self.copies
+            elif name in ('layer', 'color'):
+                self._update_optimized_path(change)
 
         model = self.create()
         if model:
