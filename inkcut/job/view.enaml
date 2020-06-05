@@ -352,29 +352,29 @@ enamldef LayersDockItem(DockItem):
                     text = layer.name
                     checked := layer.enabled
                     toggled :: job.update_document({'name': 'layer'})
-                Conditional:
-                    condition << cb.checked
-                    Form:
-                        attr layer = loop.item
-                        padding = 0
-                        Label:
-                            text= "X Offset"
-                        DoubleSpinBox:
-                            value << to_unit(layer.offset_x, plugin.units)
-                            value :: layer.offset_x = from_unit(value, plugin.units)
-                            suffix << " "+plugin.units
-                            minimum = -9999
-                            maximum = 9999
-                            single_step = 10
-                        Label:
-                            text = "Y Offset"
-                        DoubleSpinBox:
-                            value << to_unit(layer.offset_y, plugin.units)
-                            value :: layer.offset_x = from_unit(value, plugin.units)
-                            suffix << " "+plugin.units
-                            minimum = -9999
-                            maximum = 9999
-                            single_step = 10
+                #Conditional:
+                    #condition << cb.checked
+                    #Form:
+                        #attr layer = loop.item
+                        #padding = 0
+                        #Label:
+                            #text= "X Offset"
+                        #DoubleSpinBox:
+                            #value << to_unit(layer.offset_x, plugin.units)
+                            #value :: layer.offset_x = from_unit(value, plugin.units)
+                            #suffix << " "+plugin.units
+                            #minimum = -9999
+                            #maximum = 9999
+                            #single_step = 10
+                        #Label:
+                            #text = "Y Offset"
+                        #DoubleSpinBox:
+                            #value << to_unit(layer.offset_y, plugin.units)
+                            #value :: layer.offset_x = from_unit(value, plugin.units)
+                            #suffix << " "+plugin.units
+                            #minimum = -9999
+                            #maximum = 9999
+                            #single_step = 10
         Container:
             padding = 0
             Label:

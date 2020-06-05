@@ -154,10 +154,13 @@ class FillColorFilter(JobFilter):
     def get_filter_options(cls, job, doc):
         svg = doc._e
         colors = []
+        used = set()
         for e in svg.xpath('//*[@style]'):
             style = get_node_style(e)
             color = style.get(cls.style_attr)
-            if color is not None:
+            if color is not None and color not in used:
+                used.add(color)
+
                 # Try to look up a common name
                 label = SVG_COLOR_NAMES.get(color.lower(), color)
                 colors.append(cls(name=label, color=color, data=color))
