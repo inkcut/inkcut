@@ -149,8 +149,9 @@
 |SeikiTech           |stm robotics stm24            |Serial    |87        |Unlimited           |Yes    |
 |SeikiTech           |T870                          |Printer   |70        |2000                |Yes    |
 |Seron               | Cutting Plotter              |Printer   |100       |Unlimited           |Yes    |
-|Silhouette          |CAMEO                         |Printer   |30        |Unlimited           |Yes    |
-|Silhouette          |cameo                         |Serial    |30        |300                 |Yes    |
+|Silhouette          |Cameo                         |Printer   |30        |Unlimited           |Yes    |
+|Silhouette          |Cameo                         |Serial    |30        |300                 |Yes    |
+|Silhouette          |Cameo 4                       |Printer   |30.5      |300                 |Yes    |
 |SingCut             |1330                          |Serial    |136       |Unlimited           |No     |
 |Summa               |d120                          |Serial    |120       |Unlimited           |No     |
 |Summa               |D120R                         |Printer   |120       |Unlimited           |Yes    |
