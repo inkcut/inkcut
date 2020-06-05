@@ -12,7 +12,7 @@ Created on Jul 12, 2015
 import os
 import sys
 import enaml
-from atom.api import Instance, Enum, List, Unicode, Int, observe
+from atom.api import Instance, Enum, List, Unicode, Int, Float, observe
 from inkcut.core.api import Plugin, unit_conversions, log
 
 from .models import Job, JobError, Material
@@ -41,6 +41,9 @@ class JobPlugin(Plugin):
     #: Number of recent documents
     recent_document_limit = Int(10).tag(config=True)
     saved_jobs_limit = Int(100).tag(config=True)
+
+    #: Timeout for optimizing paths
+    optimizer_timeout = Float(10, strict=False).tag(config=True)
 
     def _default_job(self):
         return Job(material=self.material)

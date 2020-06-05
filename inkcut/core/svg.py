@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2017, Jairus Martin.
+Copyright (c) 2017-2020, The Inkcut Team.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -19,13 +19,14 @@ import math
 from math import sqrt, tan, atan, atan2, cos, acos, sin, pi, radians
 from lxml import etree
 from copy import deepcopy
-from enaml.qt import QtGui, QtCore
+from enaml.qt.QtGui import QPainterPath, QTransform, QFont
+from enaml.qt.QtCore import QPointF, QRectF
 
-ElementType = QtGui.QPainterPath.ElementType
+ElementType = QPainterPath.ElementType
 EtreeElement = etree._Element
 
 
-class QtSvgItem(QtGui.QPainterPath):
+class QtSvgItem(QPainterPath):
     tag = None
     _nodes = None
     _uuconv = {'in': 90.0, 'pt': 1.25, 'px': 1, 'mm': 3.5433070866,
@@ -62,21 +63,21 @@ class QtSvgItem(QtGui.QPainterPath):
     @staticmethod
     def toSubpathList(self):
         paths = []
-        path = QtGui.QPainterPath()
+        path = QPainterPath()
         i = 0
         while i < self.elementCount():
             e = self.elementAt(i)
             if e.type == ElementType.MoveToElement:
                 if not path.isEmpty():
                     paths.append(path)
-                path = QtGui.QPainterPath(QtCore.QPointF(e.x, e.y))
+                path = QPainterPath(QPointF(e.x, e.y))
             elif e.type == ElementType.LineToElement:
-                path.lineTo(QtCore.QPointF(e.x, e.y))
+                path.lineTo(QPointF(e.x, e.y))
             elif e.type == ElementType.CurveToElement:
                 e1, e2 = self.elementAt(i+1), self.elementAt(i+2)
-                path.cubicTo(QtCore.QPointF(e.x, e.y),
-                             QtCore.QPointF(e1.x, e1.y),
-                             QtCore.QPointF(e2.x, e2.y))
+                path.cubicTo(QPointF(e.x, e.y),
+                             QPointF(e1.x, e1.y),
+                             QPointF(e2.x, e2.y))
                 i += 2
             else:
                 raise ValueError("Invalid element type %s" % (e.type,))
@@ -88,21 +89,21 @@ class QtSvgItem(QtGui.QPainterPath):
     @staticmethod
     def splitAtPercent(self, t):
         paths = []
-        path = QtGui.QPainterPath()
+        path = QPainterPath()
         i = 0
         while i < self.elementCount():
             e = self.elementAt(i)
             if e.type == ElementType.MoveToElement:
                 if not path.isEmpty():
                     paths.append(path)
-                path = QtGui.QPainterPath(QtCore.QPointF(e.x, e.y))
+                path = QPainterPath(QPointF(e.x, e.y))
             elif e.type == ElementType.LineToElement:
-                path.lineTo(QtCore.QPointF(e.x, e.y))
+                path.lineTo(QPointF(e.x, e.y))
             elif e.type == ElementType.CurveToElement:
                 e1, e2 = self.elementAt(i+1), self.elementAt(i+2)
-                path.cubicTo(QtCore.QPointF(e.x, e.y),
-                             QtCore.QPointF(e1.x, e1.y),
-                             QtCore.QPointF(e2.x, e2.y))
+                path.cubicTo(QPointF(e.x, e.y),
+                             QPointF(e1.x, e1.y),
+                             QPointF(e2.x, e2.y))
                 i += 2
             else:
                 raise ValueError("Invalid element type %s" % (e.type,))
@@ -158,7 +159,7 @@ class QtSvgItem(QtGui.QPainterPath):
         Jean-Francois Barraud, barraud@math.univ-lille1.fr
 
         """
-        t = QtGui.QTransform()
+        t = QTransform()
 
         if isinstance(e, EtreeElement):
             trans = e.attrib.get('transform', '').strip()
@@ -218,7 +219,7 @@ class QtSvgItem(QtGui.QPainterPath):
             t.shear(0, math.tan(float(args[0])*math.pi/180.0))
 
         elif name == "matrix":
-            t = t*QtGui.QTransform(*map(float, args))
+            t = t*QTransform(*map(float, args))
 
         if m.end() < len(trans):
             t = self.parseTransform(trans[m.end():])*t
@@ -233,8 +234,8 @@ class QtSvgEllipse(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}ellipse"
 
     def parse(self, e):
-        c = QtCore.QPointF(*map(self.parseUnit, (e.attrib.get('cx', 0),
-                                                 e.attrib.get('cy', 0))))
+        c = QPointF(*map(self.parseUnit, (e.attrib.get('cx', 0),
+                                          e.attrib.get('cy', 0))))
         rx, ry = map(self.parseUnit, (e.attrib.get('rx', 0),
                                       e.attrib.get('ry', 0)))
         self.addEllipse(c, rx, ry)
@@ -244,8 +245,8 @@ class QtSvgCircle(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}circle"
 
     def parse(self, e):
-        c = QtCore.QPointF(*map(self.parseUnit, (e.attrib.get('cx', 0),
-                                                 e.attrib.get('cy', 0))))
+        c = QPointF(*map(self.parseUnit, (e.attrib.get('cx', 0),
+                                          e.attrib.get('cy', 0))))
         r = self.parseUnit(e.attrib.get('r', 0))
         self.addEllipse(c, r, r)
 
@@ -356,12 +357,12 @@ class QtSvgPath(QtSvgItem):
             sweep_length -= 2 * pi
 
         if phi != 0:
-            rotarc = QtGui.QPainterPath()
+            rotarc = QPainterPath()
             rotarc.moveTo(x1, y1)
             rotarc.arcTo(cx - rx, cy - ry, rx * 2, ry * 2,
                 start_theta * 360 / 2 / pi, sweep_length * 360 / 2 / pi)
 
-            t = QtGui.QTransform()
+            t = QTransform()
             t.translate(x1, y1)
             t.rotate(phi)
             t.translate(-x1, -y1)
@@ -588,9 +589,9 @@ class QtSvgText(QtSvgItem):
     tag = "{http://www.w3.org/2000/svg}text"
 
     stylemap = {
-        'normal': QtGui.QFont.StyleNormal,
-        'italic': QtGui.QFont.StyleItalic,
-        'oblique': QtGui.QFont.StyleOblique
+        'normal': QFont.StyleNormal,
+        'italic': QFont.StyleItalic,
+        'oblique': QFont.StyleOblique
     }
 
     def parse(self, e):
@@ -623,7 +624,7 @@ class QtSvgText(QtSvgItem):
         stroke-opacity:1
 
         """
-        font = QtGui.QFont()
+        font = QFont()
         styles = {}
         for item in e.attrib.get('style', '').split(";"):
             k, v = item.split(":")
@@ -717,12 +718,12 @@ class QtSvgDoc(QtSvgG):
                         parent = parent.getparent()
                 self._nodes = valid_nodes
 
-            self.viewBox = QtCore.QRectF(0, 0, -1, -1)
+            self.viewBox = QRectF(0, 0, -1, -1)
 
         super(QtSvgDoc, self).__init__(self._svg, self._nodes)
 
     def parseTransform(self, e):
-        t = QtGui.QTransform()
+        t = QTransform()
         # transforms don't apply to the root svg element, but we do need to
         # take into account the viewBox there
         if self.isParentSvg:

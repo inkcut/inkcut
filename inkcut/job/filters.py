@@ -10,9 +10,18 @@ Created on April 10, 2020
 @author: jrm
 """
 from atom.api import Atom, Unicode, Bool, Float
-from enaml.colors import ColorMember
+from enaml.colors import ColorMember, SVG_COLORS
 from inkcut.core.svg import QtSvgDoc
 from inkcut.core.utils import log, find_subclasses
+
+NAMESPACES = {
+    "inkscape": "http://www.inkscape.org/namespaces/inkscape",
+    "svg": "http://www.w3.org/2000/svg",
+}
+
+
+# Reverse mapping of color
+SVG_COLOR_NAMES = {"#%s" % hex(c.argb)[4:]: n for n, c in SVG_COLORS.items()}
 
 
 class JobFilter(Atom):
@@ -74,7 +83,14 @@ class LayerFilter(JobFilter):
     def get_filter_options(cls, job, doc):
         # TODO: Extract all layers in the document and return a list of them
         svg = doc._svg
-        return [LayerFilter(name="Layer 1")]
+        layers = []
+        for g in svg.xpath('//*[@inkscape:groupmode="layer"]',
+                           namespaces=NAMESPACES):
+            label = g.attrib.get(
+                '{http://www.inkscape.org/namespaces/inkscape}label')
+            if label is not None:
+                layers.append(LayerFilter(name=label))
+        return layers
 
     def apply_filter(self, job, doc):
         # TODO: Remove this layer from the document
@@ -89,9 +105,19 @@ class ColorFilter(JobFilter):
 
     @classmethod
     def get_filter_options(cls, job, doc):
-        # TODO: Extract all colors in the document and return a list of them
         svg = doc._svg
-        return [ColorFilter(name="Blue")]
+        colors = []
+        for e in svg.xpath('//*[@style]'):
+            style = e.attrib.get('style')
+            if style is None:
+                continue
+            style = dict(it.split(":") for it in style.split(";"))
+            stroke = style.get('stroke')
+            if stroke is not None:
+                # Try to look up a common name
+                label = SVG_COLOR_NAMES.get(stroke.lower(), stroke)
+                colors.append(ColorFilter(name=label, color=stroke))
+        return colors
 
     def apply_filter(self, job, doc):
         # TODO: Remove this color from the document

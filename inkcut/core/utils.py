@@ -16,7 +16,8 @@ from enaml.image import Image
 from enaml.icon import Icon, IconImage
 from enaml.application import timed_call
 from enaml.qt.QtCore import QPointF
-from enaml.qt.QtGui import QPainterPath
+from enaml.qt.QtGui import QPainterPath, QPixmap, QIcon
+from enaml.qt.q_resource_helpers import get_cached_qcolor
 from twisted.internet.defer import Deferred
 from .svg import QtSvgDoc
 
@@ -74,6 +75,13 @@ def menu_icon(name):
     if sys.platform == 'win32':
         return load_icon(name)
     return None
+
+
+def color_icon(color):
+    pixmap = QPixmap(12, 12)
+    pixmap.fill(get_cached_qcolor(color))
+    icg = IconImage(image=Image(_tkdata=pixmap.toImage()))
+    return Icon(images=[icg])
 
 
 # -----------------------------------------------------------------------------
