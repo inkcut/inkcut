@@ -78,6 +78,8 @@ def menu_icon(name):
 
 
 def color_icon(color):
+    if color is None:
+        return None
     pixmap = QPixmap(12, 12)
     pixmap.fill(get_cached_qcolor(color))
     icg = IconImage(image=Image(_tkdata=pixmap.toImage()))
