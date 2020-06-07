@@ -12,6 +12,7 @@ Created on Jul 12, 2015
 import os
 import sys
 import logging
+from enaml.colors import Color
 from enaml.image import Image
 from enaml.icon import Icon, IconImage
 from enaml.application import timed_call
@@ -78,9 +79,9 @@ def menu_icon(name):
 
 
 def color_icon(color):
-    if color is None:
-        return None
     pixmap = QPixmap(12, 12)
+    if color is None:
+        color = Color(0, 0, 0, 0)
     pixmap.fill(get_cached_qcolor(color))
     icg = IconImage(image=Image(_tkdata=pixmap.toImage()))
     return Icon(images=[icg])

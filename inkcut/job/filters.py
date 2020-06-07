@@ -12,7 +12,7 @@ Created on April 10, 2020
 import copy
 from lxml import etree
 from atom.api import Atom, Unicode, Instance, Bool, Float
-from enaml.colors import ColorMember, SVG_COLORS
+from enaml.colors import Color, ColorMember, SVG_COLORS
 from inkcut.core.svg import QtSvgDoc, EtreeElement
 from inkcut.core.utils import (
     log, find_subclasses, split_painter_path, join_painter_paths
@@ -26,6 +26,7 @@ NAMESPACES = {
 
 # Reverse mapping of color
 SVG_COLOR_NAMES = {"#%s" % hex(c.argb)[4:]: n for n, c in SVG_COLORS.items()}
+SVG_COLOR_NAMES['none'] = 'transparent'
 
 
 def get_node_style(e):
@@ -160,7 +161,6 @@ class FillColorFilter(JobFilter):
             color = style.get(cls.style_attr)
             if color is not None and color not in used:
                 used.add(color)
-
                 # Try to look up a common name
                 label = SVG_COLOR_NAMES.get(color.lower(), color)
                 colors.append(cls(name=label, color=color, data=color))
