@@ -148,7 +148,7 @@ class OrderShortestPath(OrderHandler):
                     "Shortest path search aborted (time limit reached)")
                 break
 
-        duration = now - time()
+        duration = time() - now
         d = self.subpath_move_distance(zero, original)
         d = d - self.subpath_move_distance(zero, result)
         log.debug("Shortest path search: Saved {} in of movement in {}".format(
