@@ -69,7 +69,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
                              stdout=DEVNULL,
                              stderr=subprocess.STDOUT,
                              close_fds=sys.platform != "win32")
-       (stdout, stderr) = p.communicate(etree.tostring(document) if VERSION == "1.X" else inkex.etree.tostring(document))
+        (stdout, stderr) = p.communicate(etree.tostring(document) if VERSION == "1.X" else inkex.etree.tostring(document))
         if p.returncode != 0:
             inkex.errormsg("Error while starting inkcut : " + str(p.returncode) + " please check inkcut path.")
         # Set the returncode to avoid this warning when popen is garbage collected:
