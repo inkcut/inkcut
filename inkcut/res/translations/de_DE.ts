@@ -162,7 +162,7 @@
     </message>
     <message>
         <source>Force</source>
-        <translation>nErzwinge</translation>
+        <translation>Kraft</translation>
     </message>
     <message>
         <source>Output</source>
@@ -170,7 +170,7 @@
     </message>
     <message>
         <source>Rotation</source>
-        <translation>Rotation</translation>
+        <translation type="vanished">Rotation</translation>
     </message>
     <message>
         <source>Scale</source>
@@ -272,6 +272,57 @@
         <source>Start</source>
         <translation>Start</translation>
     </message>
+    <message>
+        <source>Error starting job</source>
+        <translation>Fehler beim Starten des Jobs</translation>
+    </message>
+    <message>
+        <source>No file is open! Please open a file first.</source>
+        <translation>Es ist keine Datei geöffnet. Bitte erst Datei öffnen.</translation>
+    </message>
+    <message>
+        <source>No device is setup! Please select Device-&gt;Setup from the menu.</source>
+        <translation>Es wurde kein Gerät konfigurieren. Bitte wählen Sie im Menu ein Gerät unter Gerät-&gt;Setup.</translation>
+    </message>
+    <message>
+        <source>No configuration available.</source>
+        <translation>Keine Konfiguration verfügbar.</translation>
+    </message>
+    <message>
+        <source>Orientation</source>
+        <translation>Orientierung</translation>
+    </message>
+    <message>
+        <source>Swap X/Y</source>
+        <translation>X/Y umkehren</translation>
+    </message>
+    <message>
+        <source>Mirror X</source>
+        <translation>X Spiegeln</translation>
+    </message>
+    <message>
+        <source>Mirror Y</source>
+        <translation>Y Spiegeln</translation>
+    </message>
+    <message>
+        <source>Quality factor</source>
+        <translation>Qualitätsfaktor</translation>
+    </message>
+</context>
+<context>
+    <name>disk</name>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>Verzeichnis</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Durchsuchen</translation>
+    </message>
 </context>
 <context>
     <name>filters</name>
@@ -320,11 +371,11 @@
     </message>
     <message>
         <source>Graphic Spacing</source>
-        <translation>Grafikabstand</translation>
+        <translation>Grafik Abstand</translation>
     </message>
     <message>
         <source>Plotting Order</source>
-        <translation>Plott-Reihenfolge</translation>
+        <translation>Plott Reihenfolge</translation>
     </message>
     <message>
         <source>Plot Weedlines</source>
@@ -360,7 +411,7 @@
     </message>
     <message>
         <source>Return to origin</source>
-        <translation>Zum Ursprung zurückkhren</translation>
+        <translation>Zum Ursprung zurückkehren</translation>
     </message>
     <message>
         <source>Feed after</source>
@@ -384,7 +435,7 @@
     </message>
     <message>
         <source>Graphic Size</source>
-        <translation>Grafikgröße</translation>
+        <translation>Grafik Größe</translation>
     </message>
     <message>
         <source>Lock aspect ratio</source>
@@ -401,6 +452,65 @@
     <message>
         <source>Graphic Copies</source>
         <translation>Grafik Kopien</translation>
+    </message>
+    <message>
+        <source>Approve Job</source>
+        <translation>Job bestätigen</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to start?</source>
+        <translation>Sind Sie sicher, dass Sie starten wollen?</translation>
+    </message>
+    <message>
+        <source>Job</source>
+        <translation>Job</translation>
+    </message>
+    <message>
+        <source>Name of the document</source>
+        <translation>Dateiname</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation>Dauer</translation>
+    </message>
+    <message>
+        <source>Estimated job duration based on given speed and the job size.</source>
+        <translation>Geschätzte Job-Dauer, basierend auf gegebener Geschwindigkeit und Job-Größe.</translation>
+    </message>
+    <message>
+        <source>Material</source>
+        <translation>Material</translation>
+    </message>
+    <message>
+        <source>Estimated material usage</source>
+        <translation>Geschätzter Materialbedarf</translation>
+    </message>
+    <message>
+        <source>Don&apos;t ask again</source>
+        <translation>Nicht erneut nachfragen</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechnen</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Start</translation>
+    </message>
+    <message>
+        <source>Weedlines</source>
+        <translation>Jätelinien</translation>
+    </message>
+</context>
+<context>
+    <name>parallelport</name>
+    <message>
+        <source>Port</source>
+        <translation>Port</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Aktualisieren</translation>
     </message>
 </context>
 <context>
@@ -439,8 +549,19 @@
     </message>
     <message>
         <source>De-bounce timeout</source>
-        <translatorcomment>could be translated better</translatorcomment>
-        <translation>Dämpfung Zeitüberschreibung</translation>
+        <translation>De-bounce timDämpfung Zeitüberschreibungeout</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>Skalierung</translation>
+    </message>
+    <message>
+        <source>Registration</source>
+        <translation>Registrierung</translation>
+    </message>
+    <message>
+        <source>Crop mark registration</source>
+        <translation>Schnittmarkenregistrierung</translation>
     </message>
 </context>
 <context>
@@ -459,6 +580,72 @@
     <message>
         <source>Mode</source>
         <translation>Modus</translation>
+    </message>
+</context>
+<context>
+    <name>raw</name>
+    <message>
+        <source>Device path</source>
+        <translation>Gerätepfad</translation>
+    </message>
+    <message>
+        <source>Open mode</source>
+        <translation>Zugriffsmodus</translation>
+    </message>
+</context>
+<context>
+    <name>serialport</name>
+    <message>
+        <source>Port</source>
+        <translation>Port</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Aktualisieren</translation>
+    </message>
+    <message>
+        <source>Baudrate</source>
+        <translation>Baudrate</translation>
+    </message>
+    <message>
+        <source>Bytesize</source>
+        <translation>Byte Größe</translation>
+    </message>
+    <message>
+        <source>Parity</source>
+        <translation>Parität</translation>
+    </message>
+    <message>
+        <source>Stopbits</source>
+        <translation>Stop Bits</translation>
+    </message>
+    <message>
+        <source>Flow control</source>
+        <translation>Flusssteuerung</translation>
+    </message>
+    <message>
+        <source>RTS/CTS</source>
+        <translation>RTS/CTS</translation>
+    </message>
+    <message>
+        <source>Enable hardware (RTS/CTS) flow control</source>
+        <translation>Aktiviere Flusssteuerung durch Hardware (RTS/CTS)</translation>
+    </message>
+    <message>
+        <source>DSR/DTR</source>
+        <translation>DSR/DTR</translation>
+    </message>
+    <message>
+        <source>Enable hardware (DSR/DTR) flow control</source>
+        <translation>Aktiviere Flusssteuerung durch Hardware (DSR/DTR)</translation>
+    </message>
+    <message>
+        <source>XON/XOFF</source>
+        <translation>XON/XOFF</translation>
+    </message>
+    <message>
+        <source>Enable software flow control</source>
+        <translation>Aktiviere Flusssteuerung durch Software</translation>
     </message>
 </context>
 <context>
@@ -490,6 +677,54 @@
     <message>
         <source>Theme</source>
         <translation>Thema</translation>
+    </message>
+    <message>
+        <source>Job</source>
+        <translation>Job</translation>
+    </message>
+    <message>
+        <source>Default Units</source>
+        <translation>Standardeinheiten</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>Vorschau</translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation>Raster</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation>X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation>Y</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>Alpha</translation>
+    </message>
+    <message>
+        <source>System</source>
+        <translation>System</translation>
+    </message>
+    <message>
+        <source>Settings...</source>
+        <translation>Einstellungen...</translation>
+    </message>
+    <message>
+        <source>Forums</source>
+        <translation>Forum</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Sprache</translation>
+    </message>
+    <message>
+        <source>You must restart for this to apply!</source>
+        <translation>Die Anwendung muss neugestartet werden, damit die Einstellungen wirksam werden!</translation>
     </message>
 </context>
 </TS>
