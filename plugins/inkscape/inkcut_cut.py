@@ -23,7 +23,7 @@ Inkcut, Plot HPGL directly from Inkscape.
 """
 import os
 import sys
-import importlib
+import importlib.util
 optparse_spec = importlib.util.find_spec("optparse")
 if optparse_spec:
     VERSION="1.X"
