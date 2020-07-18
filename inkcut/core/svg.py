@@ -346,8 +346,8 @@ class QtSvgPath(QtSvgItem):
 
         start_theta = -atan2((y1 - cy) * rx, (x1 - cx) * ry)
 
-        start_phi = -atan2(y1 - cy, x1 - cx)
-        end_phi = -atan2(y2 - cy, x2 - cx)
+        start_phi = -atan2((y1 - cy) / ry, (x1 - cx) / rx)
+        end_phi = -atan2((y2 - cy) / ry, (x2 - cx) / rx)
 
         sweep_length = end_phi - start_phi
 
