@@ -30,6 +30,7 @@ enamldef JobApprovalDialog(Dialog): dialog:
     title = QApplication.translate("job", "Approve Job")
     initial_size = (640, 320)
     attr plugin
+    attr device = plugin.workbench.get_plugin('inkcut.device').device
     attr job: Job
     Conditional:
         # Only use this if not using the system theme
@@ -51,6 +52,11 @@ enamldef JobApprovalDialog(Dialog): dialog:
                     tool_tip = QApplication.translate("job", "Name of the document")
                 Label:
                     text << job.document
+                Label:
+                    text = QApplication.translate("job", "Device")
+                    tool_tip = QApplication.translate("job", "Name of the device")
+                Label:
+                    text << device.name
                 Label:
                     text = QApplication.translate("job", "Duration")
                     tool_tip = QApplication.translate("job", "Estimated job duration based on given speed and the job size.")
