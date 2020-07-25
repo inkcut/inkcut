@@ -99,7 +99,6 @@ enamldef MonitorDockItem(DockItem): view:
         view.history_index = 0
 
     Container:
-        padding = 0
         constraints = [
                 vbox(hbox(cmb_conn, btn_open, btn_clear, btn_autoscroll),
                     comm_log,
@@ -110,11 +109,7 @@ enamldef MonitorDockItem(DockItem): view:
 
         ObjectCombo: cmb_conn:
             items << device_plugin.devices or [device] if device else []
-            to_string << lambda d: "{} @ {} ({})".format(
-                d.declaration.id,
-                d.connection if d.connection else "",
-                d.connection.protocol.declaration.name if d.connection and d.connection.protocol else ""
-            )
+            to_string = lambda d: d.name if d else ""
             selected << device
             selected ::
                 dev = change['value']
