@@ -302,9 +302,11 @@ enamldef DeviceDialog(Dialog): dialog:
 
         TaskDialogCommandArea:
             constraints = [
-                hbox(spacer, btn_yes, btn_no),
-                align('v_center', btn_yes, btn_no),
+                hbox(lbl_dev, spacer, btn_yes, btn_no),
+                align('v_center', lbl_dev, btn_yes, btn_no),
             ]
+            Label: lbl_dev:
+                text << "Device: {}".format(plugin.device.name)
             PushButton: btn_no:
                 text = QApplication.translate("device", "Cancel")
                 clicked :: cancel()
