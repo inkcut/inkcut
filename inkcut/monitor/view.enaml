@@ -11,6 +11,7 @@ Created on Feb 2, 2019
 """
 from enaml.qt.QtCore import Qt
 from enaml.qt.QtWidgets import QApplication
+from enaml.qt.QtGui import QTextCursor
 from enaml.widgets.api import  (
     Container, MultilineField, Field, PushButton, ObjectCombo
 )
@@ -53,7 +54,9 @@ enamldef MonitorDockItem(DockItem): view:
         widget = comm_log.proxy.widget
         try:
             msg = change['value'].decode()
-            widget.append(msg.strip() if plugin.strip_whitespace else msg)
+            widget.moveCursor(QTextCursor.End)
+            widget.insertPlainText(msg.strip() if plugin.strip_whitespace else msg)
+            widget.moveCursor(QTextCursor.End)
             scroll_to_end()
         except:
             pass # Ignore decode errors
@@ -64,7 +67,9 @@ enamldef MonitorDockItem(DockItem): view:
         widget = comm_log.proxy.widget
         try:
             msg = change['value'].decode()
-            widget.append(msg.strip() if plugin.strip_whitespace else msg)
+            widget.moveCursor(QTextCursor.End)
+            widget.insertPlainText(msg.strip() if plugin.strip_whitespace else msg)
+            widget.moveCursor(QTextCursor.End)
             scroll_to_end()
         except:
             pass # Ignore decode errors
