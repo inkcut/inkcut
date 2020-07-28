@@ -15,6 +15,7 @@ from enaml.qt.QtGui import QTextCursor
 from enaml.widgets.api import  (
     Container, MultilineField, Field, PushButton, ObjectCombo
 )
+from enaml.application import deferred_call
 from enaml.layout.api import vbox, align, hbox
 from enamlx.widgets.api import KeyEvent
 from inkcut.core.api import DockItem
@@ -126,9 +127,9 @@ enamldef MonitorDockItem(DockItem): view:
             tool_tip << "Connected. Click to disconnect" if connection and connection.connected else "Disconnected. Click to Connect"
             clicked ::
                 if connection and connection.connected:
-                    device.disconnect()
+                    deferred_call(device.disconnect)
                 else:
-                    device.connect()
+                    deferred_call(device.connect)
         PushButton: btn_clear:
             icon = load_icon("bin")
             tool_tip = QApplication.translate('monitor', "Clear console")
