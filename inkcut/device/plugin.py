@@ -569,6 +569,10 @@ class Device(Model):
 
         """
         log.debug("device | connect")
+        if self.connection.connected:
+            log.debug("device | already connected")
+            log.debug(traceback.format_stack())
+            return
         yield defer.maybeDeferred(self.connection.connect)
         cmd = self.config.commands_connect
         if cmd:
