@@ -36,7 +36,8 @@ def get_node_style(e):
     style = e.attrib.get('style')
     if style is None:
         return {}
-    return dict(it.split(":") for it in style.split(";"))
+    return dict(it.split(":") if ":" in it else (it, None)
+                for it in style.split(";"))
 
 
 def get_layers(svg):
