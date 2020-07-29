@@ -220,14 +220,12 @@ enamldef JobManifest(PluginManifest):
             group = 'document'
             command = 'inkcut.job.open'
             icon = menu_icon('folder_page')
-
-        # Looper:
-        #     iterable << plugin.recent_documents
-        #     ActionItem:
-        #         path = '/file/recent/%i'%loop_index
-        #         label = loop_item
-        #         command = 'inkcut.workbench.ui.open'
-        #         parameters = {'path':loop_item}
+        MenuItem:
+            path = '/file/recent/'
+            group = 'document'
+            label = QApplication.translate("File", "Open recent...")
+            after = 'open'
+            before = 'close'
         ActionItem:
             path = '/file/save'
             label = QApplication.translate("File", "Save")

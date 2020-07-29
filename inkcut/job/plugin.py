@@ -17,6 +17,10 @@ from inkcut.core.api import Plugin, unit_conversions, log
 
 from .models import Job, JobError, Material
 
+with enaml.imports():
+    from enaml.workbench.ui.workbench_menus import WorkbenchMenu
+    from .menu import RecentDocumentsMenu
+
 
 class JobPlugin(Plugin):
 
@@ -64,6 +68,8 @@ class JobPlugin(Plugin):
         #: If we loaded from state, refresh
         if self.job.document:
             self.refresh_preview()
+
+        self.init_recent_documents_menu()
 
     # -------------------------------------------------------------------------
     # Job API
@@ -211,3 +217,34 @@ class JobPlugin(Plugin):
 
         #: Save config
         self.save()
+
+    # -------------------------------------------------------------------------
+    # Utilities
+    # -------------------------------------------------------------------------
+
+    def init_recent_documents_menu(self):
+        """ Insert the `RecentDocumentsMenu` into the Menu declaration that
+        automatically updates the recent document menu links.
+
+        """
+        recent_menu = self.get_recent_menu()
+        if recent_menu is None:
+            return
+        for c in recent_menu.children:
+            if isinstance(c, RecentDocumentsMenu):
+                return  # Already added
+        documents_menu = RecentDocumentsMenu(plugin=self, parent=recent_menu)
+        documents_menu.initialize()
+
+    def get_recent_menu(self):
+        """ Get the recent menu item WorkbenchMenu """
+        ui = self.workbench.get_plugin('enaml.workbench.ui')
+        window_model = ui._model
+        if not window_model:
+            return
+        for menu in window_model.menus:
+            if menu.item.path == '/file':
+                for c in menu.children:
+                    if isinstance(c, WorkbenchMenu):
+                        if c.item.path == '/file/recent/':
+                            return c
