@@ -20,7 +20,7 @@ from atom.api import (
 )
 from contextlib import contextmanager
 from enaml.qt.QtGui import QPainterPath, QTransform
-from enaml.qt.QtCore import QPointF
+from enaml.qt.QtCore import QPointF, QRectF
 from enaml.colors import ColorMember
 from inkcut.core.api import Model, AreaBase
 from inkcut.core.svg import QtSvgDoc
@@ -163,6 +163,10 @@ class Job(Model):
     mirror = ContainerList(Bool(), default=[False, False]).tag(config=True)
     align_center = ContainerList(Bool(),
                                  default=[False, False]).tag(config=True)
+    
+    # Shifting of original file
+    auto_shift = Bool(True).tag(config=True, help="shift to start at origin")
+    copy_bbox = Instance(QRectF)
 
     rotation = Float(0).tag(config=True)
     auto_rotate = Bool(False).tag(
@@ -195,6 +199,8 @@ class Job(Model):
     filters = ContainerList(filters.JobFilter)
 
     #: Original path parsed from the source document
+    doc = Instance(QtSvgDoc)
+    #: Modified path that may be shifted
     path = Instance(QtSvgDoc)
 
     #: Path filtered by layers/colors and ordered according to the order
@@ -236,10 +242,10 @@ class Job(Model):
             #: Only load from stdin when explicitly changed to it (when doing
             #: open from the cli) otherwise when restoring state this hangs
             #: startup
-            self.path = QtSvgDoc(sys.stdin, **self.document_kwargs)
+            self.doc = self.path = QtSvgDoc(sys.stdin, **self.document_kwargs)
         elif source and (source.startswith("<?xml") or os.path.exists(source)):
-            self.path = QtSvgDoc(source, **self.document_kwargs)
-        
+            self.doc = self.path = QtSvgDoc(source, **self.document_kwargs)
+
         # Recreate available filters when the document changes
         self.filters = self._default_filters()
 
@@ -334,10 +340,12 @@ class Job(Model):
                 s = min(sx, sy)  # Fit to the smaller of the two
                 path = QTransform.fromScale(s, s).map(optimized_path)
 
+        # Save original bbox
+        bbox = self.copy_bbox = path.boundingRect()
+        
         # Move to bottom left
-        p = path.boundingRect().bottomRight()
-
-        path = QTransform.fromTranslate(-p.x(), -p.y()).map(path)
+        br = bbox.bottomRight()
+        path = QTransform.fromTranslate(-br.x(), -br.y()).map(path)
 
         return path
 
@@ -357,7 +365,7 @@ class Job(Model):
              'copy_spacing', 'copy_weedline', 'copy_weedline_padding',
              'plot_weedline', 'plot_weedline_padding', 'feed_to_end',
              'feed_after', 'material', 'material.size', 'material.padding',
-             'auto_copies')
+             'auto_copies', 'auto_shift')
     def update_document(self, change=None):
         """ Recreate an instance of of the plot using the current settings
 
@@ -424,7 +432,7 @@ class Job(Model):
             py = -(self.material.height() - bbox.height())/2.0
         else:
             py = -self.material.padding_bottom
-
+            
         # Scale and rotate
         if scale:
             model = QTransform.fromScale(*scale).map(model)
@@ -439,6 +447,12 @@ class Job(Model):
         bbox = model.boundingRect()
         p = bbox.bottomLeft()
         tx, ty = -p.x(), -p.y()
+        
+        if not self.auto_shift:
+            # Re-add original shift
+            bbox = self.copy_bbox
+            tx += -bbox.right() if self.mirror[0] else bbox.left()
+            ty += bbox.bottom() if self.mirror[1] else -bbox.top() 
 
         # If swapped, make sure padding is still correct
         if swap_xy:
