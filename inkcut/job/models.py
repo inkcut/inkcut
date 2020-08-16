@@ -166,7 +166,7 @@ class Job(Model):
     mirror = ContainerList(Bool(), default=[False, False]).tag(config=True)
     align_center = ContainerList(Bool(),
                                  default=[False, False]).tag(config=True)
-    
+
     # Shifting of original file
     auto_shift = Bool(True).tag(config=True, help="shift to start at origin")
     copy_bbox = Instance(QRectF)
@@ -294,6 +294,8 @@ class Job(Model):
             self.scale[1] * (self.mirror[1] and -1 or 1),
             )
 
+        self.copy_bbox = t.mapRect(bbox)
+
         # Rotate about center
         if self.rotation != 0:
             c = bbox.center()
@@ -326,8 +328,8 @@ class Job(Model):
                 path = optimized_path * QTransform.fromScale(s, s)
 
         # Save original bbox
-        bbox = self.copy_bbox = path.boundingRect()
-        
+        bbox = path.boundingRect()
+
         # Move to bottom left
         br = bbox.bottomRight()
         path = path * QTransform.fromTranslate(-br.x(), -br.y())
@@ -417,7 +419,7 @@ class Job(Model):
             py = -(self.material.height() - bbox.height())/2.0
         else:
             py = -self.material.padding_bottom
-            
+
         # Scale and rotate
         if scale:
             model *= QTransform.fromScale(*scale)
@@ -432,12 +434,12 @@ class Job(Model):
         bbox = model.boundingRect()
         p = bbox.bottomLeft()
         tx, ty = -p.x(), -p.y()
-        
+
         if not self.auto_shift:
             # Re-add original shift
             bbox = self.copy_bbox
             tx += -bbox.right() if self.mirror[0] else bbox.left()
-            ty += bbox.bottom() if self.mirror[1] else -bbox.top() 
+            ty += bbox.bottom() if self.mirror[1] else -bbox.top()
 
         # If swapped, make sure padding is still correct
         if swap_xy:
