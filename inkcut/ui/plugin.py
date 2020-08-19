@@ -9,12 +9,14 @@ Created on Jul 12, 2015
 
 @author: jrm
 """
+import sys
 import enaml
 import pkg_resources
 from datetime import datetime
 from atom.api import Atom, Int, List, Unicode, Instance, Bool, Enum, Dict
 from enaml.qt.q_resource_helpers import get_cached_qicon
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
+from enaml.widgets.api import MenuBar
 from enaml.application import timed_call
 
 from inkcut.core.api import Plugin, DockItem, log
@@ -83,6 +85,8 @@ class InkcutPlugin(Plugin):
         """
         self.set_app_name()
         self.set_window_icon()
+        if sys.platform == 'darwin':
+            self.fix_menubar()
         self.load_plugins()
         self._refresh_dock_items()
         self._refresh_settings_pages()
@@ -284,3 +288,13 @@ class InkcutPlugin(Plugin):
             ui.window.proxy.widget.setWindowIcon(icon)
         except Exception as e:
             log.error('Failed to set window icon: {}'.format(e))
+
+    def fix_menubar(self):
+        """ Disable native menu on OSX
+
+        """
+        ui = self.workbench.get_plugin('enaml.workbench.ui')
+        for c in ui.window.children:
+            if isinstance(c, MenuBar):
+                c.proxy.widget.setNativeMenuBar(False)
+                break
