@@ -23,7 +23,12 @@ def application_factory():
     from enaml.qt.qt_application import QtApplication
     app = QtApplication()
 
-    #: Install twisted support into the Qt event loop
+    # Set event loop policy for windows
+    if sys.platform == 'win32' and sys.version_info.major > 2:
+        import asyncio
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+    # Install twisted support into the Qt event loop
     import qreactor
     qreactor.install()
 
