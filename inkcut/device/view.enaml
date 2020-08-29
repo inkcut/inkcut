@@ -44,7 +44,8 @@ enamldef DeviceConfigView(Container):
                     text = QApplication.translate("device", "Speed")
                 DoubleSpinBox:
                     minimum = 0
-                    value:= model.speed
+                    maximum = 999999999
+                    value := model.speed
                     single_step = 4
                     suffix << " {}".format(model.speed_units)
                 Label:
@@ -56,7 +57,8 @@ enamldef DeviceConfigView(Container):
                     text = QApplication.translate("device", "Force")
                 DoubleSpinBox:
                     minimum = 0
-                    value:= model.force
+                    maximum = 999999999
+                    value := model.force
                     single_step = 10
                     suffix << " {}".format(model.force_units)
                 Label:
