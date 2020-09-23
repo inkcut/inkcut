@@ -52,16 +52,11 @@ enamldef JoystickDockItem(DockItem):
                     text = QApplication.translate('control', 'Device')
                 ObjectCombo:
                     items << device_plugin.devices or [device] if device else []
-                    to_string << lambda d: "{} @ {} ({})".format(
-                        d.declaration.id,
-                        d.connection if d.connection else "",
-                        d.connection.protocol.declaration.name if d.connection and d.connection.protocol else ""
-                    )
+                    to_string = lambda d: d.name if d else ""
                     selected << device
                     selected ::
-                        dev = change['value']
-                        if dev:
-                            device_plugin.device = dev
+                        if selected:
+                            device_plugin.device = selected
 
                 Label:
                     text = QApplication.translate('control', 'Step')

@@ -11,6 +11,7 @@ Created on May 25, 2019
 """
 from enaml.widgets.api import Container, Form, Label, ObjectCombo
 from enaml.qt.QtWidgets import QApplication
+from enamlx.widgets.api import DoubleSpinBox
 
 
 enamldef JobSettingsPage(Container):
@@ -22,3 +23,8 @@ enamldef JobSettingsPage(Container):
         ObjectCombo:
             items = list(sorted(model.get_member('units').items))
             selected := model.units
+        Label:
+            text = QApplication.translate("settings", "Optimizer timeout")
+        DoubleSpinBox:
+            suffix = ' sec'
+            value := model.optimizer_timeout

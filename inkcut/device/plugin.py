@@ -62,7 +62,7 @@ class DeviceTransport(Model):
         """ Whenever the protocol changes update the transport reference
 
         """
-        if (change['type'] == 'update' or change['type'] == 'create') and change['value']:
+        if change['type'] in ('update', 'create') and change['value']:
             self.protocol.transport = self
 
     def connect(self):
@@ -355,6 +355,11 @@ class Device(Model):
     and protocol respectively.
 
     """
+    #: Display Items
+    name = Unicode("New device").tag(config=True)
+    manufacturer = Unicode().tag(config=True)
+    model = Unicode().tag(config=True)
+    custom = Bool().tag(config=True)
 
     #: Internal model for drawing the preview on screen
     area = Instance(AreaBase)
@@ -564,6 +569,10 @@ class Device(Model):
 
         """
         log.debug("device | connect")
+        if self.connection.connected:
+            log.debug("device | already connected")
+            log.debug(traceback.format_stack())
+            return
         yield defer.maybeDeferred(self.connection.connect)
         cmd = self.config.commands_connect
         if cmd:
@@ -1077,7 +1086,8 @@ class DevicePlugin(Plugin):
         if not self.drivers:
             raise RuntimeError("No device drivers were registered. "
                                "This indicates a missing plugin.")
-        return self.get_device_from_driver(self.drivers[0])
+        self.devices = [self.get_device_from_driver(self.drivers[0])]
+        return self.devices[0]
 
     def _observe_device(self, change):
         """ Whenever the device changes, redraw """

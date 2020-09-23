@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2015-2018, Jairus Martin.
+Copyright (c) 2015-2020, the Inkcut team.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -19,11 +19,15 @@ from atom.api import (
     Dict, Callable, observe
 )
 from contextlib import contextmanager
-from enaml.qt import QtCore, QtGui
+from enaml.qt.QtGui import QPainterPath, QTransform
+from enaml.qt.QtCore import QPointF
+from enaml.colors import ColorMember
 from inkcut.core.api import Model, AreaBase
 from inkcut.core.svg import QtSvgDoc
-from inkcut.core.utils import split_painter_path
+from inkcut.core.utils import split_painter_path, log
 
+
+from . import filters
 from . import ordering
 
 
@@ -190,8 +194,18 @@ class Job(Model):
 
     stack_size = ContainerList(Int(), default=[0, 0])
 
-    path = Instance(QtGui.QPainterPath)  # Original path
-    model = Instance(QtGui.QPainterPath)  # Copy using job properties
+    #: Filters to cut only certain items
+    filters = ContainerList(filters.JobFilter)
+
+    #: Original path parsed from the source document
+    path = Instance(QtSvgDoc)
+
+    #: Path filtered by layers/colors and ordered according to the order
+    optimized_path = Instance(QPainterPath)
+
+    #: Finaly copy using all the applied job properties
+    #: This is what is actually cut out
+    model = Instance(QPainterPath)
 
     _blocked = Bool(False)  # block change events
     _desired_copies = Int(1)  # required for auto copies
@@ -217,15 +231,58 @@ class Job(Model):
         elif self.document and os.path.exists(self.document):
             self.path = QtSvgDoc(self.document, **self.document_kwargs)
 
+        # Recreate available filters when the document changes
+        self.filters = self._default_filters()
+
+    def _default_filters(self):
+        results = []
+        if not self.path:
+            return results
+        for Filter in filters.REGISTRY.values():
+            try:
+                results.extend(Filter.get_filter_options(self, self.path))
+            except Exception as e:
+                log.error("Failed loading filters for: %s" % Filter)
+                log.exception(e)
+        return results
+
+    def _default_optimized_path(self):
+        """ Filter parts of the documen based on the selected layers and colors
+
+        """
+        doc = self.path
+        for f in self.filters:
+            # If the color/layer is NOT enabled, then remove that color/layer
+            if not f.enabled:
+                log.debug("Applying filter {}".format(f))
+                doc = f.apply_filter(self, doc)
+
+        # Apply ordering to path
+        # this delegates to objects in the ordering module
+        OrderingHandler = ordering.REGISTRY.get(self.order)
+        if OrderingHandler:
+            doc = OrderingHandler().order(self, doc)
+
+        return doc
+
+    @observe('path', 'order', 'filters')
+    def _update_optimized_path(self, change):
+        """ Whenever the loaded file (and parsed SVG path) changes update
+        it based on the filters from the job.
+
+        """
+        self.optimized_path = self._default_optimized_path()
+
     def _create_copy(self):
         """ Creates a copy of the original graphic applying the given
         transforms
 
         """
-        bbox = self.path.boundingRect()
+        optimized_path = self.optimized_path
+        bbox = optimized_path.boundingRect()
 
         # Create the base copy
-        t = QtGui.QTransform()
+        t = QTransform()
 
         t.scale(
             self.scale[0] * (self.mirror[0] and -1 or 1),
@@ -240,18 +297,11 @@ class Job(Model):
             t.translate(c.x(), c.y())
 
         # Apply transform
-        path = self.path * t
+        path = optimized_path * t
 
         # Add weedline to copy
         if self.copy_weedline:
             self._add_weedline(path, self.copy_weedline_padding)
-
-        # Apply ordering to path
-        # this delegates to objects in the ordering module
-        # TODO: Should this be done via plugins?
-        OrderingHandler = ordering.REGISTRY.get(self.order)
-        if OrderingHandler:
-            path = OrderingHandler().order(self, path)
 
         # If it's too big we have to scale it
         w, h = path.boundingRect().width(), path.boundingRect().height()
@@ -267,13 +317,13 @@ class Job(Model):
                     sx = available_area.width() / w
                 if h > available_area.height():
                     sy = available_area.height() / h
-                s = min(sx, sy) # Fit to the smaller of the two
-                path = self.path * QtGui.QTransform.fromScale(s, s)
+                s = min(sx, sy)  # Fit to the smaller of the two
+                path = optimized_path * QTransform.fromScale(s, s)
 
         # Move to bottom left
         p = path.boundingRect().bottomRight()
 
-        path = path * QtGui.QTransform.fromTranslate(-p.x(), -p.y())
+        path = path * QTransform.fromTranslate(-p.x(), -p.y())
 
         return path
 
@@ -294,15 +344,19 @@ class Job(Model):
              'plot_weedline', 'plot_weedline_padding', 'feed_to_end',
              'feed_after', 'material', 'material.size', 'material.padding',
              'auto_copies')
-    def _job_changed(self, change):
+    def update_document(self, change=None):
         """ Recreate an instance of of the plot using the current settings
 
         """
         if self._blocked:
             return
 
-        if change['name'] == 'copies':
-            self._desired_copies = self.copies
+        if change:
+            name = change['name']
+            if name == 'copies':
+                self._desired_copies = self.copies
+            elif name in ('layer', 'color'):
+                self._update_optimized_path(change)
 
         model = self.create()
         if model:
@@ -312,7 +366,7 @@ class Job(Model):
         """ Create a path model that is rotated and scaled
 
         """
-        model = QtGui.QPainterPath()
+        model = QPainterPath()
 
         if not self.path:
             return
@@ -338,7 +392,7 @@ class Job(Model):
 
         while c < self.copies:
             x, y = next(points)
-            model.addPath(path * QtGui.QTransform.fromTranslate(x, -y))
+            model.addPath(path * QTransform.fromTranslate(x, -y))
             c += 1
 
         # Create weedline
@@ -359,11 +413,11 @@ class Job(Model):
 
         # Scale and rotate
         if scale:
-            model *= QtGui.QTransform.fromScale(*scale)
+            model *= QTransform.fromScale(*scale)
             px, py = px*abs(scale[0]), py*abs(scale[1])
 
         if swap_xy:
-            t = QtGui.QTransform()
+            t = QTransform()
             t.rotate(90)
             model *= t
 
@@ -378,11 +432,11 @@ class Job(Model):
         tx += px
         ty += py
 
-        model = model * QtGui.QTransform.fromTranslate(tx, ty)
+        model = model * QTransform.fromTranslate(tx, ty)
 
-        end_point = (QtCore.QPointF(
+        end_point = (QPointF(
             0, -self.feed_after + model.boundingRect().top())
-                     if self.feed_to_end else QtCore.QPointF(0, 0))
+                     if self.feed_to_end else QPointF(0, 0))
         model.moveTo(end_point)
 
         return model
@@ -466,7 +520,7 @@ class Job(Model):
 
         """
         # Compute the negative
-        path = QtGui.QPainterPath()
+        path = QPainterPath()
         for i in range(self.model.elementCount()):
             e = self.model.elementAt(i)
             if e.isMoveTo():
@@ -484,23 +538,23 @@ class Job(Model):
 
     #     def get_offset_path(self,device):
     #         """ Returns path where it is cutting """
-    #         path = QtGui.QPainterPath()
-    #         _p = QtCore.QPointF(0,0) # previous point
+    #         path = QPainterPath()
+    #         _p = QPointF(0,0) # previous point
     #         step = 0.1
     #         for subpath in QtSvgDoc.toSubpathList(self.model):#.toSubpathPolygons():
     #             e = subpath.elementAt(0)
-    #             path.moveTo(QtCore.QPointF(e.x,e.y))
+    #             path.moveTo(QPointF(e.x,e.y))
     #             length = subpath.length()
     #             distance = 0
     #             while distance<=length:
     #                 t = subpath.percentAtLength(distance)
     #                 p = subpath.pointAtPercent(t)
     #                 a = subpath.angleAtPercent(t)+90
-    #                 #path.moveTo(p)#QtCore.QPointF(x,y))
+    #                 #path.moveTo(p)#QPointF(x,y))
     #                 # TOOD: Do i need numpy here???
     #                 x = p.x()+np.multiply(self.device.blade_offset,np.sin(np.deg2rad(a)))
     #                 y = p.y()+np.multiply(self.device.blade_offset,np.cos(np.deg2rad(a)))
-    #                 path.lineTo(QtCore.QPointF(x,y))
+    #                 path.lineTo(QPointF(x,y))
     #                 distance+=step
     #             #_p = p # update last
     #

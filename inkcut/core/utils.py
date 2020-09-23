@@ -1,5 +1,5 @@
 """
-Copyright (c) 2017, Jairus Martin.
+Copyright (c) 2017-2020, the Inkcut team.
 
 Distributed under the terms of the GPL v3 License.
 
@@ -12,11 +12,13 @@ Created on Jul 12, 2015
 import os
 import sys
 import logging
+from enaml.colors import Color
 from enaml.image import Image
 from enaml.icon import Icon, IconImage
 from enaml.application import timed_call
 from enaml.qt.QtCore import QPointF
-from enaml.qt.QtGui import QPainterPath
+from enaml.qt.QtGui import QPainterPath, QPixmap, QIcon
+from enaml.qt.q_resource_helpers import get_cached_qcolor
 from twisted.internet.defer import Deferred
 from .svg import QtSvgDoc
 
@@ -74,6 +76,15 @@ def menu_icon(name):
     if sys.platform == 'win32':
         return load_icon(name)
     return None
+
+
+def color_icon(color):
+    pixmap = QPixmap(12, 12)
+    if color is None:
+        color = Color(0, 0, 0, 0)
+    pixmap.fill(get_cached_qcolor(color))
+    icg = IconImage(image=Image(_tkdata=pixmap.toImage()))
+    return Icon(images=[icg])
 
 
 # -----------------------------------------------------------------------------
@@ -164,3 +175,12 @@ def join_painter_paths(paths):
     for p in paths:
         result.addPath(p)
     return result
+
+
+def find_subclasses(cls):
+    """ Finds all known (imported) subclasses of the given class """
+    cmds = []
+    for subclass in cls.__subclasses__():
+        cmds.append(subclass)
+        cmds.extend(find_subclasses(subclass))
+    return cmds

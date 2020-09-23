@@ -11,9 +11,11 @@ Created on Feb 2, 2019
 """
 from enaml.qt.QtCore import Qt
 from enaml.qt.QtWidgets import QApplication
+from enaml.qt.QtGui import QTextCursor
 from enaml.widgets.api import  (
     Container, MultilineField, Field, PushButton, ObjectCombo
 )
+from enaml.application import deferred_call
 from enaml.layout.api import vbox, align, hbox
 from enamlx.widgets.api import KeyEvent
 from inkcut.core.api import DockItem
@@ -53,7 +55,9 @@ enamldef MonitorDockItem(DockItem): view:
         widget = comm_log.proxy.widget
         try:
             msg = change['value'].decode()
-            widget.append(msg.strip() if plugin.strip_whitespace else msg)
+            widget.moveCursor(QTextCursor.End)
+            widget.insertPlainText(msg.strip() if plugin.strip_whitespace else msg)
+            widget.moveCursor(QTextCursor.End)
             scroll_to_end()
         except:
             pass # Ignore decode errors
@@ -64,7 +68,9 @@ enamldef MonitorDockItem(DockItem): view:
         widget = comm_log.proxy.widget
         try:
             msg = change['value'].decode()
-            widget.append(msg.strip() if plugin.strip_whitespace else msg)
+            widget.moveCursor(QTextCursor.End)
+            widget.insertPlainText(msg.strip() if plugin.strip_whitespace else msg)
+            widget.moveCursor(QTextCursor.End)
             scroll_to_end()
         except:
             pass # Ignore decode errors
@@ -99,7 +105,6 @@ enamldef MonitorDockItem(DockItem): view:
         view.history_index = 0
 
     Container:
-        padding = 0
         constraints = [
                 vbox(hbox(cmb_conn, btn_open, btn_clear, btn_autoscroll),
                     comm_log,
@@ -110,11 +115,7 @@ enamldef MonitorDockItem(DockItem): view:
 
         ObjectCombo: cmb_conn:
             items << device_plugin.devices or [device] if device else []
-            to_string << lambda d: "{} @ {} ({})".format(
-                d.declaration.id,
-                d.connection if d.connection else "",
-                d.connection.protocol.declaration.name if d.connection and d.connection.protocol else ""
-            )
+            to_string = lambda d: d.name if d else ""
             selected << device
             selected ::
                 dev = change['value']
@@ -126,9 +127,9 @@ enamldef MonitorDockItem(DockItem): view:
             tool_tip << "Connected. Click to disconnect" if connection and connection.connected else "Disconnected. Click to Connect"
             clicked ::
                 if connection and connection.connected:
-                    device.disconnect()
+                    deferred_call(device.disconnect)
                 else:
-                    device.connect()
+                    deferred_call(device.connect)
         PushButton: btn_clear:
             icon = load_icon("bin")
             tool_tip = QApplication.translate('monitor', "Clear console")

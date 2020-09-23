@@ -122,6 +122,12 @@ def job_history_dock_item_factory():
     return JobHistoryDockItem
 
 
+def layers_dock_item_factory():
+    with enaml.imports():
+        from .view import LayersDockItem
+    return LayersDockItem
+
+
 def settings_page_factory():
     with enaml.imports():
         from .settings import JobSettingsPage
@@ -189,6 +195,10 @@ enamldef JobManifest(PluginManifest):
             layout = 'left'
         DockItem:
             plugin_id = 'inkcut.job'
+            factory = layers_dock_item_factory
+            layout = 'left'
+        DockItem:
+            plugin_id = 'inkcut.job'
             factory = job_history_dock_item_factory
             layout = 'bottom'
 
@@ -210,14 +220,12 @@ enamldef JobManifest(PluginManifest):
             group = 'document'
             command = 'inkcut.job.open'
             icon = menu_icon('folder_page')
-
-        # Looper:
-        #     iterable << plugin.recent_documents
-        #     ActionItem:
-        #         path = '/file/recent/%i'%loop_index
-        #         label = loop_item
-        #         command = 'inkcut.workbench.ui.open'
-        #         parameters = {'path':loop_item}
+        MenuItem:
+            path = '/file/recent/'
+            group = 'document'
+            label = QApplication.translate("File", "Open recent...")
+            after = 'open'
+            before = 'close'
         ActionItem:
             path = '/file/save'
             label = QApplication.translate("File", "Save")
