@@ -107,11 +107,8 @@ enamldef SettingsDialog(Dialog): dialog:
                 align('v_center', btn_ok, btn_no),
             ]
             PushButton: btn_ok:
-                text = "Ok"
+                text = QApplication.translate("device", "OK")
                 clicked :: dialog.close()
             PushButton: btn_no:
-                text = "Cancel"
+                text = QApplication.translate("device", "Cancel")
                 clicked :: dialog.close()
-
-
-

@@ -409,7 +409,7 @@ enamldef LayersDockItem(DockItem):
 enamldef MaterialDockItem(DockItem):
     attr plugin
     attr job: Job << plugin.job
-    title = "Material"
+    title = QApplication.translate("job", "Material")
     name = "material-item"
     icon = load_icon('note')
     Container:

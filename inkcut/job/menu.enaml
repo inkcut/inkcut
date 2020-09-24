@@ -12,7 +12,7 @@ Created on Jul 29, 2020
 """
 from enaml.core.api import Include
 from enaml.widgets.api import Action
-
+from enaml.qt.QtWidgets import QApplication
 
 enamldef OpenRecentAction(Action):
     attr doc: str = ""
@@ -28,7 +28,7 @@ enamldef RecentDocumentsMenu(Include):
 
     func get_actions(documents):
         if not documents:
-            return [Action(text="No recent documents")]
+            return [Action(text=QApplication.translate("File", "No recent documents"))]
         return [OpenRecentAction(plugin=plugin, doc=doc) for doc in documents]
 
     objects << get_actions(plugin.recent_documents)

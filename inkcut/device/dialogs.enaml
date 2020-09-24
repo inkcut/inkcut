@@ -215,7 +215,7 @@ enamldef DeviceEditView(Notebook): notebook:
 
 
 enamldef DeviceDialog(Dialog): dialog:
-    title = 'Device Setup'
+    title = QApplication.translate("device", "Configure device")
     initial_size = (640, 320)
     attr plugin
     activated :: btn_yes.set_focus()
@@ -269,7 +269,7 @@ enamldef DeviceDialog(Dialog): dialog:
                     Container:
                         padding = 0
                         TreeView: tree:
-                            horizontal_headers = ['Device']
+                            horizontal_headers = [QApplication.translate("device", "Available Devices")]
                             horizontal_stretch = True
                             show_root = False
                             show_vertical_header = False
@@ -286,11 +286,11 @@ enamldef DeviceDialog(Dialog): dialog:
                                     clicked :: plugin.device = loop_item
                                     Menu:
                                         Action:
-                                            text = 'Remove'
+                                            text = QApplication.translate("device", "Remove")
                                             triggered :: remove_device(loop_item)
                         PushButton:
                             icon = load_icon('add')
-                            text = 'Add'
+                            text = QApplication.translate("device", "Add")
                             clicked :: add_device()
                 SplitItem:
                     stretch = 4
@@ -306,7 +306,7 @@ enamldef DeviceDialog(Dialog): dialog:
                 align('v_center', lbl_dev, btn_yes, btn_no),
             ]
             Label: lbl_dev:
-                text << "Device: {}".format(plugin.device.name)
+                text << QApplication.translate("device", "Activated Device") + ": {}".format(plugin.device.name)
             PushButton: btn_no:
                 text = QApplication.translate("device", "Cancel")
                 clicked :: cancel()

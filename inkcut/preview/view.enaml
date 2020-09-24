@@ -19,6 +19,16 @@ from inkcut.core.utils import load_icon
 from .plot_view import PlotView
 
 
+qtool_tip = QApplication.translate("preview", "tool_tip")
+if qtool_tip == 'tool_tip':
+
+    qtool_tip = textwrap.dedent("""
+                The red dashed border is the device's x-y plane.
+                The solid black border is the material. The dashed black border is
+                the available area for use. The blue lines is the movement path.
+                """).strip()
+
+
 enamldef PreviewDockItem(DockItem):
     #: A dock item for
     title = QApplication.translate("preview", "Preview")
@@ -32,11 +42,7 @@ enamldef PreviewDockItem(DockItem):
     Container:
         padding = 0
         PlotView: plot_view:
-            tool_tip = textwrap.dedent("""
-            The red dashed border is the device's x-y plane.
-            The solid black border is the material. The dashed black border is
-            the available area for use. The blue lines is the movement path.
-            """).strip()
+            tool_tip = qtool_tip
             minimum_size = (360,None)
             data := preview.plot
             grid << (plugin.show_grid_x, plugin.show_grid_y)

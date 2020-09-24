@@ -8,6 +8,14 @@
         <translation>Ouvrir</translation>
     </message>
     <message>
+        <source>Open recent...</source>
+        <translation>Documents récents...</translation>
+    </message>
+    <message>
+        <source>No recent documents</source>
+        <translation>(aucun document)</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>Enregistrer</translation>
     </message>
@@ -81,6 +89,22 @@
         <translation>Machine</translation>
     </message>
     <message>
+        <source>Available Devices</source>
+        <translation>Machines disponibles</translation>
+    </message>
+    <message>
+        <source>Activated Device</source>
+        <translation>Machine utilisée</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Ajouter</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Supprimer</translation>
+    </message>
+    <message>
         <source>Setup...</source>
         <translation>Réglages...</translation>
     </message>
@@ -115,6 +139,10 @@
     <message>
         <source>Customize</source>
         <translation>Personnaliser</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation>Personnlisé</translation>
     </message>
     <message>
         <source>Connection</source>
@@ -372,7 +400,7 @@
     </message>
     <message>
         <source>Shortest Path</source>
-        <translation>Chemin le plus cours</translation>
+        <translation>Chemin le plus court</translation>
     </message>
     <message>
         <source>Plot Weedlines</source>
@@ -401,6 +429,14 @@
     <message>
         <source>Plot Alignment</source>
         <translation>Alignement</translation>
+    </message>
+    <message>
+        <source>Align center horizontally</source>
+        <translation>Centrage horizontal</translation>
+    </message>
+    <message>
+        <source>Align center vertically</source>
+        <translation>Centrage vertical</translation>
     </message>
     <message>
         <source>Plot Feeding</source>
@@ -476,7 +512,7 @@
     </message>
     <message>
         <source>Material</source>
-        <translation>Matière</translation>
+        <translation>Format de la feuille</translation>
     </message>
     <message>
         <source>Estimated material usage</source>
@@ -497,6 +533,26 @@
     <message>
         <source>Weedlines</source>
         <translation>Lignes de découpe</translation>
+    </message>
+    <message>
+        <source>Layers</source>
+        <translation>Calques</translation>
+    </message>
+    <message>
+        <source>Fill Colors</source>
+        <translation>Couleurs de remplissage</translation>
+    </message>
+    <message>
+        <source>Stroke Colors</source>
+        <translation>Couleurs de contour</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Ligne</translation>
+    </message>
+    <message>
+        <source>Col</source>
+        <translation>Colonne</translation>
     </message>
 </context>
 <context>
@@ -559,6 +615,15 @@
     <message>
         <source>View all</source>
         <translation>Tout afficher</translation>
+    </message>
+    <message>
+        <source>tool_tip</source>
+        <translation>
+    Le cadre en pointillé rouge représente la zone de travail de la machine (plan x-y).
+    Le cadre noir représente la feuille installée.
+    Le cadre pointillé noir représente la surface utilisable.
+    La ligne bleue représente le déplacement à vide de le tête.
+        </translation>
     </message>
 </context>
 <context>
@@ -625,6 +690,10 @@
     <message>
         <source>Alpha</source>
         <translation>Alpha</translation>
+    </message>
+    <message>
+        <source>Optimizer timeout</source>
+        <translation>Timeout de l'optimiseur du chemin le plus court</translation>
     </message>
     <message>
         <source>System</source>
