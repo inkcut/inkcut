@@ -38,12 +38,8 @@ def convert_objects_to_paths(file, document):
     tempfile = inkex.os.path.splitext(file)[0] + "-prepare.svg"
     # tempfile is needed here only because we want to force the extension to be .svg
     # so that we can open and close it silently
-    copy2(file, tempfile)
 
-    command = 'inkscape --verb=EditSelectAllInAllLayers --verb=EditUnlinkClone --verb=ObjectToPath --verb=FileSave --verb=FileQuit ' + tempfile
-
-    if find_executable('xvfb-run'):
-        command = 'xvfb-run -a ' + command
+    command = 'inkscape ' + file + ' --actions="select-all;object-unlink-clones;object-to-path" -o ' + tempfile
 
     p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
     (out, err) = p.communicate()
