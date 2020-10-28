@@ -1,0 +1,107 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2020, Laszlo Ducsai.
+
+Distributed under the terms of the GPL v3 License.
+
+The full license is in the file LICENSE, distributed with this software.
+
+Created on oct 26, 2020
+
+@author: ducsi
+"""
+import textwrap
+from inkcut.core.utils import load_icon
+from enaml.layout.api import hbox, align, spacer
+from enaml.qt.QtWidgets import QApplication
+from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton, ComboBox
+
+
+enamldef SerialPortSettingsView(Container):
+    attr model
+    padding = 0
+
+    func selected_port(port, ports):
+        matches = [p for p in ports if p.portName() == port]
+        return matches[0] if matches else None
+    
+    func selected_fc(flowcontrol, flowcontrols):
+        matches = [p for p in flowcontrols if p.id  == flowcontrol]
+        return matches[0] if matches else None
+        
+    func selected_parity(parity, parities):
+        matches = [p for p in parities if p.id  == parity]
+        return matches[0] if matches else None
+    
+    func selected_stopbits(stopbits, list_stopbits):
+        matches = [p for p in list_stopbits if p.id  == stopbits]
+        return matches[0] if matches else None
+
+    Form:
+        Label:
+            text = QApplication.translate("serialport", "Port")
+        Container:
+            padding = 0
+            constraints = [
+                hbox(cb, pb),
+                align('v_center', cb, pb)
+            ]
+            ObjectCombo: cb:
+                items << model.ports
+                to_string = lambda obj: obj.portName() + " - " + obj.description() 
+                selected << selected_port(model.port, model.ports)
+                selected ::
+                    port = change['value']
+                    if port:
+                        model.port = port.portName()
+                tool_tip = textwrap.dedent("""
+                List of serial ports detected by the system. If nothing is here you
+                must install the device driver for your machine.
+                """).strip()
+            PushButton: pb:
+                text = QApplication.translate("serialport", "Refresh")
+                icon = load_icon("arrow_refresh")
+                clicked :: model.refresh()
+        Label:
+            text = QApplication.translate("serialport", "Baudrate")
+        ObjectCombo:
+            items = list(model.get_member('baudrates').items)
+            selected := model.baudrate
+        Label:
+            text = QApplication.translate("serialport", "Bytesize")
+        ObjectCombo:
+            items = list(model.get_member('bytesize').items)
+            selected := model.bytesize
+        Label:
+            text = QApplication.translate("serialport", "Parity")
+        ObjectCombo:
+            items << model.parities
+            to_string = lambda obj: obj.name
+            selected << selected_parity(model.parity, model.parities)
+            selected ::
+                    it = change['value']
+                    if it:
+                        model.parity = int(it.id)
+        Label:
+            text = QApplication.translate("serialport", "Stopbits")
+        ObjectCombo:
+            items  << model.list_stopbits
+            to_string = lambda obj: obj.name
+            selected << selected_stopbits(model.stopbits, model.list_stopbits)
+            selected ::
+                    it = change['value']
+                    if it:
+                        model.stopbits = int(it.id)
+        Label:
+            text = QApplication.translate("serialport", "Flow control")
+        ObjectCombo:
+            items  << model.flowcontrols
+            to_string = lambda obj: obj.name
+            selected << selected_fc(model.flowcontrol, model.flowcontrols)
+            selected ::
+                    fc = change['value']
+                    if fc:
+                        model.flowcontrol = int(fc.id)
+
+            
+
