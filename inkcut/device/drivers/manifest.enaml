@@ -252,6 +252,14 @@ enamldef DriversManifest(PluginManifest):
             protocols = ['hpgl']
             connections = ['serial']
 
+        DeviceDriver:
+            manufacturer = 'Sekonic'
+            model = ' SPL-450'
+            width = '44cm'
+            length = '30cm'
+            protocols = ['hpgl']
+            connections = ['serial','qtserial']
+
 #        DeviceDriver:
 #            manufacturer = 'Vision'
 #            model = ' VE-810 (XD) Engraver (configured)'
