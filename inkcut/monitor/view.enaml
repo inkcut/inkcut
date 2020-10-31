@@ -10,16 +10,28 @@ Created on Feb 2, 2019
 @author: jrm
 """
 from enaml.qt.QtCore import Qt
-from enaml.qt.QtWidgets import QApplication
+from enaml.qt.QtWidgets import QApplication, QPlainTextEdit
 from enaml.qt.QtGui import QTextCursor
 from enaml.widgets.api import  (
-    Container, MultilineField, Field, PushButton, ObjectCombo
+    Container, RawWidget, Field, PushButton, ObjectCombo
 )
 from enaml.application import deferred_call
 from enaml.layout.api import vbox, align, hbox
 from enamlx.widgets.api import KeyEvent
 from inkcut.core.api import DockItem
 from inkcut.core.utils import load_icon
+
+
+class PlainTextEdit(RawWidget):
+    """ QTextEdit used by the MultiLineField is horribly slow at appending
+    text. This widget is significantly faster.
+
+    """
+    def create_widget(self, parent):
+        widget = QPlainTextEdit(parent)
+        widget.setReadOnly(True)
+        widget.setMaximumBlockCount(1000)
+        return widget
 
 
 enamldef MonitorDockItem(DockItem): view:
@@ -55,12 +67,9 @@ enamldef MonitorDockItem(DockItem): view:
         widget = comm_log.proxy.widget
         try:
             msg = change['value'].decode()
-            widget.moveCursor(QTextCursor.End)
-            widget.insertPlainText(msg.strip() if plugin.strip_whitespace else msg)
-            widget.moveCursor(QTextCursor.End)
-            scroll_to_end()
+            widget.appendPlainText(msg.strip() if plugin.strip_whitespace else msg)
         except:
-            pass # Ignore decode errors
+            pass  # Ignore decode errors
 
     func watch_input(change):
         if not plugin.input_enabled:
@@ -68,12 +77,9 @@ enamldef MonitorDockItem(DockItem): view:
         widget = comm_log.proxy.widget
         try:
             msg = change['value'].decode()
-            widget.moveCursor(QTextCursor.End)
-            widget.insertPlainText(msg.strip() if plugin.strip_whitespace else msg)
-            widget.moveCursor(QTextCursor.End)
-            scroll_to_end()
+            widget.appendPlainText(msg.strip() if plugin.strip_whitespace else msg)
         except:
-            pass # Ignore decode errors
+            pass  # Ignore decode errors
 
     func scroll_to_end():
         if not plugin.autoscroll:
@@ -139,11 +145,11 @@ enamldef MonitorDockItem(DockItem): view:
             tool_tip = QApplication.translate('monitor', "Auto scroll")
             checkable = True
             checked := plugin.autoscroll
-        MultilineField: comm_log:
-            activated ::
-                widget = self.proxy.widget
-                widget.setReadOnly(True)
-                widget.document().setMaximumBlockCount(5000)
+        PlainTextEdit: comm_log:
+            # Expand
+            hug_width = 'ignore'
+            hug_height = 'ignore'
+
         Field: to_send:
             enabled << bool(connection and connection.connected)
             placeholder << "Enter a command.." if enabled else "Disconnected... reconnect first."
