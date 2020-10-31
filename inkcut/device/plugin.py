@@ -1037,6 +1037,7 @@ class DevicePlugin(Plugin):
         with enaml.imports():
             from .transports.raw.manifest import RawFdManifest
             from .transports.serialport.manifest import SerialManifest
+            from .transports.qtserialport.manifest import QtSerialManifest
             from .transports.printer.manifest import PrinterManifest
             from .transports.disk.manifest import FileManifest
             from .transports.parallelport.manifest import ParallelManifest
@@ -1046,6 +1047,7 @@ class DevicePlugin(Plugin):
             from inkcut.device.pi.manifest import PiManifest
             plugins.append(RawFdManifest)
             plugins.append(SerialManifest)
+            plugins.append(QtSerialManifest)
             plugins.append(PrinterManifest)
             plugins.append(FileManifest)
             plugins.append(ParallelManifest)
