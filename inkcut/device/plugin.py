@@ -362,7 +362,7 @@ class Device(Model):
     custom = Bool().tag(config=True)
 
     #: Internal model for drawing the preview on screen
-    area = Instance(AreaBase)
+    area = Instance(AreaBase).tag(config=True)
 
     #: The declaration that defined this device
     declaration = Typed(extensions.DeviceDriver).tag(config=True)
@@ -823,6 +823,10 @@ class Device(Model):
                         if config.commands_after:
                             yield defer.maybeDeferred(connection.write,
                                                       config.commands_after)
+
+                        # fix plotter skipping the end of job by sending a lot of 'do nothing'
+                        for _ in range (8000):
+                            yield defer.maybeDeferred(self.connection.write, "PU0,0;")
 
                         #: Update stats
                         info.ended = datetime.now()
