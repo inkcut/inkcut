@@ -68,8 +68,11 @@ enamldef SettingsDialog(Dialog): dialog:
         p = plugin.workbench.get_plugin(d.plugin_id)
         settings.model = getattr(p, d.model) if p and d.model else p
 
-    TaskDialogStyleSheet:
-            pass
+    Conditional:
+        # Only use this if not using the system theme
+        condition << not (plugin.workbench.get_plugin('inkcut.ui').dock_style == 'system')
+        TaskDialogStyleSheet:
+                pass
     TaskDialogBody:
         TaskDialogInstructionArea:
             Label:
