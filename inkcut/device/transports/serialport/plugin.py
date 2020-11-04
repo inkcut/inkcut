@@ -13,7 +13,7 @@ Created on Jul 12, 2015
 import serial
 import traceback
 from atom.atom import set_default
-from atom.api import List, Instance, Enum, Bool, Int, Unicode
+from atom.api import List, Instance, Enum, Bool, Int, Str
 from inkcut.core.api import Plugin, Model, log
 from inkcut.device.plugin import DeviceTransport
 from twisted.internet import reactor
@@ -54,7 +54,7 @@ class SerialConfig(Model):
     ports = List()
 
     #: Serial port config
-    port = Unicode().tag(config=True)
+    port = Str().tag(config=True)
     baudrate = Int(9600).tag(config=True)
     bytesize = Enum(serial.EIGHTBITS, serial.SEVENBITS, serial.SIXBITS,
                     serial.FIVEBITS).tag(config=True)

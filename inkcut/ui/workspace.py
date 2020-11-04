@@ -13,7 +13,7 @@ from __future__ import print_function
 
 import jsonpickle as pickle
 
-from atom.api import Unicode
+from atom.api import Str
 
 from enaml.widgets.api import Container
 from enaml.workbench.ui.api import Workspace
@@ -30,7 +30,7 @@ class InkcutWorkspace(Workspace):
 
     """
     #: Storage for the plugin manifest's id.
-    _manifest_id = Unicode()
+    _manifest_id = Str()
 
     def start(self):
         """ Start the workspace instance.

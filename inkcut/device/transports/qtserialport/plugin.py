@@ -13,7 +13,7 @@ Created on Oct 26, 2020
 import sys
 import traceback
 from atom.atom import set_default
-from atom.api import List, Instance, Enum, Bool, Int, Unicode
+from atom.api import List, Instance, Enum, Bool, Int, Str
 from inkcut.core.api import Plugin, Model, log
 from inkcut.device.plugin import DeviceTransport
 from PyQt5.QtSerialPort import QSerialPort
@@ -28,12 +28,12 @@ class IdNameItem:
 
 
 class QtSerialConfig(Model):
-    device_path = Unicode()
+    device_path = Str()
     
     #: Available serial ports
     ports = List()
     #: Serial port config
-    port = Unicode().tag(config=True)
+    port = Str().tag(config=True)
 
     flowcontrols = []
     # Available FlowControls
@@ -96,7 +96,7 @@ class QtSerialTransport(DeviceTransport):
     #: Default config
     config = Instance(QtSerialConfig, ()).tag(config=True)
     #: Current path
-    device_path = Unicode()
+    device_path = Str()
     #: Connection port
     connection = Instance(QSerialPort)
 

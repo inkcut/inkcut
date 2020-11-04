@@ -12,7 +12,7 @@ Created on Jun 11, 2015
 """
 from atom.atom import set_default
 from atom.api import (
-    Callable, Tuple, Float, List, ContainerList, Bool, FloatRange, Unicode,
+    Callable, Tuple, Float, List, ContainerList, Bool, FloatRange, Str,
     Dict, Typed, ForwardTyped, observe
 )
 from enaml.core.declarative import d_
@@ -103,13 +103,13 @@ class PlotView(Control):
     data = d_(ContainerList())
     setup = d_(Callable(lambda graph: None))
 
-    title = d_(Unicode())
-    labels = d_(Dict(Unicode(), Unicode()))
+    title = d_(Str())
+    labels = d_(Dict(Str(), Str()))
 
-    axis_scales = d_(Dict(Unicode(), Float()))
+    axis_scales = d_(Dict(Str(), Float()))
 
-    #background_color = d_(Unicode())
-    #foreground = d_(Unicode())
+    #background_color = d_(Str())
+    #foreground = d_(Str())
 
     antialiasing = d_(Bool(True))
     aspect_locked = d_(Bool(True))

@@ -13,7 +13,7 @@ import sys
 import enaml
 import pkg_resources
 from datetime import datetime
-from atom.api import Atom, Int, List, Unicode, Instance, Bool, Enum, Dict
+from atom.api import Atom, Int, List, Str, Instance, Bool, Enum, Dict
 from enaml.qt.q_resource_helpers import get_cached_qicon
 from enaml.layout.api import AreaLayout, DockBarLayout, HSplitLayout
 from enaml.widgets.api import MenuBar
@@ -58,7 +58,7 @@ class Clock(Atom):
 
 class InkcutPlugin(Plugin):
     #: Project site
-    wiki_page = Unicode("https://www.codelv.com/projects/inkcut")
+    wiki_page = Str("https://www.codelv.com/projects/inkcut")
 
     #: For anything that needs to update every second
     clock = Instance(Clock, ())

@@ -11,7 +11,7 @@ Based on my work from the https://github.com/codelv/enaml-native-cli
 
 @author: jrm
 """
-from atom.api import Unicode, Callable, List
+from atom.api import Str, Callable, List
 from enaml.core.declarative import Declarative, d_
 
 
@@ -26,13 +26,13 @@ class StopSystemExit(SystemExit):
 
 class CliCommand(Declarative):
     #: The cli sub command name `inkcut <name>`
-    name = d_(Unicode())
+    name = d_(Str())
 
     #: The cli short description for this sub command
-    desc = d_(Unicode())
+    desc = d_(Str())
 
     #: The cli help text for this sub command
-    help = d_(Unicode())
+    help = d_(Str())
 
     #: List of 2 time tuples of command arguments this command accepts.
     #: These are passed to the ArgumentParser.add_argument(args, **kwargs)

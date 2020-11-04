@@ -15,7 +15,7 @@ import enaml
 import traceback
 import jsonpickle as pickle
 from atom.api import (
-    Atom, Unicode, List, Member, Dict, Instance, ContainerList, Float, observe
+    Atom, Str, List, Member, Dict, Instance, ContainerList, Float, observe
 )
 from enaml.workbench.plugin import Plugin as EnamlPlugin
 from enaml.widgets.api import Container
@@ -139,7 +139,7 @@ class Plugin(EnamlPlugin):
     settings_items = List(Atom)
 
     #: File used to save and restore the state for this plugin
-    _state_file = Unicode()
+    _state_file = Str()
     _state_excluded = List()
     _state_members = List(Member)
 

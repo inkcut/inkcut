@@ -17,7 +17,7 @@ import enamlx
 enamlx.install()
 
 import enaml
-from atom.api import Unicode, Instance
+from atom.api import Str, Instance
 from enaml.qt import QT_API, QtCore, QtWidgets, QtGui
 from enaml.workbench.ui.api import UIWorkbench
 from inkcut.core.utils import log
@@ -61,7 +61,7 @@ class InkcutWorkbench(UIWorkbench):
     _instance = None
 
     #: For error messages
-    app_name = Unicode('Inkcut')
+    app_name = Str('Inkcut')
 
     #: Save reference to the translator
     translator = Instance(QtCore.QTranslator, ())

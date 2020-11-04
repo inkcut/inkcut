@@ -14,7 +14,7 @@ import os
 import sys
 import traceback
 from atom.atom import set_default
-from atom.api import Value, Instance, Unicode, Enum
+from atom.api import Value, Instance, Str, Enum
 from inkcut.core.api import Plugin, Model, log
 from inkcut.device.plugin import DeviceTransport
 from twisted.internet import reactor, stdio
@@ -22,7 +22,7 @@ from twisted.internet.protocol import Protocol, connectionDone
 
 
 class RawFdConfig(Model):
-    device_path = Unicode("/dev/null").tag(config=True)
+    device_path = Str("/dev/null").tag(config=True)
     mode = Enum('r+b', 'wb', 'r+', 'w').tag(config=True)
 
 
@@ -62,7 +62,7 @@ class RawFdTransport(DeviceTransport):
     fd = Value()
 
     #: Current path
-    device_path = Unicode()
+    device_path = Str()
 
     #: Wrapper
     _protocol = Instance(RawFdProtocol)

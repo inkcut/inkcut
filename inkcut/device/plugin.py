@@ -13,7 +13,7 @@ Created on Jan 16, 2015
 import enaml
 import traceback
 from atom.api import (
-    Typed, List, Instance, ForwardInstance, ContainerList, Bool, Unicode,
+    Typed, List, Instance, ForwardInstance, ContainerList, Bool, Str,
     Int, Float, Enum, Bytes, observe
 )
 from contextlib import contextmanager
@@ -320,10 +320,10 @@ class DeviceConfig(Model):
     test_mode = Bool().tag(config=True)
 
     #: Init commands
-    commands_before = Unicode().tag(config=True)
-    commands_after = Unicode().tag(config=True)
-    commands_connect = Unicode().tag(config=True)
-    commands_disconnect = Unicode().tag(config=True)
+    commands_before = Str().tag(config=True)
+    commands_after = Str().tag(config=True)
+    commands_connect = Str().tag(config=True)
+    commands_disconnect = Str().tag(config=True)
 
     def _default_step_time(self):
         """ Determine the step time based on the device speed setting
@@ -356,9 +356,9 @@ class Device(Model):
 
     """
     #: Display Items
-    name = Unicode("New device").tag(config=True)
-    manufacturer = Unicode().tag(config=True)
-    model = Unicode().tag(config=True)
+    name = Str("New device").tag(config=True)
+    manufacturer = Str().tag(config=True)
+    model = Str().tag(config=True)
     custom = Bool().tag(config=True)
 
     #: Internal model for drawing the preview on screen
@@ -403,7 +403,7 @@ class Device(Model):
     busy = Bool()
 
     #: Status
-    status = Unicode()
+    status = Str()
 
     def _default_connection(self):
         """ If no connection is set when the device is created,

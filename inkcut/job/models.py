@@ -15,7 +15,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from atom.api import (
-    Enum, Float, Int, Bool, Instance, ContainerList, Range, Unicode,
+    Enum, Float, Int, Bool, Instance, ContainerList, Range, Str,
     Dict, Callable, observe
 )
 from contextlib import contextmanager
@@ -34,8 +34,8 @@ from . import ordering
 class Material(AreaBase):
     """ Model representing the plot media
     """
-    name = Unicode().tag(config=True)
-    color = Unicode('#000000').tag(config=True)
+    name = Str().tag(config=True)
+    color = Str('#000000').tag(config=True)
 
     is_roll = Bool(False).tag(config=True)
 
@@ -82,7 +82,7 @@ class JobInfo(Model):
     started = Instance(datetime).tag(config=True)
     ended = Instance(datetime).tag(config=True)
     progress = Range(0, 100, 0).tag(config=True)
-    data = Unicode().tag(config=True)
+    data = Str().tag(config=True)
     count = Int().tag(config=True)
 
     #: Device speed in px/s
@@ -147,7 +147,7 @@ class Job(Model):
     material = Instance(Material, ()).tag(config=True)
 
     #: Path to svg document this job parses
-    document = Unicode().tag(config=True)
+    document = Str().tag(config=True)
 
     #: Nodes to restrict
     document_kwargs = Dict().tag(config=True)

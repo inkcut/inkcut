@@ -15,14 +15,14 @@ import time
 import tempfile
 from os.path import join, exists
 from atom.atom import set_default
-from atom.api import Instance, Unicode
+from atom.api import Instance, Str
 from inkcut.core.api import Plugin, Model, log
 from inkcut.device.plugin import DeviceTransport
 
 
 class FileConfig(Model):
-    format = Unicode("inkcut-{time}.{protocol}").tag(config=True)
-    directory = Unicode().tag(config=True)
+    format = Str("inkcut-{time}.{protocol}").tag(config=True)
+    directory = Str().tag(config=True)
 
     def _default_directory(self):
         return tempfile.gettempdir()
@@ -40,7 +40,7 @@ class FileTransport(DeviceTransport):
     file = Instance(object)
     
     #: Current path
-    path = Unicode()
+    path = Str()
     
     def _default_path(self):
         config = self.config

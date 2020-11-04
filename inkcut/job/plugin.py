@@ -12,7 +12,7 @@ Created on Jul 12, 2015
 import os
 import sys
 import enaml
-from atom.api import Instance, Enum, List, Unicode, Int, Float, observe
+from atom.api import Instance, Enum, List, Str, Int, Float, observe
 from inkcut.core.api import Plugin, unit_conversions, log
 
 from .models import Job, JobError, Material
@@ -40,7 +40,7 @@ class JobPlugin(Plugin):
     job = Instance(Job).tag(config=True)
 
     #: Recently open paths
-    recent_documents = List(Unicode()).tag(config=True)
+    recent_documents = List(Str()).tag(config=True)
 
     #: Number of recent documents
     recent_document_limit = Int(10).tag(config=True)

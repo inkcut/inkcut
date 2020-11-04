@@ -15,7 +15,7 @@ import sys
 import traceback
 import subprocess
 from glob import glob
-from atom.api import Atom, List, Unicode, Instance
+from atom.api import Atom, List, Str, Instance
 from inkcut.core.api import Plugin, log
 
 from inkcut.device.transports.raw.plugin import (
@@ -24,8 +24,8 @@ from inkcut.device.transports.raw.plugin import (
 
 
 class ParallelPortDescriptor(Atom):
-    name = Unicode()
-    device = Unicode()
+    name = Str()
+    device = Str()
 
     def __str__(self):
         return "{} ({})".format(self.name, self.device)

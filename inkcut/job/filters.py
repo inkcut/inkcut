@@ -11,7 +11,7 @@ Created on April 10, 2020
 """
 import copy
 from lxml import etree
-from atom.api import Atom, Unicode, Instance, Bool, Float
+from atom.api import Atom, Str, Instance, Bool, Float
 from enaml.colors import Color, ColorMember, SVG_COLORS
 from inkcut.core.svg import QtSvgDoc, EtreeElement
 from inkcut.core.utils import (
@@ -55,7 +55,7 @@ class JobFilter(Atom):
     type = ""
 
     #: Name to display in the UI
-    name = Unicode()
+    name = Str()
 
     #: If NOT enabled then apply_filter is called which should return the
     #: path with the filtered path elements REMOVED.
@@ -150,7 +150,7 @@ class FillColorFilter(JobFilter):
     color = ColorMember()
 
     #: The color name
-    data = Unicode()
+    data = Str()
 
     @classmethod
     def get_filter_options(cls, job, doc):
