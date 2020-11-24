@@ -37,7 +37,7 @@ if VERSION == "1.X":
 else:
     inkex.localize()
 import subprocess
-from inkcut import contains_text, convert_objects_to_paths
+from inkcut4inkscape import contains_text, convert_objects_to_paths
 
 
 
