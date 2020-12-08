@@ -38,7 +38,7 @@ else:
     inkex.localize()
 import subprocess
 
-from inkcut import convert_objects_to_paths
+from inkcut4inkscape import convert_objects_to_paths
 
 DEBUG = False
 try:

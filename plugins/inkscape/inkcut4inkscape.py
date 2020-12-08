@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Inkcut, Plot HPGL directly from Inkscape.
-   inkcut.py
+   inkcut4inkscape.py
 
    Copyright 2018 The Inkcut Team
 
