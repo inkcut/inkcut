@@ -362,7 +362,7 @@ class Device(Model):
     custom = Bool().tag(config=True)
 
     #: Internal model for drawing the preview on screen
-    area = Instance(AreaBase)
+    area = Instance(AreaBase).tag(config=True)
 
     #: The declaration that defined this device
     declaration = Typed(extensions.DeviceDriver).tag(config=True)
