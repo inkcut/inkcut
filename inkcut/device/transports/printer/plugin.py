@@ -148,10 +148,17 @@ class LPRProtocol(ProcessProtocol, object):
     def outReceived(self, data):
         self.delegate.data_received(data)
 
+    def errReceived(self, data):
+        log.error("LPR error: {}".format(data))
+
     def inReceived(self, data):
         self.delegate.data_received(data)
 
-    def processEnded(self, reason):
+    def processEnded(self, status):
+        if (status.value.exitCode != 0):
+            log.error("LPR error: %d" % (status.value.exitCode,))
+        else:
+            log.debug("LPR exited without error")
         self.parent.connected = False
         self.delegate.connection_lost()
 
