@@ -1,4 +1,5 @@
 enaml>=0.10.2
+qtpy<=1.11.3
 twisted
 enamlx
 pyqtgraph
