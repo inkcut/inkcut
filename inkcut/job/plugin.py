@@ -88,6 +88,21 @@ class JobPlugin(Plugin):
         """ Refresh the preview. Other plugins can request this """
         self._refresh_preview({})
 
+    def can_open(self, url):
+        """ Check if the given source url can be opened
+
+        """
+        result = False
+        try:
+            if url:
+                schema, path = url.split("://")
+                if schema == "file" and os.path.exists(path):
+                    result = path.endswith(".svg")
+        except Exception as e:
+            log.exception(e)
+        # log.debug("Checking if {} can be opened... {}".format(url, result))
+        return result
+
     def open_document(self, path, nodes=None):
         """ Set the job.document if it is empty, otherwise close and create
         a  new Job instance.
@@ -95,24 +110,31 @@ class JobPlugin(Plugin):
         """
         if path == '-':
             log.debug("Opening document from stdin...")
+            from_source = True
+        elif path.startswith("<?xml"):
+            log.debug("Opening document from source...")
+            from_source = True
         elif not os.path.exists(path):
             raise JobError("Cannot open %s, it does not exist!" % path)
         elif not os.path.isfile(path):
             raise JobError("Cannot open %s, it is not a file!" % path)
+        else:
+            from_source = False
 
         # Close any old docs
         self.close_document()
 
-        log.info("Opening {doc}".format(doc=path))
         try:
-            self.job.document_kwargs = dict(ids=nodes)
-            self.job.document = path
+            log.info("Opening {doc}".format(doc=path[:200]))
+            job = self.job
+            job.document_kwargs = dict(ids=nodes)
+            job.document = path
         except ValueError as e:
             #: Wrap in a JobError
             raise JobError(e)
 
         # Update recent documents
-        if path != '-':
+        if not from_source:
             docs = self.recent_documents[:]
             # Remove and re-ad to make it most recent
             if path in docs:

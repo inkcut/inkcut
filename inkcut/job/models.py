@@ -223,13 +223,14 @@ class Job(Model):
 
     def _observe_document(self, change):
         """ Read the document from stdin """
-        if change['type'] == 'update' and self.document == '-':
+        source = self.document
+        if change['type'] == 'update' and source == '-':
             #: Only load from stdin when explicitly changed to it (when doing
             #: open from the cli) otherwise when restoring state this hangs
             #: startup
             self.path = QtSvgDoc(sys.stdin, **self.document_kwargs)
-        elif self.document and os.path.exists(self.document):
-            self.path = QtSvgDoc(self.document, **self.document_kwargs)
+        elif source and (source.startswith("<?xml") or os.path.exists(source)):
+            self.path = QtSvgDoc(source, **self.document_kwargs)
 
         # Recreate available filters when the document changes
         self.filters = self._default_filters()

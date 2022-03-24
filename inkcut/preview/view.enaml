@@ -10,14 +10,16 @@ Created on Dec 6, 2015
 @author: jrm
 """
 import textwrap
-from enaml.widgets.api import Container, Menu, Action
+from enaml.widgets.api import Container, Menu, Action, Feature
 from enaml.qt.QtWidgets import QApplication
+from enaml.qt.qt_mime_data import QtMimeData
+
+from enamlx.widgets.api import KeyEvent
 
 from inkcut.core.api import DockItem, to_unit, from_unit
-from inkcut.core.utils import load_icon
+from inkcut.core.utils import load_icon, log
 
 from .plot_view import PlotView
-
 
 qtool_tip = QApplication.translate("preview", "tool_tip")
 if qtool_tip == 'tool_tip':
@@ -38,19 +40,83 @@ enamldef PreviewDockItem(DockItem):
     attr plugin #: PreviewPlugin
     attr preview << plugin.preview
     attr job_plugin << plugin.workbench.get_plugin('inkcut.job')
+    attr clipboard = QApplication.clipboard()
+    attr can_paste: bool = False
     icon = load_icon('page_white_swoosh')
+    activated :: setup_clipboard()
+
+    func setup_clipboard():
+        try:
+            clipboard.dataChanged.connect(self.on_clipboard_changed)
+        except Exception as e:
+            log.exception(e)
+
+    func on_clipboard_changed():
+        try:
+            mime_data = QtMimeData(clipboard.mimeData())
+            log.debug("clipboard | {}".format(mime_data.formats()))
+            if mime_data.has_format("image/x-inkscape-svg"):
+                self.can_paste = True
+            else:
+                self.can_paste = False
+        except Exception as e:
+            log.exception(e)
+
+    func open_from_clipboard():
+        mime_data = QtMimeData(clipboard.mimeData())
+        if mime_data.has_format("image/x-inkscape-svg"):
+            source = mime_data.data("image/x-inkscape-svg").decode("utf-8")
+            job_plugin.open_document(source)
+
     Container:
         padding = 0
         PlotView: plot_view:
+            features = Feature.DropEnabled
             tool_tip = qtool_tip
-            minimum_size = (360,None)
+            minimum_size = (360, None)
             data := preview.plot
             grid << (plugin.show_grid_x, plugin.show_grid_y)
             grid_alpha << plugin.grid_alpha/100.0
-            axis_scales << {'left':to_unit(1, job_plugin.units),
-                            'bottom':to_unit(1, job_plugin.units)}
+            axis_scales << {
+                'left' : to_unit(1, job_plugin.units),
+                'bottom' : to_unit(1, job_plugin.units)
+            }
+            drag_enter => (event):
+                try:
+                    mime_data = event.mime_data()
+                    log.debug("drag enter | {}".format(mime_data.formats()))
+                    if mime_data.has_format("text/uri-list"):
+                        urls = mime_data.data("text/uri-list").decode('utf-8').split("\n")
+                        for url in urls:
+                            if job_plugin.can_open(url):
+                                event.accept_proposed_action()
+                                return
+                except Exception as e:
+                    log.exception(e)
+
+            drop => (event):
+                try:
+                    mime_data = event.mime_data()
+                    log.debug("drop | {}".format(mime_data.formats()))
+                    if mime_data.has_format("text/uri-list"):
+                        urls = mime_data.data("text/uri-list").decode('utf-8').split("\n")
+                        for url in urls:
+                            if job_plugin.can_open(url):
+                                schema, path = url.split("://")
+                                job_plugin.open_document(path)
+                except Exception as e:
+                    log.exception(e)
+            KeyEvent:
+                pressed ::
+                    data = change['value']
+                    if data['key'] == '\x16' and can_paste: # Ctrl + V
+                        open_from_clipboard()
             Menu:
                 context_menu = True
                 Action:
                     text = QApplication.translate("preview", "View all")
                     triggered :: plot_view.proxy.widget.autoRange()
+                Action:
+                    visible << can_paste
+                    text = QApplication.translate("preview", "Open from clipboard")
+                    triggered :: open_from_clipboard()

@@ -67,7 +67,7 @@ enamldef MonitorDockItem(DockItem): view:
         widget = comm_log.proxy.widget
         try:
             msg = change['value'].decode()
-            widget.appendPlainText(msg.strip() if plugin.strip_whitespace else msg)
+            widget.insertPlainText(msg.strip() if plugin.strip_whitespace else msg)
         except:
             pass  # Ignore decode errors
 

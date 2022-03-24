@@ -702,8 +702,11 @@ class QtSvgDoc(QtSvgG):
         self.isParentSvg = parent or not is_etree
         if self.isParentSvg:
             if not is_etree:
-                self._doc = etree.parse(e)
-                e = self._svg = self._doc.getroot()
+                if isinstance(e, str) and e.startswith("<?xml"):
+                    e = self._svg = etree.fromstring(e.encode())
+                else:
+                    self._doc = etree.parse(e)
+                    e = self._svg = self._doc.getroot()
             if ids:
                 nodes = set()
                 xpath = self._svg.xpath
