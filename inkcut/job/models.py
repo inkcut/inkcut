@@ -231,7 +231,7 @@ class Job(Model):
             self.path = QtSvgDoc(sys.stdin, **self.document_kwargs)
         elif source and (source.startswith("<?xml") or os.path.exists(source)):
             self.path = QtSvgDoc(source, **self.document_kwargs)
-
+        
         # Recreate available filters when the document changes
         self.filters = self._default_filters()
 
@@ -280,6 +280,11 @@ class Job(Model):
 
         """
         optimized_path = self.optimized_path
+        if optimized_path is None:
+            optimized_path = self.optimized_path = self._default_optimized_path()
+        if optimized_path is None:
+            log.debug("Path is %s" % self.path)
+            raise ValueError("Path is empty")
         bbox = optimized_path.boundingRect()
 
         # Create the base copy
