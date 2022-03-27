@@ -100,7 +100,7 @@ def to_unit(val, unit='px'):
 
 def parse_unit(val):
     """ Parse a string into pixels """
-    return  QtSvgDoc.parseUnit(val)
+    return QtSvgDoc.parseUnit(val)
 
 
 unit_conversions = QtSvgDoc._uuconv
@@ -113,7 +113,7 @@ def async_sleep(ms):
     is used with the inlineCallbacks decorator.
     """
     d = Deferred()
-    timed_call(ms, d.callback, True)
+    timed_call(int(ms), d.callback, True)
     return d
 
 
