@@ -51,7 +51,7 @@ enamldef JobApprovalDialog(Dialog): dialog:
                     text = QApplication.translate("job", "Job")
                     tool_tip = QApplication.translate("job", "Name of the document")
                 Label:
-                    text << job.document
+                    text << str(job)
                 Label:
                     text = QApplication.translate("job", "Device")
                     tool_tip = QApplication.translate("job", "Name of the device")

@@ -276,7 +276,7 @@ enamldef DeviceProgressDockItem(DockItem):
             ]
             attr duration << job.info.duration.total_seconds() if job and job.info.duration else 0
             Label: lbl1:
-                text << "Source: {}".format(os.path.split(job.document)[-1] if job else "")
+                text << "Source: {}".format(job)
             Label: lbl2:
                 text << "Size: {}{} x {}{}".format(
                         round(to_unit(job.model.boundingRect().height(), job.info.units),2),

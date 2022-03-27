@@ -545,8 +545,8 @@ enamldef JobHistoryDockItem(DockItem):
                     TableViewItem:
                         text << str(job.info.created.strftime('%c')) if job and job.info.created else ""
                     TableViewItem:
-                        text << str(os.path.split(job.document)[-1]) if job else ""
-                        tool_tip = str(job.document) if job else ""
+                        text << str(job) if job else ""
+                        tool_tip = str(job) if job else ""
                     TableViewItem:
                         text << str(job.info.count) if job else "0"
                     TableViewItem:

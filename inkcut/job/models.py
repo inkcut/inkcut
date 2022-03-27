@@ -210,6 +210,17 @@ class Job(Model):
     _blocked = Bool(False)  # block change events
     _desired_copies = Int(1)  # required for auto copies
 
+    def __str__(self):
+        source = self.document
+        if not source:
+            return "Empty document"
+        if source.startswith("<?xml"):
+            return "Pasted document"
+        try:
+            return os.path.split(source)[-1]
+        except Exception:
+            return source
+
     def __setstate__(self, *args, **kwargs):
         """ Ensure that when restoring from disk the material and info
         are not set to None. Ideally these would be defined as Typed but

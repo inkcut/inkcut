@@ -170,7 +170,7 @@ class JobPlugin(Plugin):
         if not self.job.document:
             return
 
-        log.info("Closing {doc}".format(doc=self.job.document))
+        log.info("Closing {doc}".format(doc=self.job))
         # Create a new default job
         self.job = self._default_job()
 
