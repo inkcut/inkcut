@@ -209,7 +209,7 @@ class JobPlugin(Plugin):
         if device and device.area:
             area = device.area
             view_items.append(
-                dict(path=transform(device.area.path*t),
+                dict(path=transform(t.map(device.area.path)),
                      pen=plot.pen_device,
                      skip_autorange=True)#(False, [area.size[0], 0]))
             )
@@ -227,10 +227,10 @@ class JobPlugin(Plugin):
         if job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([
-                dict(path=transform(job.material.path*t),
+                dict(path=transform(t.map(job.material.path)),
                      pen=plot.pen_media,
                      skip_autorange=([0, job.size[0]], [0, job.size[1]])),
-                dict(path=transform(job.material.padding_path*t),
+                dict(path=transform(t.map(job.material.padding_path)),
                      pen=plot.pen_media_padding, skip_autorange=True)
             ])
 

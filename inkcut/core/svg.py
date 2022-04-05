@@ -55,7 +55,7 @@ class QtSvgItem(QPainterPath):
         """ Do in place multiplication by subtracting everything from itself
         then adding the multiplied values back.
         """
-        tmp = self*m
+        tmp = m.map(self)
         self -= self
         self += tmp
         return self

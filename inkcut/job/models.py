@@ -314,7 +314,7 @@ class Job(Model):
             t.translate(c.x(), c.y())
 
         # Apply transform
-        path = optimized_path * t
+        path = t.map(optimized_path)
 
         # Add weedline to copy
         if self.copy_weedline:
@@ -335,12 +335,12 @@ class Job(Model):
                 if h > available_area.height():
                     sy = available_area.height() / h
                 s = min(sx, sy)  # Fit to the smaller of the two
-                path = optimized_path * QTransform.fromScale(s, s)
+                path = QTransform.fromScale(s, s).map(optimized_path)
 
         # Move to bottom left
         p = path.boundingRect().bottomRight()
 
-        path = path * QTransform.fromTranslate(-p.x(), -p.y())
+        path = QTransform.fromTranslate(-p.x(), -p.y()).map(path)
 
         return path
 
@@ -409,7 +409,7 @@ class Job(Model):
 
         while c < self.copies:
             x, y = next(points)
-            model.addPath(path * QTransform.fromTranslate(x, -y))
+            model.addPath(QTransform.fromTranslate(x, -y).map(path))
             c += 1
 
         # Create weedline
@@ -430,13 +430,13 @@ class Job(Model):
 
         # Scale and rotate
         if scale:
-            model *= QTransform.fromScale(*scale)
+            model = QTransform.fromScale(*scale).map(model)
             px, py = px*abs(scale[0]), py*abs(scale[1])
 
         if swap_xy:
             t = QTransform()
             t.rotate(90)
-            model *= t
+            model = t.map(model)
 
         # Move to 0,0
         bbox = model.boundingRect()
@@ -449,7 +449,7 @@ class Job(Model):
         tx += px
         ty += py
 
-        model = model * QTransform.fromTranslate(tx, ty)
+        model = QTransform.fromTranslate(tx, ty).map(model)
 
         end_point = (QPointF(
             0, -self.feed_after + model.boundingRect().top())

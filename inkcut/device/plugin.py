@@ -506,7 +506,7 @@ class Device(Model):
             t.rotate(config.rotation)
 
         #: TODO: Translate back to 0,0 so all coordinates are positive
-        path = path * t
+        path = t.map(path)
 
         return path
 
@@ -881,7 +881,7 @@ class Device(Model):
         # Do a final translation since Qt's y axis is reversed from svg's
         # It should now be a bbox of (x=0, y=0, width, height)
         # this creates a copy
-        model = model * QtGui.QTransform.fromScale(1, -1)
+        model = QtGui.QTransform.fromScale(1, -1).map(model)
 
         # Determine if interpolation should be used
         skip_interpolation = (self.connection.always_spools or config.spooled
@@ -1245,7 +1245,7 @@ class DevicePlugin(Plugin):
         if device and device.area:
             area = device.area
             view_items.append(
-                dict(path=device.transform(device.area.path*t*r),
+                dict(path=device.transform(r.map(t.map(device.area.path))),
                      pen=plot.pen_device,
                      skip_autorange=True)
             )
@@ -1253,10 +1253,10 @@ class DevicePlugin(Plugin):
         if job and job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([
-                dict(path=device.transform(job.material.path*t*r),
+                dict(path=device.transform(r.map(t.map(job.material.path))),
                      pen=plot.pen_media,
                      skip_autorange=True),
-                dict(path=device.transform(job.material.padding_path*t*r),
+                dict(path=device.transform(r.map(t.map(job.material.padding_path))),
                      pen=plot.pen_media_padding, skip_autorange=True)
             ])
 

@@ -18,6 +18,7 @@ enamlx.install()
 
 import enaml
 from atom.api import Str, Instance
+from qtpy import API_NAME
 from enaml.qt import QT_API, QtCore, QtWidgets, QtGui
 from enaml.workbench.ui.api import UIWorkbench
 from inkcut.core.utils import log
@@ -52,8 +53,11 @@ def pyside_dialog_patch():
 pyside_dialog_patch.applied = False
 
 
-if QT_API in ('pyside', 'pyside2') and not pyside_dialog_patch.applied:
+if 'pyside' in QT_API and not pyside_dialog_patch.applied:
     pyside_dialog_patch()
+
+# Keep in sync
+os.environ['PYQTGRAPH_QT_LIB'] = API_NAME
 
 
 class InkcutWorkbench(UIWorkbench):

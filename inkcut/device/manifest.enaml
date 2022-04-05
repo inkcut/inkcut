@@ -50,14 +50,15 @@ def job_start(event):
                                   "Please select Device->Setup from the menu."))
         return
 
-    try:
-        yield defer.maybeDeferred(plugin.submit, job)
-    except (RuntimeError, IOError) as e:
-        log.error(traceback.format_exc())
-        workbench.message_warning("Error starting job", str(e))
-    except Exception as e:
-        log.error(traceback.format_exc())
-        workbench.message_critical("Error processing job", traceback.format_exc())
+    def show_error(err, *args, **kwargs):
+        log.error(err)
+        msg = str(err.getTraceback())
+        workbench.message_critical("Error processing job", msg)
+
+    d = defer.maybeDeferred(plugin.submit, job)
+    d.addErrback(show_error)
+    yield d
+
 
 
 def device_progress_dock_item_factory():

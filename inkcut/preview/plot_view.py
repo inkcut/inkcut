@@ -31,7 +31,7 @@ class PainterPathPlotItem(PlotCurveItem):
 
     def updateData(self, path, **kargs):
         # Invert for display
-        self.path = path*QtGui.QTransform.fromScale(1, -1)
+        self.path = QtGui.QTransform.fromScale(1, -1).map(path)
 
         # Trick the checks so it still paints
         bbox = self.path.boundingRect()
