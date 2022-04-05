@@ -15,13 +15,15 @@ from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
 from enaml.qt.QtWidgets import QApplication
 
 
-
 def application_factory():
     """ A factory function which creates the default Application
     and installs twisted support.
     """
     from enaml.qt.qt_application import QtApplication
     app = QtApplication()
+
+    # Fix wayland icon
+    QApplication.setDesktopFileName("inkcut")
 
     # Set event loop policy for windows
     if sys.platform == 'win32' and sys.version_info.major > 2:
