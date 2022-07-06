@@ -12,7 +12,6 @@ Created on Dec 6, 2015
 import sys
 from enaml.workbench.api import Extension, PluginManifest
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup
-from enaml.qt.QtWidgets import QApplication
 
 
 def application_factory():
@@ -20,6 +19,7 @@ def application_factory():
     and installs twisted support.
     """
     from enaml.qt.qt_application import QtApplication
+    from enaml.qt.QtWidgets import QApplication
     app = QtApplication()
 
     # Fix wayland icon
