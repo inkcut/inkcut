@@ -3,7 +3,6 @@
   <id>org.ekips.filter.inkcut.open</id>
   <dependency type="executable" location="extensions">inkcut_open.py</dependency>
   <dependency type="executable" location="extensions">inkcut4inkscape.py</dependency>
-  <dependency type="executable" location="extensions">inkex.py</dependency>  
   <effect>
     <object-type>all</object-type>
     <effects-menu>
