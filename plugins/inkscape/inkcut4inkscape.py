@@ -26,7 +26,6 @@ import inkex
 from lxml import etree
 from subprocess import Popen, PIPE
 from shutil import copy2
-from distutils.spawn import find_executable
 
 # check inkscape version
 import importlib
