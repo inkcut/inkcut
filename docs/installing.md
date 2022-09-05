@@ -36,6 +36,17 @@ pip3 install git+https://github.com/codelv/inkcut.git
 
 ```
 
+If you use the serial interface, you also need to add your user to the `dialout` group:
+
+```bash
+sudo usermod -a -G dialout "$USER"
+```
+
+Otherwise, you might get this error:
+
+```bash
+Permission denied: '/dev/ttyS1'
+```
 
 ##### OSX
 
