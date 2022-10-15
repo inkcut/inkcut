@@ -85,18 +85,21 @@ class BladeOffsetFilter(DeviceFilter):
         blade_path = QPainterPath()
         offset_path = QPainterPath()
 
+        def finish_curve():
+            n = len(params)
+            if n == 2:
+                self.process_quad(offset_path, blade_path, params, qf)
+            elif n == 3:
+                self.process_cubic(offset_path, blade_path, params, qf)
+            else:
+                raise ValueError("Unexpected curve data length %s" % n)
+
         for i in range(path.elementCount()):
             e = path.elementAt(i)
 
             # Finish the previous curve (if there was one)
             if cmd == CurveToElement and e.type != CurveToDataElement:
-                n = len(params)
-                if n == 2:
-                    self.process_quad(offset_path, blade_path, params, qf)
-                elif n == 3:
-                    self.process_cubic(offset_path, blade_path, params, qf)
-                else:
-                    raise ValueError("Unexpected curve data length %s" % n)
+                finish_curve()
                 params = []
 
             # Reconstruct the path
@@ -113,12 +116,8 @@ class BladeOffsetFilter(DeviceFilter):
                 params.append(QPointF(e.x, e.y))
 
         # Finish the previous curve (if there was one)
-        if params and e.type != CurveToDataElement:
-            n = len(params)
-            if n == 2:
-                self.process_quad(offset_path, blade_path, params, qf)
-            elif n == 3:
-                self.process_cubic(offset_path, blade_path, params, qf)
+        if params:
+            finish_curve()
         return offset_path
 
     def add_continuity_correction(self, offset_path, blade_path, point):

@@ -164,7 +164,7 @@ def split_painter_path(path):
             params.append(QPointF(e.x, e.y))
 
     # Finish the previous curve (if there was one)
-    if params and e and e.type != CurveToDataElement:
+    if params:
         finish_curve(p, params)
     return subpaths
 
