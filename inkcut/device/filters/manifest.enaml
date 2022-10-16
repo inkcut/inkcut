@@ -39,6 +39,14 @@ def overcut_config_view():
         from .view import OvercutConfigView
     return OvercutConfigView
 
+def min_line_factory():
+    from .min_line import MinLineFilter
+    return MinLineFilter()
+
+def min_line_config_view():
+    with enaml.imports():
+        from .view import MinLineConfigView
+    return MinLineConfigView
 
 
 enamldef FiltersManifest(PluginManifest):
@@ -59,6 +67,12 @@ enamldef FiltersManifest(PluginManifest):
             name = QApplication.translate("filters", "Overcut")
             factory = overcut_factory
             config_view = overcut_config_view
+
+        DeviceFilter:
+            id = 'min-line'
+            name = QApplication.translate("filters", "Min line")
+            factory = min_line_factory
+            config_view = min_line_config_view
 
         DeviceFilter:
             id = 'blade-offset'

@@ -220,10 +220,16 @@ class JobPlugin(Plugin):
                 dict(path=transform(job.move_path), pen=plot.pen_up),
                 dict(path=transform(job.cut_path), pen=plot.pen_down)
             ])
+           
             #: TODO: This
-            #if self.show_offset_path:
-            #    view_items.append(PainterPathPlotItem(
-            # self.job.offset_path,pen=self.pen_offset))
+            #if True:
+            #    filters = device.filters
+            #    modelt = job.cut_path
+            #    for f in filters:
+            #        log.debug(" filter | Running {} on model".format(f))
+            #        modelt = f.apply_to_model(modelt, job=device)
+            #    view_items.append(dict(
+            #        path=modelt, pen=plot.pen_offset))
         if job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([

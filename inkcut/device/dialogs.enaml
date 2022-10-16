@@ -199,7 +199,8 @@ enamldef DeviceEditView(Notebook): notebook:
                                             f = loop_item.factory()
                                             f.declaration = loop_item
                                             filters.append(f)
-                                            device.filters = filters
+                                            order = { x.id:i for (i, x) in enumerate(plugin.filters) }
+                                            device.filters = sorted(filters, key=lambda x: order.get(x.declaration.id, -1))
                                         else:
                                             device.filters = [f for f in device.filters if f.declaration.id != loop_item.id]
                             Include:

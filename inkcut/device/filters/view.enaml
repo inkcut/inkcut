@@ -51,3 +51,41 @@ enamldef BladeOffsetConfigView(Container):
             minimum = 0.0
             maximum = 90.0
             value := model.cutoff
+
+enamldef MinLineConfigView(Container):
+    attr model
+    padding = 0
+    Form:
+        Label:
+            text = QApplication.translate("filters", "Min jump")
+        DoubleSpinBox:
+            tool_tip = QApplication.translate("filters", "Ignore jumps shorter than this. Set to 0 to disable")
+            minimum = 0.0
+            decimals = 3
+            single_step = 0.01
+            suffix << " "+model.units
+            value << to_unit(model.min_jump, model.units)
+            value ::
+                model.min_jump = from_unit(change['value'], model.units)
+        Label:
+            text = QApplication.translate("filters", "Min sideways shift")
+        DoubleSpinBox:
+            tool_tip = QApplication.translate("filters", "Ignore short segments going sideways or backward followed by path which continues in the direction before shift. Set to 0 to disable")
+            minimum = 0.0
+            decimals = 3
+            single_step = 0.001
+            suffix << " "+model.units
+            value << to_unit(model.min_shift, model.units)
+            value ::
+                model.min_shift = from_unit(change['value'], model.units)
+        Label:
+            text = QApplication.translate("filters", "Min edge")
+        DoubleSpinBox:
+            tool_tip = QApplication.translate("filters", "Ignore short lines. Set to 0 to disable")
+            minimum = 0.0
+            decimals = 3
+            single_step = 0.1
+            suffix << " "+model.units
+            value << to_unit(model.min_edge, model.units)
+            value ::
+                model.min_edge = from_unit(change['value'], model.units)
