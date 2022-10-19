@@ -11,8 +11,9 @@ Created on Dec 15, 2018
 """
 import sys
 import itertools
+import math
 from time import time
-from atom.api import Atom, Instance
+from atom.api import Atom, Instance, Int, ForwardInstance, List
 from enaml.qt.QtCore import QPointF
 from enaml.qt.QtGui import QVector2D
 from enaml.qt.QtWidgets import QApplication
@@ -98,8 +99,133 @@ class OrderMaxY(OrderHandler):
             job, path, lambda p: p.boundingRect().top())
 
 
+
+class KdTree(Atom):
+    class Node(Atom):
+        position = Instance(QVector2D)
+        id = Int()
+        count = Int(0)
+        left = ForwardInstance(lambda: KdTree.Node)
+        right = ForwardInstance(lambda: KdTree.Node)
+        parent = ForwardInstance(lambda: KdTree.Node)
+
+        def __init__(self, position, id):
+            self.position = position
+            self.id = id
+
+    points = List(QVector2D)
+    n = Int(0)
+    nodes = List(Node)
+    minp = Instance(QVector2D)
+    maxp = Instance(QVector2D)
+    root = Instance(Node)
+
+    def __init__(self, points):
+        self.points = points
+        self.n = len(points)
+        self.nodes = []
+        if points:
+            self.minp = QVector2D(points[0])
+            self.maxp = QVector2D(points[0])
+            for p in points:
+                self.minp.setX(min(self.minp.x(), p.x()))
+                self.minp.setY(min(self.minp.y(), p.y()))
+                self.maxp.setX(max(self.maxp.x(), p.x()))
+                self.maxp.setY(max(self.maxp.y(), p.y()))
+        self.nodes = [KdTree.Node(p, i) for (i, p) in enumerate(self.points)]
+        self.root = KdTree._recursive_build(self.nodes[:], 0, None)
+
+    def _item_count(node):
+        if node:
+            return node.count
+        return 0
+    
+    def _recursive_build(items, depth, parent):
+        if not items:
+            return None
+        if depth & 1:
+            items.sort(key=lambda v: v.position.y())
+        else:
+            items.sort(key=lambda v: v.position.x())
+
+        m = len(items) // 2
+        pivot = items[m]
+        left, right = items[:m], items[m+1:]
+
+        pivot.parent = parent
+        pivot.left = KdTree._recursive_build(left, depth + 1, pivot)
+        pivot.right = KdTree._recursive_build(right, depth + 1, pivot)
+        pivot.count = 1
+        pivot.count += KdTree._item_count(pivot.left)
+        pivot.count += KdTree._item_count(pivot.right)
+        return pivot
+
+    def remove(self, id):
+        if id < 0:
+            return
+        node = self.nodes[id]
+        node.id = -1
+
+        while node:
+            node.count -= 1
+            node = node.parent
+
+    def recursive_find(target_pos, node, depth, minp, maxp, best):
+        if node.id >= 0:
+            d2 = (target_pos - node.position).lengthSquared()
+            if d2 < best[1]:
+                best[0] = node
+                best[1] = d2
+
+        first, second = node.left, node.right
+
+        dx = ((depth & 1 ) == 0)
+        if dx:
+            split_position = node.position.x()
+            target_v = target_pos.x()
+            first_size = (minp, QVector2D(split_position, maxp.y()))
+            second_size = (QVector2D(split_position, minp.y()), maxp)
+        else:
+            split_position = node.position.y()
+            target_v = target_pos.y()
+            first_size = (minp, QVector2D(maxp.x(), split_position))
+            second_size = (QVector2D(minp.x(), split_position), maxp)
+
+        if target_v >= split_position:
+            first, second = second, first
+            first_size, second_size = second_size, first_size
+
+        if first and first.count:
+            KdTree.recursive_find(target_pos, first, depth + 1, *first_size, best)
+        if second and second.count:
+            de = (target_v - split_position)
+            de = de * de
+            if dx:
+                vy = max(0, minp.y() - target_pos.y()) + max(0, target_pos.y() - maxp.y())
+                de += vy * vy
+            else:
+                vy = max(0, minp.x() - target_pos.x()) + max(0, target_pos.x() - maxp.x())
+                de += vy * vy
+
+            if de < best[1]:
+                KdTree.recursive_find(target_pos, second, depth + 1, *second_size, best)
+
+    def nearest_node(self, target_pos):
+        best = [None, math.inf]
+        KdTree.recursive_find(target_pos, self.root, 0, self.minp, self.maxp, best)
+        return best[0]
+
+def element_to_vec(element):
+    return QVector2D(element.x, element.y)
+
+def start_point(path):
+    return element_to_vec(path.elementAt(0))
+
+def end_point(path):
+    return element_to_vec(path.elementAt(path.elementCount() - 1))
+
 class OrderShortestPath(OrderHandler):
-    """  This uses Dijkstra's algorithm to find the shortest path.
+    """  Variation of greedy TSP solution using KDtree to query nearest point
 
     """
     name = QApplication.translate("job", "Shortest Path")
@@ -112,47 +238,62 @@ class OrderShortestPath(OrderHandler):
         subpaths = split_painter_path(path)
         log.debug("Subpath count: {}".format(len(subpaths)))
 
-        # Cache all start and end points
+        if len(subpaths) <= 0:
+            return path
+
         now = time()
         # This is in the UI thread
         time_limit = now + self.plugin.optimizer_timeout
         zero = QVector2D(0, 0)
+        endpoints = []
         for sp in subpaths:
-            # Average start and end into one "vertex"
-            start = sp.elementAt(0)
-            end = sp.elementAt(sp.elementCount()-1)
-            sp.start_point = QVector2D(start.x, start.y)
-            sp.end_point = QVector2D(end.x, end.y)
+            start = start_point(sp)
+            end = end_point(sp)
+            endpoints.append(start)
+            endpoints.append(end)
 
-        distance = QVector2D.distanceToPoint
-        original = subpaths[:]
+        point_tree = KdTree(endpoints)
+        used = [False] * len(subpaths)
+        original = subpaths
         result = []
         p = zero
-        while subpaths:
-            best = sys.maxsize
-            shortest = None
-            for sp in subpaths:
-                d = distance(p, sp.start_point)
-                if d < best:
-                    best = d
-                    shortest = sp
+        for i in range(len(subpaths)):
+            idb = point_tree.nearest_node(p).id
+            subpath_id = idb // 2
+            # remove both ends
+            point_tree.remove(idb)
+            point_tree.remove(idb ^ 1)
 
-            p = shortest.end_point
-            result.append(shortest)
-            subpaths.remove(shortest)
+            assert subpath_id >= 0
+            assert not used[subpath_id]
 
-            # time.time() is slow so limit the calls
+            used[subpath_id] = True
+            subpath = subpaths[subpath_id]
+            if idb & 1:
+                p = start_point(subpath)
+                result.append(subpath.toReversed())
+            else:
+                p = end_point(subpath)
+                result.append(subpath)
+
             if time() > time_limit:
-                result.extend(subpaths)  # At least part of it is optimized
+                continue
+                # At least part of it is optimized. Shouldn't happen
+                # with a typical input.
                 log.warning(
                     "Shortest path search aborted (time limit reached)")
                 break
+        else:
+            log.debug("Shortest path processed all")
+        
+        result.extend([p for (i, p) in enumerate(subpaths) if not used[i]])
 
         duration = time() - now
         d = self.subpath_move_distance(zero, original)
         d = d - self.subpath_move_distance(zero, result)
         log.debug("Shortest path search: Saved {} in of movement in {}".format(
                 to_unit(d, 'in'), duration))
+
         return join_painter_paths(result)
 
     def subpath_move_distance(self, p, subpaths, limit=sys.maxsize):
@@ -162,12 +303,74 @@ class OrderShortestPath(OrderHandler):
         # Local ref saves a lookup per iter
         distance = QVector2D.distanceToPoint
         for sp in subpaths:
-            d += distance(p, sp.start_point)
+            d += distance(p, start_point(sp))
             if d > limit:
                 break  # Over the limit already abort
-            p = sp.end_point
+            p = end_point(sp)
         return d
 
+class SpaceFillingCurveOrder(OrderHandler):
+    def curve_pos(self, p, p0, s):
+        raise NotImplementedError 
+
+    def order(self, job, path):
+        bounds = path.boundingRect()
+        max_size = max(bounds.size().width(), bounds.size().height())
+        p0 = bounds.topLeft()
+        res = self.order_by_func(
+            job, path, lambda p: self.curve_pos(start_point(p), p0, max_size))
+        return res
+
+class OrderHilbert(SpaceFillingCurveOrder):
+    name = QApplication.translate("job", 'SFC Hilbert')
+
+    def curve_pos(self, p, p0, s):
+        s *= 0.5
+        p = p.toPoint() - p0
+        x = p.x()
+        y = p.y()
+        result = 0
+        STEPS = 32
+        for i in range(STEPS): 
+            bits = 0
+            if x > s:
+                bits = 1
+                x -= s
+                if y > s:
+                    bits = 2
+                    y -= s
+            else:
+                if y > s:
+                    bits = 3
+                    x, y = (s-(y-s), s-x)
+                else:
+                    x, y = (y, x)
+
+            result = (result << 2) + bits
+            s *= 0.5
+        return result
+
+
+class OrderZCurve(SpaceFillingCurveOrder):
+    name = QApplication.translate("job", 'SFC Z-curve')
+
+    def curve_pos(self, p, p0, s):
+        p = p.toPoint() - p0
+        x = p.x()
+        y = p.y()
+        result = 0
+        STEPS = 32
+        for i in range(STEPS): 
+            bits = 0
+            if y > s:
+                y -= s
+                bits += 2
+            if x > s:
+                x -= s
+                bits += 1
+            result = (result << 2) + bits
+            s *= 0.5
+        return result
 
 #: Register all subclasses
-REGISTRY = {c.name: c for c in find_subclasses(OrderHandler)}
+REGISTRY = {c.name: c for c in find_subclasses(OrderHandler) if c.name}
