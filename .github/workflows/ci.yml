@@ -1,0 +1,43 @@
+name: Inkcut test
+
+on: [push] #TODO: add filter for main branch
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest"]
+        python: ["3.7", "3.8", "3.10"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Linux deps
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install -qq libcups2-dev
+          sudo apt install -qq libxkbcommon-x11-0 x11-utils libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0
+      - name: Early python deps
+        run: |
+          if [[ "${{ matrix.python }}" = "3.7" ]] # TODO: shouldn't need to manualy do this
+          then
+            pip install --upgrade setuptools cppy
+            pip install enaml==0.14.1 numpy==1.21
+          fi
+      - name: Install inkcut
+        run: python setup.py develop
+      - name: Install otherdeps # TODO: largely duplicates requirements in setup.py
+        run: |
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          if [[ "${{ matrix.os }}" = "ubuntu-latest" ]]; then
+            Xvfb :99 -screen 0 1400x900x24 -ac +extension GLX +render &
+            export DISPLAY=:99.0
+          fi
+          python -m pytest tests/
