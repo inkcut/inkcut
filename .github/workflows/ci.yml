@@ -1,6 +1,6 @@
 name: Inkcut test
 
-on: [push] #TODO: add filter for main branch
+on: [push]
 
 jobs:
   build:
@@ -8,8 +8,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest"]
+        os: ["ubuntu-latest", "macos-latest"]
         python: ["3.7", "3.8", "3.10"]
+        include:
+          - os: "windows-latest"
+            python: "3.10"
+          - os: "windows-latest"
+            python: "3.7"
 
     steps:
       - uses: actions/checkout@v3
@@ -23,18 +28,28 @@ jobs:
           sudo apt install -qq libcups2-dev
           sudo apt install -qq libxkbcommon-x11-0 x11-utils libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0
       - name: Early python deps
+        shell: bash
         run: |
           if [[ "${{ matrix.python }}" = "3.7" ]] # TODO: shouldn't need to manualy do this
           then
             pip install --upgrade setuptools cppy
             pip install enaml==0.14.1 numpy==1.21
           fi
+          if [[ "${{ contains(matrix.os, 'windows') }}" = "true" ]]
+          then
+            # pywin32 has some postinstall steps which don't get properly executed
+            # when installing indirectly as dependency from inkcut setup.py.
+            pip install pywin32
+          fi
       - name: Install inkcut
-        run: python setup.py develop
+        shell: bash
+        run: |
+          python setup.py develop
       - name: Install otherdeps # TODO: largely duplicates requirements in setup.py
         run: |
           pip install -r requirements.txt
       - name: Run tests
+        shell: bash
         run: |
           if [[ "${{ matrix.os }}" = "ubuntu-latest" ]]; then
             Xvfb :99 -screen 0 1400x900x24 -ac +extension GLX +render &
