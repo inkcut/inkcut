@@ -11,6 +11,7 @@ Created on Jul 14, 2015
 """
 from enaml.core.api import Conditional, Include, Looper
 from enaml.layout.api import align, hbox, spacer
+from enaml.stdlib.dialog_buttons import DialogButtonBox, DialogButton
 from enaml.stdlib.task_dialog import (
     TaskDialogBody, TaskDialogCommandArea,
     TaskDialogContentArea, TaskDialogDetailsArea, TaskDialogFootnoteArea,
@@ -25,7 +26,7 @@ from enamlx.widgets.api import (
     TreeView, TreeViewItem, TreeViewColumn, DoubleSpinBox
 )
 
-from .plugin import Device, DeviceConfig
+from .plugin import Device, DeviceConfig, DeviceProtocol
 from .view import ConfigView, DeviceConfigView
 from inkcut.core.api import Model
 from inkcut.core.utils import to_unit, from_unit, load_icon
@@ -63,16 +64,9 @@ enamldef DeviceEditView(Notebook): notebook:
                     text := device.name
                 Label:
                     text = QApplication.translate("device", "Driver")
-                ObjectCombo:
-                    items << plugin.drivers
-                    to_string = lambda d: QApplication.translate("device", d.id)
-                    attr selected_driver << [d for d in plugin.drivers if d.id == driver.id]
-                    selected << selected_driver[0] if selected_driver else None
-                    selected ::
-                        driver = selected
-                        device.declaration = driver
-                        device.manufacturer = driver.manufacturer
-                        device.model = driver.model
+                Field:
+                    text << QApplication.translate("device", driver.id)
+                    read_only = True
                 Label:
                     text = QApplication.translate("device", "Manufacturer")
                 Field:
@@ -214,6 +208,28 @@ enamldef DeviceEditView(Notebook): notebook:
                                 ] if current_filter and current_filter.config else []
 
 
+enamldef NewDeviceDialog(Dialog): dialog:
+    attr plugin
+    attr resultDriver = plugin.drivers[0]
+    title = QApplication.translate("device", "New device")
+    TaskDialogBody:
+        TaskDialogInstructionArea:
+            Label:
+                text = QApplication.translate("device", "Select device")
+        TaskDialogContentArea:
+            Label:
+                text = QApplication.translate("device", "Driver:")
+            ObjectCombo:
+                    items << plugin.drivers
+                    to_string = lambda d: QApplication.translate("device", d.id)
+                    selected >> dialog.resultDriver
+        TaskDialogCommandArea:
+            DialogButtonBox: bbox:
+                buttons = [
+                    DialogButton('OK', 'accept'),
+                    DialogButton('Cancel', 'reject'),
+                ]
+
 enamldef DeviceDialog(Dialog): dialog:
     title = QApplication.translate("device", "Configure device")
     initial_size = (640, 320)
@@ -226,9 +242,21 @@ enamldef DeviceDialog(Dialog): dialog:
             plugin.device = devices[0]
             plugin.devices = devices
 
-    func add_device():
+    func copy_device(device):
+        new_dev = device.clone(plugin)
+        new_dev.name += " " + QApplication.translate("device", "copy")
         devices = plugin.devices[:]
-        new_dev = plugin.get_device_from_driver(plugin.drivers[0])
+        devices.append(new_dev)
+        plugin.devices = devices
+
+    func add_device():
+        selection = NewDeviceDialog(self, plugin=plugin) 
+        accepted = selection.exec_()
+        if not accepted:
+            return
+        devices = plugin.devices[:]
+        new_dev = plugin.get_device_from_driver(selection.resultDriver)
+        new_dev.name = new_dev.name + " " + selection.resultDriver.id
         devices.append(new_dev)
         plugin.device = new_dev
         plugin.devices = devices
@@ -288,6 +316,9 @@ enamldef DeviceDialog(Dialog): dialog:
                                         Action:
                                             text = QApplication.translate("device", "Remove")
                                             triggered :: remove_device(loop_item)
+                                        Action:
+                                            text = QApplication.translate("device", "Copy")
+                                            triggered :: copy_device(loop_item)
                         PushButton:
                             icon = load_icon('add')
                             text = QApplication.translate("device", "Add")
