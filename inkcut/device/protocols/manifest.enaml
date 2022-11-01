@@ -38,9 +38,13 @@ def cammgl1_factory(driver, declaration):
 
 
 def gcode_factory(driver, declaration):
-    from .gcode import GCodeProtocol
-    return GCodeProtocol(declaration=declaration)
+    from .gcode import GCodeProtocol, GCodeConfig
+    return GCodeProtocol(declaration=declaration, config=GCodeConfig(**driver.get_protocol_config('gcode')))
 
+def gcode_config_view():
+    with enaml.imports():
+        from .view import GCodeConfigView
+    return GCodeConfigView
 
 def mock_factory(driver, declaration):
     from .debug import DebugProtocol
@@ -85,6 +89,7 @@ enamldef ProtocolManifest(PluginManifest):
             id = 'gcode'
             name = 'G-Code'
             factory = gcode_factory
+            config_view = gcode_config_view
 
         DeviceProtocol:
             id = 'debug'

@@ -10,10 +10,11 @@ Created on Dec 11, 2017
 
 @author: jrm
 """
-from enaml.widgets.api import Container, Label, ObjectCombo
+from enaml.core.api import Conditional
+from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, MultilineField, CheckBox
+from enamlx.widgets.api import DoubleSpinBox
 from enaml.qt.QtWidgets import QApplication
-
-
+from .gcode import GCodeConfig
 
 enamldef DMPLConfigView(Container):
     attr model
@@ -24,7 +25,65 @@ enamldef DMPLConfigView(Container):
         selected := model.mode
 
 
-enamldef CAMMConfigView(Container):
+enamldef GCodeConfigView(Container):
+    attr model
+    Form:
+        Label:
+            pass
+        CheckBox:
+            text = QApplication.translate("protocols", "Use builtin startup/end commands")
+            checked := model.use_builtin
+            tool_tip = QApplication.translate("protocols", "When disabled make sure to specify after connect, before and after job commands in device settings")
+        Label:
+            text = QApplication.translate("protocols", "Decimal precision")
+        SpinBox:
+            value := model.precision
+            minimum = 0
+            maximum = 10
+        Label:
+            text = QApplication.translate("protocols", "Lift mode")
+        ObjectCombo:
+            items  = list(GCodeConfig.tool_lift_modes.items())
+            to_string = lambda obj: QApplication.translate("protocols", obj[1])
+            selected << (model.lift_mode, GCodeConfig.tool_lift_modes[model.lift_mode])
+            selected ::
+                    item = change['value']
+                    if item:
+                        model.lift_mode = item[0]
+        Conditional:
+            condition << model.lift_mode == GCodeConfig.TOOL_LIFT_Z
+            Label:
+                text = QApplication.translate("protocols", "Lower Z")
+            DoubleSpinBox:
+                value := model.lower_z
+                decimals = 6
+                minimum = -9999.9
+                maximum = 9999.9
+                tool_tip =  QApplication.translate("protocols", "Z position when tool is in writing position")
+            Label:
+                text = QApplication.translate("protocols", "Upper Z")
+            DoubleSpinBox:
+                value := model.upper_z
+                decimals = 6
+                minimum = -9999.9
+                maximum = 9999.9
+                tool_tip =  QApplication.translate("protocols", "Z position when tool is lifted above material")
+        Conditional:
+            condition << model.lift_mode == GCodeConfig.TOOL_LIFT_CUSTOM
+            Label:
+                text = QApplication.translate("protocols", "Raise G-Code")
+            MultilineField:
+                   text := model.lift_gcode
+                   tool_tip = QApplication.translate("protocols", "Commands here will get sent when tool needs to be lifted away from material")
+            Label:
+                text = QApplication.translate("protocols", "Lower G-Code")
+            MultilineField:
+                   text := model.lower_gcode
+                   tool_tip = QApplication.translate("protocols", "Commands here will get sent when starting to draw a line")
+        
+
+
+enamldef DMPLConfigView(Container):
     attr model
     Label:
         text = QApplication.translate("protocols", "Mode")
