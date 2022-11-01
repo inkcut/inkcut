@@ -93,9 +93,6 @@ class JobInfo(Model):
     #: Estimates based on length and speed
     duration = Instance(timedelta, ()).tag(config=True)
 
-    #: Units
-    units = Enum('in', 'cm', 'm', 'ft').tag(config=True)
-
     #: Callback to open the approval dialog
     auto_approve = Bool().tag(config=True)
     request_approval = Callable()

@@ -279,9 +279,9 @@ enamldef DeviceProgressDockItem(DockItem):
                 text << "Source: {}".format(job)
             Label: lbl2:
                 text << "Size: {}{} x {}{}".format(
-                        round(to_unit(job.model.boundingRect().height(), job.info.units),2),
+                        round(to_unit(job.model.boundingRect().height(), job_plugin.units),2),
                         job_plugin.units,
-                        round(to_unit(job.model.boundingRect().width(), job.info.units), 2),
+                        round(to_unit(job.model.boundingRect().width(), job_plugin.units), 2),
                         job_plugin.units
                     ) if job and job.model else ""
             Label: lbl3:
