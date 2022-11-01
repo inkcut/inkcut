@@ -1,0 +1,74 @@
+name: Inkcut test
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
+        python: ["3.7", "3.8", "3.10"]
+        qt: ["PyQt5"]
+        experimental: [false]
+        include:
+          - os: "windows-latest"
+            python: "3.10"
+            qt: "PyQt5"
+            experimental: false
+          - os: "windows-latest"
+            python: "3.7"
+            qt: "PyQt5"
+            experimental: false
+          - os: "ubuntu-latest"
+            python: "3.10"
+            qt: "PyQt6"
+            experimental: true
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Linux deps
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install -qq libcups2-dev
+          sudo apt install -qq libxkbcommon-x11-0 x11-utils libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0
+          sudo apt install -qq libegl1
+      - name: Early python deps
+        shell: bash
+        run: |
+          # Most of the deps are installed later by setup.py.
+          # This is only for testing specific libs and the cases
+          # where default behavior results in combination of incompatible library versions.
+          if [[ "${{ matrix.python }}" = "3.7" ]]
+          then
+            pip install --upgrade setuptools cppy
+            pip install enaml==0.14.1 numpy==1.21
+          fi
+          if [[ "${{ contains(matrix.os, 'windows') }}" = "true" ]]
+          then
+            # pywin32 has some postinstall steps which don't get properly executed
+            # when installing indirectly as dependency from inkcut setup.py.
+            pip install pywin32
+          fi
+          # testing specific libs not included in setup.py
+          pip install pytest pytest-coverage pytest-qt codecov
+          # allow running CI tests for multiple Qt versions
+          pip install "${{ matrix.qt }}"
+      - name: Install inkcut
+        shell: bash
+        run: |
+          python setup.py develop
+      - name: Run tests
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" = "ubuntu-latest" ]]; then
+            Xvfb :99 -screen 0 1400x900x24 -ac +extension GLX +render &
+            export DISPLAY=:99.0
+          fi
+          python -m pytest tests/
