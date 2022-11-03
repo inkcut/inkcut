@@ -366,7 +366,7 @@ class QtSvgPath(QtSvgItem):
             t.translate(x1, y1)
             t.rotate(phi)
             t.translate(-x1, -y1)
-            tmp = rotarc*t
+            tmp = t.map(rotarc)
             rotarc -= rotarc
             rotarc += tmp
             self.addPath(rotarc)

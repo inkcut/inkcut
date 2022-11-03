@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="100mm" height="100mm" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none" stroke="#000" stroke-width=".26458">
+  <path d="m0 25.098h100"/>
+  <path d="m0 31.315h100"/>
+  <path d="m0 37.532h100"/>
+  <path d="m0 43.749h100"/>
+  <path d="m0 49.966h100"/>
+  <path d="m0 56.183h100"/>
+  <path d="m0 62.4h100"/>
+  <path d="m0 68.617h100"/>
+  <path d="m0 74.834h100"/>
+  <path d="m25.098 100v-100"/>
+  <path d="m31.315 100v-100"/>
+  <path d="m37.532 100v-100"/>
+  <path d="m43.749 100v-100"/>
+  <path d="m49.966 100v-100"/>
+  <path d="m56.183 100v-100"/>
+  <path d="m62.4 100v-100"/>
+  <path d="m68.617 100v-100"/>
+  <path d="m74.834 100v-100"/>
+ </g>
+</svg>

@@ -20,7 +20,6 @@ from atom.api import (
 from enaml.workbench.plugin import Plugin as EnamlPlugin
 from enaml.widgets.api import Container
 from enaml.qt import QtCore, QtGui
-from twisted.internet import reactor
 from .utils import log, clip
 
 
@@ -167,6 +166,9 @@ class Plugin(EnamlPlugin):
         See https://twistedmatrix.com/documents/current/core/howto/process.html
 
         """
+        # Importing reactor has sidefects which can interfer with testing.
+        #  Don't import it at top level of common utilities like models.
+        from twisted.internet import reactor
         log.info(" ".join(args))
         return reactor.spawnProcess(protocol, args[0], args, **kwargs)
 

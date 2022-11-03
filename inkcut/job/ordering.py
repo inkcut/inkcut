@@ -14,7 +14,6 @@ import itertools
 import math
 from time import time
 from atom.api import Atom, Instance, Int, ForwardInstance, List
-from enaml.qt.QtCore import QPointF
 from enaml.qt.QtGui import QVector2D
 from enaml.qt.QtWidgets import QApplication
 from inkcut.core.utils import (
@@ -52,6 +51,20 @@ class OrderHandler(Atom):
 
         """
         raise NotImplementedError()
+
+    @staticmethod
+    def subpath_move_distance(p0, subpaths, limit=sys.maxsize):
+        d = 0
+        p = p0
+        # Local ref saves a lookup per iter
+        distance = QVector2D.distanceToPoint
+        for sp in subpaths:
+            d += distance(p, start_point(sp))
+            if d > limit:
+                break  # Over the limit already abort
+            p = end_point(sp)
+        d += distance(p, p0)
+        return d
 
 
 class OrderNormal(OrderHandler):
@@ -99,7 +112,6 @@ class OrderMaxY(OrderHandler):
             job, path, lambda p: p.boundingRect().top())
 
 
-
 class KdTree(Atom):
     class Node(Atom):
         position = Instance(QVector2D)
@@ -139,7 +151,8 @@ class KdTree(Atom):
         if node:
             return node.count
         return 0
-    
+
+    @staticmethod
     def _recursive_build(items, depth, parent):
         if not items:
             return None
@@ -170,6 +183,7 @@ class KdTree(Atom):
             node.count -= 1
             node = node.parent
 
+    @staticmethod
     def recursive_find(target_pos, node, depth, minp, maxp, best):
         if node.id >= 0:
             d2 = (target_pos - node.position).lengthSquared()
@@ -215,14 +229,18 @@ class KdTree(Atom):
         KdTree.recursive_find(target_pos, self.root, 0, self.minp, self.maxp, best)
         return best[0]
 
+
 def element_to_vec(element):
     return QVector2D(element.x, element.y)
+
 
 def start_point(path):
     return element_to_vec(path.elementAt(0))
 
+
 def end_point(path):
     return element_to_vec(path.elementAt(path.elementCount() - 1))
+
 
 class OrderShortestPath(OrderHandler):
     """  Variation of greedy TSP solution using KDtree to query nearest point
@@ -277,7 +295,6 @@ class OrderShortestPath(OrderHandler):
                 result.append(subpath)
 
             if time() > time_limit:
-                continue
                 # At least part of it is optimized. Shouldn't happen
                 # with a typical input.
                 log.warning(
@@ -289,25 +306,12 @@ class OrderShortestPath(OrderHandler):
         result.extend([p for (i, p) in enumerate(subpaths) if not used[i]])
 
         duration = time() - now
-        d = self.subpath_move_distance(zero, original)
-        d = d - self.subpath_move_distance(zero, result)
+        d = OrderHandler.subpath_move_distance(zero, original)
+        d = d - OrderHandler.subpath_move_distance(zero, result)
         log.debug("Shortest path search: Saved {} in of movement in {}".format(
                 to_unit(d, 'in'), duration))
 
         return join_painter_paths(result)
-
-    def subpath_move_distance(self, p, subpaths, limit=sys.maxsize):
-        # Collect start and end points
-        d = 0
-
-        # Local ref saves a lookup per iter
-        distance = QVector2D.distanceToPoint
-        for sp in subpaths:
-            d += distance(p, start_point(sp))
-            if d > limit:
-                break  # Over the limit already abort
-            p = end_point(sp)
-        return d
 
 class SpaceFillingCurveOrder(OrderHandler):
     def curve_pos(self, p, p0, s):
@@ -321,12 +325,13 @@ class SpaceFillingCurveOrder(OrderHandler):
             job, path, lambda p: self.curve_pos(start_point(p), p0, max_size))
         return res
 
+
 class OrderHilbert(SpaceFillingCurveOrder):
     name = QApplication.translate("job", 'SFC Hilbert')
 
     def curve_pos(self, p, p0, s):
         s *= 0.5
-        p = p.toPoint() - p0
+        p = p.toPointF() - p0
         x = p.x()
         y = p.y()
         result = 0
@@ -355,7 +360,7 @@ class OrderZCurve(SpaceFillingCurveOrder):
     name = QApplication.translate("job", 'SFC Z-curve')
 
     def curve_pos(self, p, p0, s):
-        p = p.toPoint() - p0
+        p = p.toPointF() - p0
         x = p.x()
         y = p.y()
         result = 0
@@ -371,6 +376,7 @@ class OrderZCurve(SpaceFillingCurveOrder):
             result = (result << 2) + bits
             s *= 0.5
         return result
+
 
 #: Register all subclasses
 REGISTRY = {c.name: c for c in find_subclasses(OrderHandler) if c.name}
