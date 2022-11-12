@@ -11,7 +11,7 @@ Created on Jan 16, 2015
 @author: jrm
 """
 import enaml
-from atom.api import Str, List, Callable, Dict
+from atom.api import Str, List, Callable, Dict, Bool
 from inkcut.core.declarative import Declarative, d_
 
 DEVICE_DRIVER_POINT = 'inkcut.device.driver'
@@ -20,7 +20,7 @@ DEVICE_TRANSPORT_POINT = 'inkcut.device.transport'
 DEVICE_FILTER_POINT = 'inkcut.device.filters'
 
 
-def default_device_factory(driver, transports, protocols):
+def default_device_factory(driver, transports, protocols, config=None):
     """ Generates a device if none is given by the driver.
     Parameters
     ----------
@@ -37,10 +37,12 @@ def default_device_factory(driver, transports, protocols):
         A configured Device that the application can use.
     """
     from .plugin import Device, DeviceConfig
+    if not config:
+        config = DeviceConfig(**driver.get_device_config())
     return Device(declaration=driver,
                   transports=transports,
                   protocols=protocols,
-                  config=DeviceConfig(**driver.get_device_config()))
+                  config=config)
 
 
 def default_device_config_view_factory():
@@ -62,6 +64,9 @@ class DeviceDriver(Declarative):
 
     #: Name of the device (optional)
     name = d_(Str())
+
+    # whether user wants to use default model, width and length
+    custom =  d_(Bool(False))
 
     #: Model of the device (optional)
     model = d_(Str())

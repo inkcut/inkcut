@@ -25,6 +25,7 @@ from inkcut.core.utils import parse_unit, from_unit, to_unit, async_sleep, log
 from twisted.internet import defer
 from io import BytesIO
 from . import extensions
+import copy
 
 
 class DeviceError(AssertionError):
@@ -424,6 +425,9 @@ class Device(Model):
         driver = self.declaration
         return declaration.factory(driver, declaration)
 
+    def _default_custom(self):
+        return self.declaration.custom
+
     def _default_area(self):
         """ Create the area based on the size specified by the Device Driver
 
@@ -437,6 +441,12 @@ class Device(Model):
             h = 900000
         area.size = [w, h]
         return area
+
+    def _default_manufacturer(self):
+        return self.declaration.manufacturer
+    
+    def _default_model(self):
+        return self.declaration.model
 
     @observe('declaration.width', 'declaration.length')
     def _refresh_area(self, change):
@@ -476,6 +486,32 @@ class Device(Model):
 
         """
         raise NotImplementedError
+
+    def clone(self, device_plugin):
+        driver = self.declaration
+        new_dev = device_plugin.get_device_from_driver(driver, copy.deepcopy(self.config))
+        new_dev.name = self.name
+        new_dev.manufacturer = self.manufacturer
+        new_dev.model = self.model
+        new_dev.area = self.area
+        new_dev.custom = self.custom
+        if driver.factory:
+            connection_decl = self.connection.declaration
+            old_protocol = self.connection.protocol
+            if old_protocol.declaration.factory:
+                protocol_decl = old_protocol.declaration
+                protocol = protocol_decl.factory(driver, protocol_decl)
+                if hasattr(old_protocol, "config"):
+                    protocol.config = copy.deepcopy(old_protocol.config)
+            else:
+                protocol = DeviceProtocol()
+            new_dev.connection = connection_decl.factory(driver, connection_decl, protocol)
+
+        if hasattr(self.connection, "config")\
+                and type(self.connection) == type(new_dev.connection):
+            new_dev.connection.config = copy.deepcopy(self.connection.config)
+
+        return new_dev
 
     def transform(self, path):
         """ Apply the device output transform to the given path. This
@@ -1101,7 +1137,7 @@ class DevicePlugin(Plugin):
     # Device Driver API
     # -------------------------------------------------------------------------
 
-    def get_device_from_driver(self, driver):
+    def get_device_from_driver(self, driver, config=None):
         """ Load the device driver. This generates the device using
         the factory function the DeviceDriver specifies and assigns
         the protocols and transports based on the filters given by
@@ -1128,7 +1164,7 @@ class DevicePlugin(Plugin):
                      if not driver.protocols or p.id in driver.protocols]
 
         # Generate the device
-        return driver.factory(driver, transports, protocols)
+        return driver.factory(driver, transports, protocols, config)
 
     # -------------------------------------------------------------------------
     # Device Extensions API

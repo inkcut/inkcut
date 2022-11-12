@@ -35,6 +35,7 @@ enamldef DriversManifest(PluginManifest):
         DeviceDriver:
             manufacturer = 'Inkcut'
             model = 'Generic Driver'
+            custom = True
 
         DeviceDriver:
             manufacturer = 'Vinylmark'
