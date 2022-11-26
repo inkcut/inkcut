@@ -11,7 +11,7 @@ Created on Dec 11, 2017
 """
 from .utils import log, clip
 from enaml.core.declarative import d_, Declarative as EnamlDeclarative
-
+import atom.api
 
 class Declarative(EnamlDeclarative):
     """ A json pickable declarative using the id """
@@ -23,8 +23,10 @@ class Declarative(EnamlDeclarative):
         state = super(Declarative, self).__getstate__()
         for name, member in self.members().items():
             metadata = member.metadata
-            if (name in state and (not metadata or
-                                       not metadata.get('d_final', False))):
+            if (name in state and
+                    (not metadata or
+                     not metadata.get('d_final', False) or
+                     isinstance(member, atom.api.Event))):
                 del state[name]
         return state
 
