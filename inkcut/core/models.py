@@ -88,6 +88,12 @@ class AreaBase(Model):
         p.addRect(self.available_area)
         return p
 
+    def clone(self):
+        result = AreaBase()
+        result.size = self.size
+        result.padding = self.padding
+        return result
+
     @observe('size', 'padding')
     def _sync_size(self, change):
         self.area.setWidth(self.size[0])
