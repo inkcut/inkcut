@@ -493,7 +493,7 @@ class Device(Model):
         new_dev.name = self.name
         new_dev.manufacturer = self.manufacturer
         new_dev.model = self.model
-        new_dev.area = self.area
+        new_dev.area = self.area.clone()
         new_dev.custom = self.custom
         if driver.factory:
             connection_decl = self.connection.declaration
