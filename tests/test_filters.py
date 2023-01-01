@@ -122,3 +122,14 @@ def test_minline_shift(i, expected, min_shift_fixture):
     end_expected = input_part.elementAt(input_part.elementCount() - 1)
     assert (end.x, end.y) == approx((end_expected.x, end_expected.y))
 
+@pytest.mark.parametrize('path', glob('tests/data/*.svg'))
+def test_minlineshift_basic(path):
+    """ Just check that the filter runs and there are no API incompatibilities with current qt version
+
+    """
+    doc = QtSvgDoc(path)
+    config = min_line.MinLineConfig()
+    config.min_shift = from_unit(0.1, "mm")
+    minline_filter = min_line.MinLineFilter(config=config)
+    result = minline_filter.apply_to_model(doc, None)
+    assert result

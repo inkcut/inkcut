@@ -176,6 +176,50 @@ def join_painter_paths(paths):
         result.addPath(p)
     return result
 
+MoveToElement = QPainterPath.MoveToElement
+LineToElement = QPainterPath.LineToElement
+CurveToElement = QPainterPath.CurveToElement
+CurveToDataElement = QPainterPath.CurveToDataElement
+def add_item_to_path(result, e, i, items):
+    if e.type == MoveToElement:
+        result.moveTo(QPointF(e.x, e.y))
+    elif e.type == LineToElement:
+        result.lineTo(QPointF(e.x, e.y))
+    elif e.type == CurveToElement:
+        params = [QPointF(e.x, e.y)]
+        j = i + 1
+        while j < len(items) and items[j].type == CurveToDataElement:
+            params.append(QPointF(items[j].x, items[j].y))
+            j += 1
+        if len(params) == 2:
+            result.quadTo(*params)
+        elif len(params) == 3:
+            result.cubicTo(*params)
+        else:
+            raise ValueError("Invalid curve parameters: {}".format(params))
+    elif e.type == CurveToDataElement:
+        pass  # already processed
+    else:
+        raise ValueError("Unexpected curve element type: {}".format(e.type))
+
+def path_to_elements(path):
+    """ Create list of QPainterPath.Element to QPainterPath
+
+    """
+    return [path.elementAt(i) for i in range(path.elementCount())]
+
+def path_from_elements(elements):
+    """ Convert list of QPainterPath.Element to QPainterPath
+
+    """
+    result = QPainterPath()
+    for i, e in enumerate(elements):
+        add_item_to_path(result, e, i, elements)
+    return result
+
+def path_element_to_point(element):
+    return QPointF(element.x, element.y)
+
 
 def find_subclasses(cls):
     """ Finds all known (imported) subclasses of the given class """

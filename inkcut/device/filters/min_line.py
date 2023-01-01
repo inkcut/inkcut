@@ -14,7 +14,7 @@ from atom.api import Float, Enum, Instance
 from enaml.qt.QtCore import QPointF, QLineF
 from enaml.qt.QtGui import QPainterPath, QVector2D
 from inkcut.device.plugin import DeviceFilter, Model
-from inkcut.core.utils import unit_conversions, log
+from inkcut.core.utils import unit_conversions, log, add_item_to_path, path_to_elements, path_from_elements
 
 
 # Element types
@@ -46,7 +46,6 @@ class MinLineFilter(DeviceFilter):
     config = Instance(MinLineConfig, ()).tag(config=True)
 
     def apply_to_model(self, model, job):
-        log.debug("apply minline filter", stack_info=False)
         if self.config.min_jump > 0:
             model = self.apply_min_jump(model)
         if self.config.min_edge > 0:
@@ -69,7 +68,7 @@ class MinLineFilter(DeviceFilter):
             result.append(e)
             last_pos = QVector2D(e.x, e.y)
 
-        return self.path_from_items(result)
+        return path_from_elements(result)
     
     def apply_min_edge(self, model):
         result = []
@@ -86,7 +85,7 @@ class MinLineFilter(DeviceFilter):
             result.append(e)
             last_pos = QVector2D(e.x, e.y)
 
-        return MinLineFilter.path_from_items(result)
+        return path_from_elements(result)
 
 
     @staticmethod
@@ -109,10 +108,11 @@ class MinLineFilter(DeviceFilter):
         def abs_angle(a1, a2):
             return abs(MinLineFilter.normalize_angle(a1 - a2))
 
-        for i in range(model.elementCount()):
-            e = model.elementAt(i)
+        items = path_to_elements(model)
+
+        for i, e in enumerate(items):
             if e.type == MoveToElement:
-                MinLineFilter.add_item_to_path(result, e, i, model)
+                add_item_to_path(result, e, i, items)
                 last_angle = None
             elif e.type == LineToElement:
                 p = QPointF(e.x, e.y)
@@ -120,13 +120,13 @@ class MinLineFilter(DeviceFilter):
                 add = True
 
                 segment_l2 = QPointF.dotProduct(segment, segment)
-                if last_angle is not None and i + 1 < model.elementCount() and\
+                if last_angle is not None and i + 1 < len(items) and\
                         segment_l2  < min_d_sq:
-                    next_element = model.elementAt(i + 1)
+                    next_element = items[i+1]
                     if next_element.type != MoveToElement and next_element.type != CurveToDataElement:
                         tmp_path.clear()
                         tmp_path.moveTo(p)
-                        MinLineFilter.add_item_to_path(tmp_path, next_element, i+1, model)
+                        add_item_to_path(tmp_path, next_element, i+1, items)
                         angle_next = tmp_path.angleAtPercent(0)
 
                         if segment_l2 > 0:
@@ -145,40 +145,7 @@ class MinLineFilter(DeviceFilter):
             elif e.type == CurveToDataElement:
                 pass  # already processed
             else:
-                MinLineFilter.add_item_to_path(result, e, i, model)
+                add_item_to_path(result, e, i, items)
                 last_angle = result.angleAtPercent(1)
 
-        return result
-
-    @staticmethod
-    def add_item_to_path(result, e, i, items):
-        if e.type == MoveToElement:
-            result.moveTo(QPointF(e.x, e.y))
-        elif e.type == LineToElement:
-            result.lineTo(QPointF(e.x, e.y))
-        elif e.type == CurveToElement:
-            params = [QPointF(e.x, e.y)]
-            j = i + 1
-            while j < len(items) and items[j].type == CurveToDataElement:
-                params.append(QPointF(items[j].x, items[j].y))
-                j += 1
-            if len(params) == 2:
-                result.quadTo(*params)
-            elif len(params) == 3:
-                result.cubicTo(*params)
-            else:
-                raise ValueError("Invalid curve parameters: {}".format(params))
-        elif e.type == CurveToDataElement:
-            pass  # already processed
-        else:
-            raise ValueError("Unexpected curve element type: {}".format(e.type))
-
-    @staticmethod
-    def path_from_items(items):
-        """ Convert list of QPainterPath.Element to QPainterPath
-
-        """
-        result = QPainterPath()
-        for i, e in enumerate(items):
-            MinLineFilter.add_item_to_path(result, e, i, items)
         return result

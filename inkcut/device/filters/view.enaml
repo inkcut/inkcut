@@ -11,7 +11,7 @@ Created on Dec 14, 2018
 @author: jrm
 """
 from enaml.qt.QtWidgets import QApplication
-from enaml.widgets.api import Form, Container, Label, CheckBox
+from enaml.widgets.api import Form, Container, Label, CheckBox, SpinBox
 from enamlx.widgets.api import DoubleSpinBox
 
 from inkcut.core.utils import from_unit, to_unit
@@ -89,3 +89,28 @@ enamldef MinLineConfigView(Container):
             value << to_unit(model.min_edge, model.units)
             value ::
                 model.min_edge = from_unit(change['value'], model.units)
+
+enamldef RepeatConfigView(Container):
+    attr model
+    attr job_plugin << plugin.workbench.get_plugin('inkcut.job')
+    padding = 0
+    Form:
+        Label:
+            text = QApplication.translate("filters", "Repeat")
+        SpinBox:
+            tool_tip = QApplication.translate("filters", "Repeat each line specified amount of times. Set to 1 to disable")
+            minimum = 1
+            maximum = 50
+            value := model.steps
+        Label:
+            text = QApplication.translate("filters", "Max closed loop gap")
+        DoubleSpinBox:
+            tool_tip = QApplication.translate("filters", "When distance between start and end of shape is less consider it closed shape.")
+            minimum = 0.0
+            decimals = 3
+            single_step = 0.01
+            attr units << job_plugin.units
+            suffix << " "+job_plugin.units
+            value << to_unit(model.closed_loop_distance, job_plugin.units)
+            value ::
+                model.closed_loop_distance = from_unit(change['value'], job_plugin.units)

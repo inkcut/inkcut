@@ -48,6 +48,15 @@ def min_line_config_view():
         from .view import MinLineConfigView
     return MinLineConfigView
 
+def repeat_factory():
+    from .repeat import RepeatFilter
+    return RepeatFilter()
+
+def repeat_config_view():
+    with enaml.imports():
+        from .view import RepeatConfigView
+    return RepeatConfigView
+
 
 enamldef FiltersManifest(PluginManifest):
     """ Add new filters here or within any other plugin.
@@ -73,6 +82,12 @@ enamldef FiltersManifest(PluginManifest):
             name = QApplication.translate("filters", "Min line")
             factory = min_line_factory
             config_view = min_line_config_view
+
+        DeviceFilter:
+            id = 'repeat'
+            name = QApplication.translate("filters", "Repeat")
+            factory = repeat_factory
+            config_view = repeat_config_view
 
         DeviceFilter:
             id = 'blade-offset'
