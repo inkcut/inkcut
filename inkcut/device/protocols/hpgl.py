@@ -4,13 +4,26 @@ Created on Jul 25, 2015
 
 @author: jrm
 """
-from atom.api import Float, Bool, Int
-from inkcut.device.plugin import DeviceProtocol
+from atom.api import Instance, Float, Bool, Int
+from inkcut.device.plugin import DeviceProtocol, Model
 from inkcut.core.utils import log
+
+
+class HPGLConfig(Model):
+    #: Pad option
+    pad = Bool().tag(config=True)
 
 
 class HPGLProtocol(DeviceProtocol):
     scale = Float(1021/90.0)
+
+    #: Pad option
+    config = Instance(HPGLConfig, ()).tag(config=True)
+
+    def write(self, data):
+        if self.config.pad:
+            data += "\n"
+        super().write(data)
 
     def connection_made(self):
         #: Initialize in absoulte mode
