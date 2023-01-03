@@ -14,7 +14,8 @@ from atom.api import Float, Enum, Instance
 from enaml.qt.QtCore import QPointF, QLineF
 from enaml.qt.QtGui import QPainterPath, QVector2D
 from inkcut.device.plugin import DeviceFilter, Model
-from inkcut.core.utils import unit_conversions, log, add_item_to_path, path_to_elements, path_from_elements
+from inkcut.core.utils import unit_conversions, log, add_item_to_path, path_to_elements,\
+    path_from_elements, path_element_to_point, trailing_angle
 
 
 # Element types
@@ -103,7 +104,7 @@ class MinLineFilter(DeviceFilter):
 
         result = QPainterPath()
         tmp_path = QPainterPath()
-        ANGLE_CONFIG = 90
+        ANGLE_CONFIG = 45
 
         def abs_angle(a1, a2):
             return abs(MinLineFilter.normalize_angle(a1 - a2))
@@ -115,7 +116,7 @@ class MinLineFilter(DeviceFilter):
                 add_item_to_path(result, e, i, items)
                 last_angle = None
             elif e.type == LineToElement:
-                p = QPointF(e.x, e.y)
+                p = path_element_to_point(e)
                 segment = p - result.currentPosition()
                 add = True
 
@@ -139,13 +140,13 @@ class MinLineFilter(DeviceFilter):
 
                 if add:
                     result.lineTo(QPointF(e.x, e.y))
-                    last_angle = result.angleAtPercent(1)
+                    last_angle = trailing_angle(result)
                 else:
                     last_angle = None
             elif e.type == CurveToDataElement:
                 pass  # already processed
             else:
                 add_item_to_path(result, e, i, items)
-                last_angle = result.angleAtPercent(1)
+                last_angle = trailing_angle(result)
 
         return result

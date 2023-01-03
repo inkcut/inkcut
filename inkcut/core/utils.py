@@ -180,16 +180,27 @@ MoveToElement = QPainterPath.MoveToElement
 LineToElement = QPainterPath.LineToElement
 CurveToElement = QPainterPath.CurveToElement
 CurveToDataElement = QPainterPath.CurveToDataElement
-def add_item_to_path(result, e, i, items):
+def add_item_to_path(result, e, i, elements):
+    if type(elements) is QPainterPath:
+        element_count = elements.elementCount()
+        get_element = elements.elementAt
+    else:
+        element_count = len(elements)
+        get_element = elements.__getitem__
+
+    position = path_element_to_point(e)
     if e.type == MoveToElement:
-        result.moveTo(QPointF(e.x, e.y))
+        result.moveTo(position)
     elif e.type == LineToElement:
-        result.lineTo(QPointF(e.x, e.y))
+        result.lineTo(position)
     elif e.type == CurveToElement:
-        params = [QPointF(e.x, e.y)]
+        params = [position]
         j = i + 1
-        while j < len(items) and items[j].type == CurveToDataElement:
-            params.append(QPointF(items[j].x, items[j].y))
+        while j < element_count:
+            next_item = get_element(j)
+            if next_item.type != CurveToDataElement:
+                break
+            params.append(path_element_to_point(next_item))
             j += 1
         if len(params) == 2:
             result.quadTo(*params)
@@ -219,6 +230,18 @@ def path_from_elements(elements):
 
 def path_element_to_point(element):
     return QPointF(element.x, element.y)
+
+def trailing_angle(path):
+    if path.elementCount() < 10:
+        return path.angleAtPercent(1)
+    else:
+        p = QPainterPath()
+        p.reserve(10)
+        pos = path.elementCount() - 5
+        while pos < path.elementCount():
+            add_item_to_path(p, path.elementAt(pos), pos, path)
+            pos += 1
+        return p.angleAtPercent(1)
 
 
 def find_subclasses(cls):

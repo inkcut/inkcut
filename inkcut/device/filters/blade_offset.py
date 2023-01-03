@@ -16,7 +16,7 @@ from enaml.qt.QtCore import QPointF, QRectF, QSizeF
 from enaml.qt.QtGui import QPainterPath, QTransform, QVector2D
 
 from inkcut.device.plugin import DeviceFilter, Model
-from inkcut.core.utils import unit_conversions, log
+from inkcut.core.utils import unit_conversions, log, trailing_angle
 
 
 # Element types
@@ -136,7 +136,7 @@ class BladeOffsetFilter(DeviceFilter):
         next_angle = sp.angleAtPercent(1)
 
         # Direction of last move
-        angle = blade_path.angleAtPercent(1)
+        angle = trailing_angle(blade_path)
 
         # If not continuous it needs corrected with an arc
         if isnan(angle) or isnan(next_angle):
@@ -164,7 +164,7 @@ class BladeOffsetFilter(DeviceFilter):
 
         # Get direction of last move
         blade_path.moveTo(p0)
-        angle = blade_path.angleAtPercent(1)
+        angle = trailing_angle(blade_path)
 
         if isnan(angle):
             dx, dy = 0, r
@@ -183,7 +183,7 @@ class BladeOffsetFilter(DeviceFilter):
         p0 = params[0]
         self.add_continuity_correction(offset_path, blade_path, p0)
         blade_path.lineTo(p0)  # Must be done after continuity correction!
-        angle = blade_path.angleAtPercent(1)
+        angle = trailing_angle(blade_path)
 
         if isnan(angle):
             dx, dy = 0, r
