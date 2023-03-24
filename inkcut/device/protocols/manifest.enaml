@@ -32,6 +32,12 @@ def dmpl_config_view():
     return DMPLConfigView
 
 
+def hpgl_config_view():
+    with enaml.imports():
+        from .view import HPGLConfigView
+    return HPGLConfigView
+
+
 def cammgl1_factory(driver, declaration):
     from .camm import CAMMGL1Protocol
     return CAMMGL1Protocol(declaration=declaration)
@@ -73,6 +79,7 @@ enamldef ProtocolManifest(PluginManifest):
             id = 'hpgl'
             name = 'HPGL'
             factory = hpgl_factory
+            config_view = hpgl_config_view
 
         DeviceProtocol:
             id = 'dmpl'

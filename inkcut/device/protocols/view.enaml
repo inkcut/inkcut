@@ -90,3 +90,13 @@ enamldef DMPLConfigView(Container):
     ObjectCombo:
         items  = list(model.get_member('mode').items)
         selected := model.mode
+
+
+enamldef HPGLConfigView(Container):
+    attr model
+    Label:
+        text = QApplication.translate("protocols",
+                                      "Pad commands with line feed")
+    CheckBox:
+        checked := model.pad
+        text = QApplication.translate("protocols", "Enable")
