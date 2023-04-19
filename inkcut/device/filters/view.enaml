@@ -68,6 +68,17 @@ enamldef MinLineConfigView(Container):
             value ::
                 model.min_jump = from_unit(change['value'], model.units)
         Label:
+            text = QApplication.translate("filters", "Min path length")
+        DoubleSpinBox:
+            tool_tip = QApplication.translate("filters", "Ignore short paths. Set to 0 to disable")
+            minimum = 0.0
+            decimals = 3
+            single_step = 0.01
+            suffix << " "+model.units
+            value << to_unit(model.min_path, model.units)
+            value ::
+                model.min_path = from_unit(change['value'], model.units)
+        Label:
             text = QApplication.translate("filters", "Min sideways shift")
         DoubleSpinBox:
             tool_tip = QApplication.translate("filters", "Ignore short segments going sideways or backward followed by path which continues in the direction before shift. Set to 0 to disable")
@@ -81,7 +92,7 @@ enamldef MinLineConfigView(Container):
         Label:
             text = QApplication.translate("filters", "Min edge")
         DoubleSpinBox:
-            tool_tip = QApplication.translate("filters", "Ignore short lines. Set to 0 to disable")
+            tool_tip = QApplication.translate("filters", "Ignore short lines. Useful for simplifying excesively subdivied paths. Set to 0 to disable")
             minimum = 0.0
             decimals = 3
             single_step = 0.1

@@ -15,7 +15,7 @@ from enaml.qt.QtCore import QPointF, QLineF
 from enaml.qt.QtGui import QPainterPath, QVector2D
 from inkcut.device.plugin import DeviceFilter, Model
 from inkcut.core.utils import unit_conversions, log, add_item_to_path, path_to_elements,\
-    path_from_elements, path_element_to_point, trailing_angle
+    path_from_elements, path_element_to_point, trailing_angle, split_painter_path, join_painter_paths
 
 
 # Element types
@@ -32,6 +32,9 @@ class MinLineConfig(Model):
 
     # don't lift the pen for distnaces shorter than this
     min_jump = Float(strict=False).tag(config=True)
+    # remove whole sequence edges, for removing small details without affecting quality of segmented curves
+    # like the min_edge would
+    min_path = Float(strict=False).tag(config=True)
     # avoid unnecesary slowdowns by blade offset making half circle on very short lines
     # connecting two bigger curves
     min_shift = Float(strict=False).tag(config=True)
@@ -49,6 +52,11 @@ class MinLineFilter(DeviceFilter):
     def apply_to_model(self, model, job):
         if self.config.min_jump > 0:
             model = self.apply_min_jump(model)
+
+        # do min path after merging in case program that created files, output a lot of small disconnected segments
+        if self.config.min_path > 0:
+            model = self.apply_min_path(model)
+
         if self.config.min_edge > 0:
             model = self.apply_min_edge(model)
         if self.config.min_shift > 0:
@@ -87,6 +95,10 @@ class MinLineFilter(DeviceFilter):
             last_pos = QVector2D(e.x, e.y)
 
         return path_from_elements(result)
+
+    def apply_min_path(self, model):
+        result = [x for x in split_painter_path(model) if x.length() >= self.config.min_path]
+        return join_painter_paths(result)
 
 
     @staticmethod

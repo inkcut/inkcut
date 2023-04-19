@@ -133,3 +133,35 @@ def test_minlineshift_basic(path):
     minline_filter = min_line.MinLineFilter(config=config)
     result = minline_filter.apply_to_model(doc, None)
     assert result
+
+def test_min_path():
+    """ Test that paths of corresponding lengths get removed. Test case contains both squares and circles.
+    """
+    doc = QtSvgDoc(DATA_PREFIX + "/min_path.svg")
+    config = min_line.MinLineConfig()
+
+    config.min_path = from_unit(0.0, "mm")
+    minline_filter = min_line.MinLineFilter(config=config)
+    result = minline_filter.apply_to_model(doc, None)
+
+    assert len(utils.split_painter_path(result)) == 6 # nothing should be removed with min_path 0
+
+    config.min_path = from_unit(0.3, "mm")
+    result = minline_filter.apply_to_model(doc, None)
+
+    assert len(utils.split_painter_path(result)) == 6  # everything in testcase should still be longer than this
+
+    config.min_path = from_unit(0.41, "mm")
+    result = minline_filter.apply_to_model(doc, None)
+
+    assert len(utils.split_painter_path(result)) == 4
+
+    config.min_path = from_unit(0.6, "mm")
+    result = minline_filter.apply_to_model(doc, None)
+
+    assert len(utils.split_painter_path(result)) == 2
+
+    config.min_path = from_unit(5, "mm")
+    result = minline_filter.apply_to_model(doc, None)
+
+    assert len(utils.split_painter_path(result)) == 0
