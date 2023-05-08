@@ -23,7 +23,6 @@ with enaml.imports():
 
 
 class JobPlugin(Plugin):
-
     #: Units
     units = Enum(*unit_conversions.keys()).tag(config=True)
 
@@ -53,15 +52,13 @@ class JobPlugin(Plugin):
         return Job(material=self.material)
 
     def _default_units(self):
-        return 'in'
+        return "in"
 
     # -------------------------------------------------------------------------
     # Plugin API
     # -------------------------------------------------------------------------
     def start(self):
-        """ Register the plugins this plugin depends on
-
-        """
+        """Register the plugins this plugin depends on"""
         #: Now load state
         super(JobPlugin, self).start()
 
@@ -75,23 +72,21 @@ class JobPlugin(Plugin):
     # Job API
     # -------------------------------------------------------------------------
     def request_approval(self, job):
-        """ Request approval to start a job. This will set the job.info.status
+        """Request approval to start a job. This will set the job.info.status
         to either 'approved' or 'cancelled'.
 
         """
-        ui = self.workbench.get_plugin('enaml.workbench.ui')
+        ui = self.workbench.get_plugin("enaml.workbench.ui")
         with enaml.imports():
             from .dialogs import JobApprovalDialog
         JobApprovalDialog(ui.window, plugin=self, job=job).exec_()
 
     def refresh_preview(self):
-        """ Refresh the preview. Other plugins can request this """
+        """Refresh the preview. Other plugins can request this"""
         self._refresh_preview({})
 
     def can_open(self, url):
-        """ Check if the given source url can be opened
-
-        """
+        """Check if the given source url can be opened"""
         result = False
         try:
             if url:
@@ -104,11 +99,11 @@ class JobPlugin(Plugin):
         return result
 
     def open_document(self, path, nodes=None):
-        """ Set the job.document if it is empty, otherwise close and create
+        """Set the job.document if it is empty, otherwise close and create
         a  new Job instance.
 
         """
-        if path == '-':
+        if path == "-":
             log.debug("Opening document from stdin...")
             from_source = True
         elif path.startswith("<?xml"):
@@ -163,7 +158,7 @@ class JobPlugin(Plugin):
         self.jobs = jobs
 
     def close_document(self):
-        """ If the job currently has a "document" add this to the jobs list
+        """If the job currently has a "document" add this to the jobs list
         and create a new Job instance. Otherwise no job is open so do nothing.
 
         """
@@ -174,33 +169,28 @@ class JobPlugin(Plugin):
         # Create a new default job
         self.job = self._default_job()
 
-    @observe('job.material')
+    @observe("job.material")
     def _observe_material(self, change):
-        """ Keep the job material and plugin material in sync.
-
-        """
+        """Keep the job material and plugin material in sync."""
         m = self.material
         job = self.job
         if job.material != m:
             job.material = m
 
-    @observe('job', 'job.model', 'job.material',
-             'material.size', 'material.padding')
+    @observe("job", "job.model", "job.material", "material.size", "material.padding")
     def _refresh_preview(self, change):
-        """ Redraw the preview on the screen
-
-        """
+        """Redraw the preview on the screen"""
         log.info(change)
         view_items = []
 
         #: Transform used by the view
-        preview_plugin = self.workbench.get_plugin('inkcut.preview')
+        preview_plugin = self.workbench.get_plugin("inkcut.preview")
         job = self.job
         plot = preview_plugin.preview
         t = preview_plugin.transform
 
         #: Draw the device
-        plugin = self.workbench.get_plugin('inkcut.device')
+        plugin = self.workbench.get_plugin("inkcut.device")
         device = plugin.device
 
         #: Apply the final output transforms from the device
@@ -209,20 +199,24 @@ class JobPlugin(Plugin):
         if device and device.area:
             area = device.area
             view_items.append(
-                dict(path=transform(t.map(device.area.path)),
-                     pen=plot.pen_device,
-                     skip_autorange=True)#(False, [area.size[0], 0]))
+                dict(
+                    path=transform(t.map(device.area.path)),
+                    pen=plot.pen_device,
+                    skip_autorange=True,
+                )  # (False, [area.size[0], 0]))
             )
 
         #: The model is only set when a document is open and has no errors
         if job.model:
-            view_items.extend([
-                dict(path=transform(job.move_path), pen=plot.pen_up),
-                dict(path=transform(job.cut_path), pen=plot.pen_down)
-            ])
-           
+            view_items.extend(
+                [
+                    dict(path=transform(job.move_path), pen=plot.pen_up),
+                    dict(path=transform(job.cut_path), pen=plot.pen_down),
+                ]
+            )
+
             #: TODO: This
-            #if True:
+            # if True:
             #    filters = device.filters
             #    modelt = job.cut_path
             #    for f in filters:
@@ -232,13 +226,20 @@ class JobPlugin(Plugin):
             #        path=modelt, pen=plot.pen_offset))
         if job.material:
             # Also observe any change to job.media and job.device
-            view_items.extend([
-                dict(path=transform(t.map(job.material.path)),
-                     pen=plot.pen_media,
-                     skip_autorange=([0, job.size[0]], [0, job.size[1]])),
-                dict(path=transform(t.map(job.material.padding_path)),
-                     pen=plot.pen_media_padding, skip_autorange=True)
-            ])
+            view_items.extend(
+                [
+                    dict(
+                        path=transform(t.map(job.material.path)),
+                        pen=plot.pen_media,
+                        skip_autorange=([0, job.size[0]], [0, job.size[1]]),
+                    ),
+                    dict(
+                        path=transform(t.map(job.material.padding_path)),
+                        pen=plot.pen_media_padding,
+                        skip_autorange=True,
+                    ),
+                ]
+            )
 
         #: Update the plot
         preview_plugin.set_preview(*view_items)
@@ -251,7 +252,7 @@ class JobPlugin(Plugin):
     # -------------------------------------------------------------------------
 
     def init_recent_documents_menu(self):
-        """ Insert the `RecentDocumentsMenu` into the Menu declaration that
+        """Insert the `RecentDocumentsMenu` into the Menu declaration that
         automatically updates the recent document menu links.
 
         """
@@ -265,14 +266,14 @@ class JobPlugin(Plugin):
         documents_menu.initialize()
 
     def get_recent_menu(self):
-        """ Get the recent menu item WorkbenchMenu """
-        ui = self.workbench.get_plugin('enaml.workbench.ui')
+        """Get the recent menu item WorkbenchMenu"""
+        ui = self.workbench.get_plugin("enaml.workbench.ui")
         window_model = ui._model
         if not window_model:
             return
         for menu in window_model.menus:
-            if menu.item.path == '/file':
+            if menu.item.path == "/file":
                 for c in menu.children:
                     if isinstance(c, WorkbenchMenu):
-                        if c.item.path == '/file/recent/':
+                        if c.item.path == "/file/recent/":
                             return c

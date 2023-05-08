@@ -14,8 +14,17 @@ from atom.api import Float, Enum, Instance
 from enaml.qt.QtCore import QPointF, QLineF
 from enaml.qt.QtGui import QPainterPath, QVector2D
 from inkcut.device.plugin import DeviceFilter, Model
-from inkcut.core.utils import unit_conversions, log, add_item_to_path, path_to_elements,\
-    path_from_elements, path_element_to_point, trailing_angle, split_painter_path, join_painter_paths
+from inkcut.core.utils import (
+    unit_conversions,
+    log,
+    add_item_to_path,
+    path_to_elements,
+    path_from_elements,
+    path_element_to_point,
+    trailing_angle,
+    split_painter_path,
+    join_painter_paths,
+)
 
 
 # Element types
@@ -23,6 +32,7 @@ MoveToElement = QPainterPath.MoveToElement
 LineToElement = QPainterPath.LineToElement
 CurveToElement = QPainterPath.CurveToElement
 CurveToDataElement = QPainterPath.CurveToDataElement
+
 
 class MinLineConfig(Model):
     #: Units for display
@@ -42,7 +52,7 @@ class MinLineConfig(Model):
     min_edge = Float(strict=False).tag(config=True)
 
     def _default_units(self):
-        return 'mm'
+        return "mm"
 
 
 class MinLineFilter(DeviceFilter):
@@ -78,15 +88,19 @@ class MinLineFilter(DeviceFilter):
             last_pos = QVector2D(e.x, e.y)
 
         return path_from_elements(result)
-    
+
     def apply_min_edge(self, model):
         result = []
         last_pos = None
         min_d_sq = self.config.min_edge * self.config.min_edge
         for i in range(model.elementCount()):
             e = model.elementAt(i)
-            if e.type == LineToElement and last_pos is not None and \
-               i + 1 < model.elementCount() and model.elementAt(i+1).type != MoveToElement:
+            if (
+                e.type == LineToElement
+                and last_pos is not None
+                and i + 1 < model.elementCount()
+                and model.elementAt(i + 1).type != MoveToElement
+            ):
                 p1 = QVector2D(e.x, e.y)
                 d = p1 - last_pos
                 if d.lengthSquared() < min_d_sq:
@@ -97,9 +111,10 @@ class MinLineFilter(DeviceFilter):
         return path_from_elements(result)
 
     def apply_min_path(self, model):
-        result = [x for x in split_painter_path(model) if x.length() >= self.config.min_path]
+        result = [
+            x for x in split_painter_path(model) if x.length() >= self.config.min_path
+        ]
         return join_painter_paths(result)
-
 
     @staticmethod
     def normalize_angle(angle):
@@ -133,19 +148,28 @@ class MinLineFilter(DeviceFilter):
                 add = True
 
                 segment_l2 = QPointF.dotProduct(segment, segment)
-                if last_angle is not None and i + 1 < len(items) and\
-                        segment_l2  < min_d_sq:
-                    next_element = items[i+1]
-                    if next_element.type != MoveToElement and next_element.type != CurveToDataElement:
+                if (
+                    last_angle is not None
+                    and i + 1 < len(items)
+                    and segment_l2 < min_d_sq
+                ):
+                    next_element = items[i + 1]
+                    if (
+                        next_element.type != MoveToElement
+                        and next_element.type != CurveToDataElement
+                    ):
                         tmp_path.clear()
                         tmp_path.moveTo(p)
-                        add_item_to_path(tmp_path, next_element, i+1, items)
+                        add_item_to_path(tmp_path, next_element, i + 1, items)
                         angle_next = tmp_path.angleAtPercent(0)
 
                         if segment_l2 > 0:
                             angle_current = QLineF(result.currentPosition(), p).angle()
-                            if abs_angle(angle_current, last_angle) + abs_angle(angle_next, angle_current) >\
-                                    abs_angle(angle_next, last_angle) + ANGLE_CONFIG:
+                            if (
+                                abs_angle(angle_current, last_angle)
+                                + abs_angle(angle_next, angle_current)
+                                > abs_angle(angle_next, last_angle) + ANGLE_CONFIG
+                            ):
                                 add = False
                         else:
                             add = False

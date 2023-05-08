@@ -44,7 +44,7 @@ class BladeOffsetConfig(Model):
     cutoff = Float(5.0, strict=False).tag(config=True)
 
     def _default_offset_units(self):
-        return 'mm'
+        return "mm"
 
 
 class BladeOffsetFilter(DeviceFilter):
@@ -52,7 +52,7 @@ class BladeOffsetFilter(DeviceFilter):
     config = Instance(BladeOffsetConfig, ()).tag(config=True)
 
     def apply_to_model(self, model, job):
-        """ Apply the filter to the path model.
+        """Apply the filter to the path model.
 
         Parameters
         ----------
@@ -73,13 +73,11 @@ class BladeOffsetFilter(DeviceFilter):
         return self.apply_blade_offset(model, job)
 
     def apply_blade_offset(self, path, job):
-        """ Apply blade offset to the given path.
-
-        """
+        """Apply blade offset to the given path."""
         params = []
         e = None
         cmd = None
-        qf = getattr(job.config, 'quality_factor', 1)
+        qf = getattr(job.config, "quality_factor", 1)
 
         # Holds the blade path
         blade_path = QPainterPath()
@@ -121,7 +119,7 @@ class BladeOffsetFilter(DeviceFilter):
         return offset_path
 
     def add_continuity_correction(self, offset_path, blade_path, point):
-        """ Adds if the upcoming angle and previous angle are not the same
+        """Adds if the upcoming angle and previous angle are not the same
         we need to correct for that difference by "arcing back" about the
         current blade point with a radius equal to the offset.
 
@@ -149,13 +147,14 @@ class BladeOffsetFilter(DeviceFilter):
                 diff -= 360
             if diff < -180:
                 diff += 360
-            offset_path.arcTo(QRectF(cur - circle_size, QSizeF(2 * r, 2 * r)), angle, diff)
+            offset_path.arcTo(
+                QRectF(cur - circle_size, QSizeF(2 * r, 2 * r)), angle, diff
+            )
             # This works for small offsets < 0.5 mm
-            #offset_path.lineTo(po)
-
+            # offset_path.lineTo(po)
 
     def process_move(self, offset_path, blade_path, params):
-        """ Adjust the start point of a move by the blade offset. When just
+        """Adjust the start point of a move by the blade offset. When just
         starting we don't know the blade angle so no correction is done.
 
         """
@@ -170,13 +169,13 @@ class BladeOffsetFilter(DeviceFilter):
             dx, dy = 0, r
         else:
             a = radians(angle)
-            dx, dy = r*cos(a), -r*sin(a)
+            dx, dy = r * cos(a), -r * sin(a)
 
-        po = QPointF(p0.x()+dx, p0.y()+dy)
+        po = QPointF(p0.x() + dx, p0.y() + dy)
         offset_path.moveTo(po)
 
     def process_line(self, offset_path, blade_path, params):
-        """ Correct continuity and adjust the end point of the line to end
+        """Correct continuity and adjust the end point of the line to end
         at the correct spot.
         """
         r = self.config.offset
@@ -189,14 +188,13 @@ class BladeOffsetFilter(DeviceFilter):
             dx, dy = 0, r
         else:
             a = radians(angle)
-            dx, dy = r*cos(a), -r*sin(a)
+            dx, dy = r * cos(a), -r * sin(a)
 
-        po = QPointF(p0.x()+dx, p0.y()+dy)
+        po = QPointF(p0.x() + dx, p0.y() + dy)
         offset_path.lineTo(po)
 
     def process_quad(self, offset_path, blade_path, params, quality):
-        """ Add offset correction to a quadratic bezier.
-        """
+        """Add offset correction to a quadratic bezier."""
         r = self.config.offset
         p0 = blade_path.currentPosition()
         p1, p2 = params
@@ -212,7 +210,7 @@ class BladeOffsetFilter(DeviceFilter):
             polygon = curve.toSubpathPolygons(IDENITY_MATRIX)[0]
         else:
             m = QTransform.fromScale(quality, quality)
-            m_inv = QTransform.fromScale(1/quality, 1/quality)
+            m_inv = QTransform.fromScale(1 / quality, 1 / quality)
             polygon = m_inv.map(curve.toSubpathPolygons(m)[0])
 
         for point in polygon:
@@ -220,14 +218,13 @@ class BladeOffsetFilter(DeviceFilter):
             t = curve.percentAtLength(p.length())
             angle = curve.angleAtPercent(t)
             a = radians(angle)
-            dx, dy = r*cos(a), -r*sin(a)
-            offset_path.lineTo(point.x()+dx, point.y()+dy)
+            dx, dy = r * cos(a), -r * sin(a)
+            offset_path.lineTo(point.x() + dx, point.y() + dy)
 
         blade_path.quadTo(*params)
 
     def process_cubic(self, offset_path, blade_path, params, quality):
-        """ Add offset correction to a cubic bezier.
-        """
+        """Add offset correction to a cubic bezier."""
         r = self.config.offset
         p0 = blade_path.currentPosition()
         p1, p2, p3 = params
@@ -243,7 +240,7 @@ class BladeOffsetFilter(DeviceFilter):
             polygon = curve.toSubpathPolygons(IDENITY_MATRIX)[0]
         else:
             m = QTransform.fromScale(quality, quality)
-            m_inv = QTransform.fromScale(1/quality, 1/quality)
+            m_inv = QTransform.fromScale(1 / quality, 1 / quality)
             polygon = m_inv.map(curve.toSubpathPolygons(m)[0])
 
         for point in polygon:
@@ -251,7 +248,7 @@ class BladeOffsetFilter(DeviceFilter):
             t = curve.percentAtLength(p.length())
             angle = curve.angleAtPercent(t)
             a = radians(angle)
-            dx, dy = r*cos(a), -r*sin(a)
-            offset_path.lineTo(point.x()+dx, point.y()+dy)
+            dx, dy = r * cos(a), -r * sin(a)
+            offset_path.lineTo(point.x() + dx, point.y() + dy)
 
         blade_path.cubicTo(*params)

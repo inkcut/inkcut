@@ -9,17 +9,22 @@ Created on Dec 22, 2022
 
 @author: karliss
 """
-from PyQt5.QtCore import QPointF
+from enaml.qt.QtCore import QPointF
 from enaml.qt.QtGui import QPainterPath
 from atom.api import Int, Instance, Float
 from inkcut.device.plugin import DeviceFilter, Model
-from inkcut.core.utils import split_painter_path, join_painter_paths, path_element_to_point
+from inkcut.core.utils import (
+    split_painter_path,
+    join_painter_paths,
+    path_element_to_point,
+)
 
 
 class RepeatConfig(Model):
     steps = Int(1).tag(config=True)
     # measured in 1/90inch like most other inkcut distances
     closed_loop_distance = Float(0.1, strict=False).tag(config=True)
+
 
 class RepeatFilter(DeviceFilter):
     config = Instance(RepeatConfig, ()).tag(config=True)
@@ -32,8 +37,9 @@ class RepeatFilter(DeviceFilter):
         max_gap_2 = self.config.closed_loop_distance * self.config.closed_loop_distance
         result = QPainterPath()
         for part in parts:
-            gap = path_element_to_point(part.elementAt(0)) -\
-                  path_element_to_point(part.elementAt(part.elementCount() - 1))
+            gap = path_element_to_point(part.elementAt(0)) - path_element_to_point(
+                part.elementAt(part.elementCount() - 1)
+            )
             length2 = QPointF.dotProduct(gap, gap)
             if length2 < max_gap_2:
                 result.addPath(part)

@@ -27,17 +27,17 @@ from inkcut.device.extensions import DeviceDriver
 
 DATA_PREFIX = "tests/data/filters"
 
+
 @pytest.fixture(scope="module")
 def test_device():
     config = DeviceConfig()
     config.test_mode = True
     return Device(config=config, declaration=DeviceDriver())
 
-@pytest.mark.parametrize('path', glob('tests/data/*.svg'))
-def test_blade_offset_basic(test_device, path):
-    """ Just check that the filter runs and there are no API incompatibilities with current qt version
 
-    """
+@pytest.mark.parametrize("path", glob("tests/data/*.svg"))
+def test_blade_offset_basic(test_device, path):
+    """Just check that the filter runs and there are no API incompatibilities with current qt version"""
     job = inkcut.job.models.Job()
     doc = QtSvgDoc(path)
     config = blade_offset.BladeOffsetConfig()
@@ -47,9 +47,8 @@ def test_blade_offset_basic(test_device, path):
     assert filtered_path
 
 
-
 mingap_testdata = [
-    (0, 6), # disable at 0, event when there are points with matching position
+    (0, 6),  # disable at 0, event when there are points with matching position
     (0.01, 5),
     (0.025, 4),
     (0.06, 3),
@@ -62,6 +61,7 @@ mingap_testdata = [
 def mingap_doc():
     return QtSvgDoc(DATA_PREFIX + "/mingap.svg")
 
+
 @pytest.mark.parametrize("setting,expected_count", mingap_testdata)
 def test_minline_gap(mingap_doc, setting, expected_count):
     config = min_line.MinLineConfig()
@@ -72,11 +72,9 @@ def test_minline_gap(mingap_doc, setting, expected_count):
     assert len(parts) == expected_count
 
 
-min_shift_expected_result = [
-    1,1,1,1,1,
-    1,1,1,0,0,
-    0,1,0
-]
+min_shift_expected_result = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0]
+
+
 @pytest.fixture(scope="module")
 def min_shift_fixture():
     doc = QtSvgDoc(DATA_PREFIX + "/min_shift_1.svg")
@@ -122,11 +120,10 @@ def test_minline_shift(i, expected, min_shift_fixture):
     end_expected = input_part.elementAt(input_part.elementCount() - 1)
     assert (end.x, end.y) == approx((end_expected.x, end_expected.y))
 
-@pytest.mark.parametrize('path', glob('tests/data/*.svg'))
-def test_minlineshift_basic(path):
-    """ Just check that the filter runs and there are no API incompatibilities with current qt version
 
-    """
+@pytest.mark.parametrize("path", glob("tests/data/*.svg"))
+def test_minlineshift_basic(path):
+    """Just check that the filter runs and there are no API incompatibilities with current qt version"""
     doc = QtSvgDoc(path)
     config = min_line.MinLineConfig()
     config.min_shift = from_unit(0.1, "mm")
@@ -134,9 +131,9 @@ def test_minlineshift_basic(path):
     result = minline_filter.apply_to_model(doc, None)
     assert result
 
+
 def test_min_path():
-    """ Test that paths of corresponding lengths get removed. Test case contains both squares and circles.
-    """
+    """Test that paths of corresponding lengths get removed. Test case contains both squares and circles."""
     doc = QtSvgDoc(DATA_PREFIX + "/min_path.svg")
     config = min_line.MinLineConfig()
 
@@ -144,12 +141,16 @@ def test_min_path():
     minline_filter = min_line.MinLineFilter(config=config)
     result = minline_filter.apply_to_model(doc, None)
 
-    assert len(utils.split_painter_path(result)) == 6 # nothing should be removed with min_path 0
+    assert (
+        len(utils.split_painter_path(result)) == 6
+    )  # nothing should be removed with min_path 0
 
     config.min_path = from_unit(0.3, "mm")
     result = minline_filter.apply_to_model(doc, None)
 
-    assert len(utils.split_painter_path(result)) == 6  # everything in testcase should still be longer than this
+    assert (
+        len(utils.split_painter_path(result)) == 6
+    )  # everything in testcase should still be longer than this
 
     config.min_path = from_unit(0.41, "mm")
     result = minline_filter.apply_to_model(doc, None)
