@@ -145,9 +145,10 @@ class QtSerialTransport(DeviceTransport):
             data = data.encode()
         self.last_write = data
         self.connection.write(data)
-        
+        self.connection.waitForBytesWritten(-1)
     def disconnect(self):
         if self.connection:
+            self.connection.waitForBytesWritten(-1)
             log.debug("-- {} | closed by request".format(self.device_path))
             self.connected=False
             self.connection.close()
