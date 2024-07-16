@@ -62,7 +62,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
 
         document = self.document
         if contains_text(self.svg.selected.values() if VERSION == "1.X" else self.selected.values()):
-            document = convert_objects_to_paths(self.args[-1], self.document)
+            document = convert_objects_to_paths(self.options.input_file if VERSION == "1.X" else self.args[-1], self.document)
 
         #: If running from source
         if DEBUG:
