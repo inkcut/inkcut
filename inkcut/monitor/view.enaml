@@ -13,7 +13,7 @@ from enaml.qt.QtCore import Qt
 from enaml.qt.QtWidgets import QApplication, QPlainTextEdit
 from enaml.qt.QtGui import QTextCursor
 from enaml.widgets.api import  (
-    Container, RawWidget, Field, PushButton, ObjectCombo
+    Action, Container, RawWidget, Field, PushButton, ObjectCombo, Menu
 )
 from enaml.application import deferred_call
 from enaml.layout.api import vbox, align, hbox
@@ -68,6 +68,7 @@ enamldef MonitorDockItem(DockItem): view:
         try:
             msg = change['value'].decode()
             widget.insertPlainText(msg.strip() if plugin.strip_whitespace else msg)
+            scroll_to_end()
         except:
             pass  # Ignore decode errors
 
@@ -77,6 +78,7 @@ enamldef MonitorDockItem(DockItem): view:
         widget = comm_log.proxy.widget
         try:
             msg = change['value'].decode()
+            msg = msg.remove('\r')
             widget.appendPlainText(msg.strip() if plugin.strip_whitespace else msg)
         except:
             pass  # Ignore decode errors
@@ -109,6 +111,13 @@ enamldef MonitorDockItem(DockItem): view:
                 plugin.history.pop(0)
         # Reset
         view.history_index = 0
+
+    Menu:
+        context_menu = True
+        Action:
+            text = QApplication.translate('monitor', "Add newline")
+            checkable = True
+            checked := plugin.add_newline
 
     Container:
         constraints = [
