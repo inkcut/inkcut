@@ -13,7 +13,7 @@ from inkcut.device.plugin import DeviceProtocol, Model
 
 class DMPLConfig(Model):
     #: Version number
-    mode = Enum(1, 2, 3, 4, 6).tag(config=True)
+    mode = Enum(1, 2, 3, 4, 6, 7).tag(config=True)
 
 
 class DMPLProtocol(DeviceProtocol):
@@ -34,14 +34,17 @@ class DMPLProtocol(DeviceProtocol):
             self.write(" ;:H A L0 ")
         elif v == 6:
             self.write("IN;PA;")
+        elif v==7:
+            # Send the initialization commands without leading whitespace to ensure proper com initialization
+            self.write(";:H A L0 ECN U ")
 
     def move(self, x, y, z, absolute=True):
         x, y = int(x*self.scale), int(y*self.scale)
-        v = self.config.mode
-        if v in [1, 2, 3, 4]:
-            self.write(" {z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))
-        else:
+        # Only protocol 6 requires PD and PU commmans.
+        if self.config.mode==6:
             self.write("{z}{x},{y};".format(x=x, y=y, z=z and "PD" or "PU"))
+        else:
+            self.write(" {z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))
 
     def set_pen(self, p):
         self.write("EC{p} ".format(p=p))
@@ -54,3 +57,8 @@ class DMPLProtocol(DeviceProtocol):
 
     def connection_lost(self):
         pass
+
+    def finish(self):
+        if self.config.mode==7:
+            # Properly end the transmission to avoid locking up the cutter interface with "Waiting..." message
+            self.write(" U F @ ")
