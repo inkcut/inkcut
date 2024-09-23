@@ -10,7 +10,8 @@ Created on Jul 12, 2015
 @author: jrm
 """
 import pyqtgraph as pg
-from atom.api import List, Instance, Enum, Bool, Range
+from atom.api import List, Instance, Enum, Bool, Range, Int
+from enaml.application import timed_call
 from enaml.qt import QtCore, QtGui
 from inkcut.core.api import Plugin, Model, unit_conversions, log
 from .plot_view import PainterPathPlotItem
@@ -33,6 +34,8 @@ class PreviewModel(Model):
     pen_offset = Instance(QPen)
     pen_down = Instance(QPen)
     pen_device = Instance(QPen)
+
+    need_redraw = Int(default=0)
 
     def _default_pen_media(self):
         return pg.mkPen((128, 128, 128))
@@ -62,6 +65,19 @@ class PreviewModel(Model):
             self.paths[1], pen=self.pen_up))
         self.plot = default_items + view_items
 
+    def queue_redraw(self, type):
+        if self.need_redraw == 0:
+            timed_call(20, self.redraw)
+        self.need_redraw |= (1 << type)
+    
+    def redraw(self):
+        layers_to_update = self.need_redraw
+        self.need_redraw = 0
+        if layers_to_update & (1 << 0):
+            self.plot[0].updateData(self.paths[0])
+        if layers_to_update & (1 << 1):
+            self.plot[1].updateData(self.paths[1])
+
     def update(self, position):
         """ Watch the position of the device as it changes. """
         if not self.paths:
@@ -70,11 +86,11 @@ class PreviewModel(Model):
         if z:
             self.paths[0].lineTo(x, -y)
             self.paths[1].moveTo(x, -y)
-            self.plot[0].updateData(self.paths[0])
+            self.queue_redraw(0)
         else:
             self.paths[0].moveTo(x, -y)
             self.paths[1].lineTo(x, -y)
-            self.plot[1].updateData(self.paths[1])
+            self.queue_redraw(1)
 
 
 class PreviewPlugin(Plugin):

@@ -63,7 +63,7 @@ class FileTransport(DeviceTransport):
         self.protocol.connection_made()
 
     def write(self, data):
-        log.debug("-> File | {}".format(data))
+        #log.debug("-> File | {}".format(data)) #
 
         #: Python 3 is annoying
         if hasattr(data, 'encode'):

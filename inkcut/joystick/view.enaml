@@ -9,6 +9,7 @@ Created on Jul 19, 2015
 
 @author: jrm
 """
+from enaml.application import deferred_call
 from enaml.layout.api import align, hbox, vbox,spacer
 from enaml.qt.QtWidgets import QApplication
 from enaml.stdlib.task_dialog import (TaskDialogBody, TaskDialogCommandArea,
@@ -23,13 +24,46 @@ from inkcut.core.api import DockItem, to_unit
 from inkcut.core.utils import load_icon
 
 
-enamldef JoystickDockItem(DockItem):
+enamldef JoystickDockItem(DockItem): joystickDock:
     title = QApplication.translate('control', 'Control')
     name = 'joystick-item'
     attr plugin
     attr device << plugin.device
     attr device_plugin << plugin.workbench.get_plugin('inkcut.device')
     icon = load_icon('controller')
+
+    attr pending_refresh = False 
+    pending_refresh <<
+        device.position
+        device.origin
+        device.busy
+        return True
+    pending_refresh ::
+        if pending_refresh:
+            deferred_call(refresh)
+
+    initialized::
+        # Need to access pending_refersh at least once, otherwise first write to it doesn't 
+        # trigger the change event, even though default value is false and it gets changed to True
+        # There must be a better way of doing this.
+        self.pending_refresh# = True
+        self.pending_refresh = False
+
+        refresh()
+
+    func refresh():
+        self.pending_refresh = False
+        status_label.text = '%s: (x=%0.3f x y=%0.3f z=%s) %s: (x=%0.3f, y=%0.3f)  %s' % (
+            QApplication.translate('control', 'Position'),
+            device.position[0],
+            device.position[1],
+            device.position[2],
+            QApplication.translate('control', 'Origin'),
+            device.origin[0],
+            device.origin[1],
+            QApplication.translate('control', 'busy' if device.busy else 'idle')
+        )
+
     Container:
         padding = 0
         constraints = [
@@ -66,17 +100,8 @@ enamldef JoystickDockItem(DockItem):
                     value := plugin.rate
                 Label:
                     text = QApplication.translate('control', "Status")
-                Label:
-                    text << '%s: (x=%0.3f x y=%0.3f z=%s) %s: (x=%0.3f, y=%0.3f)  %s' % (
-                        QApplication.translate('control', 'Position'),
-                        device.position[0],
-                        device.position[1],
-                        device.position[2],
-                        QApplication.translate('control', 'Origin'),
-                        device.origin[0],
-                        device.origin[1],
-                        QApplication.translate('control', 'busy' if device.busy else 'idle')
-                    )
+                Label: status_label:
+                    text = ''
 #
 
         Container: directions:
