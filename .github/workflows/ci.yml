@@ -9,35 +9,41 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
-        python: ["3.7", "3.8", "3.10"]
-        qt: ["PyQt5"]
-        experimental: [false]
+        os: ["ubuntu-latest", "macos-latest", "macos-13"]
+        python: ["3.8", "3.10", "3.12"]
         include:
-          - os: "windows-latest"
-            python: "3.10"
-            qt: "PyQt5"
+          - qt: "PyQt6" # default values
             experimental: false
-          - os: "windows-latest"
-            python: "3.7"
+          - python: "3.8"  # with older python versions use PyQt5
             qt: "PyQt5"
-            experimental: false
-          - os: "ubuntu-latest"
-            python: "3.10"
+          - python: "3.10"
+            qt: "PyQt5"
+          - os: "windows-latest" # windows added manually
+            python: "3.12"
             qt: "PyQt6"
-            experimental: true
+            experimental: false
+          - os: "windows-latest"
+            python: "3.10"
+            qt: "PyQt5"
+            experimental: false
+          - os: "windows-latest"
+            python: "3.8"
+            qt: "PyQt5"
+            experimental: false
+        exclude:
+            - os: "macos-13" # Reduce number of total macOS combinations. Use only the latest and few older ones on x86_64
+              python: "3.10"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
       - name: Linux deps
         if: contains(matrix.os, 'ubuntu')
         run: |
           sudo apt install -qq libcups2-dev
-          sudo apt install -qq libxkbcommon-x11-0 x11-utils libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0
           sudo apt install -qq libegl1
       - name: Early python deps
         shell: bash
@@ -45,11 +51,6 @@ jobs:
           # Most of the deps are installed later by setup.py.
           # This is only for testing specific libs and the cases
           # where default behavior results in combination of incompatible library versions.
-          if [[ "${{ matrix.python }}" = "3.7" ]]
-          then
-            pip install --upgrade setuptools cppy
-            pip install enaml==0.14.1 numpy==1.21
-          fi
           if [[ "${{ contains(matrix.os, 'windows') }}" = "true" ]]
           then
             # pywin32 has some postinstall steps which don't get properly executed
@@ -63,12 +64,11 @@ jobs:
       - name: Install inkcut
         shell: bash
         run: |
-          python setup.py develop
+          pip install -e .
       - name: Run tests
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" = "ubuntu-latest" ]]; then
-            Xvfb :99 -screen 0 1400x900x24 -ac +extension GLX +render &
-            export DISPLAY=:99.0
+            export QT_QPA_PLATFORM=offscreen
           fi
           python -m pytest tests/
