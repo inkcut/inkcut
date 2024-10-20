@@ -96,7 +96,7 @@ enamldef MonitorDockItem(DockItem): view:
             text = to_send.text
             # Add to history
             add_to_history(text)
-            connection.write(text+"\r\n" if plugin.add_newline else text)
+            connection.protocol.write(text+"\r\n" if plugin.add_newline else text)
             to_send.text = ""
 
     func add_to_history(text):

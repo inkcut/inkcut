@@ -41,7 +41,19 @@ enamldef GCodeConfigView(Container):
             minimum = 0
             maximum = 10
         Label:
+            text = QApplication.translate("protocols", "Streaming mode")
+            tool_tip = QApplication.translate("protocols", "None - no audtional stream flow control, ok - wait for ok response after each command (recommended for Marlin and Grbl).")
+        ObjectCombo:
+            items = list(GCodeConfig.GCODE_STREAM_MODES.items())
+            to_string = lambda obj: QApplication.translate("gcode", obj[1])
+            selected << (model.stream_mode, GCodeConfig.GCODE_STREAM_MODES[model.stream_mode])
+            selected ::
+                item = change['value']
+                if item:
+                    model.stream_mode = item[0]
+        Label:
             text = QApplication.translate("protocols", "Lift mode")
+            tool_tip = QApplication.translate("protocols", "Implicit - determined by G0/G1, Z - user specified Z height, Custom - user specified gcode.")
         ObjectCombo:
             items  = list(GCodeConfig.tool_lift_modes.items())
             to_string = lambda obj: QApplication.translate("protocols", obj[1])

@@ -78,13 +78,6 @@ class DeviceTransport(Model):
         """
         raise NotImplementedError
 
-    def read(self, size=None):
-        """ Read using whatever implementation necessary and
-        invoke `protocol.data_received` with the output.
-
-        """
-        raise NotImplementedError
-
     def disconnect(self):
         """ Disconnect using whatever implementation necessary
 
@@ -96,7 +89,10 @@ class TestTransport(DeviceTransport):
     """ A transport that captures protocol output """
 
     #: The output buffer
-    buffer = Instance(BytesIO, ())
+    buffer : BytesIO
+
+    def _default_buffer(self):
+        return BytesIO()
 
     def connect(self):
         self.connected = True
@@ -113,8 +109,9 @@ class TestTransport(DeviceTransport):
 
         self.buffer.write(data)
 
-    def read(self, size=None):
-        return ""
+    def clear_buffer(self):
+        self.buffer.seek(0)
+        self.buffer.truncate()
 
     def disconnect(self):
         self.connected = False
@@ -444,7 +441,7 @@ class Device(Model):
 
     def _default_manufacturer(self):
         return self.declaration.manufacturer
-    
+
     def _default_model(self):
         return self.declaration.model
 
@@ -612,7 +609,7 @@ class Device(Model):
         yield defer.maybeDeferred(self.connection.connect)
         cmd = self.config.commands_connect
         if cmd:
-            yield defer.maybeDeferred(self.connection.write, cmd)
+            yield defer.maybeDeferred(self.connection.protocol.write, cmd)
 
     def move(self, position, absolute=True):
         """ Move to the given position. By default this delegates handling
@@ -663,7 +660,7 @@ class Device(Model):
         log.debug("device | disconnect")
         cmd = self.config.commands_disconnect
         if cmd:
-            yield defer.maybeDeferred(self.connection.write, cmd)
+            yield defer.maybeDeferred(self.connection.protocol.write, cmd)
         yield defer.maybeDeferred(self.connection.disconnect)
 
     @defer.inlineCallbacks
@@ -788,7 +785,7 @@ class Device(Model):
 
                         #: Write startup command
                         if config.commands_before:
-                            yield defer.maybeDeferred(connection.write,
+                            yield defer.maybeDeferred(protocol.write,
                                                       config.commands_before)
 
                         self.status = "Working..."
@@ -857,7 +854,7 @@ class Device(Model):
 
                         #: Write finalize command
                         if config.commands_after:
-                            yield defer.maybeDeferred(connection.write,
+                            yield defer.maybeDeferred(connection.protocol.write,
                                                       config.commands_after)
 
                         #: Update stats

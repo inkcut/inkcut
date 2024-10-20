@@ -71,9 +71,6 @@ class FileTransport(DeviceTransport):
 
         self.file.write(data)
 
-    def read(self, size=None):
-        return ""
-
     def disconnect(self):
         log.debug("-- File | Closed '{}'".format(self.path))
         self.connected = False
