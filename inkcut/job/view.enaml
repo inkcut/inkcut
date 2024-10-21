@@ -19,6 +19,7 @@ from enaml.widgets.api import (
 )
 from enaml.core.api import Looper, Conditional
 from enaml.layout.api import hbox, vbox, spacer, align
+from enaml.qt.QtCore import QT_TRANSLATE_NOOP
 from enaml.qt.QtWidgets import QApplication
 from enamlx.widgets.api import (
     DoubleSpinBox, TableView, TableViewRow, TableViewItem
@@ -507,26 +508,44 @@ enamldef MaterialDockItem(DockItem):
                 checked := job.align_center[1]
         Container:
             padding = 0
-            constraints = [
-                vbox(lbl,
-                     rb1,
-                     hbox(rb2,dsb)),
-                align('v_center',rb2,dsb)
-            ]
             Label: lbl:
                 text = QApplication.translate("job", "Plot Feeding")
-            RadioButton: rb1:
-                text = QApplication.translate("job", "Return to origin")
-                checked << not job.feed_to_end
-            RadioButton: rb2:
-                text = QApplication.translate("job", "Feed after")
-                checked := job.feed_to_end
-            DoubleSpinBox: dsb:
-                value << to_unit(job.feed_after, plugin.units)
-                value :: job.feed_after = from_unit(change['value'],plugin.units)
-                suffix << " "+plugin.units
-                maximum = 99999.9
-                single_step = 0.1
+            ObjectCombo: feed_choice:
+                items = list(job.get_member('after_job').items)
+                selected := job.after_job
+                attr labels = {
+                    Job.FEED_MOVE_TO_0: QT_TRANSLATE_NOOP("job", "Return to origin"),
+                    Job.FEED_TO_END: QT_TRANSLATE_NOOP("job", "Feed after and shift origin"),
+                    Job.FEED_WITHOUT_SHIFT: QT_TRANSLATE_NOOP("job", "Feed only"),
+                    Job.FEED_MOVE_TO: QT_TRANSLATE_NOOP("job", "Move to position"),
+                    Job.FEED_NOTHING: QT_TRANSLATE_NOOP("job", "Nothing"),
+                }
+                to_string = lambda v: QApplication.translate('job_after', labels[v])
+            Conditional: feed_group:
+                condition << (feed_choice.selected != Job.FEED_MOVE_TO_0) and (feed_choice.selected != Job.FEED_NOTHING)
+                Container: feed_param:
+                    constraints = [
+                        hbox(feed_x_label, fd_x, feed_y_label, fd_y),
+                        fd_x.width == fd_y.width
+                    ]
+                    Label: feed_x_label:
+                        visible << feed_choice.selected != 'feed_to_end'
+                        text = 'X:'
+                    DoubleSpinBox: fd_x:
+                        visible << feed_choice.selected != 'feed_to_end'
+                        value << to_unit(job.final_position[0], plugin.units)
+                        value :: job.final_position[0] = from_unit(change['value'],plugin.units)
+                        suffix << " "+plugin.units
+                        maximum = 99999.9
+                        single_step = 0.1
+                    Label: feed_y_label:
+                        text = 'Y:'
+                    DoubleSpinBox: fd_y:
+                        value << to_unit(job.final_position[1], plugin.units)
+                        value :: job.final_position[1] = from_unit(change['value'],plugin.units)
+                        suffix << " "+plugin.units
+                        maximum = 99999.9
+                        single_step = 0.1
 
 
 enamldef JobHistoryDockItem(DockItem):

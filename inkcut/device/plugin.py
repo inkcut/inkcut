@@ -22,11 +22,11 @@ from enaml.qt import QtCore, QtGui
 from enaml.application import timed_call
 from inkcut.core.api import Model, Plugin, AreaBase
 from inkcut.core.utils import parse_unit, from_unit, to_unit, async_sleep, log
+from inkcut.job.models import Job
 from twisted.internet import defer
 from io import BytesIO
 from . import extensions
 import copy
-
 
 class DeviceError(AssertionError):
     """ Error for whatever """
@@ -579,10 +579,9 @@ class Device(Model):
         # device outputs
         model = job.create(swap_xy=config.swap_xy, scale=scale)
 
-        if job.feed_to_end:
-            #: Move the job to the new origin
-            x, y, z = self.origin
-            model.translate(x, -y)
+        #: Move the job to the new origin
+        x, y, z = self.origin
+        model.translate(x, -y)
 
         #: TODO: Apply filters here
 
@@ -872,7 +871,7 @@ class Device(Model):
                             yield defer.maybeDeferred(self.disconnect)
 
             #: Set the origin
-            if job.feed_to_end and job.info.status == 'complete':
+            if job.info.status == 'complete' and job.after_job == Job.FEED_TO_END:
                 self.origin = self.position
 
             #: If the user didn't cancel, set the origin and

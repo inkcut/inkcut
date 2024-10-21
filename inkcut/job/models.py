@@ -190,6 +190,14 @@ class Job(Model):
     def _default_order(self):
         return 'Normal'
 
+    FEED_MOVE_TO_0 = 'move_to_0'
+    FEED_TO_END = 'feed_to_end'
+    FEED_WITHOUT_SHIFT = 'feed_without_home_shift'
+    FEED_MOVE_TO = 'move_to'
+    FEED_NOTHING = 'nothing'
+
+    after_job = Enum(FEED_MOVE_TO_0, FEED_TO_END, FEED_WITHOUT_SHIFT, FEED_MOVE_TO, FEED_NOTHING).tag(config=True)
+    final_position = ContainerList(Float(), default=[0, 0])
     feed_to_end = Bool(False).tag(config=True)
     feed_after = Float(0).tag(config=True)
 
@@ -365,8 +373,8 @@ class Job(Model):
     @observe('path', 'scale', 'auto_scale', 'lock_scale', 'mirror',
              'align_center', 'rotation', 'auto_rotate', 'copies', 'order',
              'copy_spacing', 'copy_weedline', 'copy_weedline_padding',
-             'plot_weedline', 'plot_weedline_padding', 'feed_to_end',
-             'feed_after', 'material', 'material.size', 'material.padding',
+             'plot_weedline', 'plot_weedline_padding', 'after_job',
+             'final_position', 'material', 'material.size', 'material.padding',
              'auto_copies', 'auto_shift')
     def update_document(self, change=None):
         """ Recreate an instance of of the plot using the current settings
@@ -464,10 +472,18 @@ class Job(Model):
 
         model = QTransform.fromTranslate(tx, ty).map(model)
 
-        end_point = (QPointF(
-            0, -self.feed_after + model.boundingRect().top())
-                     if self.feed_to_end else QPointF(0, 0))
-        model.moveTo(end_point)
+        end_point = QPointF(0, 0)
+        if self.after_job == Job.FEED_MOVE_TO_0:
+            end_point = QPointF(0, 0)
+        elif self.after_job == Job.FEED_TO_END:
+            end_point = QPointF(0, -self.final_position[1] + model.boundingRect().top())
+        elif self.after_job == Job.FEED_WITHOUT_SHIFT:
+            end_point = QPointF(self.final_position[0], -self.final_position[1] + model.boundingRect().top())
+        elif self.after_job == Job.FEED_MOVE_TO:
+            end_point = QPointF(self.final_position[0], -self.final_position[1])
+
+        if self.after_job != Job.FEED_NOTHING:
+            model.moveTo(end_point)
 
         return model
 
