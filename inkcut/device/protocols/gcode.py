@@ -58,7 +58,7 @@ class GCodeProtocol(DeviceProtocol):
     _receive_buffer = Bytes()
     _reactor = atom.api.Value()
 
-    def _default_reactor(self):
+    def _default__reactor(self):
         from twisted.internet import reactor as reactor
 
         return reactor

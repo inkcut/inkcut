@@ -24,7 +24,7 @@ install_requires = [
     'lxml',  # use sudo apt install libxml2-dev libxslt-dev
 
     #'PyQt5', # Let users install whatever Qt they want
-    'qt-reactor',
+    'qt-reactor@ git+https://github.com/karliss/qt-reactor.git@eae5af237d3694a649b3ff6ad6d038cb44ac3300',
 
     # Python 2:
     'faulthandler; python_version < \'3.0\'',

@@ -20,8 +20,6 @@ from inkcut.device.plugin import DeviceConfig, Device, TestTransport
 from inkcut.device.extensions import DeviceDriver
 from inkcut.device.protocols.gcode import GCodeConfig, GCodeProtocol
 
-DATA_PREFIX = "tests/data/filters"
-
 
 @pytest.fixture(scope="function")
 def gcodedevice_fixture():
