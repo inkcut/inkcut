@@ -166,6 +166,7 @@ class Plugin(EnamlPlugin):
         """ Unload any state observers when the plugin stops"""
         self._unbind_observers()
 
+    # TODO: get rid of this
     def run_command(self, protocol,  *args, **kwargs):
         """ Run a command without blocking using twisted's spawnProcess
 

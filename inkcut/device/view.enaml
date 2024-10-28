@@ -12,8 +12,10 @@ Created on Dec 7, 2017
 """
 import os
 import textwrap
-from enaml.layout.api import hbox, vbox, spacer, align
+from enaml.layout.api import hbox, vbox, spacer, align, grid
+from enaml.core.api import Conditional
 from enaml.qt.QtWidgets import QApplication
+from enaml.qt.QtCore import QT_TRANSLATE_NOOP
 from enaml.widgets.api import (
     Form, CheckBox, Container, Label, ProgressBar, PushButton, Notebook, Page, ObjectCombo,
     Action, Menu, MultilineField
@@ -30,6 +32,12 @@ enamldef ConfigView(Container):
     Label:
         text = QApplication.translate("device", "No configuration available.")
 
+enamldef MatrixNumber(DoubleSpinBox):
+    decimals = 7
+    single_step = 0.1
+    maximum = 10000000
+    minimum = -10000000
+    resist_width = 'weak'
 
 enamldef DeviceConfigView(Container):
     attr model: DeviceConfig
@@ -95,34 +103,100 @@ enamldef DeviceConfigView(Container):
                     #Final output rotation.
                     #""").strip()
                 Label:
-                    text = QApplication.translate("device", "Scale")
-                Form:
-                    Label:
-                        text = "x"
-                    DoubleSpinBox:
-                        value := model.scale[0]
-                        decimals = 6
-                        minimum = -9999.9
-                        maximum = 9999.9
-                        tool_tip = textwrap.dedent("""
-                        Final output scale for the x-axis.
+                    text = "x"
+                DoubleSpinBox:
+                    value := model.scale[0]
+                    decimals = 6
+                    minimum = -9999.9
+                    maximum = 9999.9
+                    tool_tip = textwrap.dedent("""
+                    Final output scale for the x-axis.
+                    A value of '1' here means '90 points per inch'. For example:
+                    Suppose your device is 96 ppi, configure 96/90=1.06 here.
+                    Suppose your device is 200 points per cm, configure 200*2.54/90=5.64 here.
+                    """).strip()
+                Label:
+                    text = "y"
+                DoubleSpinBox:
+                    value := model.scale[1]
+                    decimals = 6
+                    minimum = -9999.9
+                    maximum = 9999.9
+                    tool_tip = textwrap.dedent("""
+                        Final output scale for the y-axis.
                         A value of '1' here means '90 points per inch'. For example:
                         Suppose your device is 96 ppi, configure 96/90=1.06 here.
                         Suppose your device is 200 points per cm, configure 200*2.54/90=5.64 here.
                         """).strip()
+                Label:
+                    text = QApplication.translate("device", "Axis mapping")
+                ObjectCombo: axis_mode:
+                    items  = list(DeviceConfig.AXIS_MAP_MODES.items())
+                    to_string = lambda obj: QApplication.translate("device_axis", obj[1])
+                    selected << (model.axis_mapping, DeviceConfig.AXIS_MAP_MODES[model.axis_mapping])
+                    selected ::
+                            item = change['value']
+                            if item:
+                                model.axis_mapping = item[0]
+                Label:
+                    text = QApplication.translate("device", "Paper roll position")
+                ObjectCombo:
+                    items = list(model.get_member('paper_roll').items)
+                    selected := model.paper_roll
+                    attr labels = {
+                        DeviceConfig.PAPER_ROLL_AUTO: QT_TRANSLATE_NOOP("device", "Auto"),
+                        DeviceConfig.PAPER_ROLL_NONE: QT_TRANSLATE_NOOP("device", "None"),
+                        DeviceConfig.PAPER_ROLL_UP: QT_TRANSLATE_NOOP("device", "Up (behind)"),
+                        DeviceConfig.PAPER_ROLL_DOWN: QT_TRANSLATE_NOOP("device", "Down (front)"),
+                    }
+                    to_string = lambda v: QApplication.translate('device', labels[v])
+                Conditional:
+                    condition << model.axis_mapping != DeviceConfig.AXIS_MAP_CUSTOM
                     Label:
-                        text = "y"
+                        text = QApplication.translate("device", "Extra scale")
+                        tool_tip = QApplication.translate("device", "Should only be used if device protocol lacks ability to negotiate scale, or implements the protocol incorrectly")
                     DoubleSpinBox:
-                        value := model.scale[1]
-                        decimals = 6
-                        minimum = -9999.9
-                        maximum = 9999.9
-                        tool_tip = textwrap.dedent("""
-                            Final output scale for the y-axis.
-                            A value of '1' here means '90 points per inch'. For example:
-                            Suppose your device is 96 ppi, configure 96/90=1.06 here.
-                            Suppose your device is 200 points per cm, configure 200*2.54/90=5.64 here.
-                            """).strip()
+                        decimals = 7
+                        single_step = 0.1
+                        maximum = 10000000
+                        value := model.extra_scale
+                Conditional:
+                    condition << model.axis_mapping == DeviceConfig.AXIS_MAP_CUSTOM
+                    Label:
+                        text = QApplication.translate("device", "Custom mapping")
+                    Container:
+                        constraints = [
+                            grid(
+                                [None, lb_xt,  lb_yt, lb_offset],
+                                [lb_xr, v_xx, v_xy, v_xc],
+                                [lb_yr, v_yx, v_yy, v_yc],
+                            ),
+                            v_xx.width == v_xy.width,
+                            v_xx.width == v_xc.width,
+                        ]
+                        Label: lb_xt:
+                            text = "X"
+                        Label: lb_yt:
+                            text = "Y"
+                        Label: lb_offset:
+                            text = "Offset"
+                        Label: lb_xr:
+                            text = "X"
+                        Label: lb_yr:
+                            text = "Y"
+                        MatrixNumber: v_xx:
+                            value := model.custom_mapping[0]
+                        MatrixNumber: v_xy:
+                            value := model.custom_mapping[1]
+                        MatrixNumber: v_xc:
+                            value := model.custom_mapping[2]
+                        MatrixNumber: v_yx:
+                            value := model.custom_mapping[3]
+                        MatrixNumber: v_yy:
+                            value := model.custom_mapping[4]
+                        MatrixNumber: v_yc:
+                            value := model.custom_mapping[5]
+
 
         Page:
             closable = False

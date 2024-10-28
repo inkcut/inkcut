@@ -10,8 +10,12 @@ Created on Jan 16, 2015
 
 @author: jrm
 """
+from typing import Optional
+
 import enaml
 import traceback
+
+from PyQt5.QtCore import QPointF
 from atom.api import (
     Typed, List, Instance, ForwardInstance, ContainerList, Bool, Str,
     Int, Float, Enum, Bytes, observe
@@ -19,6 +23,8 @@ from atom.api import (
 from contextlib import contextmanager
 from datetime import datetime
 from enaml.qt import QtCore, QtGui
+from enaml.qt.QtCore import QT_TRANSLATE_NOOP
+from enaml.qt.QtGui import  QTransform
 from enaml.application import timed_call
 from inkcut.core.api import Model, Plugin, AreaBase
 from inkcut.core.utils import parse_unit, from_unit, to_unit, async_sleep, log
@@ -291,6 +297,42 @@ class DeviceConfig(Model):
     mirror_y = Bool().tag(config=True)
     mirror_x = Bool().tag(config=True)
 
+    AXIS_MAP_XR_YD = 0
+    AXIS_MAP_XD_YR = 1
+    AXIS_MAP_XL_YD = 2
+    AXIS_MAP_XD_YL = 3
+    AXIS_MAP_XR_YU = 4
+    AXIS_MAP_XU_YR = 5
+    AXIS_MAP_XL_YU = 6
+    AXIS_MAP_XU_YL = 7
+    AXIS_MAP_CUSTOM = 8
+
+    AXIS_MAP_MODES = {
+        AXIS_MAP_XR_YD: QT_TRANSLATE_NOOP("device_axis", "X: right, Y: down"),
+        AXIS_MAP_XD_YR: QT_TRANSLATE_NOOP("device_axis", "X: down, Y: right"),
+        AXIS_MAP_XL_YD: QT_TRANSLATE_NOOP("device_axis", "X: left, Y: down"),
+        AXIS_MAP_XD_YL: QT_TRANSLATE_NOOP("device_axis", "X: down, Y: left"),
+
+        AXIS_MAP_XR_YU: QT_TRANSLATE_NOOP("device_axis", "X: right, Y: up"),
+        AXIS_MAP_XU_YR: QT_TRANSLATE_NOOP("device_axis", "X: up, Y: right"),
+        AXIS_MAP_XL_YU: QT_TRANSLATE_NOOP("device_axis", "X: left, Y: up"),
+        AXIS_MAP_XU_YL: QT_TRANSLATE_NOOP("device_axis", "X: up, Y: left"),
+
+        AXIS_MAP_CUSTOM: QT_TRANSLATE_NOOP("device_axis", "Custom"),
+    }
+
+    axis_mapping = Enum(*AXIS_MAP_MODES.keys()).tag(config=True)
+
+    PAPER_ROLL_AUTO = 0
+    PAPER_ROLL_NONE = 1
+    PAPER_ROLL_UP = 2
+    PAPER_ROLL_DOWN = 3
+
+    paper_roll = Enum(PAPER_ROLL_AUTO, PAPER_ROLL_NONE, PAPER_ROLL_UP, PAPER_ROLL_DOWN).tag(config=True)
+
+    extra_scale : Float = Float(1.0).tag(config=True)
+    custom_mapping = ContainerList(Float(strict=False), default=[1, 0, 0, 0, 1, 0]).tag(config=True)
+
     #: Final out scaling
     scale = ContainerList(Float(strict=False), default=[1, 1]).tag(config=True)
 
@@ -343,6 +385,43 @@ class DeviceConfig(Model):
         if change['type'] == 'update':
             self.step_time = self._default_step_time()
 
+    def make_transform(self, area: AreaBase):
+        if self.axis_mapping == DeviceConfig.AXIS_MAP_CUSTOM:
+            return QTransform(self.custom_mapping[0], self.custom_mapping[3],
+                              self.custom_mapping[1], self.custom_mapping[4],
+                              self.custom_mapping[2], self.custom_mapping[5])
+        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XR_YD:
+            return QTransform(self.extra_scale, 0,
+                              0, -self.extra_scale,
+                                  0, 0)
+        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XD_YR:
+            return QTransform(0, self.extra_scale,
+                              -self.extra_scale, 0,
+                              0, 0)
+        if self.axis_mapping == DeviceConfig.AXIS_MAP_XL_YD:
+            return QTransform(-self.extra_scale, 0,
+                              0, -self.extra_scale,
+                              area.width(), 0)
+        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XD_YL:
+            return QTransform(0, -self.extra_scale,
+                              -self.extra_scale, 0,
+                              0, area.width())
+        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XR_YU:
+            return QTransform(self.extra_scale, 0,
+                              0, self.extra_scale,
+                              0, 0)
+        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XU_YR:
+            return QTransform(0, self.extra_scale,
+                              self.extra_scale, 0,
+                              0, 0)
+        if self.axis_mapping == DeviceConfig.AXIS_MAP_XL_YU:
+            return QTransform(-self.extra_scale, 0,
+                              0, self.extra_scale,
+                              area.width(), 0)
+        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XU_YL:
+            return QTransform(0, -self.extra_scale,
+                              self.extra_scale, 0,
+                              0, area.width())
 
 class Device(Model):
     """ The standard device. This is a standard model used throughout the
@@ -378,7 +457,7 @@ class Device(Model):
     connection = Instance(DeviceTransport).tag(config=True)
 
     #: List of jobs that were run on this device
-    jobs = List(Model).tag(config=True)
+    jobs = List(Model)#.tag(config=True)
 
     #: List of jobs queued to run on this device
     queue = List(Model).tag(config=True)
@@ -396,6 +475,9 @@ class Device(Model):
     #: Origin position. Defaults to [0, 0, 0]. The system will translate
     #: jobs to the origin so multiple can be run.
     origin = ContainerList(default=[0, 0, 0])
+
+    transform: Optional[QTransform] #= Instance(QTransform, optional=True)
+    inverse_transform: Optional[QTransform]  # = Instance(QTransform, optional=True)
 
     #: Device is currently busy processing a job
     busy = Bool()
@@ -448,6 +530,23 @@ class Device(Model):
     @observe('declaration.width', 'declaration.length')
     def _refresh_area(self, change):
         self.area = self._default_area()
+
+
+    @observe('area', 'config', 'config.axis_mappin', 'config.paper_roll')
+    def refresh_transform(self):
+        self.transform = self.config.make_transform(self.area)
+        self.inverse_transform = self.transform.inverted()
+
+    def get_transform(self):
+        if self.transform is None:
+            self.refresh_transform()
+        return self.transform
+
+    def map_point(self, p: QPointF) -> QPointF:
+        return self.transform.map(p)
+
+    def map_vector(self, p: QPointF) -> QPointF:
+        return self.transform.map(p) - self.transform.map(QPointF(0, 0))
 
     @contextmanager
     def device_busy(self):
@@ -510,7 +609,7 @@ class Device(Model):
 
         return new_dev
 
-    def transform(self, path):
+    def transform_tmp(self, path):
         """ Apply the device output transform to the given path. This
         is used by other plugins that may need to display or work with
         tranformed output.
@@ -618,7 +717,7 @@ class Device(Model):
         ----------
             position: List of coordinates to move to.
                 Desired position to move or move to (if using absolute
-                coordinates).
+                coordinates). Using inkcut coordinate system and scale.
             absolute: bool
                 Position is in absolute coordinates
         Returns
@@ -628,17 +727,21 @@ class Device(Model):
                 completion before continuing.
 
         """
+        p = QPointF(position[0], position[1])
+
         if absolute:
             #: Clip everything to never go below zero in absolute mode
-            position = [max(0, p) for p in position]
+            p = self.map_point(p)
+            position = [p.x(), p.y(), position[2]]
             self.position = position
         else:
             #: Convert to relative to absolute for the UI
-            p = self.position
-            p[0] += position[0]
-            p[1] += position[1]
-            self.position = p
+            p += QPointF(position[0], position[1])
+            p = self.map_point(p)
+            position = [p.x(), p.y(), position[2]]
+            self.position = position
 
+        #TODO: use relative mode provided by protocol and self.map_vector
         result = self.connection.protocol.move(*position, absolute=absolute)
         if result:
             return result

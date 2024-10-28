@@ -16,6 +16,7 @@ from atom.api import Instance, Enum, List, Str, Int, Float, observe
 from inkcut.core.api import Plugin, unit_conversions, log
 
 from .models import Job, JobError, Material
+from ..preview.plugin import PreviewPlugin
 
 with enaml.imports():
     from enaml.workbench.ui.workbench_menus import WorkbenchMenu
@@ -184,7 +185,7 @@ class JobPlugin(Plugin):
         view_items = []
 
         #: Transform used by the view
-        preview_plugin = self.workbench.get_plugin("inkcut.preview")
+        preview_plugin: PreviewPlugin = self.workbench.get_plugin("inkcut.preview")
         job = self.job
         plot = preview_plugin.preview
         t = preview_plugin.transform
@@ -194,7 +195,7 @@ class JobPlugin(Plugin):
         device = plugin.device
 
         #: Apply the final output transforms from the device
-        transform = device.transform if device else lambda p: p
+        transform = lambda p: p #TODO: cleanup
 
         if device and device.area:
             area = device.area
