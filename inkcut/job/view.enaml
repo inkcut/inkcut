@@ -524,9 +524,11 @@ enamldef MaterialDockItem(DockItem):
             Conditional: feed_group:
                 condition << (feed_choice.selected != Job.FEED_MOVE_TO_0) and (feed_choice.selected != Job.FEED_NOTHING)
                 Container: feed_param:
+                    padding = 0
                     constraints = [
                         hbox(feed_x_label, fd_x, feed_y_label, fd_y),
-                        fd_x.width == fd_y.width
+                        fd_x.width == fd_y.width,
+                        align('v_center', feed_x_label, fd_x, feed_y_label, fd_y)
                     ]
                     Label: feed_x_label:
                         visible << feed_choice.selected != 'feed_to_end'

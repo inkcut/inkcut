@@ -25,7 +25,7 @@ from enaml.qt import QtCore, QtGui
 from enaml.qt.QtCore import QT_TRANSLATE_NOOP, QPointF, QRectF
 from enaml.qt.QtGui import QTransform, QPainterPath
 from enaml.application import timed_call
-from inkcut.core.api import Model, Plugin, AreaBase
+from inkcut.core.api import Model, Plugin, AreaBase, PointF
 from inkcut.core.utils import parse_unit, from_unit, to_unit, async_sleep, log
 from inkcut.job.models import Job
 from twisted.internet import defer
@@ -296,6 +296,8 @@ class DeviceConfig(Model):
     mirror_y = Bool().tag(config=True)
     mirror_x = Bool().tag(config=True)
 
+    area = Instance(AreaBase).tag(config=True)
+
     AXIS_FLAG_H_LEFT = 1
     AXIS_FLAG_V_DOWN = 2
     AXIS_FLAG_SWAPXY = 4
@@ -334,10 +336,10 @@ class DeviceConfig(Model):
 
     area_alignment_corner = Enum(ALIGNMENT_CORNER_ZERO, ALIGNMENT_CORNER_TOP_LEFT, ALIGNMENT_CORNER_TOP_RIGHT,
                                  ALIGNMENT_CORNER_BOTTOM_LEFT, ALIGNMENT_CORNER_BOTTOM_RIGHT).tag(config=True)
-    work_area_offset = Instance(QPointF).tag(config=True)
+    work_area_offset = Instance(PointF, args=()).tag(config=True)
     paper_corner = Enum(ALIGNMENT_CORNER_ZERO, ALIGNMENT_CORNER_TOP_LEFT, ALIGNMENT_CORNER_TOP_RIGHT,
                             ALIGNMENT_CORNER_BOTTOM_LEFT, ALIGNMENT_CORNER_BOTTOM_RIGHT).tag(config=True)
-    paper_offset = Instance(QPointF).tag(config=True)
+    paper_offset = Instance(PointF, args=()).tag(config=True)
 
     extra_scale : Float = Float(1.0).tag(config=True)
     custom_mapping = ContainerList(Float(strict=False), default=[1, 0, 0, 0, 1, 0]).tag(config=True)
@@ -374,6 +376,9 @@ class DeviceConfig(Model):
     commands_connect = Str().tag(config=True)
     commands_disconnect = Str().tag(config=True)
 
+    _transform: Optional[QTransform] #= Instance(QTransform, optional=True)
+    _inverse_transform: Optional[QTransform]  # = Instance(QTransform, optional=True)
+
     def _default_step_time(self):
         """ Determine the step time based on the device speed setting
 
@@ -389,6 +394,9 @@ class DeviceConfig(Model):
         #: No determine the time and convert to ms
         return max(0, round(1000*self.step_size/speed))
 
+    def _default_area(self):
+        return AreaBase()
+
     @observe('speed', 'speed_units', 'step_size')
     def _update_step_time(self, change):
         if change['type'] == 'update':
@@ -396,8 +404,8 @@ class DeviceConfig(Model):
 
     def make_transform(self, area: AreaBase):
         if self.axis_mapping == DeviceConfig.AXIS_MAP_CUSTOM:
-            return QTransform(self.custom_mapping[0], self.custom_mapping[3],
-                              self.custom_mapping[1], self.custom_mapping[4],
+            return QTransform(self.custom_mapping[0] * self.extra_scale, self.custom_mapping[3] * self.extra_scale,
+                              self.custom_mapping[1] * self.extra_scale, self.custom_mapping[4] * self.extra_scale,
                               self.custom_mapping[2], self.custom_mapping[5])
         else:
             x1, x2, x3 = (self.extra_scale, 0, 0)
@@ -430,25 +438,70 @@ class DeviceConfig(Model):
                               x2, y2,
                               x3, y3)
 
+
+    @observe('area', 'axis_mapping', 'area_alignment_corner')
+    def refresh_transform(self, change):
+        self._transform = None
+        self._inverse_transform = None
+    @property
+    def transform(self):
+        if self._transform is None:
+            self._transform = self.make_transform(self.area)
+        return self.transform
+    @property
+    def inverse_transform(self):
+        if not self._inverse_transform:
+            inverted, invert_success = self.transform.inverted()
+            if invert_success:
+                self._inverse_transform = inverted
+            else:
+                self._inverse_transform = QTransform()
+        return self._inverse_transform
+
+
+    @staticmethod
+    def corner_to_rect_direction(corner):
+        if corner == DeviceConfig.ALIGNMENT_CORNER_BOTTOM_LEFT:
+            return QPointF(1, -1)
+        elif corner == DeviceConfig.ALIGNMENT_CORNER_BOTTOM_RIGHT:
+            return QPointF(-1, -1)
+        elif corner == DeviceConfig.ALIGNMENT_CORNER_TOP_LEFT:
+            return QPointF(1, 1)
+        elif corner == DeviceConfig.ALIGNMENT_CORNER_TOP_RIGHT:
+            return QPointF(-1, 1)
+        ValueError("Unexpected corner {}".format(corner))
     @property
     def expansion_direction(self) -> QPointF:
         if self.area_alignment_corner == DeviceConfig.ALIGNMENT_CORNER_ZERO:
             if self.axis_mapping == DeviceConfig.AXIS_MAP_CUSTOM:
                 return QPointF(1, 1)  # TODO: do better guess based on custom mapping matrix
-            dir = QPointF(1, 1)
+            direction = QPointF(1, 1)
             if not self.axis_mapping & DeviceConfig.AXIS_FLAG_V_DOWN:
-                dir.setY(-1)
+                direction.setY(-1)
             if self.axis_mapping & DeviceConfig.AXIS_FLAG_H_LEFT:
-                dir.setX(-1)
-            return dir
-        if self.area_alignment_corner == DeviceConfig.ALIGNMENT_CORNER_BOTTOM_LEFT:
-            return QPointF(1, -1)
-        elif self.area_alignment_corner == DeviceConfig.ALIGNMENT_CORNER_BOTTOM_RIGHT:
-            return QPointF(-1, -1)
-        elif self.area_alignment_corner == DeviceConfig.ALIGNMENT_CORNER_TOP_LEFT:
-            return QPointF(1, 1)
-        else:
-            return QPointF(-1, -1)
+                direction.setX(-1)
+            return direction
+        return DeviceConfig.corner_to_rect_direction(self.area_alignment_corner)
+
+    @property
+    def page_placement_direction(self) -> QPointF:
+        if self.paper_corner == DeviceConfig.ALIGNMENT_CORNER_ZERO:
+            return self.expansion_direction
+        return DeviceConfig.corner_to_rect_direction(self.paper_corner)
+
+    @property
+    def working_area_rect(self) -> QRectF:
+        return self.area.get_rect(self.expansion_direction, self.work_area_offset.to_qt())
+
+    def get_paper_rect(self, paper_area: AreaBase) -> QRectF:
+        paper = paper_area.get_rect(self.expansion_direction)
+        return self.get_paper_to_work_transform(paper_area).mapRect(paper)
+
+    def get_paper_to_work_transform(self, paper_area: AreaBase):
+        work_area = self.working_area_rect
+        paper = paper_area.get_rect(self.expansion_direction)
+        return AreaBase.align_rect(paper, work_area, self.page_placement_direction, self.paper_offset.to_qt())
+
 
 class Device(Model):
     """ The standard device. This is a standard model used throughout the
@@ -464,9 +517,6 @@ class Device(Model):
     manufacturer = Str().tag(config=True)
     model = Str().tag(config=True)
     custom = Bool().tag(config=True)
-
-    #: Internal model for drawing the preview on screen
-    area = Instance(AreaBase).tag(config=True)
 
     #: The declaration that defined this device
     declaration = Typed(extensions.DeviceDriver).tag(config=True)
@@ -503,14 +553,23 @@ class Device(Model):
     #: jobs to the origin so multiple can be run.
     origin = ContainerList(default=[0, 0, 0])
 
-    transform: Optional[QTransform] #= Instance(QTransform, optional=True)
-    inverse_transform: Optional[QTransform]  # = Instance(QTransform, optional=True)
-
     #: Device is currently busy processing a job
     busy = Bool()
 
     #: Status
     status = Str()
+
+    def __init__(self, *args, **kwargs):
+        super(Model, self).__init__(*args, **kwargs)
+        (w, h) = kwargs.get('width'), kwargs.get('height')
+        if w:
+            self.config.area.size[0] = parse_unit(w)
+        if h:
+            h = parse_unit(h)
+        if not h:
+            h = 900000
+        self.config.area.size[1] = h
+
 
     def _default_connection(self):
         """ If no connection is set when the device is created,
@@ -534,47 +593,19 @@ class Device(Model):
     def _default_custom(self):
         return self.declaration.custom
 
-    def _default_area(self):
-        """ Create the area based on the size specified by the Device Driver
-
-        """
-        d = self.declaration
-        area = AreaBase()
-        w = parse_unit(d.width)
-        if d.length:
-            h = parse_unit(d.length)
-        else:
-            h = 900000
-        area.size = [w, h]
-        return area
-
     def _default_manufacturer(self):
         return self.declaration.manufacturer
 
     def _default_model(self):
         return self.declaration.model
 
-    @observe('declaration.width', 'declaration.length')
-    def _refresh_area(self, change):
-        self.area = self._default_area()
-
     @property
     def area_rect(self):
-        return self.area.get_rect(self.config.expansion_direction)
+        return self.config.working_area_rect
 
-    @observe('area', 'config', 'config.axis_mapping', 'config.area_alignment_corner')
-    def refresh_transform(self, change):
-        self.transform = self.config.make_transform(self.area)
-        inverted, invert_success = self.transform.inverted()
-        if invert_success:
-            self.inverse_transform = inverted
-        else:
-            self.inverse_transform = QTransform()
-
-    def get_transform(self):
-        if self.transform is None:
-            self.refresh_transform()
-        return self.transform
+    @property
+    def transform(self) -> QTransform:
+        return self.config.transform
 
     def map_point(self, p: QPointF) -> QPointF:
         return self.transform.map(p)
@@ -708,11 +739,11 @@ class Device(Model):
         # device outputs
         model = job.create(direction)
 
+        tr = self.config.paper_to_work_transform(job.material)
         #: Move the job to the new origin
         x, y, z = self.origin
-        model.translate(x, -y) #TODO: recheck
-
-        #: TODO: Apply filters here
+        tr.translate(x, y)
+        model = tr.map(model)
 
         #: Return the transformed model
         return model

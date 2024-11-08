@@ -198,8 +198,8 @@ class Job(Model):
 
     after_job = Enum(FEED_MOVE_TO_0, FEED_TO_END, FEED_WITHOUT_SHIFT, FEED_MOVE_TO, FEED_NOTHING).tag(config=True)
     final_position = ContainerList(Float(), default=[0, 0])
-    feed_to_end = Bool(False).tag(config=True)
-    feed_after = Float(0).tag(config=True)
+    feed_to_end = Bool(False).tag(config=True) # TODO: remove old version
+    feed_after = Float(0).tag(config=True) # TODO: remove old version
 
     stack_size = ContainerList(Int(), default=[0, 0])
 
@@ -221,7 +221,7 @@ class Job(Model):
     _blocked = Bool(False)  # block change events
     _desired_copies = Int(1)  # required for auto copies
 
-    content_direction = Instance(QPointF)
+    quadrant_direction = Instance(QPointF)
     page_direction = Instance(QPointF)
 
     def __str__(self):
@@ -323,7 +323,7 @@ class Job(Model):
             bbox = self.doc.document_size
 
         # Create the base copy
-        t = AreaBase.rect_to_corner(bbox, self.content_direction)
+        t = AreaBase.rect_to_corner(bbox, self.quadrant_direction)
 
         t.scale(
             self.scale[0] * (self.mirror[0] and -1 or 1),
@@ -388,9 +388,9 @@ class Job(Model):
              'copy_spacing', 'copy_weedline', 'copy_weedline_padding',
              'plot_weedline', 'plot_weedline_padding', 'after_job',
              'final_position', 'material', 'material.size', 'material.padding',
-             'auto_copies', 'auto_shift', 'content_direction', 'page_direction')
+             'auto_copies', 'auto_shift', 'quadrant_direction')
     def update_document(self, change=None):
-        """ Recreate an instance of of the plot using the current settings
+        """ Recreate an instance of the plot using the current settings
 
         """
         if self._blocked:
@@ -403,7 +403,7 @@ class Job(Model):
             elif name in ('layer', 'color'):
                 self._update_optimized_path(change)
 
-        model = self.create(self.page_direction) #TODO: need proper direction
+        model = self.create(self.quadrant_direction)
         if model:
             self.model = model
 
@@ -425,7 +425,7 @@ class Job(Model):
         # Create copies
         c = 0
 
-        points = self._copy_positions_iter(path, bbox, self.content_direction)
+        points = self._copy_positions_iter(path, bbox, expansion_direction)
 
         if self.auto_copies:
             self.stack_size = self._compute_stack_sizes(path, bbox)
@@ -453,7 +453,7 @@ class Job(Model):
         if self.plot_weedline:
             bbox, model = self._add_weedline(model, self.plot_weedline_padding, bbox)
 
-        page_area = self.material.get_content_rect(self.page_direction)
+        page_area = self.material.get_content_rect(self.quadrant_direction)
 
         # TODO: add UI option for aligning to any corner
         t_align = self.align_rect_to_rect(bbox, page_area,
@@ -464,14 +464,16 @@ class Job(Model):
 
         final_bounds = model.boundingRect()
 
+        furthest_bound = final_bounds.top() if self.quadrant_direction.y() < 0 else final_bounds.bottom()
+
         end_point = QPointF(0, 0)
         if self.after_job == Job.FEED_MOVE_TO_0:
             end_point = QPointF(0, 0)
         elif self.after_job == Job.FEED_TO_END:
-            end_point = QPointF(0, -self.final_position[1] * expansion_direction.y() + final_bounds.top())
+            end_point = QPointF(0, self.final_position[1] * expansion_direction.y() + furthest_bound)
         elif self.after_job == Job.FEED_WITHOUT_SHIFT:
             end_point = QPointF(self.final_position[0] * expansion_direction.x(),
-                                -self.final_position[1] * expansion_direction.y() + final_bounds.top())
+                                self.final_position[1] * expansion_direction.y() + furthest_bound)
         elif self.after_job == Job.FEED_MOVE_TO:
             end_point = QPointF(self.final_position[0] * expansion_direction.x(),
                                 -self.final_position[1] * expansion_direction.y())
@@ -496,9 +498,9 @@ class Job(Model):
 
     def align_rect_to_rect(self, from_rect: QRectF, to_rect: QRectF, align_x, align_y) -> QTransform:
         if align_x == Job.JOB_AXIS_ALIGN_ZERO:
-            align_x = 1 if self.content_direction.x() < 0 else -1
+            align_x = 1 if self.quadrant_direction.x() < 0 else -1
         if align_y == Job.JOB_AXIS_ALIGN_ZERO:
-            align_y = 1 if self.content_direction.y() < 0 else -1
+            align_y = 1 if self.quadrant_direction.y() < 0 else -1
 
         dx = Job.align_axis(from_rect.left(), from_rect.right(), to_rect.left(), to_rect.right(), align_x)
         dy = Job.align_axis(from_rect.top(), from_rect.bottom(), to_rect.top(), to_rect.bottom(), align_y)
@@ -568,7 +570,7 @@ class Job(Model):
         bbox = bbox.adjusted(-padding[Padding.LEFT], -padding[Padding.TOP], padding[Padding.RIGHT], padding[Padding.BOTTOM])
 
         path.addRect(bbox)
-        transform = AreaBase.rect_to_corner(bbox, self.content_direction)
+        transform = AreaBase.rect_to_corner(bbox, self.quadrant_direction)
         path.translate(transform.dx(), transform.dy())
         return transform.mapRect(bbox), path
 
@@ -576,9 +578,9 @@ class Job(Model):
     def state(self):
         pass
 
-    def set_direction(self, direction: QPointF):
-        self.content_direction = direction
-        self.page_direction = direction
+    def set_direction(self, direction: QPointF, page_corner_direction: QPointF):
+        self.quadrant_direction = direction
+        self.page_direction = page_corner_direction
 
     @property
     def move_path(self):

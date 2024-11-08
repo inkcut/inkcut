@@ -34,10 +34,15 @@ from inkcut.core.utils import to_unit, from_unit, load_icon
 
 enamldef ConfigEditView(Include):
     attr configurable: Model # Pair of config model and config declaration
-
+    attr plugin
     func load_config_view(config, declaration):
         View = declaration.config_view()
-        return [View(model=config)]
+        kwargs = {
+            'model': config
+        }
+        if plugin:
+            kwargs['plugin'] = plugin
+        return [View(**kwargs)]
     objects << load_config_view(configurable.config, configurable.declaration) \
         if configurable else [ConfigView(model=Model())]
 
@@ -81,8 +86,8 @@ enamldef DeviceEditView(Notebook): notebook:
                     text = QApplication.translate("device", "Width")
                 DoubleSpinBox:
                     enabled << cb.checked
-                    value << to_unit(device.area.size[0], units)
-                    value :: device.area.size[0] = from_unit(value, units)
+                    value << to_unit(device.config.area.size[0], units)
+                    value :: device.config.area.size[0] = from_unit(value, units)
                     suffix << " " + units
                     maximum = 99999.9
                     single_step = 0.1
@@ -90,8 +95,8 @@ enamldef DeviceEditView(Notebook): notebook:
                     text = QApplication.translate("device", "Length")
                 DoubleSpinBox:
                     enabled << cb.checked
-                    value << to_unit(device.area.size[1], units)
-                    value :: device.area.size[1] = from_unit(value, units)
+                    value << to_unit(device.config.area.size[1], units)
+                    value :: device.config.area.size[1] = from_unit(value, units)
                     suffix << " " + units
                     maximum = 99999.9
                     single_step = 0.1
@@ -103,6 +108,7 @@ enamldef DeviceEditView(Notebook): notebook:
         closable = False
         ConfigEditView:
             configurable << device
+            plugin << notebook.plugin
     Page:
         title = QApplication.translate("device", "Connection")
         closable = False

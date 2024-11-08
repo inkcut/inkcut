@@ -22,7 +22,7 @@ from enaml.widgets.api import (
 )
 from enamlx.widgets.api import DoubleSpinBox
 from inkcut.core.api import Model, DockItem
-from inkcut.core.utils import to_unit, load_icon
+from inkcut.core.utils import to_unit, from_unit, load_icon
 from inkcut.preview.plot_view import PlotView
 from .plugin import DeviceConfig
 
@@ -39,8 +39,36 @@ enamldef MatrixNumber(DoubleSpinBox):
     minimum = -10000000
     resist_width = 'weak'
 
+enamldef OffsetBox(Container): this:
+    padding = 0
+    constraints = [
+        hbox(x_label, v_x, y_label, v_y),
+        v_x.width == v_y.width,
+        align('v_center', x_label, v_x, y_label, v_y)
+    ]
+    alias v_x
+    alias v_y
+    attr suffix: str = ""
+    Label: x_label:
+        text = 'X:'
+    DoubleSpinBox: v_x:
+        #suffix << " "+plugin.units
+        suffix << this.suffix
+        minimum = -99999.9
+        maximum = 99999.9
+        single_step = 0.1
+    Label: y_label:
+        text = 'Y:'
+    DoubleSpinBox: v_y:
+        suffix << this.suffix
+        minimum = -99999.9
+        maximum = 99999.9
+        single_step = 0.1
+
 enamldef DeviceConfigView(Container):
     attr model: DeviceConfig
+    attr plugin
+    attr units << plugin.workbench.get_plugin("inkcut.job").units
     Notebook:
         tab_style = 'document'
         tab_position = 'left'
@@ -79,30 +107,6 @@ enamldef DeviceConfigView(Container):
             title = QApplication.translate("device", "Output")
             Form:
                 Label:
-                    text = QApplication.translate("device", "Orientation")
-                Container:
-                    constraints = [
-                        hbox(cbsxy, cbmx, cbmy, spacer),
-                        align('v_center', cbsxy, cbmx, cbmy)
-                    ]
-                    CheckBox: cbsxy:
-                        text = QApplication.translate("device", "Swap X/Y")
-                        checked := model.swap_xy
-                    CheckBox: cbmx:
-                        text = QApplication.translate("device", "Mirror X")
-                        checked := model.mirror_x
-                    CheckBox: cbmy:
-                        text = QApplication.translate("device", "Mirror Y")
-                        checked := model.mirror_y
-                #Label:
-                    #text = QApplication.translate("device", "Rotation")
-                #ObjectCombo:
-                    #items = list(model.get_member('rotation').items)
-                    #selected := model.rotation
-                    #tool_tip = textwrap.dedent("""
-                    #Final output rotation.
-                    #""").strip()
-                Label:
                     text = "x"
                 DoubleSpinBox:
                     value := model.scale[0]
@@ -139,33 +143,19 @@ enamldef DeviceConfigView(Container):
                             if item:
                                 model.axis_mapping = item[0]
                 Label:
-                    text = QApplication.translate("device", "Alignment corner")
-                ObjectCombo:
-                    items = list(model.get_member('area_alignment_corner').items)
-                    selected := model.area_alignment_corner
-                    attr labels = {
-                        DeviceConfig.ALIGNMENT_CORNER_ZERO: QT_TRANSLATE_NOOP("device", "Origin"),
-                        DeviceConfig.ALIGNMENT_CORNER_TOP_LEFT: QT_TRANSLATE_NOOP("device", "Top left"),
-                        DeviceConfig.ALIGNMENT_CORNER_TOP_RIGHT: QT_TRANSLATE_NOOP("device", "Top right"),
-                        DeviceConfig.ALIGNMENT_CORNER_BOTTOM_LEFT: QT_TRANSLATE_NOOP("device", "Bottom left"),
-                        DeviceConfig.ALIGNMENT_CORNER_BOTTOM_RIGHT: QT_TRANSLATE_NOOP("device", "Bottom right"),
-                    }
-                    to_string = lambda v: QApplication.translate('device', labels[v])
-                Conditional:
-                    condition << model.axis_mapping != DeviceConfig.AXIS_MAP_CUSTOM
-                    Label:
-                        text = QApplication.translate("device", "Extra scale")
-                        tool_tip = QApplication.translate("device", "Should only be used if device protocol lacks ability to negotiate scale, or implements the protocol incorrectly")
-                    DoubleSpinBox:
-                        decimals = 7
-                        single_step = 0.1
-                        maximum = 10000000
-                        value := model.extra_scale
+                    text = QApplication.translate("device", "Extra scale")
+                    tool_tip = QApplication.translate("device", "Should only be used if device protocol lacks ability to negotiate scale, or implements the protocol incorrectly")
+                DoubleSpinBox:
+                    decimals = 7
+                    single_step = 0.1
+                    maximum = 10000000
+                    value := model.extra_scale
                 Conditional:
                     condition << model.axis_mapping == DeviceConfig.AXIS_MAP_CUSTOM
                     Label:
                         text = QApplication.translate("device", "Custom mapping")
                     Container:
+                        padding = 0
                         constraints = [
                             grid(
                                 [None, lb_xt,  lb_yt, lb_offset],
@@ -197,7 +187,56 @@ enamldef DeviceConfigView(Container):
                             value := model.custom_mapping[4]
                         MatrixNumber: v_yc:
                             value := model.custom_mapping[5]
-
+                Label:
+                    pass
+                CheckBox: advanced_output_opt:
+                    text = QApplication.translate("device", "Advanced options")
+                Conditional:
+                    condition << advanced_output_opt.checked
+                    Label:
+                        text = QApplication.translate("device", "Work area quadrant")
+                    ObjectCombo:
+                        items = list(model.get_member('area_alignment_corner').items)
+                        selected := model.area_alignment_corner
+                        attr labels = {
+                            DeviceConfig.ALIGNMENT_CORNER_ZERO: QT_TRANSLATE_NOOP("device", "Positive"),
+                            DeviceConfig.ALIGNMENT_CORNER_TOP_LEFT: QT_TRANSLATE_NOOP("device", "Bottom right"),
+                            DeviceConfig.ALIGNMENT_CORNER_TOP_RIGHT: QT_TRANSLATE_NOOP("device", "Bottom left"),
+                            DeviceConfig.ALIGNMENT_CORNER_BOTTOM_LEFT: QT_TRANSLATE_NOOP("device", "Top right"),
+                            DeviceConfig.ALIGNMENT_CORNER_BOTTOM_RIGHT: QT_TRANSLATE_NOOP("device", "Top left"),
+                        }
+                        to_string = lambda v: QApplication.translate('device', labels[v])
+                    Label:
+                        text = QApplication.translate("device", "Work area offset")
+                    OffsetBox:
+                        enabled = True
+                        suffix << " " + units
+                        v_x.value << to_unit(model.work_area_offset.x, units)
+                        v_x.value ::  model.work_area_offset.x = from_unit(change['value'], units)
+                        v_y.value << to_unit(model.work_area_offset.y, units)
+                        v_y.value ::  model.work_area_offset.y = from_unit(change['value'], units)
+                    Label:
+                        text = QApplication.translate("device", "Paper alignment corner")
+                    ObjectCombo:
+                        items = list(model.get_member('paper_corner').items)
+                        selected := model.paper_corner
+                        attr labels = {
+                            DeviceConfig.ALIGNMENT_CORNER_ZERO: QT_TRANSLATE_NOOP("device", "Origin corner"),
+                            DeviceConfig.ALIGNMENT_CORNER_TOP_LEFT: QT_TRANSLATE_NOOP("device", "Top left"),
+                            DeviceConfig.ALIGNMENT_CORNER_TOP_RIGHT: QT_TRANSLATE_NOOP("device", "Top right"),
+                            DeviceConfig.ALIGNMENT_CORNER_BOTTOM_LEFT: QT_TRANSLATE_NOOP("device", "Bottom left"),
+                            DeviceConfig.ALIGNMENT_CORNER_BOTTOM_RIGHT: QT_TRANSLATE_NOOP("device", "Bottom right"),
+                        }
+                        to_string = lambda v: QApplication.translate('device', labels[v])
+                    Label:
+                        text = QApplication.translate("device", "Paper offset")
+                    OffsetBox:
+                        enabled = True
+                        suffix << " " + units
+                        v_x.value << to_unit(model.paper_offset.x, units)
+                        v_x.value ::  model.paper_offset.x = from_unit(change['value'], units)
+                        v_y.value << to_unit(model.paper_offset.y, units)
+                        v_y.value ::  model.paper_offset.y = from_unit(change['value'], units)
 
         Page:
             closable = False

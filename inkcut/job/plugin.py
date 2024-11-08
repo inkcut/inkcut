@@ -20,6 +20,7 @@ from enaml.qt.QtCore import QRectF
 from .models import Job, JobError, Material
 from ..core import utils
 from ..core.models import AreaBase
+from ..device.plugin import DeviceConfig
 from ..preview.plugin import PreviewPlugin
 
 with enaml.imports():
@@ -184,7 +185,7 @@ class JobPlugin(Plugin):
 
     @observe("job", "job.model", "job.material", "material.size", "material.padding")
     def _refresh_preview(self, change):
-        """Redraw the preview on the screen"""
+        """Redraw the main preview in central area of program"""
         log.info(change)
         view_items = []
 
@@ -197,20 +198,19 @@ class JobPlugin(Plugin):
         #: Draw the device
         plugin = self.workbench.get_plugin("inkcut.device")
         device = plugin.device
-        device_config = device.config
-        job.set_direction(device_config.expansion_direction)
+        device_config:DeviceConfig = device.config
+        job.set_direction(device_config.expansion_direction,
+                          device_config.page_placement_direction)
 
         #: Apply the final output transforms from the device
         page_transform = QTransform()
-        if job.material and device and device.area:
-            page_rect = job.material.get_rect(job.page_direction)
-            page_transform = AreaBase.align_rect(page_rect, device.area_rect, job.page_direction)
+        if job.material and device and device.config.area:
+            page_transform = device_config.get_paper_to_work_transform(job.material)
+
         def transform(p):
             return page_transform.map(p)
 
-        device_area = QRectF(0, 0, 1, 1)
-
-        if device and device.area:
+        if device and device.config.area:
             view_items.append(
                 dict(
                     path=utils.rect_to_path(device.area_rect),
@@ -223,8 +223,8 @@ class JobPlugin(Plugin):
         if job.model:
             view_items.extend(
                 [
-                    dict(path=job.move_path, pen=plot.pen_up),
-                    dict(path=job.cut_path, pen=plot.pen_down),
+                    dict(path=transform(job.move_path), pen=plot.pen_up),
+                    dict(path=transform(job.cut_path), pen=plot.pen_down),
                 ]
             )
 
@@ -240,8 +240,9 @@ class JobPlugin(Plugin):
 
         if job.material:
             # Also observe any change to job.media and job.device
-            page_rect = job.material.get_rect(job.page_direction)
-            padded_page = job.material.get_content_rect(job.page_direction)
+
+            page_rect = job.material.get_rect(job.quadrant_direction)
+            padded_page = job.material.get_content_rect(job.quadrant_direction)
             view_items.extend(
                 [
                     dict(

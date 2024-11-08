@@ -126,7 +126,7 @@ class AreaBase(Model):
         return self.size[1]
 
     @staticmethod
-    def align_rect(from_rect: QRectF, to_rect: QRectF, corner: QPointF) -> QTransform:
+    def align_rect(from_rect: QRectF, to_rect: QRectF, corner: QPointF, offset: QPointF = None) -> QTransform:
         if corner.x() > 0:
             if corner.y() > 0:
                 p1 = from_rect.topLeft()
@@ -141,7 +141,9 @@ class AreaBase(Model):
             else:
                 p1 = from_rect.bottomRight()
                 p2 = to_rect.bottomRight()
-        d_vec = p1 - p2
+        d_vec = p2 - p1
+        if offset:
+            d_vec += offset
         return QTransform.fromTranslate(d_vec.x(), d_vec.y())
 
     @staticmethod
@@ -159,18 +161,29 @@ class AreaBase(Model):
         p1 = -p1
         return QTransform.fromTranslate(p1.x(), p1.y())
 
-    def get_rect(self, alignment: QPointF) -> QRectF:
+    def get_rect(self, alignment: QPointF, offset: QPointF = None) -> QRectF:
         r1 = QRectF(0, 0, self.size[0], self.size[1])
-        return AreaBase.rect_to_corner(r1, alignment).mapRect(r1)
+        t = AreaBase.rect_to_corner(r1, alignment)
+        if offset:
+            t.translate(offset.x(), offset.y())
+        return t.mapRect(r1)
 
-    def get_content_rect(self, page_alignment: QPointF = None) -> QRectF:
+    def get_content_rect(self, page_alignment: QPointF = None, offset: QPointF = None) -> QRectF:
         if not page_alignment:
             page_alignment = QPointF(1, 1)
-        return self.get_rect(page_alignment).adjusted(self.padding_left, self.padding_top,
+        return self.get_rect(page_alignment, offset).adjusted(self.padding_left, self.padding_top,
                                                       -self.padding_right, -self.padding_bottom)
     @property
     def available_area(self):
         return self.get_content_rect()
+
+
+class PointF(Model):
+    x = Float().tag(config=True)
+    y = Float().tag(config=True)
+
+    def to_qt(self) -> QPointF:
+        return QPointF(self.x, self.y)
 
 
 class Plugin(EnamlPlugin):
