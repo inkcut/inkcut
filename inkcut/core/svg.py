@@ -724,6 +724,7 @@ class QtSvgDoc(QtSvgG):
                 self._nodes = valid_nodes
 
             self.viewBox = QRectF(0, 0, -1, -1)
+            self.document_size = None
         super(QtSvgDoc, self).__init__(e, self._nodes)
 
     def parseTransform(self, e):
@@ -747,7 +748,9 @@ class QtSvgDoc(QtSvgG):
                 outerWidth, outerHeight = map(self.parseUnit,
                                               (e.attrib.get('width', None),
                                                e.attrib.get('height', None)))
+
                 if outerWidth is not None and outerHeight is not None:
+                    self.document_size = QRectF(0, 0, outerWidth, outerHeight)
                     t.scale(outerWidth / innerWidth, outerHeight / innerHeight)
         else:
             x, y = map(self.parseUnit, (e.attrib.get('x', 0),

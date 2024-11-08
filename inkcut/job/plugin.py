@@ -14,8 +14,12 @@ import sys
 import enaml
 from atom.api import Instance, Enum, List, Str, Int, Float, observe
 from inkcut.core.api import Plugin, unit_conversions, log
+from enaml.qt.QtGui import QPainterPath, QTransform
+from enaml.qt.QtCore import QRectF
 
 from .models import Job, JobError, Material
+from ..core import utils
+from ..core.models import AreaBase
 from ..preview.plugin import PreviewPlugin
 
 with enaml.imports():
@@ -193,15 +197,23 @@ class JobPlugin(Plugin):
         #: Draw the device
         plugin = self.workbench.get_plugin("inkcut.device")
         device = plugin.device
+        device_config = device.config
+        job.set_direction(device_config.expansion_direction)
 
         #: Apply the final output transforms from the device
-        transform = lambda p: p #TODO: cleanup
+        page_transform = QTransform()
+        if job.material and device and device.area:
+            page_rect = job.material.get_rect(job.page_direction)
+            page_transform = AreaBase.align_rect(page_rect, device.area_rect, job.page_direction)
+        def transform(p):
+            return page_transform.map(p)
+
+        device_area = QRectF(0, 0, 1, 1)
 
         if device and device.area:
-            area = device.area
             view_items.append(
                 dict(
-                    path=transform(t.map(device.area.path)),
+                    path=utils.rect_to_path(device.area_rect),
                     pen=plot.pen_device,
                     skip_autorange=True,
                 )  # (False, [area.size[0], 0]))
@@ -211,8 +223,8 @@ class JobPlugin(Plugin):
         if job.model:
             view_items.extend(
                 [
-                    dict(path=transform(job.move_path), pen=plot.pen_up),
-                    dict(path=transform(job.cut_path), pen=plot.pen_down),
+                    dict(path=job.move_path, pen=plot.pen_up),
+                    dict(path=job.cut_path, pen=plot.pen_down),
                 ]
             )
 
@@ -225,17 +237,20 @@ class JobPlugin(Plugin):
             #        modelt = f.apply_to_model(modelt, job=device)
             #    view_items.append(dict(
             #        path=modelt, pen=plot.pen_offset))
+
         if job.material:
             # Also observe any change to job.media and job.device
+            page_rect = job.material.get_rect(job.page_direction)
+            padded_page = job.material.get_content_rect(job.page_direction)
             view_items.extend(
                 [
                     dict(
-                        path=transform(t.map(job.material.path)),
+                        path=transform(utils.rect_to_path(page_rect)),
                         pen=plot.pen_media,
                         skip_autorange=([0, job.size[0]], [0, job.size[1]]),
                     ),
                     dict(
-                        path=transform(t.map(job.material.padding_path)),
+                        path=transform(utils.rect_to_path(padded_page)),
                         pen=plot.pen_media_padding,
                         skip_autorange=True,
                     ),

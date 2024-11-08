@@ -139,15 +139,16 @@ enamldef DeviceConfigView(Container):
                             if item:
                                 model.axis_mapping = item[0]
                 Label:
-                    text = QApplication.translate("device", "Paper roll position")
+                    text = QApplication.translate("device", "Alignment corner")
                 ObjectCombo:
-                    items = list(model.get_member('paper_roll').items)
-                    selected := model.paper_roll
+                    items = list(model.get_member('area_alignment_corner').items)
+                    selected := model.area_alignment_corner
                     attr labels = {
-                        DeviceConfig.PAPER_ROLL_AUTO: QT_TRANSLATE_NOOP("device", "Auto"),
-                        DeviceConfig.PAPER_ROLL_NONE: QT_TRANSLATE_NOOP("device", "None"),
-                        DeviceConfig.PAPER_ROLL_UP: QT_TRANSLATE_NOOP("device", "Up (behind)"),
-                        DeviceConfig.PAPER_ROLL_DOWN: QT_TRANSLATE_NOOP("device", "Down (front)"),
+                        DeviceConfig.ALIGNMENT_CORNER_ZERO: QT_TRANSLATE_NOOP("device", "Origin"),
+                        DeviceConfig.ALIGNMENT_CORNER_TOP_LEFT: QT_TRANSLATE_NOOP("device", "Top left"),
+                        DeviceConfig.ALIGNMENT_CORNER_TOP_RIGHT: QT_TRANSLATE_NOOP("device", "Top right"),
+                        DeviceConfig.ALIGNMENT_CORNER_BOTTOM_LEFT: QT_TRANSLATE_NOOP("device", "Bottom left"),
+                        DeviceConfig.ALIGNMENT_CORNER_BOTTOM_RIGHT: QT_TRANSLATE_NOOP("device", "Bottom right"),
                     }
                     to_string = lambda v: QApplication.translate('device', labels[v])
                 Conditional:

@@ -15,7 +15,6 @@ from typing import Optional
 import enaml
 import traceback
 
-from PyQt5.QtCore import QPointF
 from atom.api import (
     Typed, List, Instance, ForwardInstance, ContainerList, Bool, Str,
     Int, Float, Enum, Bytes, observe
@@ -23,8 +22,8 @@ from atom.api import (
 from contextlib import contextmanager
 from datetime import datetime
 from enaml.qt import QtCore, QtGui
-from enaml.qt.QtCore import QT_TRANSLATE_NOOP
-from enaml.qt.QtGui import  QTransform
+from enaml.qt.QtCore import QT_TRANSLATE_NOOP, QPointF, QRectF
+from enaml.qt.QtGui import QTransform, QPainterPath
 from enaml.application import timed_call
 from inkcut.core.api import Model, Plugin, AreaBase
 from inkcut.core.utils import parse_unit, from_unit, to_unit, async_sleep, log
@@ -297,38 +296,48 @@ class DeviceConfig(Model):
     mirror_y = Bool().tag(config=True)
     mirror_x = Bool().tag(config=True)
 
-    AXIS_MAP_XR_YD = 0
-    AXIS_MAP_XD_YR = 1
-    AXIS_MAP_XL_YD = 2
-    AXIS_MAP_XD_YL = 3
-    AXIS_MAP_XR_YU = 4
-    AXIS_MAP_XU_YR = 5
-    AXIS_MAP_XL_YU = 6
-    AXIS_MAP_XU_YL = 7
+    AXIS_FLAG_H_LEFT = 1
+    AXIS_FLAG_V_DOWN = 2
+    AXIS_FLAG_SWAPXY = 4
+
+    AXIS_MAP_XR_YU = (0 << 2) | (0 << 1) | (0 << 0)
+    AXIS_MAP_XL_YU = (0 << 2) | (0 << 1) | (1 << 0)
+    AXIS_MAP_XR_YD = (0 << 2) | (1 << 1) | (0 << 0)
+    AXIS_MAP_XL_YD = (0 << 2) | (1 << 1) | (1 << 0)
+    AXIS_MAP_XU_YR = (1 << 2) | (0 << 1) | (0 << 0)
+    AXIS_MAP_XU_YL = (1 << 2) | (0 << 1) | (1 << 0)
+    AXIS_MAP_XD_YR = (1 << 2) | (1 << 1) | (0 << 0)
+    AXIS_MAP_XD_YL = (1 << 2) | (1 << 1) | (1 << 0)
     AXIS_MAP_CUSTOM = 8
 
     AXIS_MAP_MODES = {
-        AXIS_MAP_XR_YD: QT_TRANSLATE_NOOP("device_axis", "X: right, Y: down"),
-        AXIS_MAP_XD_YR: QT_TRANSLATE_NOOP("device_axis", "X: down, Y: right"),
-        AXIS_MAP_XL_YD: QT_TRANSLATE_NOOP("device_axis", "X: left, Y: down"),
-        AXIS_MAP_XD_YL: QT_TRANSLATE_NOOP("device_axis", "X: down, Y: left"),
-
         AXIS_MAP_XR_YU: QT_TRANSLATE_NOOP("device_axis", "X: right, Y: up"),
-        AXIS_MAP_XU_YR: QT_TRANSLATE_NOOP("device_axis", "X: up, Y: right"),
         AXIS_MAP_XL_YU: QT_TRANSLATE_NOOP("device_axis", "X: left, Y: up"),
+        AXIS_MAP_XR_YD: QT_TRANSLATE_NOOP("device_axis", "X: right, Y: down"),
+        AXIS_MAP_XL_YD: QT_TRANSLATE_NOOP("device_axis", "X: left, Y: down"),
+
+        AXIS_MAP_XU_YR: QT_TRANSLATE_NOOP("device_axis", "X: up, Y: right"),
+        AXIS_MAP_XD_YR: QT_TRANSLATE_NOOP("device_axis", "X: down, Y: right"),
         AXIS_MAP_XU_YL: QT_TRANSLATE_NOOP("device_axis", "X: up, Y: left"),
+        AXIS_MAP_XD_YL: QT_TRANSLATE_NOOP("device_axis", "X: down, Y: left"),
 
         AXIS_MAP_CUSTOM: QT_TRANSLATE_NOOP("device_axis", "Custom"),
     }
 
     axis_mapping = Enum(*AXIS_MAP_MODES.keys()).tag(config=True)
 
-    PAPER_ROLL_AUTO = 0
-    PAPER_ROLL_NONE = 1
-    PAPER_ROLL_UP = 2
-    PAPER_ROLL_DOWN = 3
+    ALIGNMENT_CORNER_ZERO = 0
+    ALIGNMENT_CORNER_TOP_LEFT = 1
+    ALIGNMENT_CORNER_TOP_RIGHT = 2
+    ALIGNMENT_CORNER_BOTTOM_LEFT = 3
+    ALIGNMENT_CORNER_BOTTOM_RIGHT = 4
 
-    paper_roll = Enum(PAPER_ROLL_AUTO, PAPER_ROLL_NONE, PAPER_ROLL_UP, PAPER_ROLL_DOWN).tag(config=True)
+    area_alignment_corner = Enum(ALIGNMENT_CORNER_ZERO, ALIGNMENT_CORNER_TOP_LEFT, ALIGNMENT_CORNER_TOP_RIGHT,
+                                 ALIGNMENT_CORNER_BOTTOM_LEFT, ALIGNMENT_CORNER_BOTTOM_RIGHT).tag(config=True)
+    work_area_offset = Instance(QPointF).tag(config=True)
+    paper_corner = Enum(ALIGNMENT_CORNER_ZERO, ALIGNMENT_CORNER_TOP_LEFT, ALIGNMENT_CORNER_TOP_RIGHT,
+                            ALIGNMENT_CORNER_BOTTOM_LEFT, ALIGNMENT_CORNER_BOTTOM_RIGHT).tag(config=True)
+    paper_offset = Instance(QPointF).tag(config=True)
 
     extra_scale : Float = Float(1.0).tag(config=True)
     custom_mapping = ContainerList(Float(strict=False), default=[1, 0, 0, 0, 1, 0]).tag(config=True)
@@ -390,38 +399,56 @@ class DeviceConfig(Model):
             return QTransform(self.custom_mapping[0], self.custom_mapping[3],
                               self.custom_mapping[1], self.custom_mapping[4],
                               self.custom_mapping[2], self.custom_mapping[5])
-        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XR_YD:
-            return QTransform(self.extra_scale, 0,
-                              0, -self.extra_scale,
-                                  0, 0)
-        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XD_YR:
-            return QTransform(0, self.extra_scale,
-                              -self.extra_scale, 0,
-                              0, 0)
-        if self.axis_mapping == DeviceConfig.AXIS_MAP_XL_YD:
-            return QTransform(-self.extra_scale, 0,
-                              0, -self.extra_scale,
-                              area.width(), 0)
-        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XD_YL:
-            return QTransform(0, -self.extra_scale,
-                              -self.extra_scale, 0,
-                              0, area.width())
-        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XR_YU:
-            return QTransform(self.extra_scale, 0,
-                              0, self.extra_scale,
-                              0, 0)
-        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XU_YR:
-            return QTransform(0, self.extra_scale,
-                              self.extra_scale, 0,
-                              0, 0)
-        if self.axis_mapping == DeviceConfig.AXIS_MAP_XL_YU:
-            return QTransform(-self.extra_scale, 0,
-                              0, self.extra_scale,
-                              area.width(), 0)
-        elif self.axis_mapping == DeviceConfig.AXIS_MAP_XU_YL:
-            return QTransform(0, -self.extra_scale,
-                              self.extra_scale, 0,
-                              0, area.width())
+        else:
+            x1, x2, x3 = (self.extra_scale, 0, 0)
+            y1, y2, y3 = (0, self.extra_scale, 0)
+
+            corner_alignment = self.expansion_direction
+
+            if self.axis_mapping & DeviceConfig.AXIS_FLAG_H_LEFT:
+                x1 = -x1
+                #x3 = area.width()
+
+            if self.axis_mapping & DeviceConfig.AXIS_FLAG_V_DOWN:
+                y1 = y1
+            else:
+                y1 = -y1
+            #if corner_alignment.y() > 0:
+            #    if reverse_v:
+            #        y1 = -y1
+            #    else:
+            #        y1 = y1
+            #else:
+            #    if reverse_v:
+            #        y1 = -y1
+            #    else:
+            #        y1 = y1
+
+            if self.axis_mapping & DeviceConfig.AXIS_FLAG_SWAPXY:
+                x1, x2, x3, y1, y2, y3 = (y1, y2, y3, x1, x2, x3)
+            return QTransform(x1, y1,
+                              x2, y2,
+                              x3, y3)
+
+    @property
+    def expansion_direction(self) -> QPointF:
+        if self.area_alignment_corner == DeviceConfig.ALIGNMENT_CORNER_ZERO:
+            if self.axis_mapping == DeviceConfig.AXIS_MAP_CUSTOM:
+                return QPointF(1, 1)  # TODO: do better guess based on custom mapping matrix
+            dir = QPointF(1, 1)
+            if not self.axis_mapping & DeviceConfig.AXIS_FLAG_V_DOWN:
+                dir.setY(-1)
+            if self.axis_mapping & DeviceConfig.AXIS_FLAG_H_LEFT:
+                dir.setX(-1)
+            return dir
+        if self.area_alignment_corner == DeviceConfig.ALIGNMENT_CORNER_BOTTOM_LEFT:
+            return QPointF(1, -1)
+        elif self.area_alignment_corner == DeviceConfig.ALIGNMENT_CORNER_BOTTOM_RIGHT:
+            return QPointF(-1, -1)
+        elif self.area_alignment_corner == DeviceConfig.ALIGNMENT_CORNER_TOP_LEFT:
+            return QPointF(1, 1)
+        else:
+            return QPointF(-1, -1)
 
 class Device(Model):
     """ The standard device. This is a standard model used throughout the
@@ -531,11 +558,18 @@ class Device(Model):
     def _refresh_area(self, change):
         self.area = self._default_area()
 
+    @property
+    def area_rect(self):
+        return self.area.get_rect(self.config.expansion_direction)
 
-    @observe('area', 'config', 'config.axis_mappin', 'config.paper_roll')
-    def refresh_transform(self):
+    @observe('area', 'config', 'config.axis_mapping', 'config.area_alignment_corner')
+    def refresh_transform(self, change):
         self.transform = self.config.make_transform(self.area)
-        self.inverse_transform = self.transform.inverted()
+        inverted, invert_success = self.transform.inverted()
+        if invert_success:
+            self.inverse_transform = inverted
+        else:
+            self.inverse_transform = QTransform()
 
     def get_transform(self):
         if self.transform is None:
@@ -668,19 +702,15 @@ class Device(Model):
         units = config.speed_units.split("/")[0]
         job.info.speed = from_unit(config.speed, units)
 
-        scale = config.scale[:]
-        if config.mirror_x:
-            scale[0] *= -1 if config.mirror_x else 1
-        if config.mirror_y:
-            scale[1] *= -1 if config.mirror_y else 1
+        direction = self.config.expansion_direction
 
         # Get the internal QPainterPath "model" transformed to how this
         # device outputs
-        model = job.create(swap_xy=config.swap_xy, scale=scale)
+        model = job.create(direction)
 
         #: Move the job to the new origin
         x, y, z = self.origin
-        model.translate(x, -y)
+        model.translate(x, -y) #TODO: recheck
 
         #: TODO: Apply filters here
 
@@ -1355,32 +1385,39 @@ class DevicePlugin(Plugin):
         """ Clear the preview """
         self._reset_preview(None)
 
-    @observe('device', 'device.job')
+    @observe('device', 'device.job', 'device.alignment_corner', 'device.area')
     def _reset_preview(self, change):
         """ Redraw the preview on the screen
 
         """
         view_items = []
 
+        device = self.device
+        job = device.job
+
+        if job:
+            job.set_direction(device.expansion_direction)
+
         #: Transform used by the view
         preview_plugin = self.workbench.get_plugin('inkcut.preview')
         plot = preview_plugin.live_preview
         t = preview_plugin.transform
+        preview_plugin.set_live_preview(*view_items)
+
+
+        return # TODO: restore code
 
         #: Draw the device
-        device = self.device
-        job = device.job
+
 
         r = QtGui.QTransform()
-        if device.config.swap_xy:
-            # Rotate area to match swapped axis
-            r.rotate(90)
-            r.scale(-1, 1)
 
         if device and device.area:
-            area = device.area
+            path = QPainterPath()
+            area = device.area_rect
+            path.addRect(area)
             view_items.append(
-                dict(path=device.transform(r.map(t.map(device.area.path))),
+                dict(path=r.map(t.map(path)),
                      pen=plot.pen_device,
                      skip_autorange=True)
             )
@@ -1388,10 +1425,10 @@ class DevicePlugin(Plugin):
         if job and job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([
-                dict(path=device.transform(r.map(t.map(job.material.path))),
+                dict(path=r.map(t.map(job.material.path)),
                      pen=plot.pen_media,
                      skip_autorange=True),
-                dict(path=device.transform(r.map(t.map(job.material.padding_path))),
+                dict(path=r.map(t.map(job.material.padding_path)),
                      pen=plot.pen_media_padding, skip_autorange=True)
             ])
 

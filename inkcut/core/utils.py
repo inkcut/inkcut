@@ -247,6 +247,12 @@ def trailing_angle(path):
         return p.angleAtPercent(1)
 
 
+def rect_to_path(rect):
+    path = QPainterPath()
+    path.addRect(rect)
+    return path
+
+
 def find_subclasses(cls):
     """Finds all known (imported) subclasses of the given class"""
     cmds = []

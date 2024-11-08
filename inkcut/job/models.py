@@ -156,9 +156,9 @@ class Job(Model):
     size = ContainerList(Float(), default=[1, 1])
     scale = ContainerList(Float(), default=[1, 1]).tag(config=True)
     auto_scale = Bool(False).tag(
-        config=True, help="automatically scale if it's too big for the area")
+        config=True, help="automatically scale if it's too big for the area") # Currently not exposed to user
     lock_scale = Bool(True).tag(
-        config=True, help="automatically scale if it's too big for the area")
+        config=True, help="lock aspect ratio")
 
     mirror = ContainerList(Bool(), default=[False, False]).tag(config=True)
     align_center = ContainerList(Bool(),
@@ -166,7 +166,6 @@ class Job(Model):
 
     # Shifting of original file
     auto_shift = Bool(True).tag(config=True, help="shift to start at origin")
-    copy_bbox = Instance(QRectF)
 
     rotation = Float(0).tag(config=True)
     auto_rotate = Bool(False).tag(
@@ -186,6 +185,7 @@ class Job(Model):
         Float(), default=[10, 10, 10, 10]).tag(config=True)
 
     order = Enum(*sorted(ordering.REGISTRY.keys())).tag(config=True)
+
 
     def _default_order(self):
         return 'Normal'
@@ -220,6 +220,9 @@ class Job(Model):
 
     _blocked = Bool(False)  # block change events
     _desired_copies = Int(1)  # required for auto copies
+
+    content_direction = Instance(QPointF)
+    page_direction = Instance(QPointF)
 
     def __str__(self):
         source = self.document
@@ -288,6 +291,12 @@ class Job(Model):
 
         return doc
 
+    def _default_content_direction(self):
+        return QPointF(1, 1)
+
+    def _default_page_direction(self):
+        return QPointF(1, 1)
+
     @observe('path', 'order', 'filters')
     def _update_optimized_path(self, change):
         """ Whenever the loaded file (and parsed SVG path) changes update
@@ -296,7 +305,7 @@ class Job(Model):
         """
         self.optimized_path = self._default_optimized_path()
 
-    def _create_copy(self):
+    def _create_copy(self) -> (QRectF, QPainterPath):
         """ Creates a copy of the original graphic applying the given
         transforms
 
@@ -307,34 +316,42 @@ class Job(Model):
         if optimized_path is None:
             log.debug("Path is %s" % self.path)
             raise ValueError("Path is empty")
-        bbox = optimized_path.boundingRect()
+
+        if self.auto_shift or self.doc.document_size is None:
+            bbox = optimized_path.boundingRect()
+        else:
+            bbox = self.doc.document_size
 
         # Create the base copy
-        t = QTransform()
+        t = AreaBase.rect_to_corner(bbox, self.content_direction)
 
         t.scale(
             self.scale[0] * (self.mirror[0] and -1 or 1),
             self.scale[1] * (self.mirror[1] and -1 or 1),
             )
 
-        self.copy_bbox = t.mapRect(bbox)
+        bbox_c = t.mapRect(bbox)
 
         # Rotate about center
         if self.rotation != 0:
-            c = bbox.center()
+            c = bbox_c.center()
             t.translate(-c.x(), -c.y())
             t.rotate(self.rotation)
             t.translate(c.x(), c.y())
 
         # Apply transform
         path = t.map(optimized_path)
+        if self.auto_shift:
+            bbox = path.boundingRect()
+        else:
+            bbox = t.mapRect(bbox)
 
         # Add weedline to copy
         if self.copy_weedline:
-            self._add_weedline(path, self.copy_weedline_padding)
+            bbox, path = self._add_weedline(path, self.copy_weedline_padding, bbox)
 
         # If it's too big we have to scale it
-        w, h = path.boundingRect().width(), path.boundingRect().height()
+        w, h = bbox.width(), bbox.height()
         available_area = self.material.available_area
 
         #: This screws stuff up!
@@ -348,16 +365,12 @@ class Job(Model):
                 if h > available_area.height():
                     sy = available_area.height() / h
                 s = min(sx, sy)  # Fit to the smaller of the two
-                path = QTransform.fromScale(s, s).map(optimized_path)
+                t = QTransform.fromScale(s, s)
+                path = t.map(optimized_path)
+                bbox = t.mapRect(bbox)
 
-        # Save original bbox
-        bbox = path.boundingRect()
 
-        # Move to bottom left
-        br = bbox.bottomRight()
-        path = QTransform.fromTranslate(-br.x(), -br.y()).map(path)
-
-        return path
+        return bbox, path
 
     @contextmanager
     def events_suppressed(self):
@@ -375,7 +388,7 @@ class Job(Model):
              'copy_spacing', 'copy_weedline', 'copy_weedline_padding',
              'plot_weedline', 'plot_weedline_padding', 'after_job',
              'final_position', 'material', 'material.size', 'material.padding',
-             'auto_copies', 'auto_shift')
+             'auto_copies', 'auto_shift', 'content_direction', 'page_direction')
     def update_document(self, change=None):
         """ Recreate an instance of of the plot using the current settings
 
@@ -390,11 +403,11 @@ class Job(Model):
             elif name in ('layer', 'color'):
                 self._update_optimized_path(change)
 
-        model = self.create()
+        model = self.create(self.page_direction) #TODO: need proper direction
         if model:
             self.model = model
 
-    def create(self, swap_xy=False, scale=None):
+    def create(self, expansion_direction: QPointF):
         """ Create a path model that is rotated and scaled
 
         """
@@ -403,18 +416,19 @@ class Job(Model):
         if not self.path:
             return
 
-        path = self._create_copy()
+        bbox, path = self._create_copy()
 
         # Update size
-        bbox = path.boundingRect()
+
         self.size = [bbox.width(), bbox.height()]
 
         # Create copies
         c = 0
-        points = self._copy_positions_iter(path)
+
+        points = self._copy_positions_iter(path, bbox, self.content_direction)
 
         if self.auto_copies:
-            self.stack_size = self._compute_stack_sizes(path)
+            self.stack_size = self._compute_stack_sizes(path, bbox)
             if self.stack_size[0]:
                 copies_left = self.copies % self.stack_size[0]
                 if copies_left:  # not a full stack
@@ -422,70 +436,73 @@ class Job(Model):
                         self.copies = self._desired_copies
                         self.add_stack()
 
+        combined_box = None
         while c < self.copies:
             x, y = next(points)
-            model.addPath(QTransform.fromTranslate(x, -y).map(path))
+            copy_transform = QTransform.fromTranslate(x, y)
+            current_box = copy_transform.mapRect(bbox)
+            if not combined_box:
+                combined_box = current_box
+            combined_box = combined_box.united(current_box)
+            model.addPath(copy_transform.map(path))
             c += 1
+
+        bbox:QRectF = combined_box
 
         # Create weedline
         if self.plot_weedline:
-            self._add_weedline(model, self.plot_weedline_padding)
+            bbox, model = self._add_weedline(model, self.plot_weedline_padding, bbox)
 
-        # Determine padding
-        bbox = model.boundingRect()
-        if self.align_center[0]:
-            px = (self.material.width() - bbox.width())/2.0
-        else:
-            px = self.material.padding_left
+        page_area = self.material.get_content_rect(self.page_direction)
 
-        if self.align_center[1]:
-            py = -(self.material.height() - bbox.height())/2.0
-        else:
-            py = -self.material.padding_bottom
+        # TODO: add UI option for aligning to any corner
+        t_align = self.align_rect_to_rect(bbox, page_area,
+                                          Job.JOB_AXIS_ALIGN_MID if self.align_center[0] else Job.JOB_AXIS_ALIGN_ZERO,
+                                          Job.JOB_AXIS_ALIGN_MID if self.align_center[1] else Job.JOB_AXIS_ALIGN_ZERO)
 
-        # Scale and rotate
-        if scale:
-            model = QTransform.fromScale(*scale).map(model)
-            px, py = px*abs(scale[0]), py*abs(scale[1])
+        model:QPainterPath = t_align.map(model)
 
-        if swap_xy:
-            t = QTransform()
-            t.rotate(90)
-            model = t.map(model)
-
-        # Move to 0,0
-        bbox = model.boundingRect()
-        p = bbox.bottomLeft()
-        tx, ty = -p.x(), -p.y()
-
-        if not self.auto_shift:
-            # Re-add original shift
-            bbox = self.copy_bbox
-            tx += -bbox.right() if self.mirror[0] else bbox.left()
-            ty += bbox.bottom() if self.mirror[1] else -bbox.top()
-
-        # If swapped, make sure padding is still correct
-        if swap_xy:
-            px, py = -py, -px
-        tx += px
-        ty += py
-
-        model = QTransform.fromTranslate(tx, ty).map(model)
+        final_bounds = model.boundingRect()
 
         end_point = QPointF(0, 0)
         if self.after_job == Job.FEED_MOVE_TO_0:
             end_point = QPointF(0, 0)
         elif self.after_job == Job.FEED_TO_END:
-            end_point = QPointF(0, -self.final_position[1] + model.boundingRect().top())
+            end_point = QPointF(0, -self.final_position[1] * expansion_direction.y() + final_bounds.top())
         elif self.after_job == Job.FEED_WITHOUT_SHIFT:
-            end_point = QPointF(self.final_position[0], -self.final_position[1] + model.boundingRect().top())
+            end_point = QPointF(self.final_position[0] * expansion_direction.x(),
+                                -self.final_position[1] * expansion_direction.y() + final_bounds.top())
         elif self.after_job == Job.FEED_MOVE_TO:
-            end_point = QPointF(self.final_position[0], -self.final_position[1])
+            end_point = QPointF(self.final_position[0] * expansion_direction.x(),
+                                -self.final_position[1] * expansion_direction.y())
 
         if self.after_job != Job.FEED_NOTHING:
             model.moveTo(end_point)
 
         return model
+
+    @staticmethod
+    def align_axis(o1: float, o2: float, b1: float, b2: float, side: int) -> float:
+        if side == Job.JOB_AXIS_ALIGN_MIN:
+            return b1 - o1
+        if side == Job.JOB_AXIS_ALIGN_MAX:
+            return b2 - o2
+        return (b1 + b2) / 2 - (o1 + o2) / 2
+
+    JOB_AXIS_ALIGN_MIN = -1
+    JOB_AXIS_ALIGN_MAX = 1
+    JOB_AXIS_ALIGN_MID = 0
+    JOB_AXIS_ALIGN_ZERO = 2
+
+    def align_rect_to_rect(self, from_rect: QRectF, to_rect: QRectF, align_x, align_y) -> QTransform:
+        if align_x == Job.JOB_AXIS_ALIGN_ZERO:
+            align_x = 1 if self.content_direction.x() < 0 else -1
+        if align_y == Job.JOB_AXIS_ALIGN_ZERO:
+            align_y = 1 if self.content_direction.y() < 0 else -1
+
+        dx = Job.align_axis(from_rect.left(), from_rect.right(), to_rect.left(), to_rect.right(), align_x)
+        dy = Job.align_axis(from_rect.top(), from_rect.bottom(), to_rect.top(), to_rect.bottom(), align_y)
+        return QTransform.fromTranslate(dx, dy)
 
     def _check_bounds(self, plot, area):
         """ Checks that the width and height of plot are less than the width
@@ -494,29 +511,35 @@ class Job(Model):
         """
         return plot.width() > area.width() or plot.height() > area.height()
 
-    def _copy_positions_iter(self, path, axis=0):
+    def _copy_positions_iter(self, path, bbox, direction: QPointF, axis=0):
         """ Generator that creates positions of points
 
         """
         other_axis = axis +1 % 2
+        direction = (direction.x(), direction.y())
+        anchor = [0, 0]
         p = [0, 0]
 
-        bbox = path.boundingRect()
         d = (bbox.width(), bbox.height())
         pad = self.copy_spacing
-        stack_size = self._compute_stack_sizes(path)
+        if direction[0] < 0:
+            anchor[0] -= bbox.width()
+        if direction[1] < 0:
+            anchor[1] -= bbox.height()
+        p[0], p[1] = anchor
+        stack_size = self._compute_stack_sizes(path, bbox)
 
         while True:
-            p[axis] = 0
+            p[axis] = anchor[axis]
             yield p  # Beginning of each row
 
             for i in range(stack_size[axis]-1):
-                p[axis] += d[axis]+pad[axis]
+                p[axis] += (d[axis]+pad[axis]) * direction[axis]
                 yield p
 
-            p[other_axis] += d[other_axis]+pad[other_axis]
+            p[other_axis] += (d[other_axis]+pad[other_axis]) * direction[other_axis]
 
-    def _compute_stack_sizes(self, path):
+    def _compute_stack_sizes(self, path, bbox):
         # Usable area
         material = self.material
         a = [material.width(), material.height()]
@@ -524,7 +547,6 @@ class Job(Model):
         a[1] -= material.padding[Padding.TOP] + material.padding[Padding.BOTTOM]
 
         # Clone includes weedline but not spacing
-        bbox = path.boundingRect()
         size = [bbox.width(), bbox.height()]
 
         stack_size = [0, 0]
@@ -538,27 +560,25 @@ class Job(Model):
         self.stack_size = stack_size
         return stack_size
 
-    def _add_weedline(self, path, padding):
+    def _add_weedline(self, path, padding, bbox):
         """ Adds a weedline to the path
         by creating a box around the path with the given padding
 
         """
-        bbox = path.boundingRect()
-        w, h = bbox.width(), bbox.height()
+        bbox = bbox.adjusted(-padding[Padding.LEFT], -padding[Padding.TOP], padding[Padding.RIGHT], padding[Padding.BOTTOM])
 
-        tl = bbox.topLeft()
-        x = tl.x() - padding[Padding.LEFT]
-        y = tl.y() - padding[Padding.TOP]
-
-        w += padding[Padding.LEFT] + padding[Padding.RIGHT]
-        h += padding[Padding.TOP] + padding[Padding.BOTTOM]
-
-        path.addRect(x, y, w, h)
-        return path
+        path.addRect(bbox)
+        transform = AreaBase.rect_to_corner(bbox, self.content_direction)
+        path.translate(transform.dx(), transform.dy())
+        return transform.mapRect(bbox), path
 
     @property
     def state(self):
         pass
+
+    def set_direction(self, direction: QPointF):
+        self.content_direction = direction
+        self.page_direction = direction
 
     @property
     def move_path(self):

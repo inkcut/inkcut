@@ -20,6 +20,8 @@ from atom.api import (
 from enaml.workbench.plugin import Plugin as EnamlPlugin
 from enaml.widgets.api import Container
 from enaml.qt import QtCore, QtGui
+from enaml.qt.QtGui import QTransform
+from enaml.qt.QtCore import QRectF, QPointF
 from .utils import log, clip
 
 
@@ -123,12 +125,52 @@ class AreaBase(Model):
     def height(self):
         return self.size[1]
 
+    @staticmethod
+    def align_rect(from_rect: QRectF, to_rect: QRectF, corner: QPointF) -> QTransform:
+        if corner.x() > 0:
+            if corner.y() > 0:
+                p1 = from_rect.topLeft()
+                p2 = to_rect.topLeft()
+            else:
+                p1 = from_rect.bottomLeft()
+                p2 = to_rect.bottomLeft()
+        else:
+            if corner.y() > 0:
+                p1 = from_rect.topRight()
+                p2 = to_rect.topRight()
+            else:
+                p1 = from_rect.bottomRight()
+                p2 = to_rect.bottomRight()
+        d_vec = p1 - p2
+        return QTransform.fromTranslate(d_vec.x(), d_vec.y())
+
+    @staticmethod
+    def rect_to_corner(from_rect: QRectF, corner: QPointF) -> QTransform:
+        if corner.x() > 0:
+            if corner.y() > 0:
+                p1 = from_rect.topLeft()
+            else:
+                p1 = from_rect.bottomLeft()
+        else:
+            if corner.y() > 0:
+                p1 = from_rect.topRight()
+            else:
+                p1 = from_rect.bottomRight()
+        p1 = -p1
+        return QTransform.fromTranslate(p1.x(), p1.y())
+
+    def get_rect(self, alignment: QPointF) -> QRectF:
+        r1 = QRectF(0, 0, self.size[0], self.size[1])
+        return AreaBase.rect_to_corner(r1, alignment).mapRect(r1)
+
+    def get_content_rect(self, page_alignment: QPointF = None) -> QRectF:
+        if not page_alignment:
+            page_alignment = QPointF(1, 1)
+        return self.get_rect(page_alignment).adjusted(self.padding_left, self.padding_top,
+                                                      -self.padding_right, -self.padding_bottom)
     @property
     def available_area(self):
-        x, y = self.padding_left, self.padding_bottom
-        w, h = (self.size[0]-(self.padding_right+self.padding_left),
-                self.size[1]-(self.padding_bottom+self.padding_top))
-        return QtCore.QRectF(x, y, w, h)
+        return self.get_content_rect()
 
 
 class Plugin(EnamlPlugin):

@@ -124,7 +124,6 @@ class PreviewPlugin(Plugin):
             A list of kwargs to to pass to each plot item
 
         """
-        t = self.transform
         view_items = [
             PainterPathPlotItem(kwargs.pop('path'), **kwargs)
             for kwargs in items
