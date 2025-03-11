@@ -170,7 +170,7 @@ class QtSvgItem(QPainterPath):
             return t
 
         m = re.match(
-            "(translate|scale|rotate|skewX|skewY|matrix)\s*\(([^)]*)\)\s*,?",
+            r"(translate|scale|rotate|skewX|skewY|matrix)\s*\(([^)]*)\)\s*,?",
             trans)
         if m is None:
             return t
