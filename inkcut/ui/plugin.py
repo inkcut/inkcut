@@ -11,7 +11,7 @@ Created on Jul 12, 2015
 """
 import sys
 import enaml
-import pkg_resources
+import importlib.metadata
 from datetime import datetime
 from atom.api import Atom, Int, List, Str, Instance, Bool, Enum, Dict
 from enaml.qt.q_resource_helpers import get_cached_qicon
@@ -112,8 +112,8 @@ class InkcutPlugin(Plugin):
             plugins.append(MonitorManifest)
 
             #: Load any plugins defined as extension points
-            for entry_point in pkg_resources.iter_entry_points(
-                    group='inkcut.plugin', name=None):
+            for entry_point in importlib.metadata.entry_points(
+                    group='inkcut.plugin'):
                 plugins.append(entry_point.load())
 
         #: Install all of them
