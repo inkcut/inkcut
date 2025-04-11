@@ -23,7 +23,7 @@ install_requires = [
     'jsonpickle',
     'lxml',  # use sudo apt install libxml2-dev libxslt-dev
 
-    #'PyQt5', # Let users install whatever Qt they want
+    #'PyQt6', # Let users install whatever Qt they want
     'qt-reactor',
 
     # Python 2:

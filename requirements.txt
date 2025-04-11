@@ -8,7 +8,7 @@ pyserial>=3.4
 jsonpickle
 lxml
 faulthandler; python_version < '3.0'
-PyQt5; python_version >= '3.0'
+PyQt6; python_version >= '3.0'
 qt-reactor
 pytest
 pytest-coverage
