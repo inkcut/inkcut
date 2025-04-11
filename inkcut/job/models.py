@@ -224,6 +224,13 @@ class Job(Model):
         except Exception:
             return source
 
+    def __getstate__(self):
+        """ Exclude any members from the state where document does point to stdin - """
+        state = super(Job, self).__getstate__()
+        if state["document"] == "-": # Stdin, would crash the Plugin every second time
+            state["document"] = ''
+        return state
+
     def __setstate__(self, *args, **kwargs):
         """ Ensure that when restoring from disk the material and info
         are not set to None. Ideally these would be defined as Typed but
