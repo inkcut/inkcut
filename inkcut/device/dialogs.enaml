@@ -26,10 +26,18 @@ from enamlx.widgets.api import (
     TreeView, TreeViewItem, TreeViewColumn, DoubleSpinBox
 )
 
-from .plugin import Device, DeviceConfig, DeviceProtocol
+from .plugin import Device, DeviceConfig, DevicePlugin, DeviceProtocol
 from .view import ConfigView, DeviceConfigView
 from inkcut.core.api import Model
 from inkcut.core.utils import to_unit, from_unit, load_icon
+
+
+def sort_filters(plugin: DevicePlugin, filters: list) -> list:
+    # This is pushed into a separate function Workaround an enaml bug
+    # with using the lambda
+    order = { x.id: i for (i, x) in enumerate(plugin.filters) }
+    filters.sort(key=lambda x: order.get(x.declaration.id, -1))
+    return filters
 
 
 enamldef ConfigEditView(Include):
@@ -194,15 +202,14 @@ enamldef DeviceEditView(Notebook): notebook:
                                     text = QApplication.translate("device", 'Enabled')
                                     checked << bool(matching_filters)
                                     checked ::
-                                        if change['value']:
-                                            filters = device.filters[:]
-                                            f = loop_item.factory()
-                                            f.declaration = loop_item
-                                            filters.append(f)
-                                            order = { x.id:i for (i, x) in enumerate(plugin.filters) }
-                                            device.filters = sorted(filters, key=lambda x: order.get(x.declaration.id, -1))
-                                        else:
-                                            device.filters = [f for f in device.filters if f.declaration.id != loop_item.id]
+                                         if change['value']:
+                                             filters = device.filters[:]
+                                             f = loop_item.factory()
+                                             f.declaration = loop_item
+                                             filters.append(f)
+                                             device.filters = sort_filters(plugin, filters)
+                                         else:
+                                             device.filters = [f for f in device.filters if f.declaration.id != loop_item.id]
                             Include:
                                 objects << [
                                     loop_item.config_view()(model=current_filter.config)
