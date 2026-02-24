@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>inkcut.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <name>InkCut</name>
+  <summary>Open-source 2D plotting and cuting software</summary>
+  <description>
+    <p>
+      An open source application for controlling 2D plotters, cutters,
+      engravers, and CNC machines.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Graphic manipulation (Rotation, scaling, mirroring)</li>
+      <li>Copy generation and layout</li>
+      <li>Weedlines</li>
+      <li>Inkscape integration</li>
+      <li>Device control panel</li>
+      <li>Job history list</li>
+      <li>Live plot status</li>
+      <li>Pause, resume, and abort jobs mid way</li>
+    </ul>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/inkcut/inkcut/refs/heads/master/packaging/inkcut.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://codelv.com/projects/inkcut/</url>
+  <update_contact>frmdstryr@gmail.com</update_contact>
+</component>
