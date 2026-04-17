@@ -110,6 +110,7 @@
 |Roland              |Camm-1 CX24                   |Printer   |58        |Unlimited           |Yes    |
 |Roland              |Camm-1 GS-24                  |Printer   |58        |2500                |Yes    |
 |Roland              |Camm-1 Pro CM-300             |Printer   |74        |Unlimited           |No     |
+|Roland              |Camm-1 Pro CX-300             |Printer   |74        |Unlimited           |Yes    |
 |Roland              |CAMM-1 servo GX24             |Printer   |61        |160                 |Yes    |
 |Roland              |Camm1 PNC950                  |Printer   |61        |2500                |Yes    |
 |Roland              |cj-70                         |Serial    |54        |Unlimited           |Yes    |
