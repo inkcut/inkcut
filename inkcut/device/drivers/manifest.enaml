@@ -261,6 +261,16 @@ enamldef DriversManifest(PluginManifest):
             protocols = ['hpgl']
             connections = ['serial','qtserial']
 
+        DeviceDriver:
+            manufacturer = 'Vevor'
+            model = 'Smart 1'
+            width = '30.48cm'
+            length = '34.78cm'
+            protocols = ['hpgl']
+            connections = ['parallel']
+            default_config = {
+            }
+
 #        DeviceDriver:
 #            manufacturer = 'Vision'
 #            model = ' VE-810 (XD) Engraver (configured)'
