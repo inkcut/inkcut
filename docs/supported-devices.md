@@ -183,7 +183,7 @@
 |US Cutter           |Silver Bullel                 |Printer   |45        |Unlimited           |No     |
 |US Cutter           |vinyl express lynx s60        |Serial    |24        |Unlimited           |Yes    |
 |Vevor               |sk-720                        |Serial    |28        |Unlimited           |Yes    |
-|Vevor               |sk-720                        |Serial    |28        |Unlimited           |No     |
+|Vevor               |Smart 1                       |Parallel  |30        |Unlimited           |Yes    |
 |Vicsign             |630h                          |Serial    |360       |Unlimited           |Yes    |
 |Vicsign             |HS630                         |Serial    |61        |Unlimited           |Yes    |
 |Vicsign             |HW330                         |Printer   |33        |2000                |Yes    |
