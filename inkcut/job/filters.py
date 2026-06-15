@@ -14,6 +14,8 @@ from lxml import etree
 from atom.api import Atom, Str, Instance, Bool, Float
 from enaml.colors import Color, ColorMember, SVG_COLORS
 from inkcut.core.svg import QtSvgDoc, EtreeElement
+from enaml.qt.QtGui import QPainterPath, QPolygonF
+from enaml.qt.QtCore import QPointF
 from inkcut.core.utils import (
     log, find_subclasses, split_painter_path, join_painter_paths
 )
@@ -50,7 +52,7 @@ def get_layer_label(g):
     return g.attrib.get(attr)
 
 
-class JobFilter(Atom):
+class Filter(Atom):
     #: A fixed type name for the UI to extract without using isinstance
     type = ""
 
@@ -101,8 +103,75 @@ class JobFilter(Atom):
         """
         raise NotImplementedError()
 
+# These filters receive an SVG document
+# and produce a filtered version of that
+# same SVG document after filtering/modifying
+# based on the SVG document structure and
+# attributes.
+class SvgFilter(Filter):
+    pass
 
-class LayerFilter(JobFilter):
+# These filters receive a general PainterPath
+# and filter/modify based on geometry rather than
+# SVG structure which is lost when we start manipulating
+# the geometry instead of the SVG/XML structure
+class PathFilter(Filter):
+    pass
+
+# This filter clips the geometry to the
+# bounding-box implied by the Job's material
+# settings.  This helps prevent us from accidentally
+# sending the plotter head off the gantry trying to
+# draw geometry that is invalid for the material/device.
+class ClipFilter(PathFilter):
+    @classmethod
+    def get_filter_options(cls, job, doc):
+        # This filter is always 'enabled' but that
+        # just means it will always run.
+        # It may clip or not clip depending on whether
+        # the job's clip_to_plot_area is true.  This is because
+        # the get_filter_options is only called when
+        # the document is loaded, but not when options
+        # are checked by the user.
+        return [cls(enabled=False)]
+
+    def apply_filter(self, job, doc):
+        # If it's not enabled by the user, we do nothing.
+        if not job.clip_to_plot_area:
+            return doc
+
+        # We first get the boundary of the page.
+        clip_x0 = job.material.padding_left
+        clip_y0 = job.material.padding_bottom
+        clip_x1 = job.material.width() - job.material.padding_right
+        clip_y1 = job.material.height() - job.material.padding_top
+
+        # Then we assemble this as a list of points
+        clip_points = [
+            QPointF(clip_x0, clip_y0),
+            QPointF(clip_x1, clip_y0),
+            QPointF(clip_x1, clip_y1),
+            QPointF(clip_x0, clip_y1),
+            QPointF(clip_x0, clip_y0)
+        ]
+
+        # And finally turn this into a polygon
+        # and then a painter path
+        clip_polygon = QPolygonF(clip_points)
+        clip_path = QPainterPath()
+        clip_path.addPolygon(clip_polygon)
+
+        # Finally, we do the work of clipping
+        # so we can remove the un-needed pieces.
+        # It is important that the clip happen
+        # before the optimize path because
+        # removing path segments would change
+        # the optimizer's results
+        clipped = doc.intersected(clip_path)
+
+        return clipped
+        
+class LayerFilter(SvgFilter):
     type = "layer"
 
     layer = Instance(EtreeElement)
@@ -142,7 +211,7 @@ class LayerFilter(JobFilter):
         return QtSvgDoc(svg, parent=True)
 
 
-class FillColorFilter(JobFilter):
+class FillColorFilter(SvgFilter):
     type = "fill-color"
     style_attr = 'fill'
 
@@ -189,4 +258,9 @@ class StrokeColorFilter(FillColorFilter):
 
 
 #: Register all subclasses
-REGISTRY = {c.type: c for c in find_subclasses(JobFilter)}
+# Note that we distinguish between SVG filters
+# and Path filters because path filters do NOT
+# preserve the SVG tags since they can alter
+# geometry irrespective of the XML structure of the document.
+SVG_FILTERS = {c.type: c for c in find_subclasses(SvgFilter)}
+PATH_FILTERS = {c.type: c for c in find_subclasses(PathFilter)}
