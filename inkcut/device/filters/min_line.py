@@ -38,7 +38,7 @@ class MinLineConfig(Model):
     #: Units for display
     units = Enum(*unit_conversions.keys()).tag(config=True)
 
-    # measured in 1/90inch like most other inkcut distances
+    # measured in 1/90inch (1/INKCUT_DPI) like most other inkcut distances
 
     # don't lift the pen for distnaces shorter than this
     min_jump = Float(strict=False).tag(config=True)

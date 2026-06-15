@@ -7,6 +7,7 @@ Created on Jul 25, 2015
 from atom.api import Instance, Float, Bool, Int
 from inkcut.device.plugin import DeviceProtocol, Model
 from inkcut.core.utils import log
+from inkcut.core.svg import INKCUT_DPI
 
 
 class HPGLConfig(Model):
@@ -15,7 +16,7 @@ class HPGLConfig(Model):
 
 
 class HPGLProtocol(DeviceProtocol):
-    scale = Float(1021/90.0)
+    scale = Float(1021/INKCUT_DPI)
 
     #: Pad option
     config = Instance(HPGLConfig, ()).tag(config=True)

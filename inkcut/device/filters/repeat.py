@@ -22,7 +22,7 @@ from inkcut.core.utils import (
 
 class RepeatConfig(Model):
     steps = Int(1).tag(config=True)
-    # measured in 1/90inch like most other inkcut distances
+    # measured in 1/90inch (1/INKCUT_DPI) like most other inkcut distances
     closed_loop_distance = Float(0.1, strict=False).tag(config=True)
 
 
