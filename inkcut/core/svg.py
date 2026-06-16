@@ -782,7 +782,7 @@ class QtSvgDoc(QtSvgG):
                 # Not enough version information to make a correct decision,
                 # so we must return None.
                 return None
-        except:
+        except ValueError:
             # Version could not be parsed, assume it's a really old one
             # at 90dpi.
             return None

@@ -1,13 +1,12 @@
 """
-Copyright (c) 2018, Jairus Martin.
+Copyright (c) 2026, The Inkcut Team
 
 Distributed under the terms of the GPL v3 License.
 
 The full license is in the file LICENSE, distributed with this software.
 
-Created on Mar 14, 2018
+Created on June 16, 2026
 
-@author: jrm
 """
 import os
 import pytest
