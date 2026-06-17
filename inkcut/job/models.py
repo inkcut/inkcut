@@ -198,7 +198,7 @@ class Job(Model):
 
     #: Filters to cut only certain items
     svg_filters = ContainerList(filters.SvgFilter)
-    path_filters = ContainerList(filters.PathFilter)
+    job_filters = ContainerList(filters.JobFilter)
 
     #: Original path parsed from the source document
     doc = Instance(QtSvgDoc)
@@ -256,20 +256,26 @@ class Job(Model):
             self.doc = self.path = QtSvgDoc(source, **self.document_kwargs)
 
         # Recreate available filters when the document changes
-        self.svg_filters = self._default_filters(filters.SVG_FILTERS)
-        self.path_filters = self._default_filters(filters.PATH_FILTERS)
+        self.svg_filters = self._default_svg_filters()
+        self.job_filters = self._default_job_filters()
 
-    def _default_filters(self, filter_list):
+    def get_filters_from_registry(self, registry):
         results = []
         if not self.path:
             return results
-        for Filter in filter_list.values():
+        for Filter in registry.values():
             try:
                 results.extend(Filter.get_filter_options(self, self.path))
             except Exception as e:
                 log.error("Failed loading filters for: %s" % Filter)
                 log.exception(e)
         return results
+
+    def _default_svg_filters(self):
+        return self.get_filters_from_registry(filters.SVG_FILTERS)
+
+    def _default_job_filters(self):
+        return self.get_filters_from_registry(filters.JOB_FILTERS)
 
     def apply_filters(self, filter_list, doc):
         for f in filter_list:
@@ -289,11 +295,6 @@ class Job(Model):
         # the document.
         doc = self.apply_filters(self.svg_filters, doc)
 
-        # Path filters come next.  These destroy the 'SVG'
-        # structure and focus on the underlying path
-        # geometry.
-        doc = self.apply_filters(self.path_filters, doc)
-
         # Apply ordering to path
         # this delegates to objects in the ordering module
         OrderingHandler = ordering.REGISTRY.get(self.order)
@@ -302,7 +303,7 @@ class Job(Model):
 
         return doc
 
-    @observe('path', 'order', 'filters', 'clip_to_plot_area')
+    @observe('path', 'order', 'svg_filters', 'job_filters', 'clip_to_plot_area')
     def _update_optimized_path(self, change):
         """ Whenever the loaded file (and parsed SVG path) changes update
         it based on the filters from the job.
@@ -370,7 +371,6 @@ class Job(Model):
         # Move to bottom left
         br = bbox.bottomRight()
         path = QTransform.fromTranslate(-br.x(), -br.y()).map(path)
-
         return path
 
     @contextmanager
@@ -490,6 +490,10 @@ class Job(Model):
             0, -self.feed_after + model.boundingRect().top())
                      if self.feed_to_end else QPointF(0, 0))
         model.moveTo(end_point)
+
+        # Apply the job filters to the final result
+        # after copies and transformations have been applied.
+        model = self.apply_filters(self.job_filters, model)
 
         return model
 

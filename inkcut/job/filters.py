@@ -111,11 +111,11 @@ class Filter(Atom):
 class SvgFilter(Filter):
     pass
 
-# These filters receive a general PainterPath
-# and filter/modify based on geometry rather than
-# SVG structure which is lost when we start manipulating
-# the geometry instead of the SVG/XML structure
-class PathFilter(Filter):
+# These filters receive a general QPainterPath
+# of the entire job after the shapes have been
+# potentially copied, transformed, and otherwise modified
+# by the structure of the job.
+class JobFilter(Filter):
     pass
 
 # This filter clips the geometry to the
@@ -123,7 +123,7 @@ class PathFilter(Filter):
 # settings.  This helps prevent us from accidentally
 # sending the plotter head off the gantry trying to
 # draw geometry that is invalid for the material/device.
-class ClipFilter(PathFilter):
+class ClipFilter(JobFilter):
     @classmethod
     def get_filter_options(cls, job, doc):
         # This filter is always 'enabled' but that
@@ -140,11 +140,16 @@ class ClipFilter(PathFilter):
         if not job.clip_to_plot_area:
             return doc
 
-        # We first get the boundary of the page.
+        # We want to clip to the defined material
+        # boundaries.  We could use job.material.path,
+        # but this doesn't account for the margins and we would
+        # like to make sure that the margins are not cut.
+        # The signs are a bit wierd here because
+        # plus is down instead of up in this context.
         clip_x0 = job.material.padding_left
-        clip_y0 = job.material.padding_bottom
+        clip_y0 = -job.material.padding_bottom
         clip_x1 = job.material.width() - job.material.padding_right
-        clip_y1 = job.material.height() - job.material.padding_top
+        clip_y1 = -job.material.height() + job.material.padding_top
 
         # Then we assemble this as a list of points
         clip_points = [
@@ -168,7 +173,6 @@ class ClipFilter(PathFilter):
         # removing path segments would change
         # the optimizer's results
         clipped = doc.intersected(clip_path)
-
         return clipped
         
 class LayerFilter(SvgFilter):
@@ -257,10 +261,12 @@ class StrokeColorFilter(FillColorFilter):
     style_attr = 'stroke'
 
 
-#: Register all subclasses
-# Note that we distinguish between SVG filters
-# and Path filters because path filters do NOT
-# preserve the SVG tags since they can alter
-# geometry irrespective of the XML structure of the document.
+# SVG Filters apply to the input SVG document
+# and can rely on the SVG/XML structure of the document
+# for things like filtering layers, colors, and styles.
 SVG_FILTERS = {c.type: c for c in find_subclasses(SvgFilter)}
-PATH_FILTERS = {c.type: c for c in find_subclasses(PathFilter)}
+# Job filters apply to the whole document after
+# transformations and copies have been added.
+# These rely only on the geometry/paths (QPainterPath)
+# and do not have access to the SVG/XML structure.
+JOB_FILTERS = {c.type: c for c in find_subclasses(JobFilter)}
