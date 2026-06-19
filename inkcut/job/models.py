@@ -245,6 +245,11 @@ class Job(Model):
     def _observe_document(self, change):
         """ Read the document from stdin """
         source = self.document
+        from inkcut.core.workbench import InkcutWorkbench
+        workbench = InkcutWorkbench.instance()
+        plugin = workbench.get_plugin("inkcut.job")
+        self.document_kwargs["dpi_default"] = plugin.dpi_default
+        self.document_kwargs["dpi_auto_detect_inkscape"] = plugin.dpi_auto_detect_inkscape
         if change['type'] == 'update' and source == '-':
             #: Only load from stdin when explicitly changed to it (when doing
             #: open from the cli) otherwise when restoring state this hangs

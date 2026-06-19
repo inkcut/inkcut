@@ -12,7 +12,7 @@ Created on Jul 12, 2015
 import os
 import sys
 import enaml
-from atom.api import Instance, Enum, List, Str, Int, Float, observe
+from atom.api import Instance, Enum, List, Str, Int, Float, observe, Bool
 from inkcut.core.api import Plugin, unit_conversions, log
 
 from .models import Job, JobError, Material
@@ -47,6 +47,12 @@ class JobPlugin(Plugin):
 
     #: Timeout for optimizing paths
     optimizer_timeout = Float(10, strict=False).tag(config=True)
+
+    # Default DPI setting if no units are specified in document.
+    dpi_default = Float(96, strict=False).tag(config=True)
+
+    # Whether or not to auto-detect DPI settings for Inkscape SVG files.
+    dpi_auto_detect_inkscape = Bool(True).tag(config=True)
 
     def _default_job(self):
         return Job(material=self.material)

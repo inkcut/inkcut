@@ -25,11 +25,15 @@ from enaml.qt.QtCore import QPointF, QRectF
 ElementType = QPainterPath.ElementType
 EtreeElement = etree._Element
 
+# Inkcut assumes 90DPI for its internal units
+# It's an odd choice, but it's fine as long as it's consistent
+# throughout.
+INKCUT_DPI = 90.0
 
 class QtSvgItem(QPainterPath):
     tag = None
     _nodes = None
-    _uuconv = {'in': 90.0, 'pt': 1.25, 'px': 1, 'mm': 3.5433070866,
+    _uuconv = {'in': INKCUT_DPI, 'pt': 1.25, 'px': 1, 'mm': 3.5433070866,
                'cm': 35.433070866, 'm': 3543.3070866,
                'km': 3543307.0866, 'pc': 15.0, 'yd': 3240, 'ft': 1080}
 
@@ -140,6 +144,17 @@ class QtSvgItem(QPainterPath):
             except KeyError:
                 pass
         return retval
+
+    @staticmethod
+    def getUnit(value):
+        if not value:
+            return None
+        unit = re.compile('(%s)$' % '|'.join(QtSvgItem._uuconv.keys()))
+        u = unit.search(value)
+        if u:
+            return u.string[u.start():u.end()]
+        else:
+            return None
 
     @staticmethod
     def convertToUnit(val, unit='px'):
@@ -685,7 +700,7 @@ class QtSvgSymbol(QtSvgG):
 class QtSvgDoc(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}svg"
 
-    def __init__(self, e, ids=None, parent=False):
+    def __init__(self, e, ids=None, parent=False, dpi_default=96.0, dpi_auto_detect_inkscape=True):
         """
         Creates a QtPainterPath from an SVG document applying all transforms.
 
@@ -698,6 +713,9 @@ class QtSvgDoc(QtSvgG):
             ids: List
                 List of node ids to include. If not given all will be used.
         """
+        self.dpi_default = dpi_default
+        self.dpi_auto_detect_inkscape = dpi_auto_detect_inkscape
+
         is_etree = isinstance(e, EtreeElement)
         self.isParentSvg = parent or not is_etree
         if self.isParentSvg:
@@ -726,29 +744,109 @@ class QtSvgDoc(QtSvgG):
             self.viewBox = QRectF(0, 0, -1, -1)
         super(QtSvgDoc, self).__init__(e, self._nodes)
 
+    # Return the DPI of the inkscape document detected
+    # based on the version information in the SVG
+    # or None if we could not definitely identify it
+    # as an Inkscape document.
+    @staticmethod
+    def dpiDetectFromInkscapeVersionAttribute(e):
+        inkscapeVersionAttribute = e.attrib.get("{http://www.inkscape.org/namespaces/inkscape}version", None)
+        if not inkscapeVersionAttribute:
+            return None
+        inkscapeVersionAttributeSplit = inkscapeVersionAttribute.split(" ")
+        if len(inkscapeVersionAttributeSplit) <= 0:
+            return None
+        inkscapeVersion = inkscapeVersionAttributeSplit[0]
+        inkscapeVersionSplit = inkscapeVersion.split(".")
+        # This try block is just in case we encounter a non-integer
+        # in one of the major or minor versions.  In this case,
+        # we can't reliably detect the DPI based on unit, so we need to
+        # return None.
+        try:
+            # It's at least 2 digits, so pick out the major and minor versions.
+            if (len(inkscapeVersionSplit) >= 2):
+                inkscapeMajorVersion = int(inkscapeVersionSplit[0])
+                inkscapeMinorVersion = int(inkscapeVersionSplit[1])
+                if (inkscapeMajorVersion == 0 and inkscapeMinorVersion < 92):
+                    # Inkscape units are assumed to be 90dpi by older versions of Inkscape
+                    # if they are not explicitly specified, so we scale appropriately
+                    # for older documents.
+                    return 90.0
+                else:
+                    return 96.0
+            elif (len(inkscapeVersionSplit) >= 1):
+                inkscapeMajorVersion = int(inkscapeVersionSplit[0])
+                if (inkscapeMajorVersion >= 1):
+                    return 96.0
+            else:
+                # Not enough version information to make a correct decision,
+                # so we must return None.
+                return None
+        except ValueError:
+            # Version could not be parsed, assume it's a really old one
+            # at 90dpi.
+            return None
+        return None
+
     def parseTransform(self, e):
         t = QTransform()
         # transforms don't apply to the root svg element, but we do need to
         # take into account the viewBox there
         if self.isParentSvg:
+            # Establish the default units.
+            # Inkscape assumes 96dpi if units are not explicitly given
+            # because this is specified in the CSS specification.
+
+            # If we're detecting DPI based on Inkscape
+            # defaults for various versions, go ahead and do that.
+            # Otherwise, we'll fall back to the configuration default DPI setting.
+            dpi = self.dpi_default
+            if self.dpi_auto_detect_inkscape:
+                dpi_detected = QtSvgDoc.dpiDetectFromInkscapeVersionAttribute(e)
+                # If we detected something, use it.
+                # otherwise, we just use the system default
+                if dpi_detected:
+                    dpi = dpi_detected
+
+            xunit = QtSvgItem.getUnit(e.attrib.get("width", None))
+            xscale = 1.0
+            if not xunit:
+                xscale = INKCUT_DPI / dpi
+
+            yunit = QtSvgItem.getUnit(e.attrib.get("height", None))
+            yscale = 1.0
+            if not yunit:
+                yscale = INKCUT_DPI / dpi
+
+            # I think perhaps we need to keep this one
+            # because otherwise we won't correctly convert
+            # the units inside the document.
             viewBox = e.attrib.get('viewBox', None)
+            x = 0
+            y = 0
             if viewBox is not None:
+                # If there is a viewbox, we
+                # need to translate the origin, scale,
+                # and then translate it back in order to
+                # preserve the intended structure of the given SVG
+                # document.
                 (x, y, innerWidth, innerHeight) = map(self.parseUnit,
                                                       re.split("[ ,]+",
                                                                viewBox))
-
-                if x != 0 or y != 0:
-                    raise ValueError(
-                        "viewBox '%s' needs to be translated "
-                        "because is not at the origin. "
-                        "See https://github.com/codelv/inkcut/issues/69"
-                        % viewBox)
 
                 outerWidth, outerHeight = map(self.parseUnit,
                                               (e.attrib.get('width', None),
                                                e.attrib.get('height', None)))
                 if outerWidth is not None and outerHeight is not None:
-                    t.scale(outerWidth / innerWidth, outerHeight / innerHeight)
+                    xscale = xscale * outerWidth / innerWidth
+                    yscale = yscale * outerHeight / innerHeight
+
+            # First, translate the origin if the viewbox gives us one.
+            t.translate(-x*xscale, -y*yscale)
+            # Next, scale the drawing to the viewport and DPI because
+            # the remaining elements of the drawing will be based on
+            # the viewbox unit size
+            t.scale(xscale, yscale)
         else:
             x, y = map(self.parseUnit, (e.attrib.get('x', 0),
                                         e.attrib.get('y', 0)))
