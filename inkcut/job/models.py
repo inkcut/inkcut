@@ -486,14 +486,14 @@ class Job(Model):
 
         model = QTransform.fromTranslate(tx, ty).map(model)
 
+        # Apply the job filters to the final result
+        # after copies and transformations have been applied.
+        model = self.apply_filters(self.job_filters, model)
+
         end_point = (QPointF(
             0, -self.feed_after + model.boundingRect().top())
                      if self.feed_to_end else QPointF(0, 0))
         model.moveTo(end_point)
-
-        # Apply the job filters to the final result
-        # after copies and transformations have been applied.
-        model = self.apply_filters(self.job_filters, model)
 
         return model
 
