@@ -19,7 +19,7 @@ from atom.api import (
     Dict, Callable, observe
 )
 from contextlib import contextmanager
-from enaml.qt.QtGui import QPainterPath, QTransform
+from enaml.qt.QtGui import QPainterPath, QTransform, QPolygonF
 from enaml.qt.QtCore import QPointF, QRectF
 from enaml.colors import ColorMember
 from inkcut.core.api import Model, AreaBase
@@ -163,6 +163,7 @@ class Job(Model):
     mirror = ContainerList(Bool(), default=[False, False]).tag(config=True)
     align_center = ContainerList(Bool(),
                                  default=[False, False]).tag(config=True)
+    clip_to_plot_area = Bool().tag(config = True)
 
     # Shifting of original file
     auto_shift = Bool(True).tag(config=True, help="shift to start at origin")
@@ -196,7 +197,8 @@ class Job(Model):
     stack_size = ContainerList(Int(), default=[0, 0])
 
     #: Filters to cut only certain items
-    filters = ContainerList(filters.JobFilter)
+    svg_filters = ContainerList(filters.SvgFilter)
+    job_filters = ContainerList(filters.JobFilter)
 
     #: Original path parsed from the source document
     doc = Instance(QtSvgDoc)
@@ -259,13 +261,14 @@ class Job(Model):
             self.doc = self.path = QtSvgDoc(source, **self.document_kwargs)
 
         # Recreate available filters when the document changes
-        self.filters = self._default_filters()
+        self.svg_filters = self._default_svg_filters()
+        self.job_filters = self._default_job_filters()
 
-    def _default_filters(self):
+    def get_filters_from_registry(self, registry):
         results = []
         if not self.path:
             return results
-        for Filter in filters.REGISTRY.values():
+        for Filter in registry.values():
             try:
                 results.extend(Filter.get_filter_options(self, self.path))
             except Exception as e:
@@ -273,16 +276,29 @@ class Job(Model):
                 log.exception(e)
         return results
 
+    def _default_svg_filters(self):
+        return self.get_filters_from_registry(filters.SVG_FILTERS)
+
+    def _default_job_filters(self):
+        return self.get_filters_from_registry(filters.JOB_FILTERS)
+
+    def apply_filters(self, filter_list, doc):
+        for f in filter_list:
+            # If the color/layer is NOT enabled, then remove that color/layer
+            if not f.enabled:
+                log.debug("Applying filter {}".format(f))
+                doc = f.apply_filter(self, doc)
+        return doc
+
     def _default_optimized_path(self):
         """ Filter parts of the documen based on the selected layers and colors
 
         """
         doc = self.path
-        for f in self.filters:
-            # If the color/layer is NOT enabled, then remove that color/layer
-            if not f.enabled:
-                log.debug("Applying filter {}".format(f))
-                doc = f.apply_filter(self, doc)
+        # SVG filters need to happen first,
+        # these rely on the SVG structure of
+        # the document.
+        doc = self.apply_filters(self.svg_filters, doc)
 
         # Apply ordering to path
         # this delegates to objects in the ordering module
@@ -292,7 +308,7 @@ class Job(Model):
 
         return doc
 
-    @observe('path', 'order', 'filters')
+    @observe('path', 'order', 'svg_filters', 'job_filters', 'clip_to_plot_area')
     def _update_optimized_path(self, change):
         """ Whenever the loaded file (and parsed SVG path) changes update
         it based on the filters from the job.
@@ -360,7 +376,6 @@ class Job(Model):
         # Move to bottom left
         br = bbox.bottomRight()
         path = QTransform.fromTranslate(-br.x(), -br.y()).map(path)
-
         return path
 
     @contextmanager
@@ -379,7 +394,7 @@ class Job(Model):
              'copy_spacing', 'copy_weedline', 'copy_weedline_padding',
              'plot_weedline', 'plot_weedline_padding', 'feed_to_end',
              'feed_after', 'material', 'material.size', 'material.padding',
-             'auto_copies', 'auto_shift')
+             'auto_copies', 'auto_shift', 'clip_to_plot_area')
     def update_document(self, change=None):
         """ Recreate an instance of of the plot using the current settings
 
@@ -475,6 +490,10 @@ class Job(Model):
         ty += py
 
         model = QTransform.fromTranslate(tx, ty).map(model)
+
+        # Apply the job filters to the final result
+        # after copies and transformations have been applied.
+        model = self.apply_filters(self.job_filters, model)
 
         end_point = (QPointF(
             0, -self.feed_after + model.boundingRect().top())

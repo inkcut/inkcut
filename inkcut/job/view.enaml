@@ -335,7 +335,7 @@ enamldef WeedlinesDockItem(DockItem):
 enamldef LayersDockItem(DockItem):
     attr plugin
     attr job: Job << plugin.job
-    attr filters << job.filters if job else []
+    attr filters << job.svg_filters if job else []
 
     title = QApplication.translate("job", "Layers")
     name = 'layers-item'
@@ -505,6 +505,11 @@ enamldef MaterialDockItem(DockItem):
                 text = QApplication.translate("job", 'Align center vertically')
                 icon = load_icon('shape_align_middle')
                 checked := job.align_center[1]
+            CheckBox:
+                text = QApplication.translate("device", "Clip to plot area")
+                icon = load_icon('shape_square_width')
+                checked := job.clip_to_plot_area
+
         Container:
             padding = 0
             constraints = [
