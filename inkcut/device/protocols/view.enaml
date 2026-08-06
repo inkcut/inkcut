@@ -94,9 +94,10 @@ enamldef DMPLConfigView(Container):
 
 enamldef HPGLConfigView(Container):
     attr model
-    Label:
+    CheckBox:
+        checked := model.pad
         text = QApplication.translate("protocols",
                                       "Pad commands with line feed")
     CheckBox:
-        checked := model.pad
-        text = QApplication.translate("protocols", "Enable")
+        checked := model.separate_z_moves
+        text = QApplication.translate("protocols", "Send pen up/down commands separately from move commands")
