@@ -154,6 +154,10 @@ class Job(Model):
 
     # Job properties used for generating the plot
     size = ContainerList(Float(), default=[1, 1])
+
+    #: Size of the final layout (all copies incl. spacing), before the
+    #: trailing feed move. Shown in the UI when copies > 1.
+    final_size = ContainerList(Float(), default=[0, 0])
     scale = ContainerList(Float(), default=[1, 1]).tag(config=True)
     auto_scale = Bool(False).tag(
         config=True, help="automatically scale if it's too big for the area")
@@ -494,6 +498,13 @@ class Job(Model):
         # Apply the job filters to the final result
         # after copies and transformations have been applied.
         model = self.apply_filters(self.job_filters, model)
+
+        if not swap_xy and scale is None:
+            #: Only on the UI update path (device init passes swap/scale
+            #: and would leave device-space numbers here): the whole
+            #: layout's size, excluding the trailing feed move below
+            fbox = model.boundingRect()
+            self.final_size = [fbox.width(), fbox.height()]
 
         end_point = (QPointF(
             0, -self.feed_after + model.boundingRect().top())

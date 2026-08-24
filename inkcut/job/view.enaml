@@ -146,6 +146,75 @@ enamldef GraphicDockItem(DockItem):
             CheckBox:
                 text = QApplication.translate("job", "Lock aspect ratio")
                 checked := job.lock_scale
+            Conditional:
+                #: Whole layout (all copies incl. spacing) — the per-copy
+                #: spinboxes above don't change when copies are stepped up.
+                #: Editable: typing a total scales the graphic by the
+                #: ratio; spacing is fixed and stacking may reflow, so the
+                #: field re-displays the actual resulting total after the
+                #: layout recomputes.
+                condition << job.copies > 1
+                Label:
+                    text = QApplication.translate("job", "Total Size")
+                Form:
+                    padding = 0
+                    ImageView:
+                        image = load_image('text_letterspacing')
+                    DoubleSpinBox:
+                        value << to_unit(job.final_size[0], plugin.units)
+                        value ::
+                            #: The Qt spinbox rounds to `decimals`; a
+                            #: programmatic update (e.g. copies changed)
+                            #: comes back rounded, and Qt (half-up) and
+                            #: Python (banker's) can disagree by one ulp
+                            #: at halves — so treat anything within one
+                            #: display quantum as "unchanged" or the
+                            #: handler mistakes the echo for the user
+                            #: typing a new total and scales the job.
+                            v = to_unit(job.final_size[0], plugin.units)
+                            changed = abs(v - change['value']) > 1.01 * 10 ** (-self.decimals)
+                            if changed and change['oldvalue'] > 0 and change['value'] > 0:
+                                k = job.scale[0] * change['value']/change['oldvalue']
+                                #: copy: job.scale[0] = k mutates the
+                                #: same list oldvalue would point at
+                                oldvalue = job.scale[:]
+                                try:
+                                    if job.lock_scale:
+                                        job.scale = [k, k]
+                                    else:
+                                        job.scale[0] = k
+                                except Exception as e:
+                                    plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                                    job.scale = oldvalue
+                                    self.value = change['oldvalue']
+                        suffix << " "+plugin.units
+                        minimum = 0.00001
+                        maximum = 99999.9
+                    ImageView:
+                        image = load_image('text_linespacing')
+                    DoubleSpinBox:
+                        value << to_unit(job.final_size[1], plugin.units)
+                        value ::
+                            #: See width field: one display quantum of
+                            #: tolerance to ignore programmatic echoes
+                            v = to_unit(job.final_size[1], plugin.units)
+                            changed = abs(v - change['value']) > 1.01 * 10 ** (-self.decimals)
+                            if changed and change['oldvalue'] > 0 and change['value'] > 0:
+                                k = job.scale[1] * change['value']/change['oldvalue']
+                                #: copy: see width field
+                                oldvalue = job.scale[:]
+                                try:
+                                    if job.lock_scale:
+                                        job.scale = [k, k]
+                                    else:
+                                        job.scale[1] = k
+                                except Exception as e:
+                                    plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                                    job.scale = oldvalue
+                                    self.value = change['oldvalue']
+                        suffix << " "+plugin.units
+                        minimum = 0.00001
+                        maximum = 99999.9
             #CheckBox:
             #    text = 'Scale to fit'
             #    checked := job.auto_scale
@@ -216,6 +285,39 @@ enamldef GraphicDockItem(DockItem):
                     minimum = -180
                     wrapping = True
                     single_step = 15
+            Container:
+                #: Illustrator-style quick rotate; wraps into [-180, 180]
+                padding = 0
+                constraints = [hbox(rl, rr, r180, spacer)]
+                PushButton: rl:
+                    text = '90° ' + QApplication.translate("job", "left")
+                    icon = load_icon('shape_rotate_anticlockwise')
+                    clicked ::
+                        oldvalue = job.rotation
+                        try:
+                            job.rotation = ((job.rotation + 90 + 180) % 360) - 180
+                        except Exception as e:
+                            plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                            job.rotation = oldvalue
+                PushButton: rr:
+                    text = '90° ' + QApplication.translate("job", "right")
+                    icon = load_icon('shape_rotate_clockwise')
+                    clicked ::
+                        oldvalue = job.rotation
+                        try:
+                            job.rotation = ((job.rotation - 90 + 180) % 360) - 180
+                        except Exception as e:
+                            plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                            job.rotation = oldvalue
+                PushButton: r180:
+                    text = '180°'
+                    clicked ::
+                        oldvalue = job.rotation
+                        try:
+                            job.rotation = ((job.rotation + 180 + 180) % 360) - 180
+                        except Exception as e:
+                            plugin.workbench.message_critical(title="Does not fit", message=str(e))
+                            job.rotation = oldvalue
             CheckBox:
                 text = QApplication.translate("job", "Rotate to save space")
                 checked := job.auto_rotate
