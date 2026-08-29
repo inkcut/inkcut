@@ -313,6 +313,22 @@ class DeviceConfig(Model):
     #: Use absolute coordinates
     absolute = Bool().tag(config=True)
 
+    #: Feed the material out to the job's full length and back before
+    #: cutting. Pulling stiff media off the roll mid-cut drags the feed
+    #: and can jam the carriage; pre-feeding leaves it hanging free.
+    prefeed = Bool().tag(config=True)
+
+    #: Host-side pre-feed rate in mm/s. Some firmwares (e.g. the KH-870)
+    #: ignore protocol velocity commands, so the pre-feed is paced from
+    #: the host in small steps instead: slow enough that the roll's
+    #: inertia can follow without the grit rollers slipping on the media.
+    prefeed_speed = Float(100.0, strict=False).tag(config=True)
+
+    #: Machine velocity for the cut after a pre-feed. 0 leaves the
+    #: machine at its firmware default: no velocity command is sent
+    #: (the pre-feed is paced host-side, so it cannot leak into the cut).
+    cut_velocity = Int(0).tag(config=True)
+
     #: Device output is spooled by an external service
     #: this will cause the job to run with no delays between commands
     spooled = Bool().tag(config=True)
@@ -546,6 +562,93 @@ class Device(Model):
 
         return path
 
+    def _prefeed_steps(self, model, config, protocol):
+        """ Build the ordered steps for a material pre-feed.
+
+        Feeding the material out to the job's full length and back before
+        cutting leaves it hanging free of the roll, so the cut never has
+        to drag media off a stiff roll (which slips the feed and can jam
+        the carriage).
+
+        The feed rate is paced from the host: the travel is split into
+        small pen-up moves with a delay after each, so the AVERAGE rate
+        matches config.prefeed_speed (mm/s). This is required because
+        some firmwares (e.g. the Anhui Anyu KH-870) ignore protocol
+        velocity commands — a single long move would run at full machine
+        speed, and the roll's inertia makes the grit rollers slip on the
+        media ("spooling"). Protocol velocity commands are still emitted
+        for cutters that do honor them.
+
+        Parameters
+        ----------
+            model: QPainterPath
+                The transformed job model about to be cut.
+            config: DeviceConfig
+                The active device config.
+            protocol: DeviceProtocol
+                The active protocol (used for velocity control when it
+                supports set_velocity).
+
+        Returns
+        -------
+            steps: list of (callable, tuple, float)
+                (callable, args, delay_ms) triples to execute in order;
+                delay_ms is the pause after the step that produces the
+                configured average feed rate.
+
+        """
+        steps = []
+        set_velocity = getattr(protocol, 'set_velocity', None)
+        has_velocity = callable(set_velocity)
+        if not config.prefeed:
+            #: Still honor an explicit cut velocity at job start
+            if config.cut_velocity > 0 and has_velocity:
+                steps.append((set_velocity, (config.cut_velocity,), 0.0))
+            return steps
+        #: The model is still in Qt coordinates here (y <= 0, the flip to
+        #: device space happens in process()), so only the extent is
+        #: meaningful: feed out the bounding box height, not a raw y value.
+        travel = model.boundingRect().height()
+        if travel <= 0:
+            if config.cut_velocity > 0 and has_velocity:
+                steps.append((set_velocity, (config.cut_velocity,), 0.0))
+            return steps
+        #: Only pace via a protocol V command when a velocity is restored
+        #: afterwards (explicit cut velocity, or the job loop applying
+        #: config.speed); otherwise the slow prefeed V would leak into the
+        #: cut on firmwares that honor V.
+        if has_velocity and (config.cut_velocity > 0 or config.speed_enabled):
+            steps.append(
+                (set_velocity, (max(1, int(config.prefeed_speed / 10)),),
+                 0.0))
+        #: Pace from the host: 10mm pen-up steps, each followed by the
+        #: delay that yields prefeed_speed mm/s on average
+        step_px = from_unit(10, 'mm')
+        speed_px = max(1e-6, from_unit(config.prefeed_speed, 'mm'))  # px/s
+        #: Feed from the current origin, not absolute zero: after a
+        #: feed_to_end job the origin sits past the previous cut, and
+        #: rewinding to absolute zero would drag the head back over it.
+        x0, y0 = self.origin[0], self.origin[1]
+        y = y0
+        positions = []
+        while y < y0 + travel:
+            y = min(y + step_px, y0 + travel)
+            positions.append(y)
+        while y > y0:
+            y = max(y - step_px, y0)
+            positions.append(y)
+        prev = y0
+        for pos in positions:
+            delay_ms = abs(pos - prev) / speed_px * 1000.0
+            steps.append((self.move, ([x0, pos, 0],), delay_ms))
+            prev = pos
+        if has_velocity and config.cut_velocity > 0:
+            #: Restore the explicit cut velocity; cut_velocity == 0 means
+            #: firmware default, so nothing is sent (the job loop applies
+            #: config.speed next when speed_enabled).
+            steps.append((set_velocity, (config.cut_velocity,), 0.0))
+        return steps
+
     def init(self, job):
         """ Initialize the job. This should do any final path manipulation
         required by the device (or as specified by the config) and any filters
@@ -664,6 +767,23 @@ class Device(Model):
         cmd = self.config.commands_disconnect
         if cmd:
             yield defer.maybeDeferred(self.connection.write, cmd)
+        #: Let a buffering transport hand off anything still queued
+        #: (e.g. commands_disconnect) before the teardown below drops
+        #: it — but not for a cancelled job, whose queued moves must be
+        #: dropped, and never let a flush error block the disconnect
+        #: (the transport already surfaced it).
+        #: self.job is never cleared after a job ends, so only skip the
+        #: flush while the cancelled job is the ACTIVE one (busy is True
+        #: inside submit's device_busy block) — a later manual
+        #: disconnect must still hand off commands_disconnect.
+        job = self.job
+        flush = getattr(self.connection, 'flush', None)
+        if flush is not None and not (self.busy and job
+                                      and job.info.cancelled):
+            try:
+                yield defer.maybeDeferred(flush)
+            except Exception as e:
+                log.warning("device | flush on disconnect failed: %s" % e)
         yield defer.maybeDeferred(self.connection.disconnect)
 
     @defer.inlineCallbacks
@@ -791,14 +911,54 @@ class Device(Model):
                             yield defer.maybeDeferred(connection.write,
                                                       config.commands_before)
 
-                        self.status = "Working..."
+                        #: Feed the material out and back before cutting
+                        #: so it hangs free of the roll (prevents the cut
+                        #: dragging media off a stiff roll mid-job). The
+                        #: per-step delays pace the feed from the host —
+                        #: some firmwares ignore velocity commands.
+                        for func, fargs, delay_ms in self._prefeed_steps(
+                                model, config, protocol):
+                            #: A jammed or long feed must be stoppable:
+                            #: same pause/cancel/connection checks as the
+                            #: cutting loop below (which also short-circuits
+                            #: the cut if we break out here).
+                            if info.paused:
+                                self.status = "Job paused"
+                                while (info.paused and not info.cancelled
+                                       and connection.connected):
+                                    yield async_sleep(300)  # ms
+                            if info.cancelled:
+                                self.status = "Job cancelled"
+                                info.status = 'cancelled'
+                                break
+                            elif not connection.connected:
+                                self.status = (
+                                    getattr(connection, 'last_error', '')
+                                    or "connection error")
+                                info.status = 'error'
+                                break
+                            yield defer.maybeDeferred(func, *fargs)
+                            if delay_ms > 0:
+                                yield async_sleep(delay_ms)
 
-                        if config.force_enabled:
-                            yield defer.maybeDeferred(
-                                protocol.set_force, config.force)
-                        if config.speed_enabled:
-                            yield defer.maybeDeferred(
-                                protocol.set_velocity, config.speed)
+                        #: If the prefeed broke out (cancel/disconnect),
+                        #: skip the remaining setup — no force/velocity on
+                        #: a cancelled job or a dropped connection; the
+                        #: cutting loop's own checks finish the job with
+                        #: the same flow as a cancel mid-cut.
+                        if not info.cancelled and connection.connected:
+                            self.status = "Working..."
+
+                            if config.force_enabled:
+                                yield defer.maybeDeferred(
+                                    protocol.set_force, config.force)
+                            #: An explicit cut_velocity was already applied
+                            #: as the last prefeed step and takes precedence
+                            #: over the general speed setting.
+                            if (config.speed_enabled
+                                    and not config.cut_velocity > 0):
+                                yield defer.maybeDeferred(
+                                    protocol.set_velocity, config.speed)
 
                         #: For point in the path
                         for (d, cmd, args, kwargs) in self.process(model):
@@ -818,7 +978,12 @@ class Device(Model):
                                 info.status = 'cancelled'
                                 break
                             elif not connection.connected:
-                                self.status = "connection error"
+                                #: Show the transport's own error (e.g.
+                                #: the stalled-mid-transfer guidance)
+                                #: when it recorded one
+                                self.status = (
+                                    getattr(connection, 'last_error', '')
+                                    or "connection error")
                                 info.status = 'error'
                                 break
 
@@ -860,11 +1025,41 @@ class Device(Model):
                             yield defer.maybeDeferred(connection.write,
                                                       config.commands_after)
 
+                        #: The transport may buffer writes on a worker
+                        #: thread (USB): wait until everything queued has
+                        #: been handed to the device before declaring the
+                        #: job done — disconnect() below drops whatever
+                        #: is still queued. Never flush a cancelled or
+                        #: failed job: its queued moves must be dropped.
+                        flush = getattr(connection, 'flush', None)
+                        if (flush is not None and info.status == 'running'
+                                and not info.cancelled):
+                            try:
+                                yield defer.maybeDeferred(
+                                    flush, cancelled=lambda: info.cancelled)
+                            except Exception as e:
+                                if info.cancelled:
+                                    #: the cancel handling below owns it
+                                    log.debug(
+                                        "device | flush cancelled: %s" % e)
+                                else:
+                                    log.error(
+                                        "device | flush failed: %s" % e)
+                                    self.status = str(e)
+                                    info.status = 'error'
+
+                        #: A cancel that lands after the send loop is
+                        #: done (e.g. during the flush drain, which can
+                        #: take minutes) must not become 'complete'
+                        if info.cancelled and info.status == 'running':
+                            self.status = "Job cancelled"
+                            info.status = 'cancelled'
+
                         #: Update stats
                         info.ended = datetime.now()
 
                         #: If not cancelled or errored
-                        if info.status == 'running':
+                        if info.status == 'running' and not info.cancelled:
                             info.done = True
                             info.status = 'complete'
                     except Exception as e:
@@ -1154,14 +1349,28 @@ class DevicePlugin(Plugin):
                 and processing the jobs.
 
         """
-        # Set the protocols based on the declaration
+        # Set the transports based on the declaration. 'disk' and 'usb'
+        # are always offered: predefined drivers predate the raw-USB
+        # transport and would otherwise never expose it. Order by the
+        # driver's declared connections so transports[0] (the default,
+        # see Device._default_connection) is what the driver declares —
+        # not whichever transport happened to register first.
         transports = [t for t in self.transports
-                      if not driver.connections or t.id == 'disk' or
-                      t.id in driver.connections]
+                      if not driver.connections or t.id in ('disk', 'usb')
+                      or t.id in driver.connections]
+        if driver.connections:
+            rank = {tid: i for i, tid in enumerate(driver.connections)}
+            transports.sort(key=lambda t: rank.get(t.id, len(rank)))
 
-        # Set the protocols based on the declaration
+        # Set the protocols based on the declaration, preserving the
+        # driver's declared order: protocols[0] is the default (see
+        # Device._create_default_protocol), and registration order would
+        # otherwise pick e.g. HPGL for drivers listing DMPL first.
         protocols = [p for p in self.protocols
                      if not driver.protocols or p.id in driver.protocols]
+        if driver.protocols:
+            rank = {pid: i for i, pid in enumerate(driver.protocols)}
+            protocols.sort(key=lambda p: rank.get(p.id, len(rank)))
 
         # Generate the device
         return driver.factory(driver, transports, protocols, config)
