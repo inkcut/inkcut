@@ -146,6 +146,11 @@ class Job(Model):
     #: Path to svg document this job parses
     document = Str().tag(config=True)
 
+    #: Path of the original source document when `document` points to a
+    #: converted copy (e.g. a PDF/AI imported via a cached SVG). The UI
+    #: shows this instead of the internal cache filename.
+    source_document = Str().tag(config=True)
+
     #: Nodes to restrict
     document_kwargs = Dict().tag(config=True)
 
@@ -216,7 +221,7 @@ class Job(Model):
     _desired_copies = Int(1)  # required for auto copies
 
     def __str__(self):
-        source = self.document
+        source = self.source_document or self.document
         if not source:
             return "Empty document"
         if source.startswith("<?xml"):
@@ -231,6 +236,7 @@ class Job(Model):
         state = super(Job, self).__getstate__()
         if state["document"] == "-": # Stdin, would crash the Plugin every second time
             state["document"] = ''
+            state["source_document"] = ''
         return state
 
     def __setstate__(self, *args, **kwargs):

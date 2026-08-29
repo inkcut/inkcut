@@ -35,13 +35,19 @@ def open_document(event):
     if not path:
         #: Get the previous path
         if plugin.jobs:
-            current_path = dirname(plugin.jobs[-1].document)
+            #: Imported jobs load a converted copy from the internal
+            #: cache — start the dialog at the original document instead
+            last = plugin.jobs[-1]
+            current_path = dirname(last.source_document or last.document)
         else:
             current_path = expanduser('~')
 
         #: Get the file to open
         path = FileDialogEx.get_open_file_name(
-            ui.window, current_path=current_path, name_filters=['*.svg']
+            ui.window, current_path=current_path,
+            name_filters=['Vector files (*.svg *.pdf *.ai)',
+                          'SVG (*.svg)', 'PDF (*.pdf)',
+                          'Adobe Illustrator (*.ai)']
         )
 
     #: Open it
