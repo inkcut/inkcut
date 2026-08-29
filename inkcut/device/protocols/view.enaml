@@ -11,6 +11,7 @@ Created on Dec 11, 2017
 @author: jrm
 """
 from enaml.core.api import Conditional
+import textwrap
 from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, MultilineField, CheckBox
 from enamlx.widgets.api import DoubleSpinBox
 from enaml.qt.QtWidgets import QApplication
@@ -23,6 +24,16 @@ enamldef DMPLConfigView(Container):
     ObjectCombo:
         items  = list(model.get_member('mode').items)
         selected := model.mode
+    CheckBox:
+        text = QApplication.translate("protocols", "Swap axes (feed-first firmware)")
+        tool_tip = QApplication.translate("protocols", textwrap.dedent("""
+            Some firmwares (e.g. the Anhui-Anyu boards in VEVOR cutters)
+            expect the media-feed coordinate FIRST and the carriage
+            coordinate second, opposite of the usual convention. Enable
+            this so feed-to-end, pre-feed and origin tracking physically
+            reach the feed rollers on such cutters.
+            """).strip())
+        checked := model.swap_axes
 
 
 enamldef GCodeConfigView(Container):
@@ -81,15 +92,6 @@ enamldef GCodeConfigView(Container):
                    text := model.lower_gcode
                    tool_tip = QApplication.translate("protocols", "Commands here will get sent when starting to draw a line")
         
-
-
-enamldef DMPLConfigView(Container):
-    attr model
-    Label:
-        text = QApplication.translate("protocols", "Mode")
-    ObjectCombo:
-        items  = list(model.get_member('mode').items)
-        selected := model.mode
 
 
 enamldef HPGLConfigView(Container):

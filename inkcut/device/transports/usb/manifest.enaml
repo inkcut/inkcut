@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+"""
+Native libusb (pyusb) transport manifest.
+
+Created on Aug 17, 2026
+"""
+import enaml
+from enaml.workbench.api import Extension
+from enaml.workbench.plugin_manifest import PluginManifest
+from inkcut.device.extensions import DeviceTransport, DEVICE_TRANSPORT_POINT
+
+
+def transport_factory(driver, declaration, protocol):
+    from .plugin import UsbTransport, UsbConfig
+    config = UsbConfig(**driver.get_connection_config('usb'))
+    return UsbTransport(declaration=declaration, protocol=protocol,
+                        config=config)
+
+
+def config_view_factory():
+    with enaml.imports():
+        from .settings import UsbSettingsView
+    return UsbSettingsView
+
+
+enamldef UsbManifest(PluginManifest):
+    """ Direct USB (libusb) transport for printer-class cutters that get
+    no serial port on macOS.
+
+    """
+    id = 'inkcut.device.transport.usb'
+    Extension:
+        id = 'transports'
+        point = DEVICE_TRANSPORT_POINT
+
+        DeviceTransport:
+            id = 'usb'
+            name = 'USB (libusb)'
+            factory = transport_factory
+            config_view = config_view_factory
