@@ -51,7 +51,7 @@ class BladeOffsetFilter(DeviceFilter):
     #: Change config
     config = Instance(BladeOffsetConfig, ()).tag(config=True)
 
-    def apply_to_model(self, model, job):
+    async def apply_to_model(self, model, job):
         """Apply the filter to the path model.
 
         Parameters

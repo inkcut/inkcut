@@ -8,20 +8,17 @@ from inkcut.device.plugin import DeviceProtocol
 
 
 class CAMMGL1Protocol(DeviceProtocol):
-    def connection_made(self):
-        self.write("IN;")
+    async def init(self):
+        await self.write("IN;")
     
-    def move(self, x, y, z, absolute=True):
-        self.write("{z}{x},{y};".format(x=x, y=y, z=z and "D" or "M", ))
+    async def move(self, x, y, z, absolute=True):
+        await self.write("{z}{x},{y};".format(x=x, y=y, z=z and "D" or "M", ))
         
-    def set_force(self, f):
-        self.write("FS{f};".format(f=f))
+    async def set_force(self, f):
+        await self.write("FS{f};".format(f=f))
         
-    def set_velocity(self, v):
-        self.write("VS{v};".format(v=v))
+    async def set_velocity(self, v):
+        await self.write("VS{v};".format(v=v))
         
-    def set_pen(self, p):
-        self.write("SP{p};".format(p=p))
-
-    def connection_lost(self):
-        pass
+    async def set_pen(self, p):
+        await self.write("SP{p};".format(p=p))

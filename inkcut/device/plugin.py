@@ -10,6 +10,7 @@ Created on Jan 16, 2015
 
 @author: jrm
 """
+import asyncio
 import enaml
 import traceback
 from atom.api import (
@@ -19,10 +20,11 @@ from atom.api import (
 from contextlib import contextmanager
 from datetime import datetime
 from enaml.qt import QtCore, QtGui
+from enaml.qt.QtGui import QPainterPath, QPolygon
 from enaml.application import timed_call
 from inkcut.core.api import Model, Plugin, AreaBase
-from inkcut.core.utils import parse_unit, from_unit, to_unit, async_sleep, log
-from twisted.internet import defer
+from inkcut.core.utils import parse_unit, from_unit, to_unit, log
+from inkcut.job.models import Job
 from io import BytesIO
 from . import extensions
 import copy
@@ -43,8 +45,10 @@ class DeviceTransport(Model):
     #: The active protocol
     protocol = ForwardInstance(lambda: DeviceProtocol).tag(config=True)
 
-    #: Connection state. Subclasses must implement and properly update this
+    #: Connection state. Subclasses must implement and properly update this value.
     connected = Bool()
+    #: Connected event. Use self.connected_event.wait() to wait until connection is true in async code.
+    connected_event = Typed(asyncio.Event, ())
 
     #: Distinguish between transports that always spool (e.g. Printer, File I/O)
     #: or are dependent on the 'spooling' configuration option (e.g. Serial)
@@ -66,26 +70,32 @@ class DeviceTransport(Model):
         if change['type'] in ('update', 'create') and change['value']:
             self.protocol.transport = self
 
-    def connect(self):
+    def _observe_connected(self, change):
+        if self.connected:
+            self.connected_event.set()
+        else:
+            self.connected_event.clear()
+
+    async def connect(self):
         """ Connect using whatever implementation necessary
 
         """
         raise NotImplementedError
 
-    def write(self, data):
+    async def write(self, data):
         """ Write using whatever implementation necessary
 
         """
         raise NotImplementedError
 
-    def read(self, size=None):
+    async def read(self, size=None):
         """ Read using whatever implementation necessary and
         invoke `protocol.data_received` with the output.
 
         """
         raise NotImplementedError
 
-    def disconnect(self):
+    async def disconnect(self):
         """ Disconnect using whatever implementation necessary
 
         """
@@ -98,13 +108,23 @@ class TestTransport(DeviceTransport):
     #: The output buffer
     buffer = Instance(BytesIO, ())
 
-    def connect(self):
+    #: Dummy declaration
+    DECLARATION = extensions.DeviceTransport(
+        id="test",
+        name="Test transport",
+        factory=lambda driver, proto: TestTransport(),
+    )
+
+    def _default_declaration(self):
+        return self.DECLARATION
+
+    async def connect(self):
         self.connected = True
         #: Save a reference
         self.protocol.transport = self
-        self.protocol.connection_made()
+        await self.protocol.init()
 
-    def write(self, data):
+    async def write(self, data):
         log.debug("-> Test | {}".format(data))
 
         #: Python 3 is annoying
@@ -113,10 +133,10 @@ class TestTransport(DeviceTransport):
 
         self.buffer.write(data)
 
-    def read(self, size=None):
+    async def read(self, size=None):
         return ""
 
-    def disconnect(self):
+    async def disconnect(self):
         self.connected = False
         self.protocol.connection_lost()
 
@@ -132,7 +152,7 @@ class DeviceProtocol(Model):
     #: The protocol specific config
     config = Instance(Model, ()).tag(config=True)
 
-    def connection_made(self):
+    async def init(self):
         """ This is called when a connection is made to the device.
 
         Use this to send any initialization commands before the job starts.
@@ -140,7 +160,7 @@ class DeviceProtocol(Model):
         """
         raise NotImplementedError
 
-    def set_pen(self, p):
+    async def set_pen(self, p):
         """ Set the pen or tool that should be used.
 
          Parameters
@@ -150,7 +170,7 @@ class DeviceProtocol(Model):
 
         """
 
-    def set_force(self, f):
+    async def set_force(self, f):
         """ Set the force the device should use.
 
         Parameters
@@ -160,7 +180,7 @@ class DeviceProtocol(Model):
 
         """
 
-    def set_velocity(self, v):
+    async def set_velocity(self, v):
         """ Set the force the device should use.
 
         Parameters
@@ -170,20 +190,20 @@ class DeviceProtocol(Model):
 
         """
 
-    def move(self, x, y, z, absolute=True):
+    async def move(self, x, y, z, absolute=True):
         """ Called when the device position is updated.
 
         """
         raise NotImplementedError
 
-    def write(self, data):
+    async def write(self, data):
         """ Call this to write data using the underlying transport.
 
         This should typically not be overridden.
 
         """
         if self.transport is not None:
-            self.transport.write(data)
+            await self.transport.write(data)
 
     def data_received(self, data):
         """ Called when the device replies back with data. This can occur
@@ -198,17 +218,10 @@ class DeviceProtocol(Model):
         """
         log.debug("data received: {}".format(data))
 
-    def finish(self):
+    async def finish(self):
         """ Called when processing all of the paths of the job are complete.
 
         Use this to send any finalization commands.
-
-        """
-        pass
-
-    def connection_lost(self):
-        """ Called the connection to the device is dropped or
-        failed to connect.  No more data can be written when this is called.
 
         """
         pass
@@ -227,8 +240,11 @@ class DeviceFilter(Model):
     #: The protocol specific config
     config = Instance(Model, ()).tag(config=True)
 
-    def apply_to_model(self, model, job):
-        """ Apply the filter to the model
+    async def apply_to_model(self, model: QPainterPath, job) -> QPainterPath:
+        """ Apply the filter to the model.
+
+        If this operation takes a long time it should periodically call
+        await asynio.sleep(0) to avoid blocking .the UI
 
         Parameters
         ----------
@@ -245,8 +261,11 @@ class DeviceFilter(Model):
         """
         return model
 
-    def apply_to_polypath(self, polypath):
+    async def apply_to_polypath(self, polypath: list[QPolygon]) -> list[QPolygon]:
         """ Apply the filter to the model
+
+        If this operation takes a long time it should periodically call
+        await asynio.sleep(0) to avoid blocking .the UI
 
         Parameters
         ----------
@@ -479,8 +498,7 @@ class Device(Model):
             if test:
                 self.connection = connection
 
-    @defer.inlineCallbacks
-    def test(self):
+    async def test(self):
         """ Execute a test job on the device. This creates
         and submits new job that is simply a small square.
 
@@ -513,7 +531,7 @@ class Device(Model):
 
         return new_dev
 
-    def transform(self, path):
+    def transform(self, path: QPainterPath) -> QPainterPath:
         """ Apply the device output transform to the given path. This
         is used by other plugins that may need to display or work with
         tranformed output.
@@ -546,7 +564,7 @@ class Device(Model):
 
         return path
 
-    def init(self, job):
+    def init(self, job: Job) -> QPainterPath:
         """ Initialize the job. This should do any final path manipulation
         required by the device (or as specified by the config) and any filters
         should be applied here (overcut, blade offset compensation, etc..).
@@ -592,8 +610,7 @@ class Device(Model):
         #: Return the transformed model
         return model
 
-    @defer.inlineCallbacks
-    def connect(self):
+    async def connect(self):
         """ Connect to the device. By default this delegates handling
         to the active transport or connection handler.
 
@@ -609,12 +626,12 @@ class Device(Model):
             log.debug("device | already connected")
             log.debug(traceback.format_stack())
             return
-        yield defer.maybeDeferred(self.connection.connect)
+        await self.connection.connect()
         cmd = self.config.commands_connect
         if cmd:
-            yield defer.maybeDeferred(self.connection.write, cmd)
+            await self.connection.write(cmd)
 
-    def move(self, position, absolute=True):
+    async def move(self, position, absolute=True):
         """ Move to the given position. By default this delegates handling
         to the active protocol.
 
@@ -643,31 +660,31 @@ class Device(Model):
             p[1] += position[1]
             self.position = p
 
-        result = self.connection.protocol.move(*position, absolute=absolute)
+        result = await self.connection.protocol.move(*position, absolute=absolute)
         if result:
             return result
 
-    def finish(self):
+    async def finish(self):
         """ Finish the job applying any cleanup necessary.
 
         """
         log.debug("device | finish")
-        return self.connection.protocol.finish()
+        return await self.connection.protocol.finish()
 
-    @defer.inlineCallbacks
-    def disconnect(self):
+    async def disconnect(self):
         """ Disconnect from the device. By default this delegates handling
         to the active transport or connection handler.
 
         """
         log.debug("device | disconnect")
+        if not self.connection:
+            return
         cmd = self.config.commands_disconnect
         if cmd:
-            yield defer.maybeDeferred(self.connection.write, cmd)
-        yield defer.maybeDeferred(self.connection.disconnect)
+            await self.connection.write(cmd)
+        await self.connection.disconnect()
 
-    @defer.inlineCallbacks
-    def submit(self, job, test=False):
+    async def submit(self, job: Job, test=False):
         """ Submit the job to the device. If the device is currently running
         a job it will be queued and run when this is finished.
 
@@ -738,7 +755,7 @@ class Device(Model):
                         config.speed_units.split("/")[0])/1000.0
 
                 # Device model is updated in real time
-                model = yield defer.maybeDeferred(self.init, job)
+                model = self.init(job)
 
                 #: Local references are faster
                 info = job.info
@@ -768,7 +785,7 @@ class Device(Model):
                     info.status = 'approved'
                 else:
                     #: Check for approval before starting
-                    yield defer.maybeDeferred(info.request_approval)
+                    info.request_approval()
                     if info.status != 'approved':
                         self.status = "Job cancelled"
                         return
@@ -782,26 +799,25 @@ class Device(Model):
                                 test or config.test_mode) as connection:
                     self.status = "Processing job"
                     try:
-                        yield defer.maybeDeferred(self.connect)
+                        self.status = "Connecting..."
+                        await self.connect()
+                        self.status = "Connected!"
 
                         protocol = connection.protocol
 
                         #: Write startup command
-                        if config.commands_before:
-                            yield defer.maybeDeferred(connection.write,
-                                                      config.commands_before)
+                        if cmds := config.commands_before:
+                            await connection.write(cmds)
 
                         self.status = "Working..."
 
                         if config.force_enabled:
-                            yield defer.maybeDeferred(
-                                protocol.set_force, config.force)
+                            await protocol.set_force(config.force)
                         if config.speed_enabled:
-                            yield defer.maybeDeferred(
-                                protocol.set_velocity, config.speed)
+                            await protocol.set_velocity(config.speed)
 
                         #: For point in the path
-                        for (d, cmd, args, kwargs) in self.process(model):
+                        async for (d, cmd, args, kwargs) in self.process(model):
 
                             #: Check if we paused
                             if info.paused:
@@ -810,7 +826,7 @@ class Device(Model):
                                 #: connection drops
                                 while (info.paused and not info.cancelled
                                        and connection.connected):
-                                    yield async_sleep(300)  # ms
+                                    await asyncio.sleep(0.3)  # ms
 
                             #: Check for cancel for non interpolated jobs
                             if info.cancelled:
@@ -825,9 +841,8 @@ class Device(Model):
                             #: Invoke the command
                             #: If you want to let the device handle more complex
                             #: commands such as curves do it in process and handle
-                            yield defer.maybeDeferred(cmd, *args, **kwargs)
+                            await cmd(*args, **kwargs)
                             total_moved += d
-
                             #: d should be the device must move in px
                             #: so wait a proportional amount of time for the device
                             #: to catch up. This avoids buffer errors from dumping
@@ -840,10 +855,8 @@ class Device(Model):
                             #: get all jacked up. If the transport sends to a spooled
                             #: output (such as a printer) this can be set to 0
                             if rate > 0:
-                                # log.debug("d={}, delay={} t={}".format(
-                                #     d, delay, d/delay
-                                # ))
-                                yield async_sleep(d/rate)
+
+                                await asyncio.sleep(d/rate/1000)
 
                             #: TODO: Check if we need to update the ui
                             #: Set the job progress based on how far we've gone
@@ -853,12 +866,12 @@ class Device(Model):
 
                         if info.status != 'error':
                             #: We're done, send any finalization commands
-                            yield defer.maybeDeferred(self.finish)
+                            self.status = "finalizing"
+                            await self.finish()
 
                         #: Write finalize command
-                        if config.commands_after:
-                            yield defer.maybeDeferred(connection.write,
-                                                      config.commands_after)
+                        if cmds := config.commands_after:
+                            await connection.write(cmds)
 
                         #: Update stats
                         info.ended = datetime.now()
@@ -867,12 +880,13 @@ class Device(Model):
                         if info.status == 'running':
                             info.done = True
                             info.status = 'complete'
+
                     except Exception as e:
                         log.error(traceback.format_exc())
                         raise
                     finally:
                         if connection.connected:
-                            yield defer.maybeDeferred(self.disconnect)
+                            await self.disconnect()
 
             #: Set the origin
             if job.feed_to_end and job.info.status == 'complete':
@@ -893,7 +907,7 @@ class Device(Model):
                 traceback.format_exc()))
             raise
 
-    def process(self, model):
+    async def process(self, model: QPainterPath):
         """  Process the path model of a job and return each command
         within the job.
 
@@ -932,7 +946,7 @@ class Device(Model):
             # Apply device filters
             for f in self.filters:
                 log.debug(" filter | Running {} on model".format(f))
-                model = f.apply_to_model(model, job=self)
+                model = await f.apply_to_model(model, job=self)
 
             # Since Qt's toSubpathPolygons converts curves without accepting
             # a parameter to set the minimum distance between points on the
@@ -954,7 +968,7 @@ class Device(Model):
             # Apply device filters to polypath
             for f in self.filters:
                 log.debug(" filter | Running {} on polypath".format(f))
-                polypath = f.apply_to_polypath(polypath)
+                polypath = await f.apply_to_polypath(polypath)
 
             for path in polypath:
 

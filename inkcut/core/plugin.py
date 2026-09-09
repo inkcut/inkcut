@@ -58,7 +58,6 @@ class CorePlugin(Plugin):
     language = Enum('system', *sorted(ALL_TRANSLATIONS)).tag(config=True)
 
     def start(self):
-        self.init_logging()
         super(CorePlugin, self).start()
         log.debug("Inkcut loaded.")
 
@@ -92,10 +91,3 @@ class CorePlugin(Plugin):
                                       error=msg.strip(),
                                       log_dir=log_dir))
             raise
-
-    def init_logging(self):
-        """ Initialize twisted logging  """
-        #: Start twisted logger
-        from twisted.python.log import PythonLoggingObserver
-        observer = PythonLoggingObserver()
-        observer.start()

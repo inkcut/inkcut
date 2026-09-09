@@ -23,16 +23,16 @@ class HPGLProtocol(DeviceProtocol):
     #: Pad option
     config = Instance(HPGLConfig, ()).tag(config=True)
 
-    def write(self, data):
+    async def write(self, data):
         if self.config.pad:
             data += "\n"
-        super().write(data)
+        await super().write(data)
 
-    def connection_made(self):
+    async def init(self):
         #: Initialize in absoulte mode
-        self.write("IN;")
+        await self.write("IN;")
 
-    def move(self, x, y, z, absolute=True):
+    async def move(self, x, y, z, absolute=True):
         """ Move the given position. If absolute is true use a PR
         otherwise use PA. Most of the chinese machines don't handle
         negative values so absolute moves only works.
@@ -41,23 +41,23 @@ class HPGLProtocol(DeviceProtocol):
         x, y = int(x*self.scale), int(y*self.scale)
         if absolute:
             if self.config.separate_z_moves:
-                self.write('PD;' if z else 'PU;')
-                self.write("PA%i,%i;" % (x, y))
+                await self.write('PD;' if z else 'PU;')
+                await self.write("PA%i,%i;" % (x, y))
             else:
-                self.write("%s%i,%i;" % ('PD' if z else 'PU', x, y))
+                await self.write("%s%i,%i;" % ('PD' if z else 'PU', x, y))
         else:
-            self.write('PR%i,%i;' % (x, y))
+            await self.write('PR%i,%i;' % (x, y))
 
-    def set_force(self, f):
-        self.write("FS%i; " % f)
+    async def set_force(self, f):
+        await self.write("FS%i; " % f)
         
-    def set_velocity(self, v):
-        self.write("VS%i;" % v)
+    async def set_velocity(self, v):
+        await self.write("VS%i;" % v)
         
-    def set_pen(self, p):
-        self.write("SP%i;" % p)
+    async def set_pen(self, p):
+        await self.write("SP%i;" % p)
         
-    def finish(self):
+    async def finish(self):
         # Reinitialize
-        self.write("IN;")
+        await self.write("IN;")
 

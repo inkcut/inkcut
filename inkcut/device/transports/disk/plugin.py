@@ -50,7 +50,7 @@ class FileTransport(DeviceTransport):
         )
         return join(config.directory, config.format.format(**params))
 
-    def connect(self):
+    async def connect(self):
         config = self.config
         path = self.path = self._default_path()
         if not exists(config.directory):
@@ -60,9 +60,9 @@ class FileTransport(DeviceTransport):
         self.connected = True
         #: Save a reference
         self.protocol.transport = self
-        self.protocol.connection_made()
+        await self.protocol.init()
 
-    def write(self, data):
+    async def write(self, data):
         log.debug("-> File | {}".format(data))
 
         #: Python 3 is annoying
@@ -71,13 +71,12 @@ class FileTransport(DeviceTransport):
 
         self.file.write(data)
 
-    def read(self, size=None):
+    async def read(self, size=None):
         return ""
 
-    def disconnect(self):
+    async def disconnect(self):
         log.debug("-- File | Closed '{}'".format(self.path))
         self.connected = False
-        self.protocol.connection_lost()
         if self.file:
             self.file.close()
             self.file = None

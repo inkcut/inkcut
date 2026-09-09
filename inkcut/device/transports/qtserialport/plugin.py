@@ -119,7 +119,7 @@ class QtSerialTransport(DeviceTransport):
             log.error("{}".format(traceback.format_exc()))
             return None    
 
-    def connect(self):
+    async def connect(self):
         config = self.config
         #self.device_path = config.port
         device_path = self.device_path = config.port
@@ -130,14 +130,14 @@ class QtSerialTransport(DeviceTransport):
             self.connection = self.open_serial_port(config)
             self.connected = True
             log.debug("{} | opened".format(config.port))
-            self.protocol.connection_made()
+            await self.protocol.init()
             
         except Exception as e:
             #: Make sure to log any issues
             log.error("{} | {}".format(config.port, traceback.format_exc()))
             raise
             
-    def write(self, data):
+    async def write(self, data):
         if not self.connection:
             raise IOError("{} is not opened".format(self.device_path))
         log.debug("-> {} | {}".format(self.device_path, data))
@@ -146,7 +146,8 @@ class QtSerialTransport(DeviceTransport):
         self.last_write = data
         self.connection.write(data)
         self.connection.waitForBytesWritten(-1)
-    def disconnect(self):
+
+    async def disconnect(self):
         if self.connection:
             self.connection.waitForBytesWritten(-1)
             log.debug("-- {} | closed by request".format(self.device_path))

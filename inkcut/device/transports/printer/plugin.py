@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Copyright (c) 2017, Jairus Martin.
 
@@ -7,18 +6,16 @@ Distributed under the terms of the GPL v3 License.
 The full license is in the file LICENSE, distributed with this software.
 
 Created on Dec 19, 2017
-
-@author: jrm
 """
+import asyncio
 import sys
 import traceback
 
+
 from atom.atom import set_default
-from atom.api import List, Instance, Str
+from atom.api import Atom, List, ForwardInstance, Instance, Str
 from inkcut.core.api import Plugin, Model, log
-from inkcut.device.plugin import DeviceTransport
-from twisted.internet import reactor
-from twisted.internet.protocol import ProcessProtocol
+from inkcut.device.plugin import DeviceTransport, DeviceProtocol
 
 try:
     if sys.platform == 'win32':
@@ -63,13 +60,13 @@ class PrinterConnection(Model):
     #: The actual printer
     printer = Instance(object)
 
-    def open(self):
+    async def open(self):
         raise NotImplementedError
 
-    def write(self, data):
+    async def write(self, data):
         log.debug("-> {} | {}".format(self.transport.config.printer, data))
 
-    def close(self):
+    async def close(self):
         raise NotImplementedError
 
 
@@ -93,7 +90,7 @@ class Win32PrinterConfig(PrinterConfig):
 class Win32PrinterConnection(PrinterConnection):
     job = Instance(object)
 
-    def open(self):
+    async def open(self):
         p = win32print.OpenPrinter(self.transport.config.printer)
         self.job = win32print.StartDocPrinter(
             p, 1, ("Inkcut job", None, "RAW"))
@@ -102,21 +99,19 @@ class Win32PrinterConnection(PrinterConnection):
 
         #: Sync
         self.transport.connected = True
-        self.transport.protocol.connection_made()
+        await self.transport.protocol.init()
 
-    def write(self, data):
+    async def write(self, data):
         super(Win32PrinterConnection, self).write(data)
         win32print.WritePrinter(self.printer, bytearray(data,'ascii'))
 
-    def close(self):
+    async def close(self):
         p = self.printer
         win32print.EndPagePrinter(p)
         win32print.EndDocPrinter(p)
         win32print.ClosePrinter(p)
         #: Sync
         self.transport.connected = False
-        self.transport.protocol.connection_lost()
-
 
 # -----------------------------------------------------------------------------
 # Cups API
@@ -136,53 +131,58 @@ class CupsPrinterConfig(PrinterConfig):
 # -----------------------------------------------------------------------------
 # LPR API
 # -----------------------------------------------------------------------------
-class LPRProtocol(ProcessProtocol, object):
-    def __init__(self, parent, protocol):
-        self.parent = parent
+class LPRProtocol(asyncio.SubprocessProtocol, Atom):
+    parent = ForwardInstance(lambda: PrinterTransport)
+    delegate = Instance(DeviceProtocol)
+
+    def connection_made(self, transport):
         self.parent.connected = True
-        self.delegate = protocol
 
-    def connectionMade(self):
-        self.delegate.connection_made()
+    def pipe_data_received(self, fd, data):
+        if fd == 1:
+            self.in_received(data)
+        elif fd == 2:
+            self.out_received(data)
+        else:
+            self.err_received(data)
 
-    def outReceived(self, data):
+    def out_received(self, data):
         self.delegate.data_received(data)
 
-    def errReceived(self, data):
+    def err_received(self, data):
         log.error("LPR error: {}".format(data))
 
-    def inReceived(self, data):
+    def in_received(self, data):
         self.delegate.data_received(data)
 
-    def processEnded(self, status):
+    def process_exited(self, status):
         if (status.value.exitCode != 0):
             log.error("LPR error: %d" % (status.value.exitCode,))
         else:
             log.debug("LPR exited without error")
         self.parent.connected = False
-        self.delegate.connection_lost()
 
 
 class LPRPrinterConnection(PrinterConnection):
     #: Delegate
     _protocol = Instance(LPRProtocol)
 
-    def open(self):
+    async def open(self):
         t = self.transport
-        self._protocol = LPRProtocol(t, t.protocol)
-        self.printer = reactor.spawnProcess(
-            self._protocol, 'lpr', ['lpr', '-P', t.config.printer]
+        loop = asyncio.get_running_loop()
+        self._protocol = LPRProtocol(parent=t, delegate=t.protocol)
+        self.printer = loop.subprocess_exec(
+            lambda: self._protocol, 'lpr', ['lpr', '-P', t.config.printer]
         )
-
-    def write(self, data):
+    async def write(self, data):
         super(LPRPrinterConnection, self).write(data)
         if hasattr(data, 'encode'):
             data = data.encode()
-        self._protocol.transport.write(data)
+        await self._protocol.transport.write(data)
 
-    def close(self):
+    async def close(self):
         #: Close, the process should exit
-        self._protocol.transport.closeStdin()
+        self._protocol.transport.close()
 
 
 # -----------------------------------------------------------------------------
@@ -211,7 +211,7 @@ class PrinterTransport(DeviceTransport):
         else:
             return LPRPrinterConnection()
 
-    def connect(self):
+    async def connect(self):
         try:
             # Always create a new connection
             self.connection = self._default_connection()
@@ -219,7 +219,9 @@ class PrinterTransport(DeviceTransport):
             # Save a reference
             self.protocol.transport = self
             self.connection.transport = self
-            self.connection.open()
+            await self.connection.open()
+            await self.connected_event.wait()
+            await self.protocol.init()
             log.debug("{} | opened".format(self.config.printer))
         except Exception as e:
             # Make sure to log any issues as these tracebacks can get
@@ -229,14 +231,14 @@ class PrinterTransport(DeviceTransport):
             ))
             raise
 
-    def write(self, data):
+    async def write(self, data):
         if not self.connection:
             raise IOError("Port is not opened")
-        self.connection.write(data)
+        await self.connection.write(data)
 
-    def disconnect(self):
+    async def disconnect(self):
         if self.connection:
-            self.connection.close()
+            await self.connection.close()
             log.debug("{} | closed".format(self.config.printer))
             self.connection = None
 

@@ -11,17 +11,17 @@ from inkcut.device.plugin import DeviceProtocol
 
 
 class GPGLProtocol(DeviceProtocol):
-    def connection_made(self):
-        self.write("H")
+    async def init(self):
+        await self.write("H")
 
-    def move(self, x, y, z, absolute=True):
-        self.write("%s%i,%i"%('D' if z else 'M', x, y))
+    async def move(self, x, y, z, absolute=True):
+        await self.write("%s%i,%i"%('D' if z else 'M', x, y))
 
-    def set_velocity(self, v):
-        self.write('!%i' % v)
+    async def set_velocity(self, v):
+        await self.write('!%i' % v)
 
-    def set_force(self, f):
-        self.write("FX%i,1" % f)
+    async def set_force(self, f):
+        await self.write("FX%i,1" % f)
 
-    def set_pen(self, p):
+    async def set_pen(self, p):
         pass

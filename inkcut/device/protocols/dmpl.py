@@ -24,33 +24,30 @@ class DMPLProtocol(DeviceProtocol):
     #: Output scaling
     scale = Float(1021/INKCUT_DPI)
 
-    def connection_made(self):
+    async def init(self):
         v = self.config.mode
         if v == 1:
-            self.write(";:HAEC1")
+            await self.write(";:HAEC1")
         elif v == 2:
-            self.write(" ;:ECN A L0 ")
+            await self.write(" ;:ECN A L0 ")
         elif v in [3, 4]:
-            self.write(" ;:H A L0 ")
+            await self.write(" ;:H A L0 ")
         elif v == 6:
-            self.write("IN;PA;")
+            await self.write("IN;PA;")
 
-    def move(self, x, y, z, absolute=True):
+    async def move(self, x, y, z, absolute=True):
         x, y = int(x*self.scale), int(y*self.scale)
         v = self.config.mode
         if v in [1, 2, 3, 4]:
-            self.write(" {z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))
+            await self.write(" {z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))
         else:
-            self.write("{z}{x},{y};".format(x=x, y=y, z=z and "PD" or "PU"))
+            await self.write("{z}{x},{y};".format(x=x, y=y, z=z and "PD" or "PU"))
 
-    def set_pen(self, p):
-        self.write("EC{p} ".format(p=p))
+    async def set_pen(self, p):
+        await self.write("EC{p} ".format(p=p))
 
-    def set_velocity(self, v):
-        self.write("V{v} ".format(v=v))
+    async def set_velocity(self, v):
+        await self.write("V{v} ".format(v=v))
 
-    def set_force(self, f):
-        self.write("BP{f} ".format(f=f))
-
-    def connection_lost(self):
-        pass
+    async def set_force(self, f):
+        await self.write("BP{f} ".format(f=f))

@@ -1,27 +1,19 @@
-# -*- coding: utf-8 -*-
 """
 Copyright (c) 2017-2019, Jairus Martin.
 
 Distributed under the terms of the GPL v3 License.
 
 The full license is in the file LICENSE, distributed with this software.
-
-Created on Jul 12, 2015
-
-@author: jrm
 """
+import asyncio
 import serial
 import traceback
 from atom.atom import set_default
-from atom.api import List, Instance, Enum, Bool, Int, Str
+from atom.api import Atom, List, ForwardInstance, Instance, Enum, Bool, Int, Str
 from inkcut.core.api import Plugin, Model, log
-from inkcut.device.plugin import DeviceTransport
-from twisted.internet import reactor
-from twisted.internet.protocol import Protocol, connectionDone
-from twisted.internet.serialport import SerialPort
+from inkcut.device.plugin import DeviceTransport, DeviceProtocol
 from serial.tools.list_ports import comports
-
-from inkcut.device.transports.raw.plugin import RawFdTransport, RawFdProtocol
+from .serial import create_serial_connection, SerialTransport as SerialConnection
 
 
 #: Reverse key values
@@ -61,19 +53,46 @@ class SerialConfig(Model):
     def refresh(self):
         self.ports = self._default_ports()
 
+class SerialProtocol(asyncio.Protocol, Atom):
+    """Make a twisted protocol that delegates to the inkcut protocol
+    implementation to have a consistent api (and use proper pep 8 formatting!).
 
-class SerialTransport(RawFdTransport):
+    """
+    _transport = ForwardInstance(lambda: SerialTransport)
+    delegate = Instance(DeviceProtocol)
+
+    def connection_made(self, transport: SerialConnection):
+        self._transport.connected = True
+
+    def data_received(self, data):
+        log.debug("<- {} | {}".format(self._transport.device_path, data))
+        self._transport.last_read = data
+        self.delegate.data_received(data)
+
+    def connection_lost(self, reason):
+        self._transport.connected = False
+        device_path = self._transport.device_path
+        log.debug("-- {} | dropped: {}".format(device_path, reason))
+
+
+class SerialTransport(DeviceTransport):
 
     #: Default config
     config = Instance(SerialConfig, ()).tag(config=True)
 
     #: Connection port
-    connection = Instance(SerialPort)
+    connection = Instance(SerialConnection)
+
+    #: Used to wait until write is actually sent
+    pending_write = Instance(asyncio.Future)
+
+    #: The original port name
+    device_path = Str()
 
     #: Whether a serial connection spools depends on the device (configuration)
     always_spools = set_default(False)
 
-    def connect(self):
+    async def connect(self):
         config = self.config
         self.device_path = config.port
         try:
@@ -81,12 +100,10 @@ class SerialTransport(RawFdTransport):
             self.protocol.transport = self
 
             #: Make the wrapper
-            self._protocol = RawFdProtocol(self, self.protocol)
-
-            self.connection = SerialPort(
-                self._protocol,
-                config.port,
-                reactor,
+            self.connection, serial_protocol = await create_serial_connection(
+                loop=asyncio.get_running_loop(),
+                protocol_factory=lambda: SerialProtocol(_transport=self, delegate=self.protocol),
+                url=config.port,
                 baudrate=config.baudrate,
                 bytesize=config.bytesize,
                 parity=SERIAL_PARITIES[config.parity],
@@ -94,6 +111,9 @@ class SerialTransport(RawFdTransport):
                 xonxoff=config.xonxoff,
                 rtscts=config.rtscts
             )
+
+            # This is a patched in in serial.py
+            self.connection._wrote_callback = self.on_write_complete
 
             # Twisted is missing this
             if config.dsrdtr:
@@ -103,12 +123,49 @@ class SerialTransport(RawFdTransport):
                     log.warning("{} | dsrdtr is not supported {}".format(
                         config.port, e))
 
+            await self.connected_event.wait()
             log.debug("{} | opened".format(config.port))
+            await self.protocol.init()
         except Exception as e:
             #: Make sure to log any issues as these tracebacks can get
             #: squashed by twisted
             log.error("{} | {}".format(config.port, traceback.format_exc()))
             raise
+
+    def on_write_complete(self, data: bytes):
+        # This is invoked in SerialTransport._write_data
+        future = self.pending_write
+        if future and not future.done():
+            if not data:
+                future.set_result(False)  # failed
+            elif self.connection.get_write_buffer_size() == 0:
+                future.set_result(True)  # complete
+            # else not done
+
+    async def write(self, data):
+        log.debug("-> {} | {}".format(self.device_path, data))
+        if pending := self.pending_write:
+            await pending # Wait until previous completes
+        try:
+            loop = asyncio.get_event_loop()
+            self.pending_write = loop.create_future()
+            # Write just puts it into the write buffer
+            # So wait until the buffer is empty (all written)
+            # or the connection drops
+            if hasattr(data, 'encode'):
+                data = data.encode()
+            self.connection.write(data)
+            await self.pending_write
+            return
+        finally:
+            self.pending_write = None
+
+    async def disconnect(self):
+        if pending := self.pending_write:
+            pending.cancel()
+            self.pending_write = None
+        if self.connection:
+            self.connection.close()
 
 
 class SerialPlugin(Plugin):
