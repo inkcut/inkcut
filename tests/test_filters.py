@@ -36,14 +36,14 @@ def test_device():
 
 
 @pytest.mark.parametrize("path", glob("tests/data/*.svg"))
-def test_blade_offset_basic(test_device, path):
+async def test_blade_offset_basic(test_device, path):
     """Just check that the filter runs and there are no API incompatibilities with current qt version"""
     job = inkcut.job.models.Job()
     doc = QtSvgDoc(path)
     config = blade_offset.BladeOffsetConfig()
     config.offset = from_unit(1, "mm")
     offset_filter = blade_offset.BladeOffsetFilter(config=config)
-    filtered_path = offset_filter.apply_to_model(doc, test_device)
+    filtered_path = await offset_filter.apply_to_model(doc, test_device)
     assert filtered_path
 
 
@@ -63,11 +63,11 @@ def mingap_doc():
 
 
 @pytest.mark.parametrize("setting,expected_count", mingap_testdata)
-def test_minline_gap(mingap_doc, setting, expected_count):
+async def test_minline_gap(mingap_doc, setting, expected_count):
     config = min_line.MinLineConfig()
     config.min_jump = from_unit(setting, "mm")
     minline_filter = min_line.MinLineFilter(config=config)
-    result = minline_filter.apply_to_model(mingap_doc, None)
+    result = await minline_filter.apply_to_model(mingap_doc, None)
     parts = utils.split_painter_path(result)
     assert len(parts) == expected_count
 
@@ -76,7 +76,7 @@ min_shift_expected_result = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0]
 
 
 @pytest.fixture(scope="module")
-def min_shift_fixture():
+async def min_shift_fixture():
     doc = QtSvgDoc(DATA_PREFIX + "/min_shift_1.svg")
     input_parts = utils.split_painter_path(doc)
     assert len(min_shift_expected_result) == len(input_parts)
@@ -86,7 +86,7 @@ def min_shift_fixture():
     minline_filter = min_line.MinLineFilter(config=config)
 
     config.min_shift = from_unit(0.001, "mm")
-    filtered = minline_filter.apply_to_model(doc, None)
+    filtered = await minline_filter.apply_to_model(doc, None)
     parts = utils.split_painter_path(filtered)
     assert len(parts) == len(min_shift_expected_result)
     # shouldn't simplify anything with min_shift 0.001
@@ -94,14 +94,14 @@ def min_shift_fixture():
         assert part.elementCount() == 4
 
     config.min_shift = from_unit(0.01, "mm")
-    filtered = minline_filter.apply_to_model(doc, None)
+    filtered = await minline_filter.apply_to_model(doc, None)
     parts = utils.split_painter_path(filtered)
     assert len(parts) == len(min_shift_expected_result)
     return parts, input_parts
 
 
 @pytest.mark.parametrize("i, expected", enumerate(min_shift_expected_result))
-def test_minline_shift(i, expected, min_shift_fixture):
+async def test_minline_shift(i, expected, min_shift_fixture):
     parts = min_shift_fixture[0]
     input_parts = min_shift_fixture[1]
 
@@ -122,47 +122,47 @@ def test_minline_shift(i, expected, min_shift_fixture):
 
 
 @pytest.mark.parametrize("path", glob("tests/data/*.svg"))
-def test_minlineshift_basic(path):
+async def test_minlineshift_basic(path):
     """Just check that the filter runs and there are no API incompatibilities with current qt version"""
     doc = QtSvgDoc(path)
     config = min_line.MinLineConfig()
     config.min_shift = from_unit(0.1, "mm")
     minline_filter = min_line.MinLineFilter(config=config)
-    result = minline_filter.apply_to_model(doc, None)
+    result = await minline_filter.apply_to_model(doc, None)
     assert result
 
 
-def test_min_path():
+async def test_min_path():
     """Test that paths of corresponding lengths get removed. Test case contains both squares and circles."""
     doc = QtSvgDoc(DATA_PREFIX + "/min_path.svg")
     config = min_line.MinLineConfig()
 
     config.min_path = from_unit(0.0, "mm")
     minline_filter = min_line.MinLineFilter(config=config)
-    result = minline_filter.apply_to_model(doc, None)
+    result = await minline_filter.apply_to_model(doc, None)
 
     assert (
         len(utils.split_painter_path(result)) == 6
     )  # nothing should be removed with min_path 0
 
     config.min_path = from_unit(0.3, "mm")
-    result = minline_filter.apply_to_model(doc, None)
+    result = await minline_filter.apply_to_model(doc, None)
 
     assert (
         len(utils.split_painter_path(result)) == 6
     )  # everything in testcase should still be longer than this
 
     config.min_path = from_unit(0.41, "mm")
-    result = minline_filter.apply_to_model(doc, None)
+    result = await minline_filter.apply_to_model(doc, None)
 
     assert len(utils.split_painter_path(result)) == 4
 
     config.min_path = from_unit(0.6, "mm")
-    result = minline_filter.apply_to_model(doc, None)
+    result = await minline_filter.apply_to_model(doc, None)
 
     assert len(utils.split_painter_path(result)) == 2
 
     config.min_path = from_unit(5, "mm")
-    result = minline_filter.apply_to_model(doc, None)
+    result = await minline_filter.apply_to_model(doc, None)
 
     assert len(utils.split_painter_path(result)) == 0

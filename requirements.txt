@@ -8,9 +8,10 @@ jsonpickle
 lxml
 faulthandler; python_version < '3.0'
 PyQt6; python_version >= '3.0'
-qt-reactor
+asyncqtpy
 pytest
 pytest-coverage
+pytest-asyncio
 # for pytest-qt:
 pytest-qt
 codecov

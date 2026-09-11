@@ -18,9 +18,8 @@ def patch_iostream():
 
         def _start_event_gc():
             self._event_pipe_gc_task = asyncio.ensure_future(self._run_event_pipe_gc())
-            return self._event_pipe_gc_task
 
-        self.io_loop.run_sync(_start_event_gc)
+        self.io_loop.call_later(0, _start_event_gc)
 
         if not self._stopped:
             # avoid race if stop called before start thread gets here
@@ -37,7 +36,7 @@ def patch_iostream():
             else:
                 self._event_pipe_gc_task.cancel()
 
-        self.io_loop.close(all_fds=True)
+        # self.io_loop.close(all_fds=True)
 
     IOPubThread._thread_main = _thread_main
 

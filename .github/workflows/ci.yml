@@ -10,14 +10,10 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "macos-13"]
-        python: ["3.8", "3.10", "3.12"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
         include:
           - qt: "PyQt6" # default values
             experimental: false
-          - python: "3.8"  # with older python versions use PyQt5
-            qt: "PyQt5"
-          - python: "3.10"
-            qt: "PyQt5"
           - os: "windows-latest" # windows added manually
             python: "3.12"
             qt: "PyQt6"
@@ -26,18 +22,14 @@ jobs:
             python: "3.10"
             qt: "PyQt5"
             experimental: false
-          - os: "windows-latest"
-            python: "3.8"
-            qt: "PyQt5"
-            experimental: false
         exclude:
             - os: "macos-13" # Reduce number of total macOS combinations. Use only the latest and few older ones on x86_64
               python: "3.10"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
       - name: Linux deps
@@ -58,7 +50,7 @@ jobs:
             pip install pywin32
           fi
           # testing specific libs not included in setup.py
-          pip install pytest pytest-coverage pytest-qt codecov
+          pip install pytest pytest-coverage pytest-qt pytest-asyncio codecov
           # allow running CI tests for multiple Qt versions
           pip install "${{ matrix.qt }}"
       - name: Install inkcut

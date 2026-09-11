@@ -47,14 +47,17 @@ class AsyncApplication(QtApplication):
     def start(self):
         """Run using the event loop"""
         log.info("Application starting")
-        loop = self.loop
-        loop.set_exception_handler(self.on_async_exception)
+
         try:
+            self.loop.set_exception_handler(self.on_async_exception)
             self.running = True
-            with loop:
-                loop.run_forever()
+            with self.loop:
+                self.loop.run_forever()
         finally:
             self.running = False
+            del self.loop
+            asyncio.set_event_loop(None) # Clear the loop
+        log.info("Application stopped")
 
     def on_async_exception(self, loop, context):
         """Exception handler that ignores"""
