@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "macos-13"]
+        os: ["ubuntu-latest", "macos-latest"]
         python: ["3.10", "3.11", "3.12", "3.13"]
         include:
           - qt: "PyQt6" # default values
@@ -22,9 +22,6 @@ jobs:
             python: "3.10"
             qt: "PyQt5"
             experimental: false
-        exclude:
-            - os: "macos-13" # Reduce number of total macOS combinations. Use only the latest and few older ones on x86_64
-              python: "3.10"
 
     steps:
       - uses: actions/checkout@v6
