@@ -49,7 +49,7 @@ class HPGLProtocol(DeviceProtocol):
             await self.write('PR%i,%i;' % (x, y))
 
     async def set_force(self, f):
-        await self.write("FS%i; " % f)
+        await self.write("FS%i;" % f)
         
     async def set_velocity(self, v):
         await self.write("VS%i;" % v)

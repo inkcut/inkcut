@@ -36,6 +36,8 @@ class DMPLProtocol(DeviceProtocol):
             await self.write("IN;PA;")
 
     async def move(self, x, y, z, absolute=True):
+        if not absolute:
+            raise NotImplementedError()
         x, y = int(x*self.scale), int(y*self.scale)
         v = self.config.mode
         if v in [1, 2, 3, 4]:

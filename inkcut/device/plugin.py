@@ -102,7 +102,7 @@ class DeviceTransport(Model):
         raise NotImplementedError
 
 
-class TestTransport(DeviceTransport):
+class DebugTransport(DeviceTransport):
     """ A transport that captures protocol output """
 
     #: The output buffer
@@ -112,7 +112,7 @@ class TestTransport(DeviceTransport):
     DECLARATION = extensions.DeviceTransport(
         id="test",
         name="Test transport",
-        factory=lambda driver, proto: TestTransport(),
+        factory=lambda driver, proto: DebugTransport(),
     )
 
     def _default_declaration(self):
@@ -138,8 +138,6 @@ class TestTransport(DeviceTransport):
 
     async def disconnect(self):
         self.connected = False
-        self.protocol.connection_lost()
-
 
 class DeviceProtocol(Model):
 
@@ -430,7 +428,7 @@ class Device(Model):
         create one using the first "connection" type the driver supports.
         """
         if not self.transports:
-            return TestTransport()
+            return DebugTransport()
         declaration = self.transports[0]
         driver = self.declaration
         protocol = self._create_default_protocol()
@@ -487,7 +485,7 @@ class Device(Model):
         try:
             #: Create a test connection if necessary
             if test:
-                self.connection = TestTransport(
+                self.connection = DebugTransport(
                     protocol=connection.protocol,
                     declaration=connection.declaration
                 )
