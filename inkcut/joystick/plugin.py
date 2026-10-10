@@ -86,25 +86,44 @@ class JoystickPlugin(Plugin):
         x, y, z = [0, 0, 0] if system else self.device.origin
         self.device.move([x, y, 0], absolute=True)
 
+    def device_step(self, dx, dy):
+        """ Honor the device's swap and mirror settings when jogging.
+
+        Mirror then swap, the order Job.create uses.
+
+        """
+        config = self.device.config
+        if config.mirror_x:
+            dx = -dx
+        if config.mirror_y:
+            dy = -dy
+        if config.swap_xy:
+            dx, dy = dy, dx
+        return dx, dy
+
     @with_connection
     def move_up(self):
         x, y, z = self.device.position
-        self.device.move([x, y+self.rate, z], absolute=True)
+        dx, dy = self.device_step(0, self.rate)
+        self.device.move([x+dx, y+dy, z], absolute=True)
 
     @with_connection
     def move_down(self):
         x, y, z = self.device.position
-        self.device.move([x, y-self.rate, z], absolute=True)
+        dx, dy = self.device_step(0, -self.rate)
+        self.device.move([x+dx, y+dy, z], absolute=True)
 
     @with_connection
     def move_left(self):
         x, y, z = self.device.position
-        self.device.move([x-self.rate, y, z], absolute=True)
+        dx, dy = self.device_step(-self.rate, 0)
+        self.device.move([x+dx, y+dy, z], absolute=True)
 
     @with_connection
     def move_right(self):
         x, y, z = self.device.position
-        self.device.move([x+self.rate, y, z], absolute=True)
+        dx, dy = self.device_step(self.rate, 0)
+        self.device.move([x+dx, y+dy, z], absolute=True)
 
     @with_connection
     def move_head_up(self):
