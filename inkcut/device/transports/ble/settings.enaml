@@ -1,0 +1,113 @@
+# -*- coding: utf-8 -*-
+"""
+Bluetooth LE transport settings.
+"""
+import textwrap
+from inkcut.core.utils import load_icon
+from enaml.layout.api import hbox, align
+from enaml.qt.QtWidgets import QApplication
+from enaml.widgets.api import (
+    Container, Form, Label, ObjectCombo, PushButton, CheckBox, Field
+)
+
+
+enamldef BLESettingsView(Container):
+    attr model
+    padding = 0
+
+    func selected_device(address, devices):
+        matches = [d for d in devices if d.address == address]
+        return matches[0] if matches else None
+
+    Form:
+        Label:
+            text = QApplication.translate("ble", "Device")
+        Container:
+            padding = 0
+            constraints = [
+                hbox(cb, pb),
+                align('v_center', cb, pb)
+            ]
+            ObjectCombo: cb:
+                items << model.devices
+                to_string = lambda d: "{} ({})".format(d.name, d.address)
+                selected << selected_device(model.address, model.devices)
+                selected ::
+                    device = change['value']
+                    if device:
+                        model.address = device.address
+                tool_tip = textwrap.dedent("""
+                Bluetooth LE devices found nearby. Press Scan to look again.
+                The machine must be powered on and in range.
+                """).strip()
+            PushButton: pb:
+                text << (QApplication.translate("ble", "Scanning...")
+                         if model.scanning
+                         else QApplication.translate("ble", "Scan"))
+                enabled << not model.scanning
+                icon = load_icon("arrow_refresh")
+                clicked :: model.refresh()
+        Label:
+            text = QApplication.translate("ble", "Show")
+        Container:
+            padding = 0
+            constraints = [
+                hbox(flt, allcb),
+                align('v_center', flt, allcb)
+            ]
+            Field: flt:
+                text := model.name_filter
+                enabled << not model.show_all
+                tool_tip = textwrap.dedent("""
+                Comma separated names to match, case insensitive. BLE
+                adverts from these machines carry no service id, and macOS
+                hides the hardware address, so the name is all there is to
+                filter on.
+                """).strip()
+            CheckBox: allcb:
+                text = QApplication.translate("ble", "Show all devices")
+                checked := model.show_all
+                tool_tip = QApplication.translate("ble",
+                    "List every nearby device, not just matching ones.")
+        Label:
+            text = QApplication.translate("ble", "Address")
+        Field:
+            text := model.address
+            tool_tip = QApplication.translate("ble",
+                "Address of the device. Set by the scan, or enter it directly.")
+        Label:
+            text = QApplication.translate("ble", "Options")
+        CheckBox:
+            text = QApplication.translate("ble", "Append ETX terminator")
+            checked := model.append_etx
+            tool_tip = textwrap.dedent("""
+            GPGL commands end with ETX (0x03). Inkcut's protocols do not
+            add it, so the transport does. Leave this on for Silhouette
+            machines.
+            """).strip()
+        Label:
+            text = QApplication.translate("ble", "Characteristics")
+        CheckBox:
+            text = QApplication.translate("ble", "Detect automatically")
+            checked := model.auto_discover
+            tool_tip = textwrap.dedent("""
+            Read the device's GATT table on connect and work out which
+            characteristics carry commands and status. Turn this off only
+            to pin them by hand.
+            """).strip()
+        Label:
+            text = QApplication.translate("ble", "Write characteristic")
+        Field:
+            text := model.data_uuid
+            enabled << not model.auto_discover
+            read_only << model.auto_discover
+            tool_tip = QApplication.translate("ble",
+                "Where commands are sent. Filled in by detection.")
+        Label:
+            text = QApplication.translate("ble", "Status characteristic")
+        Field:
+            text := model.status_uuid
+            enabled << not model.auto_discover
+            read_only << model.auto_discover
+            tool_tip = QApplication.translate("ble",
+                "Where the machine reports back. May be empty.")

@@ -142,7 +142,7 @@ enamldef DriversManifest(PluginManifest):
             width = '300cm'
             length = '30.5cm'
             protocols = ['gpgl']
-            connections = ['printer']
+            connections = ['printer', 'ble']
             default_config = {
               'scale': [ 5.64, 5.64 ],
               'swap_xy': True,
