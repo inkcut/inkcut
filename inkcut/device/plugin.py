@@ -1101,6 +1101,11 @@ class DevicePlugin(Plugin):
         #: Restore state after plugins are loaded
         super(DevicePlugin, self).start()
 
+        #: A device read back from the config file has no transport
+        #: list, so the dialog would offer every transport instead of
+        #: the ones its driver supports. Fill the lists back in.
+        self._restore_device_extensions()
+
     def submit(self, job):
         """ Send the given job to the device and restart all stats
 
@@ -1136,6 +1141,33 @@ class DevicePlugin(Plugin):
     # -------------------------------------------------------------------------
     # Device Driver API
     # -------------------------------------------------------------------------
+
+    def _restore_device_extensions(self):
+        """ Give each device loaded from the config file the transports
+        and protocols its driver supports.
+
+        Both lists are filled in when a device is created from a driver,
+        but neither is saved with the device, so a device read back from
+        the config file has them empty. The config dialog then offers
+        every transport Inkcut has instead of the ones that work, and
+        _create_default_protocol falls back to a protocol that cannot
+        move the machine.
+
+        """
+        drivers = {d.id: d for d in self.drivers}
+        for device in self.devices:
+            declaration = device.declaration
+            if declaration is None:
+                continue
+            #: The restored declaration is a stale copy, so prefer the
+            #: one registered by the driver manifest.
+            driver = drivers.get(declaration.id, declaration)
+            device.transports = [t for t in self.transports
+                                 if not driver.connections or t.id == 'disk'
+                                 or t.id in driver.connections]
+            device.protocols = [p for p in self.protocols
+                                if not driver.protocols
+                                or p.id in driver.protocols]
 
     def get_device_from_driver(self, driver, config=None):
         """ Load the device driver. This generates the device using
