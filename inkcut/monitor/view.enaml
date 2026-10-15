@@ -91,12 +91,12 @@ enamldef MonitorDockItem(DockItem): view:
         scroll_bar = widget.verticalScrollBar()
         scroll_bar.setValue(scroll_bar.maximum())
 
-    func send_text():
+    async func send_text():
         if connection and connection.connected:
             text = to_send.text
             # Add to history
             add_to_history(text)
-            connection.write(text+"\r\n" if plugin.add_newline else text)
+            await connection.write(text+"\r\n" if plugin.add_newline else text)
             to_send.text = ""
 
     func add_to_history(text):
@@ -165,7 +165,7 @@ enamldef MonitorDockItem(DockItem): view:
             tool_tip = QApplication.translate('monitor', "Press enter to send")
             KeyEvent:
                 keys = ['return']
-                released :: send_text()
+                released :: btn_send.clicked(True)
             KeyEvent:
                 released ::
                     code = change['value']['code']
@@ -184,4 +184,6 @@ enamldef MonitorDockItem(DockItem): view:
         PushButton: btn_send:
             text = QApplication.translate('monitor', "Send")
             enabled << bool(connection and connection.connected)
-            clicked :: send_text()
+            # The async_ = True is required because enaml's async func doesn't get detected
+            # as a coroutine function automatically by deferred_call
+            clicked :: deferred_call(send_text, async_=True)

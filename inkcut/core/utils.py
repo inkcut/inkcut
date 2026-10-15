@@ -19,7 +19,6 @@ from enaml.application import timed_call
 from enaml.qt.QtCore import QPointF
 from enaml.qt.QtGui import QPainterPath, QPixmap, QIcon
 from enaml.qt.q_resource_helpers import get_cached_qcolor
-from twisted.internet.defer import Deferred
 from .svg import QtSvgDoc
 
 
@@ -103,18 +102,6 @@ def parse_unit(val):
 
 
 unit_conversions = QtSvgDoc._uuconv
-
-
-# -----------------------------------------------------------------------------
-# Async helpers
-# -----------------------------------------------------------------------------
-def async_sleep(ms):
-    """Sleep for the given duration without blocking. Typically this
-    is used with the inlineCallbacks decorator.
-    """
-    d = Deferred()
-    timed_call(int(ms), d.callback, True)
-    return d
 
 
 # -----------------------------------------------------------------------------

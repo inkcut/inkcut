@@ -166,18 +166,6 @@ class Plugin(EnamlPlugin):
         """ Unload any state observers when the plugin stops"""
         self._unbind_observers()
 
-    def run_command(self, protocol,  *args, **kwargs):
-        """ Run a command without blocking using twisted's spawnProcess
-
-        See https://twistedmatrix.com/documents/current/core/howto/process.html
-
-        """
-        # Importing reactor has sidefects which can interfer with testing.
-        #  Don't import it at top level of common utilities like models.
-        from twisted.internet import reactor
-        log.info(" ".join(args))
-        return reactor.spawnProcess(protocol, args[0], args, **kwargs)
-
     # -------------------------------------------------------------------------
     # State API
     # -------------------------------------------------------------------------

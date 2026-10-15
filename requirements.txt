@@ -1,5 +1,4 @@
 enaml>=0.10.2
-twisted
 enamlx
 pyqtgraph
 ipykernel<5; python_version < '3.0'
@@ -9,9 +8,10 @@ jsonpickle
 lxml
 faulthandler; python_version < '3.0'
 PyQt6; python_version >= '3.0'
-qt-reactor
+asyncqtpy
 pytest
 pytest-coverage
+pytest-asyncio
 # for pytest-qt:
 pytest-qt
 codecov

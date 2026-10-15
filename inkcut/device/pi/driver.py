@@ -15,9 +15,8 @@ import pstats
 from cProfile import Profile
 from atom.api import Instance, List, Int, Float, Tuple, Dict, Bool, observe
 from inkcut.core.api import Model
-from inkcut.core.utils import async_sleep, log
+from inkcut.core.utils import log
 from inkcut.device.plugin import Device, DeviceConfig
-from twisted.internet.defer import inlineCallbacks, DeferredList
 from contextlib import contextmanager
 from enaml.qt import QtGui
 try:
@@ -87,7 +86,6 @@ class StepperMotor(Model):
         finally:
             self.enabled = False
 
-    #@inlineCallbacks
     def step(self, steps):
         # set ds to 0 or 1 for direction pin output
         ds = 0 if steps < 0 else 1
@@ -180,7 +178,7 @@ class PiDevice(Device):
     #: Last update time
     _updated = Float()
     
-    def connect(self):
+    async def connect(self):
         self.init_rpi()
         self.init_motors({'type':'manual'})
         for motor in self.motor.values():
@@ -189,7 +187,7 @@ class PiDevice(Device):
         log.info("Pi mmotors enabled")
         PROFILER.enable()
 
-    def disconnect(self):
+    async def disconnect(self):
         """ Set the motors to disabled """
         for motor in self.motor.values():
             motor.enabled = False
@@ -273,14 +271,12 @@ class PiDevice(Device):
                                     callback=self.on_hit_bound_max_y,
                                     debounce_timeout_ms=bbt)
 
-    @inlineCallbacks
-    def reset(self):
+    async def reset(self):
         """ Checks the boundaries and then moves to the (0,0) position. """
-        yield self.check_bounds()
-        yield self.move(0, 0, absolute=True)
+        await self.check_bounds()
+        await self.move(0, 0, absolute=True)
 
-    #@inlineCallbacks
-    def move(self, position, absolute=True):
+    async def move(self, position, absolute=True):
         """ Move to position. Based on this publication
         http://goldberg.berkeley.edu/pubs/XY-Interpolation-Algorithms.pdf
          
@@ -353,18 +349,17 @@ class PiDevice(Device):
         # self.position = [dx, dy, z]
         # return self.position
 
-    @inlineCallbacks
-    def check_bounds(self):
+    async def check_bounds(self):
         """ Do a cutter range check with end stop switches 
         """
 
         # Move -x until we hit min x bound pin
         for i in range(self.MAX_X):
-            yield self.move(-1, 0)
+            await self.move(-1, 0)
 
         # Move -y until we hit min y bound pin
         for i in range(self.MAX_Y):
-            yield self.move(0, -1)
+            await self.move(0, -1)
             # Move +x until we hit max x bound pin
             # Move +y until we hit max y bound pin
 

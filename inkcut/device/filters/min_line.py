@@ -59,7 +59,7 @@ class MinLineFilter(DeviceFilter):
     #: Change config
     config = Instance(MinLineConfig, ()).tag(config=True)
 
-    def apply_to_model(self, model, job):
+    async def apply_to_model(self, model, job):
         if self.config.min_jump > 0:
             model = self.apply_min_jump(model)
 
