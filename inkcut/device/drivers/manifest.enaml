@@ -96,6 +96,41 @@ enamldef DriversManifest(PluginManifest):
             connections = ['serial', 'printer']
 
         DeviceDriver:
+            #: Anhui Anyu D-type mainboard sold under many brands
+            #: (USB 0483:5750 "CH554_CDC"). Native language is DMPL at
+            #: 0.025mm/step; the HPGL mode is unreliable on this firmware.
+            manufacturer = 'VEVOR'
+            model = 'KH-870 (Anhui Anyu, USB)'
+            #: 87cm is the feed width; cutting width is 78cm (VEVOR manual)
+            width = '78cm'
+            protocols = ['dmpl', 'hpgl']
+            connections = ['usb', 'serial', 'printer']
+            default_config = {
+                #: This firmware takes the feed coordinate first and
+                #: mirrors the carriage: without these a fresh profile
+                #: drives the wrong physical axes (verified on hardware)
+                'mirror_x': True,
+                'protocol': {
+                    'dmpl': {'mode': 3, 'swap_axes': True},
+                },
+            }
+
+        DeviceDriver:
+            manufacturer = 'VEVOR'
+            model = 'KH-720 (Anhui Anyu, USB)'
+            #: 72cm is the feed width; cutting width is 63cm (VEVOR manual)
+            width = '63cm'
+            protocols = ['dmpl', 'hpgl']
+            connections = ['usb', 'serial', 'printer']
+            default_config = {
+                #: Same feed-first firmware family as the KH-870
+                'mirror_x': True,
+                'protocol': {
+                    'dmpl': {'mode': 3, 'swap_axes': True},
+                },
+            }
+
+        DeviceDriver:
             manufacturer = 'KNK'
             model = 'ACS Eagle/KNK Maxx'
             width = '28in'
@@ -262,7 +297,7 @@ enamldef DriversManifest(PluginManifest):
             connections = ['serial','qtserial']
 
         DeviceDriver:
-            manufacturer = 'Vevor'
+            manufacturer = 'VEVOR'
             model = 'Smart 1'
             width = '30.48cm'
             length = '34.78cm'

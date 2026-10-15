@@ -1,0 +1,65 @@
+# -*- coding: utf-8 -*-
+"""
+Config view for the libusb transport.
+
+Created on Aug 17, 2026
+"""
+from enaml.qt.QtWidgets import QApplication
+from enaml.widgets.api import Container, Field, Form, Label, SpinBox, CheckBox
+
+
+def parse_hex(text, fallback):
+    """ USB ids are conventionally written in hex (e.g. lsusb prints
+    0483:5750), so the fields accept hex with or without a 0x prefix.
+    Values outside the valid id range keep the old value rather than
+    silently wrapping. """
+    try:
+        value = int(text.strip().lower().replace('0x', ''), 16)
+    except (ValueError, AttributeError):
+        return fallback
+    if not (0x0001 <= value <= 0xFFFF):
+        return fallback
+    return value
+
+
+enamldef UsbSettingsView(Container):
+    attr model
+    padding = 0
+    Form:
+        Label:
+            text = QApplication.translate("usb", "Vendor id (hex)")
+        Field:
+            text << '{:04x}'.format(model.vid)
+            text ::
+                model.vid = parse_hex(text, model.vid)
+        Label:
+            text = QApplication.translate("usb", "Product id (hex)")
+        Field:
+            text << '{:04x}'.format(model.pid)
+            text ::
+                model.pid = parse_hex(text, model.pid)
+        Label:
+            text = QApplication.translate("usb", "Bulk OUT endpoint")
+        SpinBox:
+            # OUT endpoint addresses only (no direction bit, not EP0)
+            minimum = 0x01
+            maximum = 0x0F
+            value := model.endpoint
+        Label:
+            text = QApplication.translate("usb", "Chunk size (bytes)")
+        SpinBox:
+            minimum = 8
+            maximum = 512
+            value := model.chunk_size
+        Label:
+            text = QApplication.translate("usb", "CDC handshake")
+        CheckBox:
+            text = QApplication.translate(
+                "usb", "Set line coding and assert DTR/RTS")
+            checked := model.cdc_init
+        Label:
+            text = QApplication.translate("usb", "Baud (line coding)")
+        SpinBox:
+            minimum = 300
+            maximum = 921600
+            value := model.baud
