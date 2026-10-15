@@ -117,6 +117,42 @@ def async_sleep(ms):
     return d
 
 
+def defer_to_thread(func, *args, **kwargs):
+    """Run func in a daemon thread and fire the returned Deferred on the
+    main GUI thread. Unlike twisted's deferToThread this does not need a
+    running twisted reactor: Inkcut installs qreactor but never starts
+    it, so the reactor threadpool never runs and deferToThread'd work
+    would never execute. The app's only live event loop is Qt's, which
+    enaml's deferred_call posts to (thread-safe QEvent post).
+
+    Without an enaml Application (cli/tests) func runs inline and the
+    Deferred fires synchronously.
+    """
+    import threading
+    from enaml.application import Application, deferred_call
+    from twisted.python.failure import Failure
+    d = Deferred()
+    if Application.instance() is None:
+        try:
+            d.callback(func(*args, **kwargs))
+        except Exception:
+            d.errback(Failure())
+        return d
+
+    def worker():
+        try:
+            result = func(*args, **kwargs)
+        except Exception:
+            deferred_call(d.errback, Failure())
+        else:
+            deferred_call(d.callback, result)
+
+    t = threading.Thread(target=worker, name='inkcut-worker')
+    t.daemon = True
+    t.start()
+    return d
+
+
 # -----------------------------------------------------------------------------
 # QPainterPath helpers
 # -----------------------------------------------------------------------------

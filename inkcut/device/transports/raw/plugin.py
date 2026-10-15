@@ -103,6 +103,35 @@ class RawFdTransport(DeviceTransport):
             log.debug("-- {} | closed by request".format(self.device_path))
             self.connection.loseConnection()
             self.connection = None
+            # connectionLost normally closes the descriptor and clears
+            # self.fd; give it a moment, then close whatever it leaked.
+            # Capture the fd NOW: by the time the callback fires a new
+            # connection may have installed a fresh self.fd.
+            from twisted.internet import reactor
+            reactor.callLater(1.0, self._close_leaked_fd, self.fd)
+        else:
+            self._close_leaked_fd(self.fd)
+        # connectionLost may never fire if the reader side is already gone
+        # (e.g. a FIFO whose consumer died); reset the flag here or the next
+        # connect() is skipped as "already connected" with no connection.
+        self.connected = False
+
+    def _close_leaked_fd(self, fd):
+        """ If connectionLost never fired (dead FIFO reader), the write fd
+        stays open forever, holding the FIFO's writer side hostage. Close
+        only the captured fd, and only while it is still the transport's
+        current one — if connectionLost already handled it (self.fd
+        cleared) or a reconnect installed a new fd, closing here could hit
+        a reused descriptor number. """
+        if fd is None or self.fd is not fd:
+            return
+        self.fd = None
+        try:
+            fd.close()
+            log.debug("-- {} | leaked fd closed".format(self.device_path))
+        except Exception as e:
+            log.warning("-- {} | fd close failed: {}".format(
+                self.device_path, e))
 
     def __repr__(self):
         return self.device_path

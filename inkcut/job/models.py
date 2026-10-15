@@ -106,10 +106,15 @@ class JobInfo(Model):
 
     def _default_request_approval(self):
         """ Request approval using the current job """
-        from inkcut.core.workbench import InkcutWorkbench
-        workbench = InkcutWorkbench.instance()
-        plugin = workbench.get_plugin("inkcut.job")
-        return lambda: plugin.request_approval(plugin.job)
+        #: Resolve the plugin lazily — this default is also evaluated by
+        #: __getstate__ (clone/state save), which must work without a
+        #: workbench (deserialization, standalone tests)
+        def request_approval():
+            from inkcut.core.workbench import InkcutWorkbench
+            workbench = InkcutWorkbench.instance()
+            plugin = workbench.get_plugin("inkcut.job")
+            plugin.request_approval(plugin.job)
+        return request_approval
 
     def reset(self):
         """ Reset to initial states"""
@@ -248,10 +253,19 @@ class Job(Model):
         """ Read the document from stdin """
         source = self.document
         from inkcut.core.workbench import InkcutWorkbench
+        #: State restore may set the document before the workbench and
+        #: job plugin exist — fall back to the parser defaults then.
         workbench = InkcutWorkbench.instance()
-        plugin = workbench.get_plugin("inkcut.job")
-        self.document_kwargs["dpi_default"] = plugin.dpi_default
-        self.document_kwargs["dpi_auto_detect_inkscape"] = plugin.dpi_auto_detect_inkscape
+        plugin = None
+        if workbench is not None:
+            try:
+                plugin = workbench.get_plugin("inkcut.job")
+            except Exception:
+                plugin = None
+        if plugin is not None:
+            self.document_kwargs["dpi_default"] = plugin.dpi_default
+            self.document_kwargs["dpi_auto_detect_inkscape"] = \
+                plugin.dpi_auto_detect_inkscape
         if change['type'] == 'update' and source == '-':
             #: Only load from stdin when explicitly changed to it (when doing
             #: open from the cli) otherwise when restoring state this hangs
