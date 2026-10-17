@@ -62,6 +62,17 @@ class Padding:
     BOTTOM = 3
 
 
+def move_path_of(model):
+    path = QPainterPath()
+    for i in range(model.elementCount()):
+        e = model.elementAt(i)
+        if e.isMoveTo():
+            path.lineTo(e.x, e.y)
+        else:
+            path.moveTo(e.x, e.y)
+    return path
+
+
 class JobError(Exception):
     pass
 
@@ -383,11 +394,13 @@ class Job(Model):
         """ Block change events to prevent feedback loops
 
         """
+        blocked = self._blocked
         self._blocked = True
         try:
             yield
         finally:
-            self._blocked = False
+            # Nested create() must not clear an outer block.
+            self._blocked = blocked
 
     @observe('path', 'scale', 'auto_scale', 'lock_scale', 'mirror',
              'align_center', 'rotation', 'auto_rotate', 'copies', 'order',
@@ -413,9 +426,8 @@ class Job(Model):
         if model:
             self.model = model
 
-    def create(self, swap_xy=False, scale=None):
-        """ Create a path model that is rotated and scaled
-
+    def create(self):
+        """ The document path (padding, return or feed), not the device orientation.
         """
         model = QPainterPath()
 
@@ -462,16 +474,6 @@ class Job(Model):
         else:
             py = -self.material.padding_bottom
 
-        # Scale and rotate
-        if scale:
-            model = QTransform.fromScale(*scale).map(model)
-            px, py = px*abs(scale[0]), py*abs(scale[1])
-
-        if swap_xy:
-            t = QTransform()
-            t.rotate(90)
-            model = t.map(model)
-
         # Move to 0,0
         bbox = model.boundingRect()
         p = bbox.bottomLeft()
@@ -483,9 +485,6 @@ class Job(Model):
             tx += -bbox.right() if self.mirror[0] else bbox.left()
             ty += bbox.bottom() if self.mirror[1] else -bbox.top()
 
-        # If swapped, make sure padding is still correct
-        if swap_xy:
-            px, py = -py, -px
         tx += px
         ty += py
 
@@ -580,15 +579,7 @@ class Job(Model):
         """ Returns the path the head moves when not cutting
 
         """
-        # Compute the negative
-        path = QPainterPath()
-        for i in range(self.model.elementCount()):
-            e = self.model.elementAt(i)
-            if e.isMoveTo():
-                path.lineTo(e.x, e.y)
-            else:
-                path.moveTo(e.x, e.y)
-        return path
+        return move_path_of(self.model)
 
     @property
     def cut_path(self):

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns="http://www.w3.org/2000/svg"
+   width="440px"
+   height="440px"
+   id="root">
+  <g id="layer">
+    <path id="path-a" d="M 0 0 L 40 0 L 40 40 L 0 40 Z"/>
+    <path id="path-b" d="M 200 0 L 240 0 L 240 40 L 200 40 Z"/>
+    <g id="group-c">
+      <path id="path-c" d="M 0 200 L 40 200 L 40 240 L 0 240 Z"/>
+      <path id="path-d" d="M 200 200 L 240 200 L 240 240 L 200 240 Z"/>
+    </g>
+  </g>
+</svg>

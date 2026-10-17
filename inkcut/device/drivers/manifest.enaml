@@ -204,6 +204,26 @@ enamldef DriversManifest(PluginManifest):
             connections = ['serial']
 
         DeviceDriver:
+            manufacturer = 'Summa'
+            model = 'D760'
+            width = '740mm'
+            initial_protocol = 'dmpl'
+            protocols = ['hpgl', 'dmpl']
+            connections = ['raw', 'serial', 'printer']
+            default_config = {
+                'protocol': {
+                    'dmpl': {'mode': 1},
+                    'hpgl': {'addressing': '0.025 mm'},
+                },
+                'connection': {
+                    'raw': {
+                        'device_path': '/dev/ttyUSB0',
+                        'mode': 'wb',
+                    },
+                },
+            }
+
+        DeviceDriver:
             manufacturer = 'Roland'
             model = 'CM 24'
             width = '61cm'

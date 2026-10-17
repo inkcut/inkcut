@@ -668,12 +668,14 @@ class QtSvgG(QtSvgItem):
     def parse(self, e):
         valid_nodes = self._nodes
         for node in e:
+            # Skip before the text check. Unselected text must not abort
+            # a selection that never asked for it.
+            if valid_nodes and node not in valid_nodes:
+                continue
             if node.tag == QtSvgText.tag:
                 raise ValueError("Text nodes are not supported. "
                                  "Please convert all text to paths and "
                                  "re-open the document.")
-            if valid_nodes and node not in valid_nodes:
-                continue
 
             for cls in [
                         QtSvgG,
@@ -697,6 +699,48 @@ class QtSvgSymbol(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}symbol"
 
 
+def _element_children(element):
+    for child in element:
+        # Comments and processing instructions are not SVG elements.
+        if isinstance(child.tag, str):
+            yield child
+
+
+def _keep_elements_for_ids(root, ids):
+    """Return (elements, found_ids) for a non-empty id list.
+
+    A kept element was requested, sits inside a requested element, or
+    is an ancestor of a match so the walk from the root can reach it.
+    found_ids is empty when no requested id is in the tree.
+    """
+    wanted = set(ids)
+    found = set()
+    valid = set()
+
+    def add_descendants(element):
+        for child in _element_children(element):
+            valid.add(child)
+            add_descendants(child)
+
+    def walk(element):
+        node_id = element.get("id")
+        matched = node_id is not None and node_id in wanted
+        if matched:
+            found.add(node_id)
+        descendant_matched = False
+        for child in _element_children(element):
+            if walk(child):
+                descendant_matched = True
+        if matched or descendant_matched:
+            valid.add(element)
+        if matched:
+            add_descendants(element)
+        return matched or descendant_matched
+
+    walk(root)
+    return valid, found
+
+
 class QtSvgDoc(QtSvgG):
     tag = "{http://www.w3.org/2000/svg}svg"
 
@@ -711,7 +755,10 @@ class QtSvgDoc(QtSvgG):
             e: Element or string
                 An lxml etree.Element or an argument to pass to etree.parse()
             ids: List
-                List of node ids to include. If not given all will be used.
+                Element ids to include. None or empty means the whole
+                document. A non-empty list that matches nothing raises
+                ValueError. A match includes that element and its
+                descendants.
         """
         self.dpi_default = dpi_default
         self.dpi_auto_detect_inkscape = dpi_auto_detect_inkscape
@@ -726,19 +773,11 @@ class QtSvgDoc(QtSvgG):
                     self._doc = etree.parse(e)
                     e = self._svg = self._doc.getroot()
             if ids:
-                nodes = set()
-                xpath = self._svg.xpath
-                for node_id in ids:
-                    nodes.update(set(xpath('//*[@id="%s"]' % node_id)))
-
-                # Find all nodes and their parents
-                valid_nodes = set()
-                for node in nodes:
-                    valid_nodes.add(node)
-                    parent = node.getparent()
-                    while parent:
-                        valid_nodes.add(parent)
-                        parent = parent.getparent()
+                valid_nodes, found = _keep_elements_for_ids(e, ids)
+                if not found:
+                    raise ValueError(
+                        "None of the selected objects are in this document."
+                    )
                 self._nodes = valid_nodes
 
             self.viewBox = QRectF(0, 0, -1, -1)

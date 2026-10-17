@@ -20,7 +20,9 @@ def application_factory():
     and installs twisted support.
     """
     from enaml.qt.qt_application import QtApplication
-    app = QtApplication()
+    # Qt skips WM_CLASS when argv is empty, so the dock cannot raise the window.
+    app = QtApplication(appname="inkcut")
+    app._qapp.setApplicationName("inkcut")
 
     # Fix wayland icon
     QApplication.setDesktopFileName("inkcut")

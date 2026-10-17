@@ -88,6 +88,9 @@ class DeviceDriver(Declarative):
     # List of protocol IDs supported by this device
     protocols = d_(List(Str()))
 
+    #: Startup protocol id. Empty keeps registration order.
+    initial_protocol = d_(Str())
+
     # List of transport IDs supported by this device
     connections = d_(List(Str()))
 

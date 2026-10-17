@@ -7,22 +7,26 @@ Thanks to Lex Wernars
 @author: jrm
 @author: lwernars
 """
-from atom.api import Enum, Instance, Float
+from atom.api import Enum, Instance
 from inkcut.device.plugin import DeviceProtocol, Model
 from inkcut.core.svg import INKCUT_DPI
+from inkcut.device.protocols.units import (
+    ADDRESSING_0_001_INCH, ADDRESSING_0_025_MM, ADDRESSING_LEGACY,
+    ADDRESSING_ORDER, units_per_inch,
+)
 
 class DMPLConfig(Model):
     #: Version number
     mode = Enum(1, 2, 3, 4, 6).tag(config=True)
+
+    #: Modes 3, 4, and 6. Modes 1 and 2 send the unit on connect.
+    addressing = Enum(*ADDRESSING_ORDER)(ADDRESSING_LEGACY).tag(config=True)
 
 
 class DMPLProtocol(DeviceProtocol):
 
     #: Different modes
     config = Instance(DMPLConfig, ()).tag(config=True)
-
-    #: Output scaling
-    scale = Float(1021/INKCUT_DPI)
 
     def connection_made(self):
         v = self.config.mode
@@ -36,9 +40,16 @@ class DMPLProtocol(DeviceProtocol):
             self.write("IN;PA;")
 
     def move(self, x, y, z, absolute=True):
-        x, y = int(x*self.scale), int(y*self.scale)
-        v = self.config.mode
-        if v in [1, 2, 3, 4]:
+        mode = self.config.mode
+        if mode == 1:
+            per_inch = units_per_inch(ADDRESSING_0_001_INCH)
+        elif mode == 2:
+            per_inch = units_per_inch(ADDRESSING_0_025_MM)
+        else:
+            # Modes 3, 4, and 6. Connect does not set a unit.
+            per_inch = units_per_inch(self.config.addressing)
+        x, y = int(x * per_inch / INKCUT_DPI), int(y * per_inch / INKCUT_DPI)
+        if mode in [1, 2, 3, 4]:
             self.write(" {z}{x},{y} ".format(x=x, y=y, z=z and "D" or "U"))
         else:
             self.write("{z}{x},{y};".format(x=x, y=y, z=z and "PD" or "PU"))

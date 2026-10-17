@@ -37,7 +37,8 @@ if VERSION == "1.X":
 else:
     inkex.localize()
 import subprocess
-from inkcut4inkscape import contains_text, convert_objects_to_paths
+from inkcut4inkscape import convert_objects_to_paths
+from selection import contains_text, ids_still_present
 
 
 
@@ -55,14 +56,31 @@ class InkscapeInkcutPlugin(inkex.Effect):
         text nodes.
         """
 
-        nodes = self.svg.selected if (VERSION == "1.X") else self.selected
-        if not len(nodes):
+        if VERSION == "1.X":
+            selected = self.svg.selected
+            # .ids is id -> xml_path. The dict keys are xml paths, not ids.
+            selected_ids = list(selected.ids)
+        else:
+            selected = self.selected
+            selected_ids = [str(k) for k in selected.keys()]
+
+        if not len(selected):
             inkex.errormsg("There were no paths were selected.")
             return
 
         document = self.document
-        if contains_text(self.svg.selected.values() if VERSION == "1.X" else self.selected.values()):
-            document = convert_objects_to_paths(self.options.input_file if VERSION == "1.X" else self.args[-1], self.document)
+        if contains_text(selected.values()):
+            source = self.options.input_file if VERSION == "1.X" else self.args[-1]
+            converted = convert_objects_to_paths(source, document, selected_ids)
+            if converted is None:
+                return
+            document = converted
+            selected_ids = ids_still_present(document, selected_ids)
+
+        # An empty id list would import the whole document.
+        if not selected_ids:
+            inkex.errormsg("None of the selected objects can be sent to Inkcut.")
+            return
 
         #: If running from source
         if DEBUG:
@@ -72,8 +90,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
         else:
             cmd = ['inkcut']
 
-        cmd += ['open', '-',
-               '--nodes']+[str(k) for k in nodes.keys()]
+        cmd += ['open', '-', '--nodes'] + selected_ids
         p = subprocess.Popen(cmd,
                              stdin=subprocess.PIPE,
                              stdout=DEVNULL,

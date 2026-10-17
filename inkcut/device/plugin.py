@@ -347,6 +347,31 @@ class DeviceConfig(Model):
             self.step_time = self._default_step_time()
 
 
+def orient_path(path, swap_xy, scale):
+    """ Scale, then rotate(90) when Swap X/Y is on; the park includes
+    the document origin so padding is not pulled away.
+    """
+    oriented = path
+    if scale:
+        oriented = QtGui.QTransform.fromScale(scale[0], scale[1]).map(oriented)
+    if swap_xy:
+        rot = QtGui.QTransform()
+        rot.rotate(90)
+        oriented = rot.map(oriented)
+    # Union with (0, 0): the ink box alone would delete the margin.
+    bounds = oriented.boundingRect()
+    left = min(bounds.left(), 0.0)
+    bottom = max(bounds.bottom(), 0.0)
+    return QtGui.QTransform.fromTranslate(-left, -bottom).map(oriented)
+
+
+def orient_bed(path, swap_xy, scale):
+    """ Bed outline in the oriented path frame. Rects are stored y-down.
+    """
+    framed = QtGui.QTransform.fromScale(1, -1).map(path)
+    return orient_path(framed, swap_xy, scale)
+
+
 class Device(Model):
     """ The standard device. This is a standard model used throughout the
     application. An instance of this is configured by specifying a
@@ -546,6 +571,37 @@ class Device(Model):
 
         return path
 
+    def output_scale(self):
+        """ Device scale with mirror folded in. """
+        scale = self.config.scale[:]
+        if self.config.mirror_x:
+            scale[0] *= -1
+        if self.config.mirror_y:
+            scale[1] *= -1
+        return scale
+
+    def output_path(self, job):
+        """ Path init sends to the cutter. Does not apply config.rotation.
+        """
+        if job.model is None:
+            return None
+        path = orient_path(job.model, self.config.swap_xy, self.output_scale())
+        if self.config.swap_xy:
+            # The final pen-up is Return or Feed After. Orient leaves it on top.
+            last = path.elementCount() - 1
+            element = path.elementAt(last)
+            if element.isMoveTo():
+                path.setElementPositionAt(last, element.x, 0.0)
+        if job.feed_to_end:
+            x, y, z = self.origin
+            path.translate(x, -y)
+        return path
+
+    def preview_output_path(self, job):
+        """ Same path as output_path. Does not call create().
+        """
+        return self.output_path(job)
+
     def init(self, job):
         """ Initialize the job. This should do any final path manipulation
         required by the device (or as specified by the config) and any filters
@@ -572,24 +628,10 @@ class Device(Model):
         units = config.speed_units.split("/")[0]
         job.info.speed = from_unit(config.speed, units)
 
-        scale = config.scale[:]
-        if config.mirror_x:
-            scale[0] *= -1 if config.mirror_x else 1
-        if config.mirror_y:
-            scale[1] *= -1 if config.mirror_y else 1
-
-        # Get the internal QPainterPath "model" transformed to how this
-        # device outputs
-        model = job.create(swap_xy=config.swap_xy, scale=scale)
-
-        if job.feed_to_end:
-            #: Move the job to the new origin
-            x, y, z = self.origin
-            model.translate(x, -y)
+        model = self.output_path(job)
 
         #: TODO: Apply filters here
 
-        #: Return the transformed model
         return model
 
     @defer.inlineCallbacks
@@ -1194,6 +1236,9 @@ class DevicePlugin(Plugin):
         # Set the protocols based on the declaration
         protocols = [p for p in self.protocols
                      if not driver.protocols or p.id in driver.protocols]
+        # Local list only. The shared registry feeds the language combo.
+        if driver.initial_protocol:
+            protocols.sort(key=lambda protocol: protocol.id != driver.initial_protocol)
 
         # Generate the device
         return driver.factory(driver, transports, protocols, config)
@@ -1295,25 +1340,18 @@ class DevicePlugin(Plugin):
         """
         view_items = []
 
-        #: Transform used by the view
         preview_plugin = self.workbench.get_plugin('inkcut.preview')
         plot = preview_plugin.live_preview
-        t = preview_plugin.transform
 
         #: Draw the device
         device = self.device
         job = device.job
-
-        r = QtGui.QTransform()
-        if device.config.swap_xy:
-            # Rotate area to match swapped axis
-            r.rotate(90)
-            r.scale(-1, 1)
+        scale = device.output_scale()
+        swap_xy = device.config.swap_xy
 
         if device and device.area:
-            area = device.area
             view_items.append(
-                dict(path=device.transform(r.map(t.map(device.area.path))),
+                dict(path=orient_bed(device.area.path, swap_xy, scale),
                      pen=plot.pen_device,
                      skip_autorange=True)
             )
@@ -1321,10 +1359,10 @@ class DevicePlugin(Plugin):
         if job and job.material:
             # Also observe any change to job.media and job.device
             view_items.extend([
-                dict(path=device.transform(r.map(t.map(job.material.path))),
+                dict(path=orient_bed(job.material.path, swap_xy, scale),
                      pen=plot.pen_media,
                      skip_autorange=True),
-                dict(path=device.transform(r.map(t.map(job.material.padding_path))),
+                dict(path=orient_bed(job.material.padding_path, swap_xy, scale),
                      pen=plot.pen_media_padding, skip_autorange=True)
             ])
 

@@ -4,10 +4,13 @@ Created on Jul 25, 2015
 
 @author: jrm
 """
-from atom.api import Instance, Float, Bool, Int
+from atom.api import Instance, Bool, Enum
 from inkcut.device.plugin import DeviceProtocol, Model
 from inkcut.core.utils import log
 from inkcut.core.svg import INKCUT_DPI
+from inkcut.device.protocols.units import (
+    ADDRESSING_LEGACY, ADDRESSING_ORDER, units_per_inch,
+)
 
 
 class HPGLConfig(Model):
@@ -17,9 +20,9 @@ class HPGLConfig(Model):
     #: Whether use seperate PU/PD and PA or just PU/PD
     separate_z_moves = Bool().tag(config=True)
 
-class HPGLProtocol(DeviceProtocol):
-    scale = Float(1021/INKCUT_DPI)
+    addressing = Enum(*ADDRESSING_ORDER)(ADDRESSING_LEGACY).tag(config=True)
 
+class HPGLProtocol(DeviceProtocol):
     #: Pad option
     config = Instance(HPGLConfig, ()).tag(config=True)
 
@@ -38,7 +41,8 @@ class HPGLProtocol(DeviceProtocol):
         negative values so absolute moves only works.
         
         """
-        x, y = int(x*self.scale), int(y*self.scale)
+        per_inch = units_per_inch(self.config.addressing)
+        x, y = int(x * per_inch / INKCUT_DPI), int(y * per_inch / INKCUT_DPI)
         if absolute:
             if self.config.separate_z_moves:
                 self.write('PD;' if z else 'PU;')

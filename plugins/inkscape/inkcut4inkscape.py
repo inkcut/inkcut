@@ -22,10 +22,20 @@ Inkcut, Plot HPGL directly from Inkscape.
    MA 02110-1301, USA.
 """
 import os
+import sys
+from pathlib import Path
+
 import inkex
 from lxml import etree
 from subprocess import Popen, PIPE
 from shutil import copy2
+
+# Symlinked install: Inkscape's path is the link directory.
+_extension_dir = str(Path(__file__).resolve().parent)
+if _extension_dir not in sys.path:
+    sys.path.insert(0, _extension_dir)
+
+from selection import conversion_actions, id_breaks_actions
 
 # check inkscape version
 import importlib
@@ -35,21 +45,29 @@ if optparse_spec:
 else:
     VERSION= "0.9"
 
-def contains_text(nodes):
-    for node in nodes:
-        tag = node.tag[node.tag.rfind("}")+1:]
-        if tag == 'text':
-            return True
-    return False
-
-def convert_objects_to_paths(file, document):
+def convert_objects_to_paths(file, document, ids=None):
     tempfile = os.path.splitext(file)[0] + "-prepare.svg"
     # tempfile is needed here only because we want to force the extension to be .svg
     # so that we can open and close it silently
 
-    command = 'inkscape ' + file + ' --actions="select-all;object-unlink-clones;object-to-path" -o ' + tempfile
+    if ids:
+        for node_id in ids:
+            if id_breaks_actions(node_id):
+                inkex.errormsg(_(
+                    "Cannot convert objects to paths because an id "
+                    "contains ';' or a newline."
+                ))
+                return None
 
-    p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+    command = [
+        "inkscape",
+        file,
+        "--actions=" + conversion_actions(ids),
+        "-o",
+        tempfile,
+    ]
+
+    p = Popen(command, shell=False, stdout=PIPE, stderr=PIPE)
     (out, err) = p.communicate()
 
     if p.returncode != 0:

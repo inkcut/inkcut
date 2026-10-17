@@ -15,6 +15,7 @@ from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, Mult
 from enamlx.widgets.api import DoubleSpinBox
 from enaml.qt.QtWidgets import QApplication
 from .gcode import GCodeConfig
+from .units import ADDRESSING_0_001_INCH, ADDRESSING_0_025_MM
 
 enamldef DMPLConfigView(Container):
     attr model
@@ -90,6 +91,19 @@ enamldef DMPLConfigView(Container):
     ObjectCombo:
         items  = list(model.get_member('mode').items)
         selected := model.mode
+    Conditional:
+        condition << model.mode in (1, 2)
+        Label:
+            text = QApplication.translate("protocols", "Addressing")
+        Label:
+            text << ADDRESSING_0_001_INCH if model.mode == 1 else ADDRESSING_0_025_MM
+    Conditional:
+        condition << model.mode in (3, 4, 6)
+        Label:
+            text = QApplication.translate("protocols", "Addressing")
+        ObjectCombo:
+            items = list(model.get_member('addressing').items)
+            selected := model.addressing
 
 
 enamldef HPGLConfigView(Container):
@@ -101,3 +115,8 @@ enamldef HPGLConfigView(Container):
     CheckBox:
         checked := model.separate_z_moves
         text = QApplication.translate("protocols", "Send pen up/down commands separately from move commands")
+    Label:
+        text = QApplication.translate("protocols", "Addressing")
+    ObjectCombo:
+        items = list(model.get_member('addressing').items)
+        selected := model.addressing
