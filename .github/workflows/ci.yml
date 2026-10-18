@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "macos-13"]
+        os: ["ubuntu-latest", "macos-latest", "macos-15-intel"]
         python: ["3.8", "3.10", "3.12"]
         include:
           - qt: "PyQt6" # default values
@@ -31,7 +31,7 @@ jobs:
             qt: "PyQt5"
             experimental: false
         exclude:
-            - os: "macos-13" # Reduce number of total macOS combinations. Use only the latest and few older ones on x86_64
+            - os: "macos-15-intel" # Reduce number of total macOS combinations. Use only the latest and few older ones on x86_64
               python: "3.10"
 
     steps:
