@@ -15,6 +15,7 @@ import enaml
 from atom.api import Instance, Enum, List, Str, Int, Float, observe, Bool
 from inkcut.core.api import Plugin, unit_conversions, log
 
+from . import importers
 from .models import Job, JobError, Material
 
 with enaml.imports():
@@ -54,8 +55,27 @@ class JobPlugin(Plugin):
     # Whether or not to auto-detect DPI settings for Inkscape SVG files.
     dpi_auto_detect_inkscape = Bool(True).tag(config=True)
 
+    #: Bumped on every open_document call. A background conversion holds
+    #: the value it started with and drops its result if another open
+    #: happened meanwhile, so a slow conversion can never replace a
+    #: document the user opened after it. Not part of the saved state.
+    _open_generation = Int()
+
     def _default_job(self):
-        return Job(material=self.material)
+        job = Job(material=self.material)
+        #: Feed settings describe the physical media workflow, not the
+        #: document — carry them over so every new document doesn't
+        #: silently reset to cutting over the previous job.
+        #: Peek at the slot directly — touching self.job here would
+        #: re-enter this default handler and recurse
+        try:
+            old = self.get_member('job').get_slot(self)
+        except Exception:
+            old = None
+        if old is not None:
+            job.feed_to_end = old.feed_to_end
+            job.feed_after = old.feed_after
+        return job
 
     def _default_units(self):
         return "in"
@@ -98,7 +118,8 @@ class JobPlugin(Plugin):
             if url:
                 schema, path = url.split("://")
                 if schema == "file" and os.path.exists(path):
-                    result = path.endswith(".svg")
+                    result = (path.lower().endswith(".svg")
+                              or importers.is_importable(path))
         except Exception as e:
             log.exception(e)
         # log.debug("Checking if {} can be opened... {}".format(url, result))
@@ -122,6 +143,71 @@ class JobPlugin(Plugin):
         else:
             from_source = False
 
+        #: Any newer open — SVG or not — invalidates conversions that
+        #: are still running in the background
+        self._open_generation += 1
+
+        #: PDF and PDF-compatible .ai documents are converted to a cached
+        #: SVG first — the parser only reads SVG. The original path is
+        #: still what lands in the recent-documents menu below.
+        if not from_source and importers.is_importable(path):
+            return self._open_imported_document(path, nodes)
+        return self._load_document(path, path, nodes, from_source)
+
+    def _open_imported_document(self, path, nodes):
+        """Convert a PDF/AI document to SVG and open the result. The
+        conversion subprocess can take up to two minutes, so when the
+        event loop is running it goes to a worker thread — a blocking
+        call here would freeze the UI and the device reactor.
+
+        """
+        from enaml.application import Application
+        if Application.instance() is None:
+            #: No event loop to defer to (cli/tests): convert inline
+            return self._load_document(
+                path, importers.convert_to_svg(path), nodes)
+
+        from inkcut.core.utils import defer_to_thread
+        generation = self._open_generation
+
+        def on_converted(result):
+            load_path, pages = result
+            if self._open_generation != generation:
+                log.debug("import | dropping stale conversion of %s "
+                          "(a newer document was opened)" % path)
+                return
+            self._load_document(path, load_path, nodes)
+            if pages and pages > 1:
+                self.workbench.message_warning(
+                    title="Multi-page document",
+                    message="{} has {} pages; only page 1 was "
+                            "imported.".format(os.path.basename(path),
+                                               pages))
+
+        def on_error(failure):
+            log.error("import | opening %s failed: %s"
+                      % (path, failure.value))
+            if self._open_generation != generation:
+                return
+            self.workbench.message_critical(
+                title="Error opening document",
+                message="Could not open {}\n\n{}".format(path,
+                                                         failure.value))
+
+        d = defer_to_thread(importers.convert_to_svg_info, path)
+        #: NOT addCallbacks: on_error must also cover failures raised by
+        #: _load_document inside on_converted (e.g. an invalid converted
+        #: SVG), and a paired errback would not see those
+        d.addCallback(on_converted)
+        d.addErrback(on_error)
+        return d
+
+    def _load_document(self, path, load_path, nodes, from_source=False):
+        """Finish opening a document on the main thread. `path` is what
+        the user opened, `load_path` is what the parser reads (identical
+        unless the document was converted).
+
+        """
         # Close any old docs
         self.close_document()
 
@@ -129,7 +215,8 @@ class JobPlugin(Plugin):
             log.info("Opening {doc}".format(doc=path[:200]))
             job = self.job
             job.document_kwargs = dict(ids=nodes)
-            job.document = path
+            job.source_document = path
+            job.document = load_path
         except ValueError as e:
             #: Wrap in a JobError
             raise JobError(e)
