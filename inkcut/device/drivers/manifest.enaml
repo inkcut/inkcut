@@ -32,6 +32,7 @@ enamldef Cameo4Driver(DeviceDriver):
         'ble': {
           'service_uuid': 'e2088282-4fde-42f9-bb22-6ec3c7ed8f91',
           'write_uuid': '6d92661d-f429-4d67-929b-28e7a9780912',
+          'read_uuid': '8dcf199a-30e7-4bd4-beb6-beb57dca866c',
           'notify_uuid': '61490654-b5b4-458c-a867-9e15bc1471e0',
           'append_etx': True,
           'name_filter': 'cameo,silhouette',

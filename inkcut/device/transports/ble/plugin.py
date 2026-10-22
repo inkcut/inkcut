@@ -13,14 +13,20 @@ Which service and characteristics to use is set by the transport config.
             'ble': {
                 'service_uuid': '...',
                 'write_uuid': '...',
+                'read_uuid': '...',
                 'notify_uuid': '...',
                 'append_etx': True,
             }
         }
     }
 
-service_uuid and write_uuid are required. notify_uuid is optional, for
-machines that report status.
+service_uuid and write_uuid are required. read_uuid is where the machine
+answers queries, and notify_uuid where it reports status unasked; both
+are optional. Replies on read_uuid go to the protocol like a serial
+port's input. Status on notify_uuid is only logged, so that a "busy"
+the machine sends unasked is not taken as the answer to a query. A
+machine without a read_uuid answers on notify_uuid, which is then
+treated as the reply stream.
 
 Finding the values for a new cutter
 -----------------------------------
@@ -65,24 +71,26 @@ family and have to be found by looking at the machine.
 
 4. Sort its characteristics by properties. The command channel accepts
    writes; a write-only one is the strongest candidate, and that is
-   write_uuid. Status comes back on one that can notify or indicate,
-   which is notify_uuid.
+   write_uuid. Replies and status come back on ones that can notify or
+   indicate, which are read_uuid and notify_uuid.
 
    The properties do not always settle it. The Cameo 4 Plus reports::
 
        e2088282-4fde-42f9-bb22-6ec3c7ed8f91     vendor service
            61490654-b5b4-458c-a867-9e15bc1471e0 write, indicate  <- status
-           8dcf199a-30e7-4bd4-beb6-beb57dca866c write, indicate
+           8dcf199a-30e7-4bd4-beb6-beb57dca866c write, indicate  <- replies
            6d92661d-f429-4d67-929b-28e7a9780912 write            <- commands
 
    Two characteristics look the same, and only trying them shows which
-   one reports status.
+   is which.
 
 5. Confirm by experiment. Subscribe to every notify/indicate candidate
-   (client.start_notify), then write a command that makes the machine
-   respond and does not cut, such as GPGL "H" (home), to the write
-   candidate. A Cameo answers "1" (busy) then "2" (ready) on its status
-   characteristic. If nothing happens, vary how the command is sent:
+   (client.start_notify), then write commands to the write candidate
+   that make the machine respond and do not cut. A Cameo answers GPGL
+   "FG" (its name) and ESC ENQ (its state) on its reply characteristic,
+   and on its status characteristic reports "1" (busy) then "0" or "2"
+   (ready, with or without media loaded) whenever it moves, as for "H"
+   (home). If nothing happens, vary how the command is sent:
 
    - write_with_response: some machines silently ignore writes without
      a response. The Cameo 4 is one of them.
@@ -125,8 +133,8 @@ def find_characteristics(services, config):
     Returns
     -------
     result: tuple
-        (write, notify) characteristics. notify is None if the config
-        has no notify_uuid, not every machine reports status.
+        (write, read, notify) characteristics. read and notify are None
+        if the config has no read_uuid or notify_uuid.
 
     """
     service = services.get_service(config.service_uuid)
@@ -134,7 +142,7 @@ def find_characteristics(services, config):
         raise IOError('Service {} not found on the device'.format(
             config.service_uuid))
     chars = []
-    for uuid in (config.write_uuid, config.notify_uuid):
+    for uuid in (config.write_uuid, config.read_uuid, config.notify_uuid):
         char = service.get_characteristic(uuid) if uuid else None
         if uuid and char is None:
             raise IOError('Characteristic {} not found in service {}'.format(
@@ -171,8 +179,12 @@ class BLEConfig(Model):
     #: the driver.
     write_uuid = Str().tag(config=True)
 
-    #: Characteristic in that service the machine reports status on.
-    #: Optional, not every machine reports status.
+    #: Characteristic in that service the machine answers queries on.
+    #: Optional, not every machine answers.
+    read_uuid = Str().tag(config=True)
+
+    #: Characteristic in that service the machine reports status on
+    #: unasked. Optional, not every machine reports status.
     notify_uuid = Str().tag(config=True)
 
     #: Terminate each write with ETX. The GPGL protocol puts ETX before
@@ -252,19 +264,30 @@ class BLETransport(DeviceTransport):
     #: Characteristic commands are written to once connected
     _write_char = Value()
 
+    #: Whether replies come on their own characteristic, so that status
+    #: notifications can be kept out of the reply stream
+    _has_read_char = Bool()
+
     #: Streams commands as they are generated, like a serial port
     always_spools = set_default(False)
 
     # -------------------------------------------------------------------------
     # bleak callbacks
     # -------------------------------------------------------------------------
-    def _on_notify(self, sender, data):
-        """ Called when the machine reports status. """
+    def _on_read(self, sender, data):
+        """ Called when the machine answers a query. """
         data = bytes(data)
         log.debug('<- {} | {}'.format(self, data))
         self.last_read = data
         if self.protocol is not None:
             self.protocol.data_received(data)
+
+    def _on_notify(self, sender, data):
+        """ Called when the machine reports status unasked. """
+        if not self._has_read_char:
+            #: Machines without a reply characteristic answer here
+            return self._on_read(sender, data)
+        log.debug('<- {} | status {}'.format(self, bytes(data)))
 
     def _on_disconnect(self, client):
         if client is not self.client:
@@ -325,12 +348,16 @@ class BLETransport(DeviceTransport):
                     'application.'.format(address, e))
 
             try:
-                write_char, notify_char = find_characteristics(
+                write_char, read_char, notify_char = find_characteristics(
                     client.services, config)
+                #: Without replies the protocol cannot query the machine
+                if read_char is not None:
+                    await client.start_notify(read_char, self._on_read)
             except Exception:
                 await client.disconnect()
                 raise
             self._write_char = write_char
+            self._has_read_char = read_char is not None
 
             #: Status notifications are optional, not every machine has them
             if notify_char is not None:
