@@ -15,6 +15,31 @@ def load_drivers():
     return []
 
 
+enamldef Cameo4Driver(DeviceDriver):
+    """ Silhouette Cameo 4. Variants override what differs. """
+    manufacturer = 'Silhouette'
+    model = 'Cameo 4'
+    width = '300cm'
+    length = '30.5cm'
+    protocols = ['gpgl']
+    connections = ['printer', 'ble']
+    default_config = {
+      'scale': [ 5.64, 5.64 ],
+      'swap_xy': True,
+      'mirror_x': True,
+      'mirror_y': True,
+      'connection': {
+        'ble': {
+          'service_uuid': 'e2088282-4fde-42f9-bb22-6ec3c7ed8f91',
+          'write_uuid': '6d92661d-f429-4d67-929b-28e7a9780912',
+          'notify_uuid': '61490654-b5b4-458c-a867-9e15bc1471e0',
+          'append_etx': True,
+          'name_filter': 'cameo,silhouette',
+        }
+      }
+    }
+
+
 enamldef DriversManifest(PluginManifest):
     """ Device drivers manifest.
 
@@ -136,28 +161,12 @@ enamldef DriversManifest(PluginManifest):
             protocols = ['hpgl', 'gpgl']
             connections = ['serial']
 
-        DeviceDriver:
-            manufacturer = 'Silhouette'
-            model = 'Cameo 4'
-            width = '300cm'
-            length = '30.5cm'
-            protocols = ['gpgl']
-            connections = ['printer', 'ble']
-            default_config = {
-              'scale': [ 5.64, 5.64 ],
-              'swap_xy': True,
-              'mirror_x': True,
-              'mirror_y': True,
-              'connection': {
-                'ble': {
-                  'service_uuid': 'e2088282-4fde-42f9-bb22-6ec3c7ed8f91',
-                  'write_uuid': '6d92661d-f429-4d67-929b-28e7a9780912',
-                  'notify_uuid': '61490654-b5b4-458c-a867-9e15bc1471e0',
-                  'append_etx': True,
-                  'name_filter': 'cameo,silhouette',
-                }
-              }
-            }
+        Cameo4Driver:
+            pass
+
+        Cameo4Driver:
+            model = 'Cameo 4 Plus'
+            length = '38.1cm'
 
         DeviceDriver:
             manufacturer = 'Silhouette'
