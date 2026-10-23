@@ -15,7 +15,6 @@ from setuptools import setup, find_packages
 
 #: Common requirements
 install_requires = [
-    'twisted',
     'enamlx>=0.4.2',
     'pyqtgraph',
     'qtconsole',  # now optional
@@ -24,7 +23,8 @@ install_requires = [
     'lxml',  # use sudo apt install libxml2-dev libxslt-dev
 
     #'PyQt6', # Let users install whatever Qt they want
-    'qt-reactor',
+    'asyncqtpy',
+    'aiofile; sys_platform != \'win32\'',
 
     # Python 2:
     'faulthandler; python_version < \'3.0\'',

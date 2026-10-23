@@ -41,33 +41,33 @@ class GCodeProtocol(DeviceProtocol):
     _currently_up = Bool()
     scale = 1 # Float(25.4/90)
 
-    def send_command_block(self, commands):
+    async def send_command_block(self, commands):
         if commands:
             if not commands.endswith("\n"):
-                self.write(commands + "\n")
+                await self.write(commands + "\n")
             else:
-                self.write(commands)
+                await self.write(commands)
 
-    def _lift(self):
+    async def _lift(self):
         if self.config.lift_mode == GCodeConfig.TOOL_LIFT_CUSTOM:
-            self.send_command_block(self.config.lift_gcode)
+            await self.send_command_block(self.config.lift_gcode)
 
-    def _lower(self):
+    async def _lower(self):
         if self.config.lift_mode == GCodeConfig.TOOL_LIFT_CUSTOM:
-            self.send_command_block(self.config.lower_gcode)
+            await self.send_command_block(self.config.lower_gcode)
 
-    def connection_made(self):
+    async def init(self):
         if self.config.use_builtin:
-            self.write("G28; Return to home\n")
-            self.write("G98; Return to initial z\n")
-            self.write("G90; Use absolute coordinates\n")
+            await self.write("G28; Return to home\n")
+            await self.write("G98; Return to initial z\n")
+            await self.write("G90; Use absolute coordinates\n")
     
-    def move(self, x, y, z, absolute=True):
+    async def move(self, x, y, z, absolute=True):
         if self._currently_up != (z == 0):
             if self._currently_up:
-                self._lower()
+                await self._lower()
             else:
-                self._lift()
+                await self._lift()
             if z == 0:
                 self._currently_up = True
             else:
@@ -78,21 +78,9 @@ class GCodeProtocol(DeviceProtocol):
             physical_z = self.config.lower_z if z == 1 else self.config.upper_z
             line += " Z{:.{precision}f}".format(physical_z, precision=self.config.precision)
         line += "\n"
-        self.write(line)
+        await self.write(line)
 
-    def set_force(self, f):
-        raise NotImplementedError
-        
-    def set_velocity(self, v):
-        raise NotImplementedError
-        
-    def set_pen(self, p):
-        raise NotImplementedError
-
-    def finish(self):
+    async def finish(self):
         if self.config.use_builtin:
-            self.write("G28; Return to home\n")
-            self.write("G98; Return to initial z\n")
-
-    def connection_lost(self):
-        pass
+           await self.write("G28; Return to home\n")
+           await self.write("G98; Return to initial z\n")

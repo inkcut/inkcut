@@ -7,6 +7,7 @@ Created on Jul 25, 2015
 import enaml
 import traceback
 from enaml.qt.QtWidgets import QApplication
+from enaml.application import deferred_call
 from enaml.workbench.api import Extension, PluginManifest, ExtensionPoint
 from enaml.workbench.core.api import Command
 from enaml.workbench.ui.api import ActionItem, MenuItem, ItemGroup, Autostart
@@ -16,7 +17,6 @@ from .extensions import (
     DEVICE_FILTER_POINT
 )
 from inkcut.ui.extensions import DOCK_ITEM_POINT, DockItem
-from twisted.internet import defer
 
 
 def device_setup(event):
@@ -28,7 +28,6 @@ def device_setup(event):
     DeviceDialog(ui.window, plugin=plugin).exec_()
 
 
-@defer.inlineCallbacks
 def job_start(event):
     """ Pass the job to the current device for it to cut. Watch
     the process in the task dialog.
@@ -50,15 +49,15 @@ def job_start(event):
                                   "Please select Device->Setup from the menu."))
         return
 
-    def show_error(err, *args, **kwargs):
-        log.error(err)
-        msg = str(err.getTraceback())
-        workbench.message_critical("Error processing job", msg)
+    async def run(job):
+        try:
+            await plugin.submit(job)
+        except Exception as e:
+            log.exception(e)
+            msg = traceback.format_exc()
+            workbench.message_critical("Error processing job", msg)
 
-    d = defer.maybeDeferred(plugin.submit, job)
-    d.addErrback(show_error)
-    yield d
-
+    deferred_call(run, job)
 
 
 def device_progress_dock_item_factory():

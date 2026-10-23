@@ -29,7 +29,7 @@ class RepeatConfig(Model):
 class RepeatFilter(DeviceFilter):
     config = Instance(RepeatConfig, ()).tag(config=True)
 
-    def apply_to_model(self, model, job):
+    async def apply_to_model(self, model, job):
         if self.config.steps <= 1:
             return model
 

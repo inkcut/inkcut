@@ -10,6 +10,7 @@ Created on Mar 14, 2018
 @author: jrm
 """
 import pytest
+import asyncio
 from threading import Timer
 from enaml.application import deferred_call
 

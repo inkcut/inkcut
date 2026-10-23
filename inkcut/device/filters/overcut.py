@@ -30,7 +30,7 @@ class OvercutFilter(DeviceFilter):
     #: Change config
     config = Instance(OvercutConfig, ()).tag(config=True)
     
-    def apply_to_polypath(self, polypath):
+    async def apply_to_polypath(self, polypath):
         """ Apply the filter to the polypath. It's much easier doing this
         after conversion to polypaths.
         
