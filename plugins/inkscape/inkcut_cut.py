@@ -73,7 +73,7 @@ class InkscapeInkcutPlugin(inkex.Effect):
             cmd = ['inkcut']
 
         cmd += ['open', '-',
-               '--nodes']+[str(k) for k in nodes.keys()]
+               '--nodes']+[n.get('id') for n in nodes.values() if n.get('id')]
         p = subprocess.Popen(cmd,
                              stdin=subprocess.PIPE,
                              stdout=DEVNULL,
