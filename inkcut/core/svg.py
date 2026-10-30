@@ -734,9 +734,9 @@ class QtSvgDoc(QtSvgG):
                 # Find all nodes and their parents
                 valid_nodes = set()
                 for node in nodes:
-                    valid_nodes.add(node)
+                    valid_nodes.update(node.iter())
                     parent = node.getparent()
-                    while parent:
+                    while parent is not None:
                         valid_nodes.add(parent)
                         parent = parent.getparent()
                 self._nodes = valid_nodes

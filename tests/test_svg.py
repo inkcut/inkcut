@@ -23,3 +23,19 @@ def test_svg(path):
         doc = QtSvgDoc(path)
     except NotImplementedError as e:
          pytest.skip(str(e))
+
+
+@pytest.mark.parametrize('ids, paths', [
+    (['g860'], ['path979']),
+    (['g865'], ['path979', 'path981']),
+])
+def test_svg_select_group(ids, paths):
+    """ Selecting a group by id must keep the paths inside it and nothing
+    else (eg 'Cut selection' from Inkscape on text converted to paths)
+    """
+    path = 'tests/data/groups.svg'
+    selected = QtSvgDoc(path, ids=ids)
+    expected = QtSvgDoc(path, ids=paths)
+    assert not selected.isEmpty()
+    assert selected.elementCount() == expected.elementCount()
+    assert selected.boundingRect() == expected.boundingRect()
