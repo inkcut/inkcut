@@ -139,27 +139,12 @@ class LPRProtocol(asyncio.SubprocessProtocol, Atom):
         self.parent.connected = True
 
     def pipe_data_received(self, fd, data):
-        if fd == 1:
-            self.in_received(data)
-        elif fd == 2:
-            self.out_received(data)
+        if fd == 2:
+            log.error("LPR error: {}".format(data))
         else:
-            self.err_received(data)
+            self.delegate.data_received(data)
 
-    def out_received(self, data):
-        self.delegate.data_received(data)
-
-    def err_received(self, data):
-        log.error("LPR error: {}".format(data))
-
-    def in_received(self, data):
-        self.delegate.data_received(data)
-
-    def process_exited(self, status):
-        if (status.value.exitCode != 0):
-            log.error("LPR error: %d" % (status.value.exitCode,))
-        else:
-            log.debug("LPR exited without error")
+    def process_exited(self):
         self.parent.connected = False
 
 
@@ -171,18 +156,26 @@ class LPRPrinterConnection(PrinterConnection):
         t = self.transport
         loop = asyncio.get_running_loop()
         self._protocol = LPRProtocol(parent=t, delegate=t.protocol)
-        self.printer = loop.subprocess_exec(
-            lambda: self._protocol, 'lpr', ['lpr', '-P', t.config.printer]
-        )
+        self.printer, _ = await loop.subprocess_exec(
+            lambda: self._protocol,
+            'lpr', '-P', t.config.printer, '-o', 'raw')
+
     async def write(self, data):
-        super(LPRPrinterConnection, self).write(data)
+        await super().write(data)
         if hasattr(data, 'encode'):
             data = data.encode()
-        await self._protocol.transport.write(data)
+        self.printer.get_pipe_transport(0).write(data)
 
     async def close(self):
-        #: Close, the process should exit
-        self._protocol.transport.close()
+        #: EOF on stdin makes lpr submit the job; wait for it instead of
+        #: killing it, otherwise the job is discarded
+        self.printer.get_pipe_transport(0).close()
+        while self.printer.get_returncode() is None:
+            await asyncio.sleep(0.1)
+        rc = self.printer.get_returncode()
+        if rc:
+            log.error("LPR exited with {}".format(rc))
+        self.printer.close()
 
 
 # -----------------------------------------------------------------------------
