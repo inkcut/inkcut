@@ -84,6 +84,7 @@
 |Mimaki              |cg60sr                        |Printer   |60        |Unlimited           |Yes    |
 |Mimaki              |CG60st                        |Serial    |60        |Unlimited           |Yes    |
 |Mimaki              |GG-130 Fx II                  |Printer   |128       |Unlimited           |No     |
+|Monoprice           |MakerCraft (SKYCUT)           |USBPrint* |30        |Unlimited           |Yes    |
 |Moritzu             |UC-700E                       |Printer   |63        |Unlimited           |Yes    |
 |Mutoh               |sc 1000e                      |Printer   |105       |Unlimited           |No     |
 |Mutoh               |sc 650                        |Serial    |63        |1200                |Yes    |
@@ -199,3 +200,5 @@
 |Vinyl Express       |vinyl express Rseries         |Serial    |79        |Unlimited           |No     |
 |ZEON                |ZEONCUT-1080                  |Serial    |98        |Unlimited           |Yes    |
 |ZEON                |ZEONCUT-1080                  |Printer   |98        |Unlimited           |Yes    |
+
+\* `USBPrint` is not built in; it is provided by the [inkcut-usbprint](https://github.com/gladfelter/inkcut-usbprint) plugin.

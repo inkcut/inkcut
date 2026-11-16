@@ -71,3 +71,12 @@ If you would like to add a missing device, please create an issue and provide th
 - Supported protocols
 - Supported connection types
 - Width and length of the plotting area
+
+Some machines need a connection type that Inkcut does not ship. Those are
+provided as external plugins: a plugin registers the transport *and* a device
+driver, which is what makes the device appear in the list above restricted to the
+transports it can actually use. For example, cutters that enumerate as USB
+printer-class devices with no vendor driver and no print queue — where there is
+neither a queue for the `Printer` transport to attach to nor a COM port for
+`Serial Port` — are supported by
+[inkcut-usbprint](https://github.com/gladfelter/inkcut-usbprint).
