@@ -101,6 +101,26 @@ enamldef DriversManifest(PluginManifest):
             width = '28in'
 
         DeviceDriver:
+            manufacturer = 'Refine'
+            model = 'EH-1351'
+            width = '126cm'
+            protocols = ['hpgl']
+            connections = ['serial']
+            default_config = {
+                'connection': {
+                    'serial': {
+                        'baudrate': 9600,
+                        'bytesize': 8,
+                        'parity': 'None',
+                        'stopbits': 1,
+                        'rtscts': True,
+                        'xonxoff': False,
+                        'dsrdtr': False
+                    }
+                }
+            }
+
+        DeviceDriver:
             manufacturer = 'US Cutter'
             model = 'Refine MH-1351'
             width = '120cm'
