@@ -14,7 +14,7 @@ import textwrap
 from inkcut.core.utils import load_icon
 from enaml.layout.api import hbox, align, spacer
 from enaml.qt.QtWidgets import QApplication
-from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton
+from enaml.widgets.api import Container, Form, Label, ObjectCombo, SpinBox, CheckBox, PushButton, Field
 
 
 enamldef SerialPortSettingsView(Container):
@@ -49,6 +49,16 @@ enamldef SerialPortSettingsView(Container):
                 text = QApplication.translate("serialport", "Refresh")
                 icon = load_icon("arrow_refresh")
                 clicked :: model.refresh()
+        Label:
+            text = QApplication.translate("serialport", "Custom port / URL")
+        Field:
+            text := model.port
+            tool_tip = textwrap.dedent("""
+            Enter a local serial device path or network serial URL.
+            Examples:
+            /dev/ttyUSB0
+            rfc2217://192.168.1.100:7000
+            """).strip()
         Label:
             text = QApplication.translate("serialport", "Baudrate")
         SpinBox:

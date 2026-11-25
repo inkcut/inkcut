@@ -71,6 +71,11 @@ class SerialProtocol(asyncio.Protocol, Atom):
 
     def connection_lost(self, reason):
         self._transport.connected = False
+
+        pending = self._transport.pending_write
+        if pending is not None and not pending.done():
+            pending.set_result(False)
+
         device_path = self._transport.device_path
         log.debug("-- {} | dropped: {}".format(device_path, reason))
 
@@ -145,7 +150,10 @@ class SerialTransport(DeviceTransport):
     async def write(self, data):
         log.debug("-> {} | {}".format(self.device_path, data))
         if pending := self.pending_write:
-            await pending # Wait until previous completes
+            if not await pending:
+                raise serial.SerialException(
+                    "Previous serial write failed"
+                )
         try:
             loop = asyncio.get_event_loop()
             self.pending_write = loop.create_future()
@@ -154,8 +162,18 @@ class SerialTransport(DeviceTransport):
             # or the connection drops
             if hasattr(data, 'encode'):
                 data = data.encode()
+            if not self.connected:
+                raise serial.SerialException(
+                    "Serial device is disconnected"
+                )
+
             self.connection.write(data)
-            await self.pending_write
+
+            if not await self.pending_write:
+                raise serial.SerialException(
+                    "Serial write failed"
+                )
+
             return
         finally:
             self.pending_write = None
