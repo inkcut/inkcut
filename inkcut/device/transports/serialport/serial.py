@@ -77,12 +77,15 @@ class SerialTransport(asyncio.Transport):
         # XXX how to support url handlers too
 
         # Asynchronous I/O requires non-blocking devices
-        self._serial.timeout = 0
-        self._serial.write_timeout = 0
+        self._configure_serial()
 
         # These two callbacks will be enqueued in a FIFO queue by asyncio
         loop.call_soon(protocol.connection_made, self)
         loop.call_soon(self._ensure_reader)
+
+    def _configure_serial(self):
+        self._serial.timeout = 0
+        self._serial.write_timeout = 0
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
@@ -488,6 +491,150 @@ class SerialTransport(asyncio.Transport):
         self._protocol = None
 
 
+
+class RFC2217Transport(SerialTransport):
+    """Thread-backed transport for remote RFC2217 serial devices."""
+
+    def __init__(self, loop, protocol, serial_instance):
+        self._reader_task = None
+        self._writer_task = None
+        self._shutdown_task = None
+        self._inflight = 0
+        super().__init__(loop, protocol, serial_instance)
+
+    def _configure_serial(self):
+        # RFC2217 does not support non-blocking write_timeout.
+        # Network operations are executed outside the event loop.
+        pass
+
+    def _ensure_reader(self):
+        if not self._closing and self._reader_task is None:
+            self._reader_task = self._loop.create_task(
+                self._read_remote()
+            )
+
+    def _remove_reader(self):
+        # The reader exits when paused or closing.
+        self._has_reader = False
+
+    async def _read_remote(self):
+        self._has_reader = True
+        try:
+            while self._has_reader and not self._closing:
+                waiting = await asyncio.to_thread(
+                    lambda: self._serial.in_waiting
+                )
+
+                if waiting:
+                    data = await asyncio.to_thread(
+                        self._serial.read,
+                        min(waiting, self._max_read_size),
+                    )
+                    if data and not self._closing:
+                        self._protocol.data_received(data)
+
+                await asyncio.sleep(0.01)
+
+        except Exception as exc:
+            self._start_shutdown(exc, False)
+
+        finally:
+            self._has_reader = False
+            self._reader_task = None
+
+    def get_write_buffer_size(self):
+        return super().get_write_buffer_size() + self._inflight
+
+    def write(self, data):
+        if self._closing:
+            raise serial.SerialException(
+                "RFC2217 connection is closing"
+            )
+
+        if not data:
+            return
+
+        self._write_buffer.append(bytes(data))
+        self._maybe_pause_protocol()
+
+        if self._writer_task is None:
+            self._writer_task = self._loop.create_task(
+                self._write_remote()
+            )
+
+    async def _write_remote(self):
+        try:
+            while self._write_buffer:
+                data = self._write_buffer.pop(0)
+                self._inflight = len(data)
+
+                written = await asyncio.to_thread(
+                    self._serial.write, data
+                )
+
+                if written != len(data):
+                    raise serial.SerialException(
+                        "Incomplete RFC2217 write"
+                    )
+
+                self._inflight = 0
+                self._wrote_callback(data)
+                self._maybe_resume_protocol()
+
+        except Exception as exc:
+            self._inflight = 0
+            self._write_buffer.clear()
+            self._wrote_callback(b"")
+            self._start_shutdown(exc, False)
+
+        finally:
+            self._writer_task = None
+
+    def close(self):
+        self._start_shutdown(None, True)
+
+    def abort(self):
+        self._start_shutdown(None, False)
+
+    def flush(self):
+        self._write_buffer.clear()
+        self._maybe_resume_protocol()
+
+    def _start_shutdown(self, exc, graceful):
+        self._closing = True
+        self._has_reader = False
+
+        if not graceful:
+            self._write_buffer.clear()
+
+        if self._shutdown_task is None:
+            self._shutdown_task = self._loop.create_task(
+                self._shutdown(exc, graceful)
+            )
+
+    async def _shutdown(self, exc, graceful):
+        try:
+            if self._writer_task is not None:
+                await self._writer_task
+
+            if self._reader_task is not None:
+                await self._reader_task
+
+            if graceful:
+                await asyncio.to_thread(self._serial.flush)
+
+        except Exception as error:
+            exc = exc or error
+
+        finally:
+            try:
+                await asyncio.to_thread(self._serial.close)
+            except Exception as error:
+                exc = exc or error
+
+            self._protocol.connection_lost(exc)
+
+
 async def create_serial_connection(
     loop: asyncio.AbstractEventLoop,
     protocol_factory: Callable[[], asyncio.Protocol],
@@ -574,7 +721,13 @@ async def connection_for_serial(
     protocol instance, you can pass lambda: my_protocol.
     """
     protocol = protocol_factory()
-    transport = SerialTransport(loop, protocol, serial_instance)
+    port = getattr(serial_instance, "port", "") or ""
+    transport_class = (
+        RFC2217Transport
+        if urllib.parse.urlparse(port).scheme == "rfc2217"
+        else SerialTransport
+    )
+    transport = transport_class(loop, protocol, serial_instance)
     return transport, protocol
 
 
