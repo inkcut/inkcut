@@ -22,10 +22,10 @@ Which service and characteristics to use is set by the transport config.
 service_uuid and write_uuid are required. read_uuid is where the machine
 answers queries, and notify_uuid where it reports status unasked; both
 are optional. Replies on read_uuid go to the protocol like a serial
-port's input. Status on notify_uuid is only logged, so that a "busy"
-the machine sends unasked is not taken as the answer to a query. A
-machine without a read_uuid answers on notify_uuid, which is then
-treated as the reply stream.
+port's input. Status on notify_uuid goes to protocol.status_received
+instead, so that a "busy" the machine sends unasked is not taken as the
+answer to a query. A machine without a read_uuid answers on notify_uuid,
+which is then treated as the reply stream.
 
 Finding the values for a new cutter
 -----------------------------------
@@ -281,7 +281,10 @@ class BLETransport(DeviceTransport):
         if not self._has_read_char:
             #: Machines without a reply characteristic answer here
             return self._on_read(sender, data)
-        log.debug('<- {} | status {}'.format(self, bytes(data)))
+        data = bytes(data)
+        log.debug('<- {} | status {}'.format(self, data))
+        if self.protocol is not None:
+            self.protocol.status_received(data)
 
     def _on_disconnect(self, client):
         if client is not self.client:
