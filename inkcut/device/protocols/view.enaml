@@ -109,3 +109,7 @@ enamldef GPGLConfigView(Container):
         text = QApplication.translate("protocols", "Append ETX terminator")
         checked := model.append_etx
         tool_tip = QApplication.translate("protocols", "End each command with ETX (0x03). Silhouette machines do not run a command until it is terminated.")
+    CheckBox:
+        text = QApplication.translate("protocols", "Flow control")
+        checked := model.flow_control
+        tool_tip = QApplication.translate("protocols", "Send jobs in batches and wait on the machine's answers, instead of one command at a time. Needs a machine that answers queries, like Silhouette machines. Smooths curves over Bluetooth.")
