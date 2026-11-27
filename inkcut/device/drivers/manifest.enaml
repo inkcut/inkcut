@@ -34,8 +34,12 @@ enamldef Cameo4Driver(DeviceDriver):
           'write_uuid': '6d92661d-f429-4d67-929b-28e7a9780912',
           'read_uuid': '8dcf199a-30e7-4bd4-beb6-beb57dca866c',
           'notify_uuid': '61490654-b5b4-458c-a867-9e15bc1471e0',
-          'append_etx': True,
           'name_filter': 'cameo,silhouette',
+        }
+      },
+      'protocol': {
+        'gpgl': {
+          'append_etx': True,
         }
       }
     }

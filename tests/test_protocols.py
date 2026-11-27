@@ -86,3 +86,13 @@ async def test_gpgl_protocol():
     await protocol.move(1, 4, 0)
     expect_written(transport, b"M1,4")
     await protocol.finish()
+
+
+async def test_gpgl_append_etx():
+    protocol = GPGLProtocol()
+    protocol.config.append_etx = True
+    transport = DebugTransport(protocol=protocol)
+    await transport.connect()
+    expect_written(transport, b"\x03\x03H\x03")
+    await protocol.move(1, 4, 0)
+    expect_written(transport, b"\x03M1,4\x03")

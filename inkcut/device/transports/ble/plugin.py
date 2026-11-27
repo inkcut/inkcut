@@ -15,7 +15,6 @@ Which service and characteristics to use is set by the transport config.
                 'write_uuid': '...',
                 'read_uuid': '...',
                 'notify_uuid': '...',
-                'append_etx': True,
             }
         }
     }
@@ -94,9 +93,9 @@ family and have to be found by looking at the machine.
 
    - write_with_response: some machines silently ignore writes without
      a response. The Cameo 4 is one of them.
-   - append_etx: GPGL machines run a command once it is terminated by
-     ETX (0x03). The GPGL protocol puts ETX before each command, so the
-     latest one is only terminated by the next unless this is on.
+   - ETX: GPGL machines like the Cameo do not run a command until it is
+     terminated by ETX (0x03). That is the GPGL protocol's append_etx
+     option, not a transport setting.
    - chunk_size: large writes are split into chunks of this many bytes.
      Lower it if long jobs stall or the connection drops.
 
@@ -186,11 +185,6 @@ class BLEConfig(Model):
     #: Characteristic in that service the machine reports status on
     #: unasked. Optional, not every machine reports status.
     notify_uuid = Str().tag(config=True)
-
-    #: Terminate each write with ETX. The GPGL protocol puts ETX before
-    #: each command, so the latest one is not terminated until the next
-    #: is sent, and machines like the Cameo 4 wait for it.
-    append_etx = Bool().tag(config=True)
 
     #: Use write with response. Some machines (e.g. the Cameo 4) ignore
     #: write-without-response entirely.
@@ -383,8 +377,6 @@ class BLETransport(DeviceTransport):
         config = self.config
         if hasattr(data, 'encode'):
             data = data.encode()
-        if config.append_etx and not data.endswith(b'\x03'):
-            data += b'\x03'
         log.debug('-> {} | {}'.format(self, data))
         self.last_write = data
         async with self._lock:

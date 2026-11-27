@@ -81,15 +81,6 @@ enamldef BLESettingsView(Container):
         Container:
             padding = 0
             CheckBox:
-                text = QApplication.translate("ble", "Append ETX terminator")
-                checked := model.append_etx
-                tool_tip = textwrap.dedent("""
-                End each write with ETX (0x03). The GPGL protocol only puts
-                ETX before each command, so without this the latest command
-                is not run until the next one is sent. Turn this on for
-                Silhouette machines.
-                """).strip()
-            CheckBox:
                 text = QApplication.translate("ble", "Write with response")
                 checked := model.write_with_response
                 tool_tip = textwrap.dedent("""
