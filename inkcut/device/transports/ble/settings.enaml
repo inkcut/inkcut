@@ -51,7 +51,9 @@ enamldef BLESettingsView(Container):
         Label:
             text = QApplication.translate("ble", "Show")
         Container:
-            padding = 0
+            #: On macOS a checkbox is larger than the size it is laid out
+            #: at, so leave room for it
+            padding = (0, 10, 0, 0)
             constraints = [
                 hbox(flt, allcb),
                 align('v_center', flt, allcb)
@@ -79,7 +81,7 @@ enamldef BLESettingsView(Container):
         Label:
             text = QApplication.translate("ble", "Options")
         Container:
-            padding = 0
+            padding = (0, 10, 4, 0)
             CheckBox:
                 text = QApplication.translate("ble", "Write with response")
                 checked := model.write_with_response
