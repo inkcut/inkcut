@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+"""
+Bluetooth LE transport manifest.
+"""
+import enaml
+from enaml.workbench.api import Extension
+from enaml.workbench.plugin_manifest import PluginManifest
+from inkcut.device.extensions import DeviceTransport, DEVICE_TRANSPORT_POINT
+
+
+def transport_factory(driver, declaration, protocol):
+    from .plugin import BLETransport, BLEConfig
+    config = BLEConfig(**driver.get_connection_config('ble'))
+    return BLETransport(declaration=declaration, protocol=protocol,
+                        config=config)
+
+
+def config_view_factory():
+    with enaml.imports():
+        from .settings import BLESettingsView
+    return BLESettingsView
+
+
+enamldef BLEManifest(PluginManifest):
+    """ Talk to cutters that expose their command stream over a BLE
+    GATT service instead of a serial port.
+
+    """
+    id = 'inkcut.device.transport.ble'
+    Extension:
+        id = 'transports'
+        point = DEVICE_TRANSPORT_POINT
+
+        DeviceTransport:
+            id = 'ble'
+            name = 'Bluetooth LE'
+            factory = transport_factory
+            config_view = config_view_factory

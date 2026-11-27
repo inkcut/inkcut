@@ -101,3 +101,11 @@ enamldef HPGLConfigView(Container):
     CheckBox:
         checked := model.separate_z_moves
         text = QApplication.translate("protocols", "Send pen up/down commands separately from move commands")
+
+
+enamldef GPGLConfigView(Container):
+    attr model
+    CheckBox:
+        text = QApplication.translate("protocols", "Append ETX terminator")
+        checked := model.append_etx
+        tool_tip = QApplication.translate("protocols", "End each command with ETX (0x03). Silhouette machines do not run a command until it is terminated.")
