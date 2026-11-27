@@ -28,6 +28,11 @@ enamldef Cameo4Driver(DeviceDriver):
       'swap_xy': True,
       'mirror_x': True,
       'mirror_y': True,
+      #: Standard vinyl, near Silhouette Studio's force 10, speed 5
+      'force': 70,
+      'force_enabled': True,
+      'speed': 20,
+      'speed_enabled': True,
       'connection': {
         'ble': {
           'service_uuid': 'e2088282-4fde-42f9-bb22-6ec3c7ed8f91',
@@ -41,6 +46,14 @@ enamldef Cameo4Driver(DeviceDriver):
         'gpgl': {
           'append_etx': True,
           'flow_control': True,
+          #: Standard vinyl
+          'autoblade_depth': 1,
+          #: Machine units, per py_silhouette: force 7g each up to 33,
+          #: speed 100 mm/s each up to 30 on the Cameo 4
+          'force_grams_per_unit': 7,
+          'force_max': 33,
+          'speed_mm_s_per_unit': 100,
+          'speed_max': 30,
         }
       }
     }

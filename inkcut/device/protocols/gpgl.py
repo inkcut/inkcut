@@ -9,7 +9,7 @@ Thanks to Lex Wernars
 """
 import asyncio
 
-from atom.api import Bool, Bytes, Float, Instance, Int, Str, Value
+from atom.api import Bool, Bytes, Float, Instance, Int, List, Str, Value
 from inkcut.core.api import Model, log
 from inkcut.device.plugin import DeviceProtocol
 
@@ -20,6 +20,32 @@ SENTINEL = "\x03FG\x03"
 #: Asks for the machine's state, which it answers at once: 0 ready,
 #: 1 busy, 2 ready without media, 3 paused.
 STATE = "\x1b\x05"
+
+#: Asks which tool is in each holder (Cameo 4 and later)
+TOOLS = "\x1b\x15"
+
+#: Tool codes a Cameo 4 reports for each holder
+TOOL_EMPTY = 0
+TOOL_AUTOBLADE = 2
+TOOL_NAMES = {
+    0: 'Empty',
+    1: 'Ratchet blade',
+    2: 'AutoBlade',
+    3: 'Deep-cut blade',
+    4: 'Kraft blade',
+    5: 'Rotary blade',
+    7: 'Pen',
+    255: 'Error',
+}
+
+
+def to_machine_units(value, per_unit, highest):
+    """ Round value to the nearest whole machine unit, from 1 to highest
+    (no upper limit if highest is 0).
+
+    """
+    units = int(value / per_unit + 0.5)
+    return max(1, min(highest or units, units))
 
 
 class GPGLConfig(Model):
@@ -35,6 +61,24 @@ class GPGLConfig(Model):
     #: discards what arrives then. Needs a machine that answers queries.
     flow_control = Bool().tag(config=True)
 
+    #: Set the AutoBlade in tool holder 1 to autoblade_depth before each
+    #: job. The machine taps the blade against a post to turn it.
+    autoblade = Bool().tag(config=True)
+
+    #: AutoBlade depth, 0-10 as on the blade's scale
+    autoblade_depth = Int(3).tag(config=True)
+
+    #: Machine force unit in grams, and the highest unit. Inkcut's force
+    #: is in grams; GPGL machines take their own scale, which differs
+    #: between them, so drivers set these. 0 sends force unconverted.
+    force_grams_per_unit = Float().tag(config=True)
+    force_max = Int().tag(config=True)
+
+    #: Machine speed unit in mm/s, and the highest unit. Inkcut's speed is
+    #: in in/s, the only unit its settings offer. 0 sends it unconverted.
+    speed_mm_s_per_unit = Float().tag(config=True)
+    speed_max = Int().tag(config=True)
+
 
 class GPGLProtocol(DeviceProtocol):
     config = Instance(GPGLConfig, ()).tag(config=True)
@@ -49,8 +93,11 @@ class GPGLProtocol(DeviceProtocol):
     #: they are taken as lost
     lost_after = Float(1.0)
 
-    #: Seconds to wait for the answer to a state query
-    reply_timeout = Float(1.0)
+    #: Seconds to wait for the machine to answer a query
+    reply_timeout = Float(2.0)
+
+    #: Tool code per holder from the last get_tools, empty if unknown
+    tools = List()
 
     #: Whether writes are batched, which is only during a job: jogging
     #: sends each move at once
@@ -70,6 +117,9 @@ class GPGLProtocol(DeviceProtocol):
 
     #: Future for the answer to a state query
     _state = Value()
+
+    #: Future for the answer to any other query
+    _reply = Value()
 
     #: Set whenever the machine replies or reports its state
     _heard = Instance(asyncio.Event, ())
@@ -94,6 +144,8 @@ class GPGLProtocol(DeviceProtocol):
         await self.write("\x03\x03H")
 
     async def start_job(self):
+        if self.config.autoblade:
+            await self.set_autoblade_depth(self.config.autoblade_depth)
         self._batching = self.controls_flow()
         self._unanswered = 0
 
@@ -111,13 +163,80 @@ class GPGLProtocol(DeviceProtocol):
         await self.write("\x03%s%i,%i"%('D' if z else 'M', x, y))
 
     async def set_velocity(self, v):
-        await self.write('\x03!%i' % v)
+        await self.write('\x03!%i' % self.machine_speed(v))
 
     async def set_force(self, f):
-        await self.write("\x03FX%i,1" % f)
+        await self.write("\x03FX%i,1" % self.machine_force(f))
+
+    def machine_force(self, grams):
+        """ Force as sent: in machine units if the driver gave a scale. """
+        c = self.config
+        if not c.force_grams_per_unit:
+            return grams
+        return to_machine_units(grams, c.force_grams_per_unit, c.force_max)
+
+    def machine_speed(self, in_s):
+        """ Speed as sent: in machine units if the driver gave a scale. """
+        c = self.config
+        if not c.speed_mm_s_per_unit:
+            return in_s
+        return to_machine_units(in_s * 25.4, c.speed_mm_s_per_unit, c.speed_max)
 
     async def set_pen(self, p):
         pass
+
+    async def set_autoblade_depth(self, depth):
+        """ Select tool holder 1 and turn its AutoBlade to depth. Skipped
+        if the machine reports a different tool there; machines that do
+        not answer get the commands anyway.
+
+        """
+        tools = await self.get_tools()
+        if tools and tools[0] not in (TOOL_AUTOBLADE, TOOL_EMPTY):
+            log.warning("gpgl | AutoBlade depth not set, tool holder 1 "
+                        "has tool {}".format(tools[0]))
+            return
+        depth = max(0, min(10, depth))
+        log.debug("gpgl | AutoBlade depth {}".format(depth))
+        await self.write("\x03J1")
+        await self.write("\x03TF%i,1" % depth)
+
+    async def get_tools(self):
+        """ Ask which tool is in each holder (Cameo 4 and later).
+
+        Returns
+        -------
+        tools: list or None
+            Tool code per holder, or None if the machine did not answer.
+
+        """
+        reply = await self.query(TOOLS)
+        tools = None
+        if reply is not None:
+            try:
+                tools = [int(t) for t in reply.decode().split(',')]
+            except ValueError:
+                log.warning("gpgl | unexpected tool reply {}".format(reply))
+        self.tools = tools or []
+        return tools
+
+    async def query(self, cmd):
+        """ Send a query and return the machine's reply without its ETX,
+        or None if no reply comes within reply_timeout.
+
+        Not for use while batches are unanswered, whose answers would be
+        taken as the reply.
+
+        """
+        self._reply = asyncio.get_running_loop().create_future()
+        try:
+            await super().write(cmd)
+            return await asyncio.wait_for(self._reply, self.reply_timeout)
+        except asyncio.TimeoutError:
+            log.debug("gpgl | no reply to {!r}".format(cmd))
+            return None
+        finally:
+            self._reply = None
 
     async def get_state(self):
         """ Ask the machine's state.
@@ -187,6 +306,8 @@ class GPGLProtocol(DeviceProtocol):
                 #: A state
                 if self._state is not None and not self._state.done():
                     self._state.set_result(reply.decode())
+            elif self._reply is not None and not self._reply.done():
+                self._reply.set_result(reply)
             elif self._unanswered:
                 #: The answer to a batch's query
                 self._unanswered -= 1
