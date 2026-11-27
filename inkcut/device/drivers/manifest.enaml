@@ -15,6 +15,50 @@ def load_drivers():
     return []
 
 
+enamldef Cameo4Driver(DeviceDriver):
+    """ Silhouette Cameo 4. Variants override what differs. """
+    manufacturer = 'Silhouette'
+    model = 'Cameo 4'
+    width = '300cm'
+    length = '30.5cm'
+    protocols = ['gpgl']
+    connections = ['printer', 'ble']
+    default_config = {
+      'scale': [ 5.64, 5.64 ],
+      'swap_xy': True,
+      'mirror_x': True,
+      'mirror_y': True,
+      #: Standard vinyl, near Silhouette Studio's force 10, speed 5
+      'force': 70,
+      'force_enabled': True,
+      'speed': 20,
+      'speed_enabled': True,
+      'connection': {
+        'ble': {
+          'service_uuid': 'e2088282-4fde-42f9-bb22-6ec3c7ed8f91',
+          'write_uuid': '6d92661d-f429-4d67-929b-28e7a9780912',
+          'read_uuid': '8dcf199a-30e7-4bd4-beb6-beb57dca866c',
+          'notify_uuid': '61490654-b5b4-458c-a867-9e15bc1471e0',
+          'name_filter': 'cameo,silhouette',
+        }
+      },
+      'protocol': {
+        'gpgl': {
+          'append_etx': True,
+          'flow_control': True,
+          #: Standard vinyl
+          'autoblade_depth': 1,
+          #: Machine units, per py_silhouette: force 7g each up to 33,
+          #: speed 100 mm/s each up to 30 on the Cameo 4
+          'force_grams_per_unit': 7,
+          'force_max': 33,
+          'speed_mm_s_per_unit': 100,
+          'speed_max': 30,
+        }
+      }
+    }
+
+
 enamldef DriversManifest(PluginManifest):
     """ Device drivers manifest.
 
@@ -136,19 +180,12 @@ enamldef DriversManifest(PluginManifest):
             protocols = ['hpgl', 'gpgl']
             connections = ['serial']
 
-        DeviceDriver:
-            manufacturer = 'Silhouette'
-            model = 'Cameo 4'
-            width = '300cm'
-            length = '30.5cm'
-            protocols = ['gpgl']
-            connections = ['printer']
-            default_config = {
-              'scale': [ 5.64, 5.64 ],
-              'swap_xy': True,
-              'mirror_x': True,
-              'mirror_y': True
-            }
+        Cameo4Driver:
+            pass
+
+        Cameo4Driver:
+            model = 'Cameo 4 Plus'
+            length = '38.1cm'
 
         DeviceDriver:
             manufacturer = 'Silhouette'

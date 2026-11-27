@@ -1,0 +1,119 @@
+# -*- coding: utf-8 -*-
+"""
+Cut settings pane.
+
+Shows the settings that change with the material, which otherwise are
+only in the device settings dialog. Force and speed are the device's own
+config, so both places edit the same values.
+"""
+from enaml.application import deferred_call
+from enaml.core.api import Conditional
+from enaml.layout.api import hbox, align, spacer
+from enaml.qt.QtWidgets import QApplication
+from enaml.widgets.api import (
+    CheckBox, Container, Form, GroupBox, Label, PushButton, SpinBox
+)
+from enamlx.widgets.api import DoubleSpinBox
+from inkcut.core.api import DockItem
+from inkcut.core.utils import load_icon
+from inkcut.device.protocols.gpgl import GPGLProtocol, TOOL_NAMES
+from .actions import refresh_tools, set_autoblade_depth
+
+
+def tools_text(tools):
+    if not tools:
+        return QApplication.translate("cut", "Unknown")
+    return ", ".join(
+        "{}: {}".format(i + 1, TOOL_NAMES.get(t, "tool {}".format(t)))
+        for i, t in enumerate(tools))
+
+
+enamldef CutSettingsDockItem(DockItem):
+    title = QApplication.translate("cut", "Cut settings")
+    name = 'cut-settings-item'
+    icon = load_icon('cut_red')
+    attr plugin
+    attr device << plugin.device
+    attr config << device.config
+    attr protocol << device.connection.protocol \
+        if device and device.connection else None
+    Container:
+        Form:
+            Label:
+                text = QApplication.translate("device", "Speed")
+            Container:
+                #: On macOS a checkbox is wider than the size it is laid
+                #: out at, so leave room for it at the right
+                padding = (0, 10, 0, 0)
+                constraints = [hbox(speed, speed_on),
+                               align('v_center', speed, speed_on)]
+                DoubleSpinBox: speed:
+                    minimum = 0
+                    maximum = 999999999
+                    value := config.speed
+                    single_step = 4
+                    suffix << " {}".format(config.speed_units)
+                CheckBox: speed_on:
+                    text = QApplication.translate("device", "Enabled")
+                    checked := config.speed_enabled
+            Label:
+                text = QApplication.translate("device", "Force")
+            Container:
+                #: On macOS a checkbox is wider than the size it is laid
+                #: out at, so leave room for it at the right
+                padding = (0, 10, 0, 0)
+                constraints = [hbox(force, force_on),
+                               align('v_center', force, force_on)]
+                DoubleSpinBox: force:
+                    minimum = 0
+                    maximum = 999999999
+                    value := config.force
+                    single_step = 10
+                    suffix << " {}".format(config.force_units)
+                CheckBox: force_on:
+                    text = QApplication.translate("device", "Enabled")
+                    checked := config.force_enabled
+        Conditional:
+            condition << isinstance(protocol, GPGLProtocol)
+            GroupBox:
+                title = QApplication.translate("cut", "AutoBlade")
+                Form:
+                    Label:
+                        text = QApplication.translate("cut", "Tools")
+                    Container:
+                        padding = 0
+                        constraints = [hbox(tools, spacer, refresh),
+                                       align('v_center', tools, refresh)]
+                        Label: tools:
+                            text << tools_text(protocol.tools)
+                        PushButton: refresh:
+                            #: Keep its size as the tools text changes
+                            hug_width = 'required'
+                            icon = load_icon("arrow_refresh")
+                            tool_tip = QApplication.translate("cut",
+                                "Ask the machine which tool is in each holder")
+                            enabled << not device.busy
+                            clicked :: deferred_call(refresh_tools, device)
+                    Label:
+                        text = QApplication.translate("cut", "Depth")
+                    Container:
+                        padding = 0
+                        constraints = [hbox(depth, set_now), align('v_center', depth, set_now)]
+                        SpinBox: depth:
+                            minimum = 0
+                            maximum = 10
+                            value := protocol.config.autoblade_depth
+                        PushButton: set_now:
+                            text = QApplication.translate("cut", "Set now")
+                            tool_tip = QApplication.translate("cut",
+                                "Turn the AutoBlade in holder 1 to this depth now")
+                            enabled << not device.busy
+                            clicked :: deferred_call(set_autoblade_depth, device)
+                    Label:
+                        text = ""
+                    CheckBox:
+                        text = QApplication.translate("cut", "Set before each job")
+                        checked := protocol.config.autoblade
+                        tool_tip = QApplication.translate("cut",
+                            "Turn the AutoBlade in holder 1 to this depth at the "
+                            "start of every job. Skipped if another tool is loaded.")

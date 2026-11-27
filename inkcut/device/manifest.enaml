@@ -66,6 +66,12 @@ def device_progress_dock_item_factory():
     return DeviceProgressDockItem
 
 
+def cut_settings_dock_item_factory():
+    with enaml.imports():
+        from .cut.view import CutSettingsDockItem
+    return CutSettingsDockItem
+
+
 def plugin_factory():
     from .plugin import DevicePlugin
     return DevicePlugin()
@@ -128,6 +134,10 @@ enamldef DeviceManifest(PluginManifest):
             plugin_id = 'inkcut.device'
             factory = device_progress_dock_item_factory
             layout = 'bottom'
+        DockItem:
+            plugin_id = 'inkcut.device'
+            factory = cut_settings_dock_item_factory
+            layout = 'left'
 
     Extension:
         id = 'actions'

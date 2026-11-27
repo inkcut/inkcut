@@ -19,6 +19,7 @@ install_requires = [
     'pyqtgraph',
     'qtconsole',  # now optional
     'pyserial>=3.5',
+    'bleak',  # Bluetooth LE transport
     'jsonpickle',
     'lxml',  # use sudo apt install libxml2-dev libxslt-dev
 
