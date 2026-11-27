@@ -158,6 +158,23 @@ class DeviceProtocol(Model):
         """
         raise NotImplementedError
 
+    async def start_job(self):
+        """ Called at the start of each job, after the before job commands
+        and before force and speed are set.
+
+        Use this for setup that belongs to a job rather than a connection,
+        since a connection is also made for jogging.
+
+        """
+
+    def controls_flow(self):
+        """ Whether the protocol waits on the device itself, so the job is
+        sent without the delays between commands that otherwise keep the
+        device's buffer from overflowing.
+
+        """
+        return False
+
     async def set_pen(self, p):
         """ Set the pen or tool that should be used.
 
@@ -215,6 +232,16 @@ class DeviceProtocol(Model):
 
         """
         log.debug("data received: {}".format(data))
+
+    def status_received(self, data):
+        """ Called when the device reports its state unasked, on transports
+        that keep this apart from replies to queries (e.g. BLE).
+
+        Parameters
+        ----------
+        data: bytes
+
+        """
 
     async def finish(self):
         """ Called when processing all of the paths of the job are complete.
@@ -740,7 +767,8 @@ class Device(Model):
                 #: Rate px/ms
                 if config.custom_rate >= 0:
                     rate = config.custom_rate
-                elif self.connection.always_spools or config.spooled:
+                elif (self.connection.always_spools or config.spooled
+                      or self.connection.protocol.controls_flow()):
                     rate = 0
                 elif config.interpolate:
                     if config.step_time > 0:
@@ -806,6 +834,8 @@ class Device(Model):
                         #: Write startup command
                         if cmds := config.commands_before:
                             await connection.write(cmds)
+
+                        await protocol.start_job()
 
                         self.status = "Working..."
 
@@ -933,6 +963,7 @@ class Device(Model):
 
         # Determine if interpolation should be used
         skip_interpolation = (self.connection.always_spools or config.spooled
+                              or self.connection.protocol.controls_flow()
                               or not config.interpolate)
 
         # speed = distance/seconds
@@ -1089,6 +1120,7 @@ class DevicePlugin(Plugin):
             from .transports.printer.manifest import PrinterManifest
             from .transports.disk.manifest import FileManifest
             from .transports.parallelport.manifest import ParallelManifest
+            from .transports.ble.manifest import BLEManifest
             from inkcut.device.protocols.manifest import ProtocolManifest
             from inkcut.device.drivers.manifest import DriversManifest
             from inkcut.device.filters.manifest import FiltersManifest
@@ -1099,6 +1131,7 @@ class DevicePlugin(Plugin):
             plugins.append(PrinterManifest)
             plugins.append(FileManifest)
             plugins.append(ParallelManifest)
+            plugins.append(BLEManifest)
             plugins.append(ProtocolManifest)
             plugins.append(DriversManifest)
             plugins.append(FiltersManifest)
